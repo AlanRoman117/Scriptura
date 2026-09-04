@@ -1,0 +1,15 @@
+{
+  "number": 43,
+  "name": "John",
+  "abbreviation": "John",
+  "testament": "NT",
+  "chapters": [
+    {
+      "number": 3,
+      "verses": [
+        { "number": 16, "text": "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life." },
+        { "number": 17, "text": "For God sent not his Son into the world to condemn the world; but that the world through him might be saved." }
+      ]
+    }
+  ]
+}

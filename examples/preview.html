@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scriptura | Bible Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Lora:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 850px) {
+            .preview-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .sidebar {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 20px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.25rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        .control-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: #fff;
+            transition: all 0.2s;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .content-card {
+            background: var(--card-bg);
+            padding: 50px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            min-height: 600px;
+        }
+
+        .content-header {
+            border-bottom: 2px solid var(--bg);
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+        }
+
+        .content-header h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .bible-text {
+            font-family: 'Lora', serif;
+            font-size: 1.25rem;
+            color: #334155;
+        }
+
+        .verse {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .verse:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .verse-num {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-right: 12px;
+            vertical-align: baseline;
+        }
+
+        .status-msg {
+            text-align: center;
+            padding: 100px 20px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: #e0e7ff;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <span class="badge">PREVIEW MODE</span>
+            <h1>Scriptura</h1>
+            <p>A modern interface for exploring sacred scripture.</p>
+        </header>
+
+        <div class="preview-grid">
+            <aside class="sidebar">
+                <h2>Navigation</h2>
+                <div class="control-group">
+                    <label for="translation">Translation</label>
+                    <select id="translation">
+                        <option value="kjv">King James Version (KJV)</option>
+                        <option value="web">World English Bible (WEB)</option>
+                        <option value="bsb">Bible in Basic English (BSB)</option>
+                        <option value="rv1909">Reina-Valera 1909 (Spanish)</option>
+                        <option value="vbl">Biblia en Lengua de Signos (Spanish)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="book">Book</label>
+                    <select id="book">
+                        <option value="genesis">Genesis</option>
+                        <option value="exodus">Exodus</option>
+                        <option value="leviticus">Leviticus</option>
+                        <option value="numbers">Numbers</option>
+                        <option value="deuteronomy">Deuteronomy</option>
+                        <option value="john">John</option>
+                        <option value="revelation">Revelation</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="chapter">Chapter</label>
+                    <select id="chapter">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+            </aside>
+
+            <main class="content-card" id="bible-content">
+                <!-- Content injected here -->
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const mockData = {
+            kjv: {
+                genesis: {
+                    1: [
+                        { number: 1, text: "In the beginning God created the heaven and the earth." },
+                        { number: 2, text: "And the earth was without form, and void; and darkness was upon the face of the deep." },
+                        { number: 3, text: "And God said, Let there be light: and there was light." }
+                    ],
+                    3: [
+                        { number: 1, text: "Now the Lord God spake unto Adam, saying, Be ye fruitful, and multiply, and replenish the earth, and subdue it: and have dominance over the fish of the sea, and over the fowl of the air, and over the cattle, and over every beast of the earth." }
+                    ]
+                },
+                john: {
+                    3: [
+                        { number: 16, text: "For God so loved the world, that he gave his only begotten Son, that whosoever believeth in him should not perish, but have everlasting life." }
+                    ]
+                }
+            }
+        };
+
+        const translationSelect = document.getElementById('translation');
+        const bookSelect = document.getElementById('book');
+        const chapterSelect = document.getElementById('chapter');
+        const contentDiv = document.getElementById('bible-content');
+
+        function updateContent() {
+            const translation = translationSelect.value;
+            const book = bookSelect.value;
+            const chapter = parseInt(chapterSelect.value);
+
+            if (mockData[translation] && mockData[translation][book] && mockData[translation][book][chapter]) {
+                const verses = mockData[translation][book][chapter];
+                
+                contentDiv.innerHTML = `
+                    <div class="content-header">
+                        <h2>${book.toUpperCase()} ${chapter}</h2>
+                    </div>
+                    <div class="bible-text">
+                        ${verses.map((v, i) => `
+                            <div class="verse" style="animation-delay: ${i * 0.1}s">
+                                <span class="verse-num">${v.number}</span> ${v.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                contentDiv.innerHTML = `
+                    <div class="status-msg">
+                        <p>Data for ${translation} ${book} ${chapter} is currently being ingested.</p>
+                        <p style="margin-top: 15px; font-size: 0.8rem;">(The current project data files are placeholders)</p>
+                    </div>
+                `;
+            }
+        }
+
+        translationSelect.addEventListener('change', updateContent);
+        bookSelect.addEventListener('change', updateContent);
+        chapterSelect.addEventListener('change', updateContent);
+
+        // Initial Load
+        updateContent();
+    </script>
+</body>
+</html>"

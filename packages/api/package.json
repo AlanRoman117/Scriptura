@@ -1,0 +1,22 @@
+{
+  "name": "@scriptura/api",
+  "version": "0.1.0",
+  "description": "REST and GraphQL handlers for serving Scriptura Bible data.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@scriptura/core": "0.1.0",
+    "@scriptura/search": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlanRoman117/scriptura.git",
+    "directory": "packages/api"
+  }
+}

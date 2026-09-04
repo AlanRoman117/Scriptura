@@ -1,0 +1,11 @@
+{
+  "id": "bungo",
+  "name": "文語訳聖書",
+  "language": "ja",
+  "license": "public-domain",
+  "attribution": "文語訳聖書 (Classical Japanese) — Public Domain",
+  "source_url": "https://bible.salterrae.net",
+  "year": 1887,
+  "testament": "both",
+  "book_count": 66
+}

@@ -1,0 +1,11 @@
+{
+  "id": "kjv",
+  "name": "King James Version",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "King James Version — Public Domain",
+  "source_url": "https://github.com/aruljohn/Bible-kjv",
+  "year": 1769,
+  "testament": "both",
+  "book_count": 66
+}

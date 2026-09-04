@@ -1,0 +1,11 @@
+{
+  "id": "ostervald",
+  "name": "Bible Ostervald",
+  "language": "fr",
+  "license": "public-domain",
+  "attribution": "Bible Ostervald — Public Domain",
+  "source_url": "https://github.com/seven1m/open-bibles",
+  "year": 1744,
+  "testament": "both",
+  "book_count": 66
+}

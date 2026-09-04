@@ -1,0 +1,11 @@
+{
+  "id": "bsb",
+  "name": "Berean Standard Bible",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "Berean Standard Bible — Public Domain (2023)",
+  "source_url": "https://berean.bible",
+  "year": 2023,
+  "testament": "both",
+  "book_count": 66
+}

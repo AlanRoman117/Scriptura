@@ -1,0 +1,11 @@
+{
+  "id": "test",
+  "name": "Test Translation",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "Test Translation — Public Domain",
+  "source_url": "https://example.com",
+  "year": 2024,
+  "testament": "both",
+  "book_count": 66
+}

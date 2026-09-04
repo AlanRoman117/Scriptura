@@ -1,0 +1,21 @@
+{
+  "name": "@scriptura/compare",
+  "version": "0.1.0",
+  "description": "Multi-translation verse and chapter diff engine for Scriptura.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@scriptura/core": "0.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlanRoman117/scriptura.git",
+    "directory": "packages/compare"
+  }
+}

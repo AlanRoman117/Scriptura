@@ -1,0 +1,20 @@
+{
+  "name": "scriptura-cli-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CLI demo using @scriptura/search.",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@scriptura/core": "0.1.0",
+    "@scriptura/search": "0.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "ts-node": "^10.9.0"
+  }
+}

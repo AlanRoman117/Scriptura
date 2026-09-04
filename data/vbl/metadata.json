@@ -1,0 +1,11 @@
+{
+  "id": "vbl",
+  "name": "Versión Biblia Libre",
+  "language": "es",
+  "license": "cc-by-sa-4.0",
+  "attribution": "Versión Biblia Libre (Free Bible Version) — CC BY-SA 4.0",
+  "source_url": "https://ebible.org/find/details.php?id=spavbl",
+  "year": 2025,
+  "testament": "both",
+  "book_count": 66
+}
