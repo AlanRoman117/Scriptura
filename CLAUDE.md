@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Scriptura is an open-source monorepo for working with Bible data programmatically. It provides freely-licensed Bible translations in canonical JSON format with TypeScript packages for loading, searching, comparing, validating, and serving scripture data.
 
-**Current state.** Data ingestion is essentially done: 10 of the 11 registered translations are ingested and committed (66 books each, passing `validate.py --strict` with zero warnings). Only `martin1744` is outstanding. The TypeScript packages build, type-check, and pass their tests. The two biggest gaps are that **no CI or deployment workflow exists yet** (see Docs → Specified but not built) and that the packages are thinly tested (6 unit tests, no integration tests).
+**Current state.** 10 of the 11 registered translations are ingested and committed (66 books each; `validate.py --strict` reports zero errors and zero warnings). Only `martin1744` is outstanding, and **`data/martin1744/` is deliberately absent** — an empty `books/` dir is a validation error, and CI is worthless if it starts red. Its `TRANSLATIONS` entry in `ingest.py` and its docs rows remain as planned work.
+
+The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. 49 tests pass. CI exists. The remaining gaps are GraphQL and the AWS deployment workflow — both still design-only (see Docs → Specified but not built).
 
 Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). Individual translations in `data/` carry their own licenses, recorded per-translation in each `metadata.json`.
 
@@ -17,6 +19,8 @@ npm install                    # Install all workspace dependencies
 npm run build                  # Build all packages (tsc --build)
 npm test                       # Run all tests (jest, config in jest.config.ts)
 npm run lint                   # TypeScript type-check (tsc --build; see note below)
+npm run dev:api                # Run the REST API with hot reload (tsx watch) on :3000
+npm run start:api              # Build, then run the compiled REST API on :3000
 npm run validate               # Validate all translation data (python scripts/validate.py)
 npm run build:api              # Compile data/ into a static JSON API tree in dist/ (node scripts/build-static-api.mjs)
 npm run schema:gen             # Generate JSON schemas from types (ts-node scripts/schema-gen.ts)
@@ -34,6 +38,8 @@ python scripts/validate.py           # Validate data/ (npm run validate wraps th
 
 Single-package builds: `cd packages/<name> && npm run build`
 
+**Workspaces** are `packages/*` plus `examples/node-server` and `examples/cli-demo`, listed explicitly rather than as `examples/*` — `examples/react-app` is a package.json with no source files, and a glob would install the whole vite/react tree for it.
+
 **Node version:** `.nvmrc` pins Node 20. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
 
 **Why `lint` is `tsc --build` and not `tsc --noEmit`:** the packages are composite project references, and TypeScript rejects `--noEmit` on those outright (TS6310). `tsc --build` *is* the type-check; the emitted declarations are a byproduct. Root `tsconfig.json` is a solution file (`files: []` plus `references`) that exists so both `tsc --build` and editors have a single entry point — it holds no compiler options of its own.
@@ -46,7 +52,12 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 - **@scriptura/core** (`packages/core/`) — Canonical types and data access layer.
   - `src/types.ts` — All shared types: `Verse`, `Chapter`, `Book`, `Bible`, `TranslationMeta`, `SearchResult`, `TranslationVerse`, `License`, `Testament`
-  - `src/loader.ts` — `loadTranslation(id)` reads `data/{id}/` into a `Bible` object with `.verse()`, `.chapter()`, `.book()` accessors. `listTranslations()` returns all available translation metadata.
+  - `src/loader.ts` — `loadTranslation(id)` reads `data/{id}/` into a `Bible` object with `.verse()`, `.chapter()`, `.book()`, `.slugs()` accessors. `listTranslations()` returns all available translation metadata. Translations are **cached** (keyed by id, holding the in-flight promise) — without it every request re-read and re-parsed all 66 book files. `clearCache()` for tests.
+  - `getDataDir()` / `setDataDir()` / `SCRIPTURA_DATA_DIR` — the corpus location, resolved per call rather than frozen at import. Lets tests run against a fixture tree and a deployment relocate `data/`.
+  - `src/books.ts` — book addressing. `slugFromFilename()` (**must stay identical to the same-named function in `scripts/build-static-api.mjs`**) and `normalizeBookKey()`.
+    - **Books resolve by slug, localized name, abbreviation, or canonical number.** The slug (`43-john.json` → `john`) is the language-independent key and is what URLs use, in every translation.
+    - The slug already *is* the English name in kebab-case, so none of this needs a book table — **it adds no fourth canon definition.**
+    - ⚠️ `normalizeBookKey` strips only the Latin combining block (`\u0300-\u036f`). A general `\p{M}` strip also eats the Japanese dakuten (U+3099), silently turning ガラテヤ into カラテヤ. There is a regression test; do not "simplify" it.
   - Other packages depend on core for types and data loading.
 
 - **@scriptura/search** (`packages/search/`) — Depends on `@scriptura/core`.
@@ -63,18 +74,20 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 - **@scriptura/api** (`packages/api/`) — Depends on core + search.
   - `src/router.ts` — Framework-agnostic `createRouter(req)` matching REST routes. Returns `{ status, body }` — integrate with Express, Fastify, etc.
-  - Routes: `/translations`, `/translations/:id`, `/translations/:id/:book/:chapter`, `/translations/:id/:book/:chapter/:verse`, `/search?q=&translation=`
+  - Routes: `/translations`, `/translations/:id`, `/translations/:id/:book`, `/translations/:id/:book/:chapter`, `/translations/:id/:book/:chapter/:verse`, `/search?q=&translation=&limit=&offset=`, `/compare?ref=&translations=`
+  - `src/format.ts` — response formatters. **These shapes are the contract and are deliberately identical to what `scripts/build-static-api.mjs` writes.** A client must be able to point at a local server or at the CDN and get the same JSON. The static builder is zero-dependency `.mjs` that runs without a TS build, so it cannot import these; `tests/integration/static-parity.test.ts` diffs the two implementations instead. **Change a shape in one place and you must change it in the other.**
+  - `/search` is paginated (`limit` default 100, max 500). It has to be: `q=the` matches ~28,000 KJV verses.
   - This is the **dynamic** serving path. There is also a **static** serving path (see Deployment) that pre-renders the same data to files for S3/CloudFront.
 
 ### Data Layer (`data/`)
 
-One directory per translation (11 total). Each contains:
+One directory per **ingested** translation (10 today). A registered translation with no data yet has no directory at all — an empty `books/` is a validation error. Each contains:
 - `metadata.json` — Schema: `{ id, name, language, license, attribution, source_url, year, testament, book_count }`
 - `books/` — `01-genesis.json` through `66-revelation.json`, populated by `scripts/ingest.py`. The normalized JSON here **is committed** to the repo (it's the product). The raw upstream downloads used to build it live in `.cache/` and are gitignored.
 
 Book JSON schema: `{ number, name, abbreviation, testament, chapters: [{ number, verses: [{ number, text }] }] }`
 
-The filename prefix (`43-john.json`) encodes the canonical book number and an English slug (`john`). The slug is language-independent and becomes the `:book` URL segment even for non-English translations (`name` inside the file is localized, e.g. "Génesis").
+The filename prefix (`43-john.json`) encodes the canonical book number and an English slug (`john`). The slug is language-independent and becomes the `:book` URL segment even for non-English translations (`name` inside the file is localized, e.g. "Génesis"). **The slug exists only in the filename, never in the JSON body** — `packages/core` attaches it at load time as `LoadedBook.slug`, which is why the on-disk `Book` type has no `slug` field.
 
 ### Scripts (`scripts/`)
 
@@ -91,14 +104,19 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 
 ### Tests (`tests/`)
 
-Jest with ts-jest preset. Config in root `jest.config.ts`. Module alias `@scriptura/*` maps to `packages/*/src`.
-- `tests/unit/` — Type conformance tests for core, canon completeness tests for validate
-- `tests/integration/` — Placeholder for API endpoint smoke tests
-- `tests/fixtures/` — Sample `sample-metadata.json` and `sample-verse.json` (John 3:16-17 KJV)
+Jest with ts-jest. Config in root `jest.config.ts`. 49 tests.
+- `tests/unit/` — canon completeness (`validate`), type conformance (`core`), and book-key normalization (`books.test.ts`, including the Japanese-dakuten regression).
+- `tests/integration/api.test.ts` — drives `createRouter` directly. It is framework-agnostic, so there is no HTTP server, no supertest, no port. Covers every route, book resolution in five languages, error bodies, and pagination.
+- `tests/integration/static-parity.test.ts` — runs `build-static-api.mjs` over a two-book slice and asserts each emitted file deep-equals the router's body for the same path. **This is the anti-drift mechanism between the two serving paths.**
+- `tests/fixtures/` — `sample-metadata.json` and `sample-verse.json` (John 3:16-17 KJV).
+
+Two config details that are load-bearing:
+- `moduleNameMapper` needs `'^(\.{1,2}/.*)\.js$': '$1'`. The sources use NodeNext-style `./loader.js` specifiers, which Jest will not resolve to `.ts`. Without it **no test can import any runtime code** — which is why the original 6 tests passed while exercising almost nothing.
+- ts-jest points at `tsconfig.test.json`, not `tsconfig.json`. The root config is a solution file with no `compilerOptions`, so ts-jest pointed there silently falls back to defaults and drops `strict`/`esModuleInterop` from every test.
 
 ### Examples (`examples/`)
 
-- `node-server/` — Express server wrapping `@scriptura/api`'s `createRouter`
+- `node-server/` — Express server wrapping `@scriptura/api`'s `createRouter`. Run it with `npm run dev:api` (hot reload) or `npm run start:api` (compiled). Uses `app.use`, not `app.get('*')`, which throws on express 5.
 - `cli-demo/` — CLI tool using `@scriptura/search` (search, lookup, list commands)
 - `react-app/` — Vite + React SPA (package.json only, app code not yet built)
 - `python-client/` — Python `requests`-based client for the REST API
@@ -111,25 +129,22 @@ Jest with ts-jest preset. Config in root `jest.config.ts`. Module alias `@script
 - `docs/translations-status.md` — the per-translation license verification log; update it whenever a translation's source, license, or ingestion state changes.
 - `docs/API.md`, `docs/usage-examples.md`, `docs/contributing.md`.
 
-**Specified but not built.** Several docs describe things that do not exist in the repo yet. They are labelled *planned* now; keep them labelled until the code lands:
-- **CI and deployment workflows** — there is no `.github/` directory. Nothing is automated.
-- **GraphQL** — `packages/api` is REST only (`createRouter`). There is no schema, resolver, or dependency; the only trace is the word in `packages/api/package.json`'s `description`. Roadmap slots it at v1.1.
-- **`GET /compare`** — not a route in `router.ts`. `@scriptura/compare` exists as a library, but nothing serves it over HTTP. Planned as a Phase-2 Lambda alongside `/search` (see Deployment).
+**Specified but not built.** These appear in the docs but do not exist in the repo. Keep them labelled *planned* until the code lands:
+- **Deployment workflow and AWS infrastructure** — `deploy.yml` is unwritten and nothing is provisioned. (CI *does* exist now.)
+- **GraphQL** — `packages/api` is REST only. There is no schema, resolver, or dependency. Roadmap slots it at v1.1.
 - **`crossRefs()`** — appears in usage docs as a future API.
 
-### CI (`.github/workflows/ci.yml`) — ⚠️ NOT YET CREATED
+### CI (`.github/workflows/ci.yml`)
 
-**There is no `.github/` directory in this repo.** Nothing runs on push or PR today; every check below is a specification waiting to be written, and every "CI enforces this" claim elsewhere in the docs is aspirational. Validation is currently a manual `python scripts/validate.py`.
+Runs on push/PR to `main` and `develop`. Two jobs, deliberately separate so a data problem and a code problem are visibly different failures:
+- **`validate-data`** — `python scripts/validate.py` on Python 3.12. No pip install (the script is stdlib-only) and no `--strict`, so versification warnings don't fail the build.
+- **`build-and-test`** — `npm ci`, `npm run lint`, `npm test`, then `npm run build:api -- --skip-verses` to smoke the static builder. Node comes from `node-version-file: .nvmrc` so the version lives in exactly one place.
 
-The intended design, for whoever writes it:
-- **`validate-data`** — runs `python scripts/validate.py` (no `--strict`, so versification warnings don't fail the build).
-- **`build-and-test`** — `npm run lint` + `npm test` on Node 20 (per `.nvmrc`). The original plan had this self-skip until the npm workspace was scaffolded; that is no longer needed, since `package.json` now declares `workspaces` and the suite passes.
-
-Note that `validate.py` currently exits non-zero because `martin1744` has no book data. A CI job added today would be red until that translation is ingested or removed from `data/`.
+`npm ci` requires `package-lock.json` to be committed and current — that is the most likely way to break this workflow.
 
 ### Deployment (`.github/workflows/deploy.yml`) — ⚠️ NOT YET CREATED
 
-Also unwritten, and no AWS infrastructure is provisioned. The intended design — static, serverless hosting on AWS, on push to `main`:
+Unwritten, and no AWS infrastructure is provisioned. `npm run build:api` (the static tree itself) does work. The intended design — static, serverless hosting on AWS, on push to `main`:
 1. `npm run build:api` compiles `data/` → `dist/` (static JSON tree).
 2. `aws s3 sync dist/ s3://<bucket>/ --delete --content-type application/json --cache-control "public, max-age=31536000, immutable"` (Bible text never changes → cache aggressively).
 3. CloudFront `/*` invalidation so updates go live immediately.
@@ -152,11 +167,11 @@ Generated/ignored artifacts: `node_modules/`, `dist/` (static build output), and
 - **Forbidden:** RV1960 (copyrighted by Sociedades Bíblicas Unidas), 口語訳 1954/55 Japanese (US copyright until 2049-2050 via URAA restoration — note that Japan Bible Society now calls its *Japanese* copyright expired, which is true and irrelevant; see the Japanese-sources note under Supported Translations). `scripts/validate.py` actively guards against these — it fails the build if a data directory matches a forbidden id (e.g. `rv1960`, `kougo`) or if metadata contains a forbidden marker (e.g. "reina valera 1960", "口語訳").
 
 ### Data validation
-- `scripts/validate.py` is the data integrity gate and must pass before data is committed. **It is not yet automated** — no CI workflow exists (see CI section), so run it by hand until one does.
+- `scripts/validate.py` is the data integrity gate. It runs on every push/PR via CI and must pass. Run it locally before committing data.
 - **Errors fail the build** (unambiguous corruption): malformed/missing metadata, missing or invalid license, missing expected book, unexpected book for the declared testament, `book_count` mismatch, duplicate book number, empty verse text, duplicate/invalid verse number, book testament disagreeing with canon, forbidden translation.
 - **Warnings do NOT fail the build** (may be legitimate versification differences): chapter count differing from canon (Joel and Malachi have accepted alternates), total verse count outside a rough sanity band, filename prefix not matching internal book number. Verse-number gaps are intentionally NOT flagged, since critical-text translations legitimately omit verses (e.g. Acts 8:37).
 - Expected books are **testament-aware**: `testament: "both"` expects all 66, `"OT"` expects 39, `"NT"` expects 27.
-- Use `--strict` locally to treat warnings as errors; the intended CI job deliberately would not. All ingested translations currently pass `--strict` with zero warnings, so keep it that way.
+- Use `--strict` locally to treat warnings as errors; CI deliberately does not. All ingested translations currently pass `--strict` with **zero warnings** — keep it that way.
 
 ### Canon sync
 There are now **three** canon definitions that must be kept consistent when any changes:
@@ -165,6 +180,10 @@ There are now **three** canon definitions that must be kept consistent when any 
 3. `scripts/ingest.py` (`CANONICAL_BOOKS` — 66 books + USFM codes, slugs, abbreviations)
 
 Book numbers, names, and chapter counts must match across all three.
+
+**`canon.ts`'s `abbreviation` column is wrong and unused.** 45 of its 66 abbreviations disagree with the data (`canon.ts` says `Exod`/`Deut`/`1Sam`/`Ps`; the files say `Exo`/`Deu`/`1Sa`/`Psa`). `packages/validate/src/index.ts` only reads `number` and `chapters`, so nothing has noticed. Do **not** wire book lookup to it — routing derives slugs from filenames precisely to avoid becoming a fourth consumer. Either fix the column or delete it.
+
+Book *addressing* (slug/name/abbreviation/number resolution in `packages/core/src/books.ts`) is deliberately **not** a canon definition: it derives everything from the book filenames, so it needs no table.
 
 ### TypeScript standards
 - Strict mode, no implicit `any`, 100% type coverage required for packages
@@ -178,9 +197,10 @@ Book numbers, names, and chapter counts must match across all three.
 | `kjv`, `web`, `bsb`, `asv`, `ylt` | English | Public domain |
 | `rv1909` | Spanish | Public domain |
 | `vbl` | Spanish | CC BY-SA 4.0 |
-| `lsg1910`, `martin1744`, `ostervald` | French | Public domain |
+| `lsg1910`, `ostervald` | French | Public domain |
+| `martin1744` | French | Public domain — *not yet ingested, no `data/` dir* |
 | `bungo` | Japanese | Public domain |
 
-Ingestion status (see `scripts/ingest.py`): 10 of 11 ingest cleanly and pass `validate.py --strict` with zero warnings — `rv1909`, `kjv`, `web`, `lsg1910`, `vbl`, `asv`, `ylt`, `bsb`, `ostervald`, `bungo`. Only `martin1744` (Bible Martin 1744) still needs a dedicated source; it is not on eBible.org, so `data/martin1744/books/` is empty and `validate.py` reports 1 error.
+Ingestion status (see `scripts/ingest.py`): 10 of 11 ingest cleanly and pass `validate.py --strict` with **zero errors and zero warnings** — `rv1909`, `kjv`, `web`, `lsg1910`, `vbl`, `asv`, `ylt`, `bsb`, `ostervald`, `bungo`. Only `martin1744` (Bible Martin 1744) still needs a dedicated source; it is not on eBible.org. **`data/martin1744/` does not exist** and should not be recreated until there is data to put in it — its registry entry in `ingest.py` is where it is tracked.
 
 **Japanese sources — read before touching `bungo`.** The old planned source, `bible.salterrae.net`, no longer resolves in DNS; CrossWire's `JapBungo` module preserves that text and is what `ingest.py` now uses (`DistributionLicense=Public Domain`, KJV versification, all 66 books). The underlying translations are 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012). **Do not be talked into un-banning 口語訳 (Kougo).** Japan Bible Society now states its copyright has expired, and that is true *in Japan* (50-year term, lapsed ~2004/2005) — but because it was still protected there on 1996-01-01, the URAA restored its **US** copyright until 2049/2050. Japan-PD does not imply US-PD; the forbidden-translation rule stands.

@@ -18,12 +18,17 @@ license before its data may be committed.**
 | `lsg1910` | Louis Segond 1910 | fr | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
 | `ostervald` | Bible Ostervald (1867) | fr | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | Complete |
 | `bungo` | 文語訳聖書 (Classical) | ja | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | Complete |
-| `martin1744` | Bible Martin 1744 | fr | Public domain | *source still needed* | — | Metadata only |
+| `martin1744` | Bible Martin 1744 | fr | Public domain | *source still needed* | — | Not started |
 
 **Status key:**
 - **Complete** — all 66 books ingested; passes `scripts/validate.py --strict` with zero warnings
 - **Partial** — some books ingested, ingestion in progress
-- **Metadata only** — `metadata.json` created, book data not yet ingested
+- **Not started** — no `data/` directory yet
+
+A translation with no data has **no `data/` directory at all**. An empty
+`books/` is a validation error, so the directory is created by the first
+successful ingest, not ahead of it. Until then the translation is tracked by its
+entry in `scripts/ingest.py`'s `TRANSLATIONS` registry and by its row above.
 
 ## Verification notes
 
@@ -56,7 +61,8 @@ that thin layer is an unknown.
 Not on eBible (no French Martin edition). Leading candidates are
 [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases)
 and [seven1m/open-bibles](https://github.com/seven1m/open-bibles); both need a
-dedicated parser. Until it is ingested, `scripts/validate.py` exits non-zero.
+dedicated parser. `data/martin1744/` does not exist and should not be created
+until there is data to put in it.
 
 ## Forbidden translations
 

@@ -32,9 +32,9 @@ scriptura/
 │   ├── vbl/                     # Versión Biblia Libre (Spanish) — CC BY-SA 4.0
 │   ├── lsg1910/                 # Louis Segond 1910 (French) — Public domain
 │   ├── ostervald/               # Bible Ostervald 1867 (French) — Public domain
-│   ├── bungo/                   # 文語訳 (Japanese Classical) — Public domain
-│   └── martin1744/              # Bible Martin 1744 (French) — awaiting a source
-│                                #   (licences and parsers in §6)
+│   └── bungo/                   # 文語訳 (Japanese Classical) — Public domain
+│                                #   martin1744 is registered but not ingested,
+│                                #   so it has NO directory here (§6)
 ├── packages/
 │   ├── core/                    # Loader, parser, canonical types
 │   ├── search/                  # Full-text + reference search
@@ -66,16 +66,18 @@ scriptura/
 │   ├── contributing.md
 │   └── translations-status.md   # Tracks license verification for each version
 │
-├── .github/                     # ⚠️ DOES NOT EXIST YET — specified in §7 / §8
+├── .github/
 │   └── workflows/
 │       ├── ci.yml               # Validate data + type-check + test (push/PR)
-│       └── deploy.yml           # Build static API + sync to S3/CloudFront (main)
+│       └── deploy.yml           # ⚠️ NOT WRITTEN — specified in §8
 │
 ├── dist/                        # Generated static API tree (gitignored)
 ├── .cache/                      # Ingest download cache (gitignored)
 ├── CLAUDE.md                    # Guidance for Claude Code
 ├── .nvmrc                       # Node 20
 ├── tsconfig.json                # Solution file: references only, no options
+├── tsconfig.dev.json            # tsx only: maps @scriptura/* at package sources
+├── tsconfig.test.json           # ts-jest only: composite off, node10 resolution
 ├── scriptura-architecture-spec.md   # Duplicate of docs/Architecture.md;
 │                                    #   consolidate onto docs/ and delete
 ├── package.json                 # Workspace root (npm workspaces)
@@ -204,7 +206,7 @@ await validateAll('data/');
 
 The API package exposes framework-agnostic REST handlers that drop into any Node server or edge runtime. `createRouter(req)` returns `{ status, body }` and does no I/O of its own.
 
-> **Implementation status.** Only the REST routes marked ✅ below exist in `packages/api/src/router.ts` today. GraphQL is **not implemented** — there is no schema, resolver, or dependency in the package; the sketch below is a design target for v1.1.
+> **Implementation status.** Every REST route below is implemented and tested. GraphQL is **not implemented** — there is no schema, resolver, or dependency in the package; the sketch below is a design target for v1.1.
 
 ### REST endpoints
 
@@ -214,10 +216,21 @@ The API package exposes framework-agnostic REST handlers that drop into any Node
 | `GET` | `/translations/:id` | Metadata for one translation | ✅ |
 | `GET` | `/translations/:id/:book/:chapter` | Full chapter as JSON | ✅ |
 | `GET` | `/translations/:id/:book/:chapter/:verse` | Single verse | ✅ |
-| `GET` | `/search?q=&translation=` | Full-text search | ✅ |
-| `GET` | `/compare?ref=&translations=` | Cross-translation verse comparison | ⏳ planned |
+| `GET` | `/translations/:id/:book` | Book index: chapter numbers + verse counts | ✅ |
+| `GET` | `/search?q=&translation=&limit=&offset=` | Full-text search, paginated | ✅ |
+| `GET` | `/compare?ref=&translations=` | Cross-translation verse comparison | ✅ |
 
-> These routes are served **dynamically** by `createRouter` (Express/Fastify/edge). The metadata/chapter/verse routes are **also** pre-rendered as static `.json` files for CDN hosting — see §8. `/search` and `/compare` are dynamic-only. `@scriptura/compare` already implements the comparison logic as a library; what is missing is only the HTTP route that exposes it.
+> These routes are served **dynamically** by `createRouter` (Express/Fastify/edge). The metadata/book/chapter/verse routes are **also** pre-rendered as static `.json` files for CDN hosting — see §8, and their bodies are **identical** between the two paths. `/search` and `/compare` are dynamic-only.
+
+### Book addressing
+
+The `:book` segment is the English slug from the filename (`43-john.json` → `john`) and is language-independent — `john` addresses that book in `bungo` too. Localized name, abbreviation and canonical book number also resolve, with case, accents and separators folded, so `/translations/rv1909/{john,Juan,Jhn,43,Génesis…}` all work.
+
+Resolution derives entirely from filenames, so it needs **no book table and adds no fourth canon definition** (see §7). Implemented in `packages/core/src/books.ts`.
+
+### Response shapes are a contract
+
+The bodies below are byte-identical to what `scripts/build-static-api.mjs` writes into the static tree, so a client can point at a local server or the CDN unchanged. The builder is zero-dependency `.mjs` that runs without a TypeScript build and therefore cannot import `packages/api/src/format.ts`; `tests/integration/static-parity.test.ts` diffs the two implementations instead. **Change a shape in one and you must change it in the other.**
 
 ### GraphQL schema (excerpt) — ⏳ planned, not implemented
 
@@ -261,10 +274,14 @@ type Verse {
 | `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | ✅ |
 | `ostervald` | Bible Ostervald (1867) | French | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | ✅ |
-| `martin1744` | Bible Martin 1744 | French | Public domain | *source still needed* | — | ⏳ |
+| `martin1744` | Bible Martin 1744 | French | Public domain | *source still needed* | — | ⏳ no `data/` dir |
 
 All ten ingested translations carry the full 66-book Protestant canon and pass
-`scripts/validate.py --strict` with zero warnings.
+`scripts/validate.py --strict` with zero errors and zero warnings.
+
+A translation with no data has **no `data/` directory at all** — an empty
+`books/` is a validation error, so the directory is created by the first
+successful ingest rather than ahead of it.
 
 eBible IDs are easy to guess wrong (`engasv` 404s; the real id is `eng-asv`).
 Confirm any new id against [eBible's index](https://ebible.org/Scriptures/translations.csv)
@@ -314,20 +331,12 @@ of that field.
 
 ---
 
-## 7. CI / validation pipeline — ⚠️ specified, not built
+## 7. CI / validation pipeline
 
-**There is no `.github/` directory in this repository.** No workflow runs on
-push or pull request; `scripts/validate.py` is currently invoked by hand. Treat
-this section as the specification to implement, not a description of what
-happens today. Anywhere else in the docs that says "CI enforces" should be read
-the same way.
-
-One thing to know before adding the workflow: `validate.py` exits non-zero right
-now because `martin1744` has no book data, so a job added today is red until
-that translation is ingested or dropped from `data/`.
+Runs on push and pull request to `main` and `develop`.
 
 ```
-on: push / pull_request  (.github/workflows/ci.yml)  — TO BE WRITTEN
+on: push / pull_request  (.github/workflows/ci.yml)
 ├── validate all translations (scripts/validate.py)
 │     ├── check every expected book is present (testament-aware)
 │     ├── check chapter counts against canon (warning; versification-aware)
@@ -338,9 +347,10 @@ on: push / pull_request  (.github/workflows/ci.yml)  — TO BE WRITTEN
 └── Integration tests (API endpoint smoke tests — tests/integration/ is a placeholder)
 ```
 
-The original plan had the build-and-test job self-skip until the npm workspace
-was scaffolded. That is no longer needed: `package.json` declares `workspaces`,
-and `npm run lint` / `npm test` both pass.
+Two jobs, deliberately separate so a data problem and a code problem are
+visibly different failures. Node comes from `node-version-file: .nvmrc`, so the
+version lives in exactly one place. `npm ci` requires a current committed
+`package-lock.json` — that is the most likely way to break this workflow.
 
 Note `lint` is `tsc --build`, not `tsc --noEmit`: the packages are composite
 project references, and TypeScript rejects `--noEmit` on those (TS6310). The
@@ -350,8 +360,17 @@ In practice: **errors** fail the build (missing books, empty text, bad/missing l
 
 The canon is defined in three places that must stay in sync:
 `packages/validate/src/canon.ts`, `scripts/validate.py`, and `scripts/ingest.py`.
-(`JA_BOOK_NAMES` in `ingest.py` is *not* a fourth: it is display metadata keyed
-off the existing USFM codes and defines no numbering, order, or chapter counts.)
+
+Neither of these is a fourth definition: `JA_BOOK_NAMES` in `ingest.py` is
+display metadata keyed off the existing USFM codes, and book addressing in
+`packages/core/src/books.ts` derives slugs from filenames. Both define no
+numbering, order, or chapter counts.
+
+⚠️ **`canon.ts`'s `abbreviation` column is wrong** — 45 of its 66 entries
+disagree with the data (`canon.ts` says `Exod`/`Deut`/`1Sam`/`Ps`; the files say
+`Exo`/`Deu`/`1Sa`/`Psa`). Nothing has noticed because `packages/validate/src/index.ts`
+reads only `number` and `chapters`. Do not use it as a lookup source; fix or
+delete the column.
 
 ---
 

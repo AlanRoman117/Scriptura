@@ -43,6 +43,6 @@ These will **never** be accepted, regardless of how they are packaged:
 3. Run `npm run lint`, `npm test`, and `python scripts/validate.py --strict`
 4. Open a PR with a clear description of what you changed and why
 
-> There is no CI workflow yet, so these checks are **manual** — please actually
-> run them. `validate.py` currently exits non-zero because `martin1744` has no
-> book data; make sure your change introduces no *new* errors or warnings.
+> CI runs all three on every PR. `validate.py --strict` is stricter than CI
+> (which tolerates warnings) — the data currently passes it with zero errors and
+> zero warnings, so keep it that way.

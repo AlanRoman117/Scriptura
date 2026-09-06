@@ -21,7 +21,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 - 🔍 **Search** — full-text and reference-based lookup via `@scriptura/search`
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
-- 🔌 **API-ready** — framework-agnostic REST handlers in `@scriptura/api` (GraphQL is planned — see [Project status](#-project-status))
+- 🔌 **API-ready** — framework-agnostic REST handlers in `@scriptura/api`; run it locally with one command (GraphQL is planned — see [Project status](#-project-status))
 - 🧩 **Modular** — install only what you need (`@scriptura/core`, `/search`, `/api`, etc.)
 - 📖 **Study Bible foundation** — comparison engine built to support future annotation and cross-reference layers
 
@@ -59,6 +59,9 @@ npm run validate
 
 # Run the tests
 npm test
+
+# Start the REST API on :3000, with hot reload
+npm run dev:api
 ```
 
 ### Load a verse in Node
@@ -87,26 +90,42 @@ results.forEach(r => console.log(`${r.ref}: ${r.text}`));
 ```typescript
 import { compareVerse } from '@scriptura/compare';
 
-const diff = await compareVerse('John 3:16', ['rv1909', 'kjv', 'web']);
-diff.forEach(d => console.log(`[${d.translation}] ${d.text}`));
+const diff = await compareVerse('John 3:16', ['kjv', 'rv1909', 'bungo']);
+diff.forEach(d => console.log(`[${d.translation}] ${d.reference} — ${d.text}`));
+// [kjv]    John 3:16 — For God so loved the world...
+// [rv1909] Juan 3:16 — Porque de tal manera amó Dios al mundo...
+// [bungo]  ヨハネによる福音書 3:16 — それ神はその獨子を賜ふほどに世を愛し給へり...
 ```
+
+One English reference resolves across every language: the book may be given as
+its slug (`john`), its name in any translation (`Juan`, `ヨハネによる福音書`), its
+abbreviation (`Jhn`), or its canonical number (`43`).
 
 ### REST API
 
 ```bash
-# Start the API server (from examples/node-server)
-npm run start:api
+# Hot-reloading dev server (tsx); or `npm run start:api` for the compiled build
+npm run dev:api
 
-# Fetch a verse
+# A verse — the same URL works in every translation
 curl http://localhost:3000/translations/kjv/john/3/16
+curl http://localhost:3000/translations/bungo/john/3/16
+curl http://localhost:3000/translations/rv1909/1-samuel/1/1
 
-# Search
-curl "http://localhost:3000/search?q=love&translation=kjv"
+# A whole chapter, and a book's chapter index
+curl http://localhost:3000/translations/lsg1910/song-of-solomon/1
+curl http://localhost:3000/translations/kjv/john
+
+# Search (paginated; `the` matches ~28,000 KJV verses)
+curl "http://localhost:3000/search?q=love&translation=kjv&limit=5"
+
+# Compare across translations
+curl "http://localhost:3000/compare?ref=John+3:16&translations=kjv,rv1909,lsg1910,bungo"
 ```
 
-> Comparison is available as a library (`@scriptura/compare`, shown above) but is
-> not yet exposed as a `/compare` HTTP route — that is planned alongside the
-> hosted API. See [Project status](#-project-status).
+Responses are **byte-identical to the static CDN build**, so a client can point
+at localhost or at the deployed tree without changing a line. A
+[parity test](tests/integration/static-parity.test.ts) enforces it.
 
 ---
 
@@ -169,10 +188,11 @@ scriptura/
 │   ├── asv/                     # American Standard Version (English, public domain)
 │   ├── ylt/                     # Young's Literal Translation (English, public domain)
 │   ├── lsg1910/                 # Louis Segond 1910 (French, public domain)
-│   ├── martin1744/              # Bible Martin 1744 (French, public domain)
 │   ├── ostervald/               # Bible Ostervald (French, public domain)
 │   ├── vbl/                     # Versión Biblia Libre (Spanish, CC BY-SA 4.0)
 │   └── bungo/                   # 文語訳聖書 Classical Japanese (public domain)
+│                                #   (martin1744 is registered but not yet ingested,
+│                                #    so it has no directory here)
 │
 ├── packages/
 │   ├── core/                    # Canonical types, loader, parser
@@ -221,7 +241,7 @@ All translations in this repository are independently verified to be public doma
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
 | `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
-| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | *source still needed* | ⏳ |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | *source still needed* | ⏳ no `data/` dir yet |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
@@ -283,13 +303,15 @@ data/{translation-id}/
 
 | Area | State |
 |---|---|
-| Translation data | 10 of 11 ingested, 66 books each, clean under `validate.py --strict` |
-| TypeScript packages | Build, type-check, and pass unit tests on Node 20 |
+| Translation data | 10 of 11 ingested, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
+| REST API | Runs locally; every route works in every language |
+| TypeScript packages | Build, type-check, and pass tests on Node 20 |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
-| Tests | Thin: 6 unit tests; `tests/integration/` is still a placeholder |
+| Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
+| Tests | 49, incl. integration coverage of every route |
+| CI | Running — data validation + lint + tests on every push and PR |
 | GraphQL | Not built (planned v1.1) |
-| `GET /compare` route | Not built — `@scriptura/compare` is library-only for now |
-| CI / deployment | **Not built** — no `.github/` workflows exist; validation is manual |
+| Deployment | **Not built** — no AWS infrastructure, no `deploy.yml` |
 
 The AWS hosting design (S3 + CloudFront with OAC, GitHub OIDC auth, Lambda for
 the dynamic `/search` and `/compare` paths) is specified in
@@ -317,10 +339,11 @@ Contributions are welcome and encouraged. Please read [`docs/contributing.md`](d
 
 **The most important rule:** every translation addition must include a `metadata.json` with a verified `license` field and a link to the primary source confirming it. PRs that add translation data without this will not be merged.
 
-Run the validator before you open a PR — there is no CI workflow yet, so this check is currently manual:
+CI runs data validation, the type-check and the test suite on every PR. Run them locally first:
 
 ```bash
-python scripts/validate.py --strict
+python scripts/validate.py --strict   # stricter than CI: warnings fail too
+npm run lint && npm test
 ```
 
 Other ways to contribute:
