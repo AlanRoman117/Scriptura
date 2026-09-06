@@ -54,8 +54,10 @@ import io
 import json
 import re
 import sys
+import time
 import zipfile
 from pathlib import Path
+from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -207,35 +209,32 @@ TRANSLATIONS = {
         "language": "en",
         "license": "public-domain",
         "attribution": "American Standard Version (1901) — Public Domain",
-        "source_url": "https://ebible.org/find/details.php?id=engasv",
+        "source_url": "https://ebible.org/eng-asv/",
         "year": 1901,
         "source": "usfx",
-        "ebible_id": "engasv",
-        "verify": True,
+        "ebible_id": "eng-asv",
     },
     "ylt": {
         "name": "Young's Literal Translation",
         "language": "en",
         "license": "public-domain",
         "attribution": "Young's Literal Translation — Public Domain",
-        "source_url": "https://ebible.org/find/details.php?id=engylt",
+        "source_url": "https://ebible.org/engylt/",
         "year": 1898,
         "source": "usfx",
         "ebible_id": "engylt",
-        "verify": True,
     },
-    # --- Configured but not yet automated (need a dedicated parser/source) ---
     "bsb": {
         "name": "Berean Standard Bible",
         "language": "en",
         "license": "public-domain",
         "attribution": "Berean Standard Bible — Public Domain (2023)",
-        "source_url": "https://berean.bible",
+        "source_url": "https://ebible.org/engbsb/",
         "year": 2023,
-        "source": "manual",
-        "note": "Download the spreadsheet/CSV from berean.bible (dated AFTER "
-                "2023-04-30 — earlier files carry the old restrictive license).",
+        "source": "usfx",
+        "ebible_id": "engbsb",
     },
+    # --- Configured but not yet automated (need a dedicated parser/source) ---
     "martin1744": {
         "name": "Bible Martin",
         "language": "fr",
@@ -251,10 +250,10 @@ TRANSLATIONS = {
         "language": "fr",
         "license": "public-domain",
         "attribution": "Bible Ostervald 1867 — Domaine public",
-        "source_url": "https://github.com/seven1m/open-bibles",
+        "source_url": "https://ebible.org/fra_fob/",
         "year": 1867,
-        "source": "manual",
-        "note": "Available from seven1m/open-bibles as fra-ostervald.osis.xml.",
+        "source": "usfx",
+        "ebible_id": "fra_fob",
     },
     "bungo": {
         "name": "文語訳聖書 (Classical)",
@@ -279,13 +278,39 @@ NOTE_TAGS = {"f", "fe", "x", "xe", "ef", "ex", "note", "fig", "rem", "periph",
 # =============================================================================
 # Download helpers (stdlib only, with a simple on-disk cache)
 # =============================================================================
-def fetch_bytes(url: str, cache_path: Path, use_cache: bool = True) -> bytes:
-    """Download `url`, caching the raw bytes at `cache_path` for fast re-runs."""
+def fetch_bytes(url: str, cache_path: Path, use_cache: bool = True,
+                attempts: int = 3) -> bytes:
+    """
+    Download `url`, caching the raw bytes at `cache_path` for fast re-runs.
+
+    eBible.org occasionally cuts a response short mid-body, so we compare the
+    payload against Content-Length and retry rather than caching a truncated
+    zip (which would fail later as a confusing "bad zip file").
+    """
     if use_cache and cache_path.exists():
         return cache_path.read_bytes()
-    req = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(req, timeout=60) as resp:
-        data = resp.read()
+
+    last_err = None
+    for attempt in range(1, attempts + 1):
+        try:
+            req = Request(url, headers={"User-Agent": USER_AGENT})
+            with urlopen(req, timeout=120) as resp:
+                expected = resp.headers.get("Content-Length")
+                data = resp.read()
+            if expected is not None and len(data) != int(expected):
+                raise IncompleteRead(data, int(expected) - len(data))
+            break
+        except (IncompleteRead, URLError, TimeoutError) as e:
+            last_err = e
+            if isinstance(e, HTTPError):     # a 404 won't fix itself — give up
+                raise
+            if attempt == attempts:
+                raise
+            print(f"      retry {attempt}/{attempts - 1} after {type(e).__name__}")
+            time.sleep(2 * attempt)
+    else:                                     # pragma: no cover - loop always breaks/raises
+        raise last_err
+
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_bytes(data)
     return data
@@ -546,6 +571,9 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
         return False
     except URLError as e:
         print(f"    ! network error: {e.reason}")
+        return False
+    except (IncompleteRead, TimeoutError) as e:
+        print(f"    ! download truncated after retries ({type(e).__name__}) — re-run to resume.")
         return False
     except zipfile.BadZipFile:
         print(f"    ! the downloaded file was not a valid zip (delete the cached "

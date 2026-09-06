@@ -3,9 +3,9 @@
   "name": "Bible Ostervald",
   "language": "fr",
   "license": "public-domain",
-  "attribution": "Bible Ostervald — Public Domain",
-  "source_url": "https://github.com/seven1m/open-bibles",
-  "year": 1744,
+  "attribution": "Bible Ostervald 1867 — Domaine public",
+  "source_url": "https://ebible.org/fra_fob/",
+  "year": 1867,
   "testament": "both",
   "book_count": 66
 }
