@@ -6,8 +6,7 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../core" },
-    { "path": "../search" },
-    { "path": "../compare" }
+    { "path": "../../packages/api" },
+    { "path": "../../packages/core" }
   ]
 }

@@ -5,6 +5,7 @@
     { "path": "packages/search" },
     { "path": "packages/compare" },
     { "path": "packages/validate" },
-    { "path": "packages/api" }
+    { "path": "packages/api" },
+    { "path": "examples/node-server" }
   ]
 }

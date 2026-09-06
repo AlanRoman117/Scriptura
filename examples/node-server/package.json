@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@scriptura/api": "0.1.0",
+    "@scriptura/core": "0.1.0",
     "express": "^4.18.0"
   },
   "devDependencies": {

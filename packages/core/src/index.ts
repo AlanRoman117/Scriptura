@@ -3,6 +3,7 @@ export type {
   Book,
   Chapter,
   License,
+  LoadedBook,
   SearchResult,
   Testament,
   TranslationMeta,
@@ -10,4 +11,13 @@ export type {
   Verse,
 } from './types.js';
 
-export { loadTranslation, listTranslations } from './loader.js';
+export { normalizeBookKey, slugFromFilename } from './books.js';
+
+export {
+  clearCache,
+  getDataDir,
+  listTranslations,
+  loadMetadata,
+  loadTranslation,
+  setDataDir,
+} from './loader.js';

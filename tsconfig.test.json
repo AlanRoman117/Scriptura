@@ -1,0 +1,25 @@
+{
+  // ts-jest's config. Separate from tsconfig.json because that is a solution
+  // file (references only, no compilerOptions) — ts-jest pointed at it silently
+  // falls back to compiler defaults, quietly dropping `strict` and
+  // `esModuleInterop` from every test.
+  //
+  // `composite` must be off: ts-jest and composite projects fight over emit
+  // and tsbuildinfo. `node10` resolution is what lets Jest follow the
+  // `./loader.js` specifiers in the sources back to the .ts files.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "module": "CommonJS",
+    "moduleResolution": "node10",
+    // Off for tests only: unused fixtures and placeholder params are normal in
+    // test scaffolding and shouldn't fail the suite.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "types": ["jest", "node"]
+  },
+  "include": ["tests", "packages/*/src"]
+}

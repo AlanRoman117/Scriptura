@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Data integrity and licence enforcement. Kept separate from the TypeScript
+  # job so a bad translation and a bad build are visibly different failures,
+  # and so this still runs if the code job breaks.
+  validate-data:
+    name: Validate translation data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # No pip install: scripts/validate.py is standard library only.
+      # No --strict: versification warnings are legitimate and must not fail
+      # the build. See CLAUDE.md → Critical Rules → Data validation.
+      - run: python scripts/validate.py
+
+  build-and-test:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Read from .nvmrc so the Node version lives in exactly one place.
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      # `lint` is `tsc --build` — TypeScript rejects --noEmit on composite
+      # project references (TS6310), so the build is the type-check.
+      - run: npm run lint
+      - run: npm test
+      # Smoke the static API builder. --skip-verses keeps it to a few hundred
+      # files rather than ~12,500 while still exercising every code path.
+      - run: npm run build:api -- --skip-verses
