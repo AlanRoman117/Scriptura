@@ -1,5 +1,4 @@
 import { loadTranslation, listTranslations } from '@scriptura/core';
-import type { TranslationMeta, Verse } from '@scriptura/core';
 import { search } from '@scriptura/search';
 
 export interface ScripturaRequest {

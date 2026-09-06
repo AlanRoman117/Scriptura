@@ -7,10 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build packages/*/tsconfig.json",
+    "build": "tsc --build",
     "test": "jest",
     "validate": "python scripts/validate.py",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --build",
     "start:api": "node examples/node-server/dist/index.js",
     "schema:gen": "ts-node scripts/schema-gen.ts"
   },
