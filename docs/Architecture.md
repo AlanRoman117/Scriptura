@@ -26,17 +26,21 @@ scriptura/
 │   │       └── ...
 │   ├── kjv/                     # King James Version — Public domain
 │   ├── web/                     # World English Bible — Public domain
+│   ├── asv/                     # American Standard Version 1901 — Public domain
+│   ├── ylt/                     # Young's Literal Translation — Public domain
 │   ├── bsb/                     # Berean Standard Bible — Public domain (2023)
-│   ├── lsg1910/                 # Louis Segond 1910 (French) — Public domain
 │   ├── vbl/                     # Versión Biblia Libre (Spanish) — CC BY-SA 4.0
-│   └── bungo/                   # 文語訳 (Japanese Classical) — Public domain
-│                                #   (full set of 11 in §6)
+│   ├── lsg1910/                 # Louis Segond 1910 (French) — Public domain
+│   ├── ostervald/               # Bible Ostervald 1867 (French) — Public domain
+│   ├── bungo/                   # 文語訳 (Japanese Classical) — Public domain
+│   └── martin1744/              # Bible Martin 1744 (French) — awaiting a source
+│                                #   (licences and parsers in §6)
 ├── packages/
 │   ├── core/                    # Loader, parser, canonical types
 │   ├── search/                  # Full-text + reference search
 │   ├── compare/                 # Multi-translation diff engine
 │   ├── validate/                # Data integrity checks
-│   └── api/                     # REST + GraphQL handlers
+│   └── api/                     # REST handlers (GraphQL planned — see §5)
 │
 ├── scripts/
 │   ├── ingest.py                # Download & normalize source data
@@ -56,13 +60,13 @@ scriptura/
 │   └── fixtures/                # Sample verse data for test assertions
 │
 ├── docs/
-│   ├── architecture.md          # This document
+│   ├── Architecture.md          # This document (the maintained copy)
 │   ├── API.md
 │   ├── usage-examples.md
 │   ├── contributing.md
 │   └── translations-status.md   # Tracks license verification for each version
 │
-├── .github/
+├── .github/                     # ⚠️ DOES NOT EXIST YET — specified in §7 / §8
 │   └── workflows/
 │       ├── ci.yml               # Validate data + type-check + test (push/PR)
 │       └── deploy.yml           # Build static API + sync to S3/CloudFront (main)
@@ -70,6 +74,10 @@ scriptura/
 ├── dist/                        # Generated static API tree (gitignored)
 ├── .cache/                      # Ingest download cache (gitignored)
 ├── CLAUDE.md                    # Guidance for Claude Code
+├── .nvmrc                       # Node 20
+├── tsconfig.json                # Solution file: references only, no options
+├── scriptura-architecture-spec.md   # Duplicate of docs/Architecture.md;
+│                                    #   consolidate onto docs/ and delete
 ├── package.json                 # Workspace root (npm workspaces)
 ├── tsconfig.base.json
 └── LICENSE                      # Apache 2.0
@@ -194,22 +202,24 @@ await validateAll('data/');
 
 ## 5. API layer (`packages/api`)
 
-The API package exposes both REST and GraphQL from the same handlers, making it easy to drop into any Node server or edge runtime.
+The API package exposes framework-agnostic REST handlers that drop into any Node server or edge runtime. `createRouter(req)` returns `{ status, body }` and does no I/O of its own.
+
+> **Implementation status.** Only the REST routes marked ✅ below exist in `packages/api/src/router.ts` today. GraphQL is **not implemented** — there is no schema, resolver, or dependency in the package; the sketch below is a design target for v1.1.
 
 ### REST endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/translations` | List all available translations |
-| `GET` | `/translations/:id` | Metadata for one translation |
-| `GET` | `/translations/:id/:book/:chapter` | Full chapter as JSON |
-| `GET` | `/translations/:id/:book/:chapter/:verse` | Single verse |
-| `GET` | `/search?q=&translation=` | Full-text search |
-| `GET` | `/compare?ref=&translations=` | Cross-translation verse comparison |
+| Method | Path | Description | Status |
+|---|---|---|---|
+| `GET` | `/translations` | List all available translations | ✅ |
+| `GET` | `/translations/:id` | Metadata for one translation | ✅ |
+| `GET` | `/translations/:id/:book/:chapter` | Full chapter as JSON | ✅ |
+| `GET` | `/translations/:id/:book/:chapter/:verse` | Single verse | ✅ |
+| `GET` | `/search?q=&translation=` | Full-text search | ✅ |
+| `GET` | `/compare?ref=&translations=` | Cross-translation verse comparison | ⏳ planned |
 
-> These routes are served **dynamically** by `createRouter` (Express/Fastify/edge). The metadata/chapter/verse routes are **also** pre-rendered as static `.json` files for CDN hosting — see §8. `/search` and `/compare` are dynamic-only.
+> These routes are served **dynamically** by `createRouter` (Express/Fastify/edge). The metadata/chapter/verse routes are **also** pre-rendered as static `.json` files for CDN hosting — see §8. `/search` and `/compare` are dynamic-only. `@scriptura/compare` already implements the comparison logic as a library; what is missing is only the HTTP route that exposes it.
 
-### GraphQL schema (excerpt)
+### GraphQL schema (excerpt) — ⏳ planned, not implemented
 
 ```graphql
 type Query {
@@ -239,48 +249,118 @@ type Verse {
 
 ## 6. Validated open-source translations
 
-| ID | Name | Language | License | Source |
-|---|---|---|---|---|
-| `rv1909` | Reina Valera 1909 | Spanish | Public domain | [eBible.org](https://ebible.org/find/details.php?id=spaRV1909) |
-| `kjv` | King James Version | English | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) |
-| `web` | World English Bible | English | Public domain | [worldenglish.bible](https://worldenglish.bible) |
-| `bsb` | Berean Standard Bible | English | Public domain (2023) | [berean.bible](https://berean.bible) |
-| `asv` | American Standard Version | English | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `ylt` | Young's Literal Translation | English | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible.org](https://ebible.org/fraLSG/) |
-| `martin1744` | Bible Martin | French | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `ostervald` | Bible Ostervald | French | Public domain | [seven1m/open-bibles](https://github.com/seven1m/open-bibles) |
-| `vbl` | Versión Biblia Libre | Spanish | CC BY-SA 4.0 | [eBible.org](https://ebible.org/find/details.php?id=spavbl) |
-| `bungo` | 文語訳聖書 (Classical) | Japanese | Public domain | [bible.salterrae.net](https://bible.salterrae.net) |
+| ID | Name | Language | License | Source | Parser | Ingested |
+|---|---|---|---|---|---|---|
+| `kjv` | King James Version | English | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | `aruljohn` | ✅ |
+| `web` | World English Bible | English | Public domain | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | ✅ |
+| `asv` | American Standard Version (1901) | English | Public domain | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | ✅ |
+| `ylt` | Young's Literal Translation | English | Public domain | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | ✅ |
+| `bsb` | Berean Standard Bible | English | Public domain (2023) | [eBible `engbsb`](https://ebible.org/engbsb/) | `usfx` | ✅ |
+| `rv1909` | Reina Valera 1909 | Spanish | Public domain | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | ✅ |
+| `vbl` | Versión Biblia Libre | Spanish | CC BY-SA 4.0 | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | ✅ |
+| `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | ✅ |
+| `ostervald` | Bible Ostervald (1867) | French | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | ✅ |
+| `bungo` | 文語訳聖書 (Classical) | Japanese | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | ✅ |
+| `martin1744` | Bible Martin 1744 | French | Public domain | *source still needed* | — | ⏳ |
+
+All ten ingested translations carry the full 66-book Protestant canon and pass
+`scripts/validate.py --strict` with zero warnings.
+
+eBible IDs are easy to guess wrong (`engasv` 404s; the real id is `eng-asv`).
+Confirm any new id against [eBible's index](https://ebible.org/Scriptures/translations.csv)
+before adding a registry entry.
 
 > ⚠️ **Never add RV1960** — copyrighted by Sociedades Bíblicas Unidas.
-> ⚠️ **Never add 口語訳** — under US copyright until 2049–2050 (URAA restoration).
+> ⚠️ **Never add 口語訳 (Kougo, 1954/55)** — under US copyright until 2049–2050 via URAA restoration.
+>
+> The Kougo trap: Japan Bible Society now states its copyright has expired, which is true **in Japan** (50-year term, lapsed ~2004/2005). Because it was still protected there on 1996-01-01, the URAA restored its **US** copyright for 95 years from publication. Japan-PD does not imply US-PD. By contrast the 文語訳 text we do ship — 明治元訳 OT (1887), 大正改訳 NT (1917) — is US public domain, because even a restored term caps at 95 years from publication (1982 and 2012).
 >
 > `scripts/validate.py` enforces both: it fails the build if a data directory matches a forbidden id or if metadata contains a forbidden marker.
 
+### Ingestion pipeline (`scripts/ingest.py`)
+
+Dependency-free Python (standard library only). A `TRANSLATIONS` registry maps
+each id to its licence metadata plus how to fetch it, and three parsers
+normalize wildly different upstream formats into the one schema in §3:
+
+| Parser | Source shape | Notes |
+|---|---|---|
+| `usfx` | USFX XML inside an eBible.org `_usfx.zip` | Milestone verse/chapter model; strips footnotes and cross-references, keeps translator additions. Covers eight translations from one consistent source. |
+| `aruljohn` | Per-book JSON from aruljohn/Bible-kjv | Used only by `kjv`. |
+| `sword` | A CrossWire SWORD **zText** module | Compiled OSIS in a binary format. Used by `bungo`. |
+
+Downloads cache under `.cache/` (gitignored); normalized output in `data/` is
+committed, because that structured data *is* the product.
+
+**On the `sword` parser.** zText is not plain XML. Each testament is three
+files: `.bzs` (block index — offset, compressed size, uncompressed size per
+block), `.bzz` (the zlib blocks), and `.bzv` (verse index — block, start, size
+per verse). `osis2mod` strips `<verse>` milestones when it compiles a module,
+so verse boundaries survive only in `.bzv`. Book and chapter structure is
+recovered from the `<div type="book">` and `<chapter osisID>` markers, which get
+their own index entries — that is what lets the parser work without carrying a
+versification table. Zero-size entries are verses the translation omits; they
+still advance the verse counter so neighbours keep canonical numbers.
+
+> ⚠️ `.bzv` offsets are **byte** offsets into the decompressed block. Slice the
+> bytes and decode afterwards. Slicing decoded text works fine on ASCII and
+> silently corrupts every multi-byte verse — which is the entire point of the
+> parser's only current consumer.
+
+zText modules carry no per-book localized headers, so `bungo` book names come
+from `JA_BOOK_NAMES`, sourced from SWORD's `ja-utf8.conf`. These are modern-era
+names on a classical text; they identify each book correctly, which is the job
+of that field.
+
 ---
 
-## 7. CI / validation pipeline
+## 7. CI / validation pipeline — ⚠️ specified, not built
+
+**There is no `.github/` directory in this repository.** No workflow runs on
+push or pull request; `scripts/validate.py` is currently invoked by hand. Treat
+this section as the specification to implement, not a description of what
+happens today. Anywhere else in the docs that says "CI enforces" should be read
+the same way.
+
+One thing to know before adding the workflow: `validate.py` exits non-zero right
+now because `martin1744` has no book data, so a job added today is red until
+that translation is ingested or dropped from `data/`.
 
 ```
-on: push / pull_request  (.github/workflows/ci.yml)
+on: push / pull_request  (.github/workflows/ci.yml)  — TO BE WRITTEN
 ├── validate all translations (scripts/validate.py)
 │     ├── check every expected book is present (testament-aware)
 │     ├── check chapter counts against canon (warning; versification-aware)
 │     ├── flag any verse with empty text
 │     └── license audit (metadata.json license field per data/ dir)
-├── TypeScript type-check (tsc --noEmit)   ┐ self-skips until the npm
-├── Unit tests (jest)                      ┘ workspace is scaffolded
-└── Integration tests (API endpoint smoke tests)
+├── TypeScript type-check (npm run lint → tsc --build, on Node 20 per .nvmrc)
+├── Unit tests (jest)
+└── Integration tests (API endpoint smoke tests — tests/integration/ is a placeholder)
 ```
+
+The original plan had the build-and-test job self-skip until the npm workspace
+was scaffolded. That is no longer needed: `package.json` declares `workspaces`,
+and `npm run lint` / `npm test` both pass.
+
+Note `lint` is `tsc --build`, not `tsc --noEmit`: the packages are composite
+project references, and TypeScript rejects `--noEmit` on those (TS6310). The
+build *is* the type-check.
 
 In practice: **errors** fail the build (missing books, empty text, bad/missing license, a forbidden translation), while **warnings** do not (chapter-count differences from versification, verse-number gaps in critical-text translations). Deployment runs in a separate workflow — see §8.
 
-The canon is defined in three places that must stay in sync: `packages/validate/src/canon.ts`, `scripts/validate.py`, and `scripts/ingest.py`.
+The canon is defined in three places that must stay in sync:
+`packages/validate/src/canon.ts`, `scripts/validate.py`, and `scripts/ingest.py`.
+(`JA_BOOK_NAMES` in `ingest.py` is *not* a fourth: it is display metadata keyed
+off the existing USFM codes and defines no numbering, order, or chapter counts.)
 
 ---
 
-## 8. Deployment & hosting
+## 8. Deployment & hosting — ⚠️ specified, not provisioned
+
+No AWS infrastructure exists yet and `deploy.yml` has not been written. The
+static build itself (`npm run build:api`) does work today — it emits ~12,500
+JSON files across the ten ingested translations. Everything below the static
+build is a design target.
 
 Scriptura serves the same data two ways.
 
@@ -321,7 +401,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 
 | Phase | Feature |
 |---|---|
-| v1 | Core loader + search + REST API + 5 translations |
+| v1 | Core loader + search + REST API + translation data ✅ (10 of 11 ingested) |
 | v1.1 | GraphQL layer + additional translations |
 | v2 | `compare` package — side-by-side diff for study Bible UI |
 | v2.1 | Cross-reference data (Open Scriptures) |

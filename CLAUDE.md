@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Scriptura is an open-source monorepo for working with Bible data programmatically. It provides freely-licensed Bible translations in canonical JSON format with TypeScript packages for loading, searching, comparing, validating, and serving scripture data. The project scaffolding is in place; the next major step is ingesting actual Bible text data into the `data/{id}/books/` directories using `scripts/ingest.py`.
+Scriptura is an open-source monorepo for working with Bible data programmatically. It provides freely-licensed Bible translations in canonical JSON format with TypeScript packages for loading, searching, comparing, validating, and serving scripture data.
+
+**Current state.** Data ingestion is essentially done: 10 of the 11 registered translations are ingested and committed (66 books each, passing `validate.py --strict` with zero warnings). Only `martin1744` is outstanding. The TypeScript packages build, type-check, and pass their tests. The two biggest gaps are that **no CI or deployment workflow exists yet** (see Docs → Specified but not built) and that the packages are thinly tested (6 unit tests, no integration tests).
 
 Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). Individual translations in `data/` carry their own licenses, recorded per-translation in each `metadata.json`.
 
@@ -14,7 +16,7 @@ Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). I
 npm install                    # Install all workspace dependencies
 npm run build                  # Build all packages (tsc --build)
 npm test                       # Run all tests (jest, config in jest.config.ts)
-npm run lint                   # TypeScript type-check (tsc --noEmit)
+npm run lint                   # TypeScript type-check (tsc --build; see note below)
 npm run validate               # Validate all translation data (python scripts/validate.py)
 npm run build:api              # Compile data/ into a static JSON API tree in dist/ (node scripts/build-static-api.mjs)
 npm run schema:gen             # Generate JSON schemas from types (ts-node scripts/schema-gen.ts)
@@ -32,9 +34,13 @@ python scripts/validate.py           # Validate data/ (npm run validate wraps th
 
 Single-package builds: `cd packages/<name> && npm run build`
 
+**Node version:** `.nvmrc` pins Node 20. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
+
+**Why `lint` is `tsc --build` and not `tsc --noEmit`:** the packages are composite project references, and TypeScript rejects `--noEmit` on those outright (TS6310). `tsc --build` *is* the type-check; the emitted declarations are a byproduct. Root `tsconfig.json` is a solution file (`files: []` plus `references`) that exists so both `tsc --build` and editors have a single entry point — it holds no compiler options of its own.
+
 ## Architecture
 
-**Monorepo** using npm workspaces (`packages/*`). Root `tsconfig.base.json` sets strict mode, `NodeNext` module resolution, ES2022 target. Each package extends it.
+**Monorepo** using npm workspaces (`packages/*`). Root `tsconfig.base.json` sets strict mode, `NodeNext` module resolution, ES2022 target, and `composite: true` (required of every project that is referenced by another). Each package extends it.
 
 ### Packages (`packages/`)
 
@@ -97,15 +103,33 @@ Jest with ts-jest preset. Config in root `jest.config.ts`. Module alias `@script
 - `react-app/` — Vite + React SPA (package.json only, app code not yet built)
 - `python-client/` — Python `requests`-based client for the REST API
 
-### CI (`.github/workflows/ci.yml`)
+### Docs (`docs/`, plus root files)
 
-Runs on push/PR to `main` and `develop`:
-- **`validate-data`** — runs `python scripts/validate.py` (no `--strict`, so versification warnings don't fail the build). This is the gate that works today.
-- **`build-and-test`** — TypeScript type-check + Jest. **Self-skips** until the npm workspace is scaffolded (it checks for `"workspaces"` in `package.json`), keeping CI green while packages are still being built out.
+- `README.md` — public front door.
+- `docs/Architecture.md` — the **maintained** architecture spec.
+- `scriptura-architecture-spec.md` (repo root) — an **older duplicate** of the same document, kept in sync by hand. Two copies of one spec is a standing drift hazard; the intent is to consolidate on `docs/Architecture.md` and delete the root copy. Until that happens, any architectural change must be written to **both**.
+- `docs/translations-status.md` — the per-translation license verification log; update it whenever a translation's source, license, or ingestion state changes.
+- `docs/API.md`, `docs/usage-examples.md`, `docs/contributing.md`.
 
-### Deployment (`.github/workflows/deploy.yml`)
+**Specified but not built.** Several docs describe things that do not exist in the repo yet. They are labelled *planned* now; keep them labelled until the code lands:
+- **CI and deployment workflows** — there is no `.github/` directory. Nothing is automated.
+- **GraphQL** — `packages/api` is REST only (`createRouter`). There is no schema, resolver, or dependency; the only trace is the word in `packages/api/package.json`'s `description`. Roadmap slots it at v1.1.
+- **`GET /compare`** — not a route in `router.ts`. `@scriptura/compare` exists as a library, but nothing serves it over HTTP. Planned as a Phase-2 Lambda alongside `/search` (see Deployment).
+- **`crossRefs()`** — appears in usage docs as a future API.
 
-Static, serverless hosting on AWS. On push to `main`:
+### CI (`.github/workflows/ci.yml`) — ⚠️ NOT YET CREATED
+
+**There is no `.github/` directory in this repo.** Nothing runs on push or PR today; every check below is a specification waiting to be written, and every "CI enforces this" claim elsewhere in the docs is aspirational. Validation is currently a manual `python scripts/validate.py`.
+
+The intended design, for whoever writes it:
+- **`validate-data`** — runs `python scripts/validate.py` (no `--strict`, so versification warnings don't fail the build).
+- **`build-and-test`** — `npm run lint` + `npm test` on Node 20 (per `.nvmrc`). The original plan had this self-skip until the npm workspace was scaffolded; that is no longer needed, since `package.json` now declares `workspaces` and the suite passes.
+
+Note that `validate.py` currently exits non-zero because `martin1744` has no book data. A CI job added today would be red until that translation is ingested or removed from `data/`.
+
+### Deployment (`.github/workflows/deploy.yml`) — ⚠️ NOT YET CREATED
+
+Also unwritten, and no AWS infrastructure is provisioned. The intended design — static, serverless hosting on AWS, on push to `main`:
 1. `npm run build:api` compiles `data/` → `dist/` (static JSON tree).
 2. `aws s3 sync dist/ s3://<bucket>/ --delete --content-type application/json --cache-control "public, max-age=31536000, immutable"` (Bible text never changes → cache aggressively).
 3. CloudFront `/*` invalidation so updates go live immediately.
@@ -125,14 +149,14 @@ Generated/ignored artifacts: `node_modules/`, `dist/` (static build output), and
 - All translations MUST have a verified `license` field in `metadata.json`
 - Accepted values: `public-domain`, `cc-by-sa-4.0`, `cc0`, `custom-free`
 - Every translation PR must link to primary source confirming license status
-- **Forbidden:** RV1960 (copyrighted by Sociedades Bíblicas Unidas), 口語訳 1954/55 Japanese (US copyright until 2049-2050 via URAA restoration). `scripts/validate.py` actively guards against these — it fails the build if a data directory matches a forbidden id (e.g. `rv1960`, `kougo`) or if metadata contains a forbidden marker (e.g. "reina valera 1960", "口語訳").
+- **Forbidden:** RV1960 (copyrighted by Sociedades Bíblicas Unidas), 口語訳 1954/55 Japanese (US copyright until 2049-2050 via URAA restoration — note that Japan Bible Society now calls its *Japanese* copyright expired, which is true and irrelevant; see the Japanese-sources note under Supported Translations). `scripts/validate.py` actively guards against these — it fails the build if a data directory matches a forbidden id (e.g. `rv1960`, `kougo`) or if metadata contains a forbidden marker (e.g. "reina valera 1960", "口語訳").
 
 ### Data validation
-- `scripts/validate.py` runs on every push/PR via CI and must pass.
+- `scripts/validate.py` is the data integrity gate and must pass before data is committed. **It is not yet automated** — no CI workflow exists (see CI section), so run it by hand until one does.
 - **Errors fail the build** (unambiguous corruption): malformed/missing metadata, missing or invalid license, missing expected book, unexpected book for the declared testament, `book_count` mismatch, duplicate book number, empty verse text, duplicate/invalid verse number, book testament disagreeing with canon, forbidden translation.
 - **Warnings do NOT fail the build** (may be legitimate versification differences): chapter count differing from canon (Joel and Malachi have accepted alternates), total verse count outside a rough sanity band, filename prefix not matching internal book number. Verse-number gaps are intentionally NOT flagged, since critical-text translations legitimately omit verses (e.g. Acts 8:37).
 - Expected books are **testament-aware**: `testament: "both"` expects all 66, `"OT"` expects 39, `"NT"` expects 27.
-- Use `--strict` locally to treat warnings as errors; CI deliberately does not.
+- Use `--strict` locally to treat warnings as errors; the intended CI job deliberately would not. All ingested translations currently pass `--strict` with zero warnings, so keep it that way.
 
 ### Canon sync
 There are now **three** canon definitions that must be kept consistent when any changes:

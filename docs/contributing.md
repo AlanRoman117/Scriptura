@@ -27,18 +27,22 @@ data/{translation-id}/
 These will **never** be accepted, regardless of how they are packaged:
 
 - **Reina Valera 1960 (RV1960)** — Copyrighted by Sociedades Bíblicas Unidas, renewed 1988
-- **口語訳聖書 (1954/55)** — US copyright until 2049–2050 (URAA restoration)
+- **口語訳聖書 / Kougo (1954/55)** — US copyright until 2049–2050 (URAA restoration). Japan Bible Society now calls its copyright expired, which is true in Japan and irrelevant in the US — see [`translations-status.md`](translations-status.md#the-kougo-trap) before arguing otherwise. Scanned collections often bundle Kougo with the permissible 文語訳; that does not make the bundle usable.
 
 ## Improving TypeScript packages
 
 - All code under `packages/` must maintain strict TypeScript (no implicit `any`)
-- Run `tsc --noEmit` to type-check before submitting
+- Run `npm run lint` to type-check before submitting (that is `tsc --build`; plain `tsc --noEmit` fails with TS6310 because the packages are composite project references)
 - Add tests in `tests/unit/` or `tests/integration/` as appropriate
 - Run `npm test` to confirm all tests pass
 
 ## Submitting a PR
 
 1. Fork the repo and create a feature branch
-2. Make your changes
-3. Run `npm test` and `npm run validate`
+2. Make your changes (Node 20 — see `.nvmrc`)
+3. Run `npm run lint`, `npm test`, and `python scripts/validate.py --strict`
 4. Open a PR with a clear description of what you changed and why
+
+> There is no CI workflow yet, so these checks are **manual** — please actually
+> run them. `validate.py` currently exits non-zero because `martin1744` has no
+> book data; make sure your change introduces no *new* errors or warnings.

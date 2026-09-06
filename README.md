@@ -3,7 +3,7 @@
 > **Open Bible data ecosystem — multi-translation, multi-language, developer-first.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Translations](https://img.shields.io/badge/translations-11-green.svg)](#verified-translations)
+[![Translations](https://img.shields.io/badge/translations-10%20ingested%20%C2%B7%2011%20verified-green.svg)](#verified-translations)
 [![Languages](https://img.shields.io/badge/languages-4-orange.svg)](#verified-translations)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/contributing.md)
 [![Data: Open License Only](https://img.shields.io/badge/data-open--license--only-important.svg)](#verified-translations)
@@ -16,12 +16,12 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 ## ✨ Features
 
-- 📚 **Multi-translation** — 11 verified translations, more being added
+- 📚 **Multi-translation** — 11 verified translations, 10 fully ingested
 - 🌍 **Multi-language** — English, Spanish, French, and Japanese
 - 🔍 **Search** — full-text and reference-based lookup via `@scriptura/search`
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
-- 🛡️ **Validated** — every translation includes license metadata; CI enforces it
-- 🔌 **API-ready** — REST + GraphQL handlers in `@scriptura/api`
+- 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
+- 🔌 **API-ready** — framework-agnostic REST handlers in `@scriptura/api` (GraphQL is planned — see [Project status](#-project-status))
 - 🧩 **Modular** — install only what you need (`@scriptura/core`, `/search`, `/api`, etc.)
 - 📖 **Study Bible foundation** — comparison engine built to support future annotation and cross-reference layers
 
@@ -35,11 +35,16 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 | `@scriptura/search` | Full-text search + reference lookup (e.g. `"John 3:16"`) |
 | `@scriptura/compare` | Multi-translation verse/chapter diff engine |
 | `@scriptura/validate` | Data integrity checker for translation directories |
-| `@scriptura/api` | REST + GraphQL handlers (drop into any Node server or edge runtime) |
+| `@scriptura/api` | REST handlers (drop into any Node server or edge runtime); GraphQL planned |
 
 ---
 
 ## 🚀 Quick start
+
+**Prerequisites:** Node 20 (pinned in [`.nvmrc`](.nvmrc)) and Python 3.9+ for the
+data tooling. Any `.nvmrc`-aware version manager works — `nvm use`, `fnm use`, or
+`mise install` (mise reads `.nvmrc` once `idiomatic_version_file_enable_tools`
+includes `node`).
 
 ```bash
 # Clone the repo
@@ -97,10 +102,11 @@ curl http://localhost:3000/translations/kjv/john/3/16
 
 # Search
 curl "http://localhost:3000/search?q=love&translation=kjv"
-
-# Compare across translations
-curl "http://localhost:3000/compare?ref=John+3:16&translations=kjv,rv1909,web"
 ```
+
+> Comparison is available as a library (`@scriptura/compare`, shown above) but is
+> not yet exposed as a `/compare` HTTP route — that is planned alongside the
+> hosted API. See [Project status](#-project-status).
 
 ---
 
@@ -126,11 +132,24 @@ Raw downloads are cached under `.cache/` (git-ignored) so re-runs are instant.
 The normalized output in `data/` **is** committed to the repo — that structured
 data is the product.
 
-Five translations ingest cleanly today — `rv1909`, `kjv`, `web`, `lsg1910`,
-`vbl` — covering English, Spanish, and French. Two more (`asv`, `ylt`) are
-automated pending eBible source-ID confirmation, and four (`bsb`, `martin1744`,
-`ostervald`, `bungo`) are registered with source notes and need a dedicated
-step. Run `--list` for the current status.
+**Ten of the eleven translations ingest cleanly today** — `kjv`, `web`, `asv`,
+`ylt`, `bsb`, `rv1909`, `vbl`, `lsg1910`, `ostervald`, and `bungo` — covering
+English, Spanish, French, and Japanese. Each is 66 books and passes
+`python scripts/validate.py --strict` with zero warnings. Only `martin1744`
+(Bible Martin 1744, French) still needs a source; it is registered with a note
+and the script skips it. Run `--list` for current status.
+
+Three parsers sit behind the `TRANSLATIONS` registry:
+
+| Parser | Source shape | Used by |
+|---|---|---|
+| `usfx` | USFX XML in an eBible.org `_usfx.zip` | most translations |
+| `aruljohn` | per-book JSON from aruljohn/Bible-kjv | `kjv` |
+| `sword` | a CrossWire SWORD zText module (compiled OSIS) | `bungo` |
+
+eBible translation IDs are easy to guess wrong. Confirm them against
+[eBible's own index](https://ebible.org/Scriptures/translations.csv) rather than
+constructing them by hand.
 
 > **Adding a translation?** Add an entry to the `TRANSLATIONS` table in
 > `scripts/ingest.py` with a verified `license` and a `source_url` confirming
@@ -165,6 +184,7 @@ scriptura/
 ├── scripts/
 │   ├── ingest.py                # Download & normalize source data
 │   ├── validate.py              # Run integrity checks on all translations
+│   ├── build-static-api.mjs     # Compile data/ → dist/ static JSON API tree
 │   └── schema-gen.ts            # Generate TypeScript types from JSON schema
 │
 ├── examples/
@@ -189,23 +209,24 @@ scriptura/
 
 All translations in this repository are independently verified to be public domain or explicitly open-licensed. **No copyrighted text is included or will be accepted via PR.**
 
-| ID | Name | Language | License | Primary source |
-|---|---|---|---|---|
-| `rv1909` | Reina Valera 1909 | Spanish 🇪🇸 | Public domain | [eBible.org](https://ebible.org/find/details.php?id=spaRV1909) |
-| `kjv` | King James Version | English 🇬🇧 | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) |
-| `web` | World English Bible | English 🇺🇸 | Public domain | [worldenglish.bible](https://worldenglish.bible) |
-| `bsb` | Berean Standard Bible | English 🇺🇸 | Public domain (2023) | [berean.bible](https://berean.bible) |
-| `asv` | American Standard Version | English 🇺🇸 | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `ylt` | Young's Literal Translation | English 🇬🇧 | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org](https://ebible.org/fraLSG/) |
-| `martin1744` | Bible Martin | French 🇫🇷 | Public domain | [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) |
-| `ostervald` | Bible Ostervald | French 🇫🇷 | Public domain | [seven1m/open-bibles](https://github.com/seven1m/open-bibles) |
-| `vbl` | Versión Biblia Libre | Spanish 🇪🇸 | CC BY-SA 4.0 | [eBible.org](https://ebible.org/find/details.php?id=spavbl) |
-| `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [bible.salterrae.net](https://bible.salterrae.net) |
+| ID | Name | Language | License | Primary source | Ingested |
+|---|---|---|---|---|---|
+| `kjv` | King James Version | English 🇬🇧 | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | ✅ |
+| `web` | World English Bible | English 🇺🇸 | Public domain | [eBible.org `engwebp`](https://ebible.org/find/details.php?id=engwebp) | ✅ |
+| `asv` | American Standard Version (1901) | English 🇺🇸 | Public domain | [eBible.org `eng-asv`](https://ebible.org/eng-asv/) | ✅ |
+| `ylt` | Young's Literal Translation | English 🇬🇧 | Public domain | [eBible.org `engylt`](https://ebible.org/engylt/) | ✅ |
+| `bsb` | Berean Standard Bible | English 🇺🇸 | Public domain (2023) | [eBible.org `engbsb`](https://ebible.org/engbsb/) | ✅ |
+| `rv1909` | Reina Valera 1909 | Spanish 🇪🇸 | Public domain | [eBible.org `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | ✅ |
+| `vbl` | Versión Biblia Libre | Spanish 🇪🇸 | CC BY-SA 4.0 | [eBible.org `spavbl`](https://ebible.org/find/details.php?id=spavbl) | ✅ |
+| `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
+| `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
+| `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | *source still needed* | ⏳ |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
-> - **口語訳聖書 (1954/55)** — public domain in Japan but under active US copyright until 2049–2050 due to URAA restoration. Off-limits for any US-hosted project.
+> - **口語訳聖書 / Kougo (1954/55)** — the one people get wrong. Japan Bible Society now states its copyright has expired, and that is true **in Japan** (50-year term, lapsed ~2004/2005). But because it was still protected there on 1996-01-01, the URAA **restored its US copyright until 2049–2050**. Japan-PD does not imply US-PD. Off-limits for any US-hosted project, and `validate.py` blocks it by id and by metadata marker.
+>   - By contrast, the 文語訳 (Bungo) text we *do* ship is 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012).
 > - Any translation without a `license` field in its `metadata.json` will be rejected by CI.
 
 ---
@@ -258,6 +279,24 @@ data/{translation-id}/
 
 ---
 
+## 📊 Project status
+
+| Area | State |
+|---|---|
+| Translation data | 10 of 11 ingested, 66 books each, clean under `validate.py --strict` |
+| TypeScript packages | Build, type-check, and pass unit tests on Node 20 |
+| Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
+| Tests | Thin: 6 unit tests; `tests/integration/` is still a placeholder |
+| GraphQL | Not built (planned v1.1) |
+| `GET /compare` route | Not built — `@scriptura/compare` is library-only for now |
+| CI / deployment | **Not built** — no `.github/` workflows exist; validation is manual |
+
+The AWS hosting design (S3 + CloudFront with OAC, GitHub OIDC auth, Lambda for
+the dynamic `/search` and `/compare` paths) is specified in
+[`docs/Architecture.md`](docs/Architecture.md) but not yet provisioned.
+
+---
+
 ## 🗺️ Roadmap
 
 | Version | Focus |
@@ -276,7 +315,13 @@ data/{translation-id}/
 
 Contributions are welcome and encouraged. Please read [`docs/contributing.md`](docs/contributing.md) before opening a PR.
 
-**The most important rule:** every translation addition must include a `metadata.json` with a verified `license` field and a link to the primary source confirming it. PRs that add translation data without this will not be merged. The CI pipeline enforces this automatically.
+**The most important rule:** every translation addition must include a `metadata.json` with a verified `license` field and a link to the primary source confirming it. PRs that add translation data without this will not be merged.
+
+Run the validator before you open a PR — there is no CI workflow yet, so this check is currently manual:
+
+```bash
+python scripts/validate.py --strict
+```
 
 Other ways to contribute:
 - Port a new verified public-domain translation into the canonical JSON schema
@@ -300,12 +345,12 @@ Individual Bible translations in `data/` carry their own licenses as documented 
 
 Key upstream sources that made this possible:
 
-- [eBible.org](https://ebible.org) — the most comprehensive source of freely licensed scripture in structured formats
-- [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) — multi-format Bible databases
-- [seven1m/open-bibles](https://github.com/seven1m/open-bibles) — curated public domain Bible XML
+- [eBible.org](https://ebible.org) — the most comprehensive source of freely licensed scripture in structured formats, and the origin of eight of our eleven translations
+- [CrossWire Bible Society](https://www.crosswire.org) — the SWORD project, whose `JapBungo` module preserves the classical Japanese text after its original host (`bible.salterrae.net`) went offline
 - [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) — clean KJV JSON
 - [worldenglish.bible](https://worldenglish.bible) — the World English Bible project
 - [berean.bible](https://berean.bible) — the Berean Standard Bible project
+- [scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases) and [seven1m/open-bibles](https://github.com/seven1m/open-bibles) — multi-format Bible databases, still the leading candidates for `martin1744`
 
 ---
 
