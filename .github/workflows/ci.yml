@@ -21,8 +21,8 @@ jobs:
     name: Validate translation data
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
       # No pip install: scripts/validate.py is standard library only.
@@ -39,8 +39,8 @@ jobs:
     name: Build & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           # Read from .nvmrc so the Node version lives in exactly one place.
           node-version-file: '.nvmrc'

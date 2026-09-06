@@ -98,6 +98,12 @@ CANON = {
 # Books whose chapter count legitimately varies by versification tradition.
 CHAPTER_VARIANTS = {29: {3, 4}, 39: {3, 4}}  # Joel, Malachi (Hebrew vs. Western)
 
+# Directories under data/ that are not translations. `schemas/` holds the JSON
+# Schemas written by scripts/schema-gen.ts; without this, running `npm run
+# schema:gen` makes `npm run validate` fail on a directory that was never a
+# translation. Kept in step with the same list in scripts/build-static-api.mjs.
+NON_TRANSLATION_DIRS = {"schemas"}
+
 # Rough total-verse sanity bands per testament coverage (gross-corruption catch).
 VERSE_BANDS = {"both": (30000, 32000), "OT": (22000, 24000), "NT": (7000, 8500)}
 
@@ -301,7 +307,9 @@ def main() -> int:
         return 1
 
     dirs = sorted(d for d in data_dir.iterdir()
-                  if d.is_dir() and not d.name.startswith("."))
+                  if d.is_dir()
+                  and not d.name.startswith(".")
+                  and d.name not in NON_TRANSLATION_DIRS)
     if args.only:
         wanted = set(args.only)
         dirs = [d for d in dirs if d.name in wanted]

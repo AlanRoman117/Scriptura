@@ -41,7 +41,11 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 **Workspaces** are `packages/*` plus `examples/node-server` and `examples/cli-demo`, listed explicitly rather than as `examples/*` — `examples/react-app` is a package.json with no source files, and a glob would install the whole vite/react tree for it.
 
-**Node version:** `.nvmrc` pins Node 20. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
+**Node version:** `.nvmrc` pins **Node 24** — the current Active LTS (EOL 2028-04-30). It was Node 20 until that line went end-of-life on 2026-04-30. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
+
+⚠️ **This machine's default Node is newer than `.nvmrc`**, so a bare `npm test` does not prove anything about the pinned version. Use `mise exec node@24 -- …` when it matters.
+
+**Do not upgrade TypeScript past 5.x.** `ts-jest` declares `typescript: ">=4.3 <7"`, so TypeScript 7 (the current `latest`, and the Go rewrite) breaks the test suite. `.github/dependabot.yml` holds it back for the same reason.
 
 **Why `lint` is `tsc --build` and not `tsc --noEmit`:** the packages are composite project references, and TypeScript rejects `--noEmit` on those outright (TS6310). `tsc --build` *is* the type-check; the emitted declarations are a byproduct. Root `tsconfig.json` is a solution file (`files: []` plus `references`) that exists so both `tsc --build` and editors have a single entry point — it holds no compiler options of its own.
 
@@ -103,7 +107,8 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 - **`validate.py`** — Data integrity gate run by CI (see below).
 - **`check-canon-sync.py`** — Cross-checks the three canon definitions against each other and against `data/`. Stdlib-only; parses the TypeScript table with a regex rather than building it. See Critical Rules → Canon sync.
 - **`build-static-api.mjs`** — Node (ESM, zero-dependency) builder that compiles `data/` into a tree of static JSON files under `dist/`, one per REST endpoint, for S3/CloudFront hosting. Endpoints carry a `.json` extension (`/translations/kjv/john/3/16.json`) because the nested verse path forces the chapter segment to be a directory. Emits `/translations.json`, `/translations/:id.json`, `/translations/:id/:book.json`, `/translations/:id/:book/:chapter.json`, and `/translations/:id/:book/:chapter/:verse.json`. Flags: `--data-dir`, `--out-dir`, `--skip-verses` (chapters only — leaner; per-verse files produce a very large object count), `--pretty`. Wire it up as `npm run build:api`.
-- **`schema-gen.ts`** — Generates `data/schemas/metadata.schema.json` and `data/schemas/book.schema.json` from the canonical format.
+- **`schema-gen.ts`** — Generates `data/schemas/metadata.schema.json` and `data/schemas/book.schema.json` from the canonical format. Runs via `tsx` (`npm run schema:gen`). Its output is **not** committed today.
+  - `data/schemas/` is not a translation, so `validate.py` and `build-static-api.mjs` both skip it via a `NON_TRANSLATION_DIRS` list. **That list exists in both files and must stay in step** — before it did, running `schema:gen` made `npm run validate` fail on a directory that was never a translation.
 
 ### Tests (`tests/`)
 
@@ -137,13 +142,19 @@ Two config details that are load-bearing:
 - **GraphQL** — `packages/api` is REST only. There is no schema, resolver, or dependency. Roadmap slots it at v1.1.
 - **`crossRefs()`** — appears in usage docs as a future API.
 
-### CI (`.github/workflows/ci.yml`)
+### CI & security (`.github/workflows/`)
 
 Runs on push/PR to `main` and `develop`. Two jobs, deliberately separate so a data problem and a code problem are visibly different failures:
 - **`validate-data`** — `python scripts/validate.py` then `python scripts/check-canon-sync.py`, on Python 3.12. No pip install (both are stdlib-only) and no `--strict`, so versification warnings don't fail the build.
 - **`build-and-test`** — `npm ci`, `npm run lint`, `npm test`, then `npm run build:api -- --skip-verses` to smoke the static builder. Node comes from `node-version-file: .nvmrc` so the version lives in exactly one place.
 
 `npm ci` requires `package-lock.json` to be committed and current — that is the most likely way to break this workflow.
+
+**`codeql.yml`** runs CodeQL (`javascript-typescript`, `security-and-quality`) on push/PR and weekly. Free and unlimited because the repo is public. It catches what `npm audit` structurally cannot — injection, traversal, unsafe regex — as opposed to known-bad dependency versions.
+
+**`.github/dependabot.yml`** configures weekly *version* updates for the `npm` and `github-actions` ecosystems. The `github-actions` entry exists because this repo's actions went stale onto a deprecated runtime once already. It pins TypeScript below 6 (see the Node version note above).
+
+⚠️ **Dependabot *security* alerts are a repository setting, not a file.** They must be enabled under Settings → Code security; `dependabot.yml` does not turn them on. They were off, which is precisely why the express 4 / `qs` advisories went unnoticed until someone ran `npm audit` by hand. Secret scanning and push protection are already on.
 
 ### Deployment (`.github/workflows/deploy.yml`) — ⚠️ NOT YET CREATED
 

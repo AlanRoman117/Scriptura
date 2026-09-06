@@ -108,6 +108,10 @@ Translation metadata, plus a book index you can navigate from.
 ### `GET /search?q=love&translation=kjv&limit=5`
 
 Paginated: `limit` defaults to 100 and caps at 500, `offset` defaults to 0.
+
+Query params are flat scalars. The example server runs Express 5, whose default
+query parser is `simple`, so bracket-array syntax (`?q[]=love`) is **not**
+supported — send `?q=love`. Repeated params (`?q=a&q=b`) resolve to the last value.
 `total` is the full match count, not the page size — `q=the` matches about
 28,000 verses in the KJV.
 

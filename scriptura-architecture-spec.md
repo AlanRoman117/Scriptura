@@ -74,14 +74,16 @@ scriptura/
 │   └── translations-status.md   # Tracks license verification for each version
 │
 ├── .github/
+│   ├── dependabot.yml           # Weekly npm + github-actions version updates
 │   └── workflows/
 │       ├── ci.yml               # Validate data + type-check + test (push/PR)
+│       ├── codeql.yml           # CodeQL static analysis (push/PR + weekly)
 │       └── deploy.yml           # ⚠️ NOT WRITTEN — specified in §8
 │
 ├── dist/                        # Generated static API tree (gitignored)
 ├── .cache/                      # Ingest download cache (gitignored)
 ├── CLAUDE.md                    # Guidance for Claude Code
-├── .nvmrc                       # Node 20
+├── .nvmrc                       # Node 24 (Active LTS)
 ├── tsconfig.json                # Solution file: references only, no options
 ├── tsconfig.dev.json            # tsx only: maps @scriptura/* at package sources
 ├── tsconfig.test.json           # ts-jest only: composite off, node10 resolution
@@ -351,13 +353,14 @@ on: push / pull_request  (.github/workflows/ci.yml)
 │     ├── check chapter counts against canon (warning; versification-aware)
 │     ├── flag any verse with empty text
 │     └── license audit (metadata.json license field per data/ dir)
-├── TypeScript type-check (npm run lint → tsc --build, on Node 20 per .nvmrc)
+├── TypeScript type-check (npm run lint → tsc --build, on Node 24 per .nvmrc)
 ├── Unit tests (jest)
 └── Integration tests (API endpoint smoke tests — tests/integration/ is a placeholder)
 ```
 
 Two jobs, deliberately separate so a data problem and a code problem are
-visibly different failures. Node comes from `node-version-file: .nvmrc`, so the
+visibly different failures. A third workflow, `codeql.yml`, runs static analysis
+on the same triggers plus weekly. Node comes from `node-version-file: .nvmrc`, so the
 version lives in exactly one place. `npm ci` requires a current committed
 `package-lock.json` — that is the most likely way to break this workflow.
 
@@ -366,6 +369,14 @@ project references, and TypeScript rejects `--noEmit` on those (TS6310). The
 build *is* the type-check.
 
 In practice: **errors** fail the build (missing books, empty text, bad/missing license, a forbidden translation), while **warnings** do not (chapter-count differences from versification, verse-number gaps in critical-text translations). Deployment runs in a separate workflow — see §8.
+
+### Supply-chain posture
+
+`.github/dependabot.yml` takes weekly npm and github-actions version updates.
+Dependabot **security** alerts are a repository setting rather than a file and
+must be enabled under Settings → Code security — they were off, which is why the
+express 4 / `qs` advisories went unnoticed. Secret scanning and push protection
+are on. All of these are free and unlimited because the repository is public.
 
 The canon is defined in three places that must stay in sync:
 `packages/validate/src/canon.ts`, `scripts/validate.py`, and `scripts/ingest.py`.

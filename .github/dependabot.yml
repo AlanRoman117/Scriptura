@@ -1,0 +1,35 @@
+# Dependabot version updates.
+#
+# NOTE: this file configures *version* updates only. Dependabot **security**
+# alerts and security updates are a separate repository setting and must be
+# switched on under Settings → Code security. Until they are, advisories still
+# go unnoticed — which is how the qs advisories in express 4 sat here unseen.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for the test toolchain rather than four; these move together and
+      # ts-jest's peer range couples them.
+      test-tooling:
+        patterns: ['jest', 'ts-jest', '@types/jest']
+      types:
+        patterns: ['@types/*']
+        exclude-patterns: ['@types/jest']
+    ignore:
+      # ts-jest declares `typescript: ">=4.3 <7"`, so TypeScript 7 — the current
+      # `latest`, and the Go rewrite — would break the test suite. Hold at 5.x
+      # until ts-jest supports it.
+      - dependency-name: typescript
+        versions: ['>=6']
+
+  # The stale-actions problem this repo just hit (v4 actions pinned to a
+  # deprecated Node 20 runtime) is exactly what this entry prevents recurring.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -69,6 +69,11 @@ function writeEndpoint(relPath, obj) {
   filesWritten++;
 }
 
+// Directories under data/ that are not translations. `schemas/` holds the JSON
+// Schemas written by scripts/schema-gen.ts. Kept in step with the same list in
+// scripts/validate.py.
+const NON_TRANSLATION_DIRS = new Set(["schemas"]);
+
 // Derive the URL slug from a book filename: "43-john.json" → "john".
 const slugFromFilename = (name) =>
   name.replace(/\.json$/i, "").replace(/^\d+-/, "");
@@ -85,7 +90,7 @@ function build() {
   mkdirSync(OUT_DIR, { recursive: true });
 
   const translationDirs = readdirSync(DATA_DIR, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && !d.name.startsWith("."))
+    .filter((d) => d.isDirectory() && !d.name.startsWith(".") && !NON_TRANSLATION_DIRS.has(d.name))
     .map((d) => d.name)
     .sort();
 

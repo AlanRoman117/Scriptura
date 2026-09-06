@@ -1,0 +1,44 @@
+name: CodeQL
+
+# Static analysis for the kind of defect `npm audit` structurally cannot see —
+# injection, path traversal, unsafe regex — as opposed to known-vulnerable
+# dependency versions. Free and unlimited on public repositories.
+#
+# Worth a look here in particular: packages/core/src/loader.ts takes a
+# user-supplied path segment from the URL and joins it onto a filesystem path.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Weekly, so newly-published queries reach existing code rather than only
+    # code that happens to change.
+    - cron: '27 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze JavaScript/TypeScript
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # required to upload results
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          # security-and-quality is broader than the default security-extended;
+          # this codebase is small enough to absorb the extra findings.
+          queries: security-and-quality
+
+      # No build step: CodeQL analyses TypeScript directly, and `tsc --build`
+      # would only emit declarations it does not need.
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:javascript-typescript

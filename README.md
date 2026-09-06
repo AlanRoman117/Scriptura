@@ -41,7 +41,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 ## 🚀 Quick start
 
-**Prerequisites:** Node 20 (pinned in [`.nvmrc`](.nvmrc)) and Python 3.9+ for the
+**Prerequisites:** Node 24 (pinned in [`.nvmrc`](.nvmrc)) and Python 3.9+ for the
 data tooling. Any `.nvmrc`-aware version manager works — `nvm use`, `fnm use`, or
 `mise install` (mise reads `.nvmrc` once `idiomatic_version_file_enable_tools`
 includes `node`).
@@ -309,11 +309,12 @@ data/{translation-id}/
 |---|---|
 | Translation data | 10 of 11 ingested, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
 | REST API | Runs locally; every route works in every language |
-| TypeScript packages | Build, type-check, and pass tests on Node 20 |
+| TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
 | Tests | 49, incl. integration coverage of every route |
-| CI | Running — data validation + lint + tests on every push and PR |
+| CI | Running — data validation, canon sync, lint and tests on every push and PR |
+| Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
 | Deployment | **Not built** — no AWS infrastructure, no `deploy.yml` |
 

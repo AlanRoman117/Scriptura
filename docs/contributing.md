@@ -39,7 +39,7 @@ These will **never** be accepted, regardless of how they are packaged:
 ## Submitting a PR
 
 1. Fork the repo and create a feature branch
-2. Make your changes (Node 20 — see `.nvmrc`)
+2. Make your changes (Node 24 — see `.nvmrc`)
 3. Run `npm run lint`, `npm test`, and `python scripts/validate.py --strict`
 4. Open a PR with a clear description of what you changed and why
 
