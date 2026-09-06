@@ -107,6 +107,10 @@ abbreviation (`Jhn`), or its canonical number (`43`).
 # Hot-reloading dev server (tsx); or `npm run start:api` for the compiled build
 npm run dev:api
 
+# Open http://localhost:3000/ in a browser — the root path is an index of every
+# endpoint with working examples. JSON renders fine in Firefox and Chrome, so
+# you don't need Postman or Hoppscotch to look around.
+
 # A verse — the same URL works in every translation
 curl http://localhost:3000/translations/kjv/john/3/16
 curl http://localhost:3000/translations/bungo/john/3/16

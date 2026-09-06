@@ -45,6 +45,7 @@ scriptura/
 ├── scripts/
 │   ├── ingest.py                # Download & normalize source data
 │   ├── validate.py              # Run integrity checks on all translations
+│   ├── check-canon-sync.py      # Verify the three canon definitions agree
 │   ├── build-static-api.mjs     # Compile data/ → dist/ static JSON API tree
 │   └── schema-gen.ts            # Generate TypeScript types from JSON schema
 │
@@ -212,6 +213,7 @@ The API package exposes framework-agnostic REST handlers that drop into any Node
 
 | Method | Path | Description | Status |
 |---|---|---|---|
+| `GET` | `/` | Index of endpoints with working examples | ✅ |
 | `GET` | `/translations` | List all available translations | ✅ |
 | `GET` | `/translations/:id` | Metadata for one translation | ✅ |
 | `GET` | `/translations/:id/:book/:chapter` | Full chapter as JSON | ✅ |
@@ -338,6 +340,7 @@ Runs on push and pull request to `main` and `develop`.
 ```
 on: push / pull_request  (.github/workflows/ci.yml)
 ├── validate all translations (scripts/validate.py)
+├── canon sync check (scripts/check-canon-sync.py)
 │     ├── check every expected book is present (testament-aware)
 │     ├── check chapter counts against canon (warning; versification-aware)
 │     ├── flag any verse with empty text
@@ -366,11 +369,16 @@ display metadata keyed off the existing USFM codes, and book addressing in
 `packages/core/src/books.ts` derives slugs from filenames. Both define no
 numbering, order, or chapter counts.
 
-⚠️ **`canon.ts`'s `abbreviation` column is wrong** — 45 of its 66 entries
-disagree with the data (`canon.ts` says `Exod`/`Deut`/`1Sam`/`Ps`; the files say
-`Exo`/`Deu`/`1Sa`/`Psa`). Nothing has noticed because `packages/validate/src/index.ts`
-reads only `number` and `chapters`. Do not use it as a lookup source; fix or
-delete the column.
+`scripts/check-canon-sync.py` verifies all three agree with each other and with
+the committed data, on every CI run. It covers book numbers, names, testaments,
+chapter counts, abbreviations and filename slugs.
+
+That check exists because the manual discipline failed: `canon.ts` used to carry
+an `abbreviation` column that was wrong for 45 of its 66 books (OSIS-style
+`Exod`/`1Sam`/`1Kgs` where the data has `Exo`/`1Sa`/`1Ki`), and nothing noticed
+because `packages/validate/src/index.ts` reads only `number` and `chapters`. The
+column is gone; abbreviations live in `ingest.py`, which writes them, and in
+each book's JSON, which carries them.
 
 ---
 

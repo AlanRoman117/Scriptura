@@ -24,3 +24,16 @@ describe('@scriptura/validate canon', () => {
     });
   });
 });
+
+describe('CANON has no abbreviation field', () => {
+  test('abbreviations are not duplicated here', () => {
+    // They were, and were wrong for 45 of the 66 books — OSIS-style `Exod`,
+    // `1Sam`, `1Kgs` where the data has `Exo`, `1Sa`, `1Ki`. Nothing read the
+    // field, so nothing noticed. Abbreviations belong to scripts/ingest.py,
+    // which writes them, and to each book's JSON, which carries them.
+    // scripts/check-canon-sync.py verifies those two agree.
+    for (const book of CANON) {
+      expect(book).not.toHaveProperty('abbreviation');
+    }
+  });
+});

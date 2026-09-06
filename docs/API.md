@@ -32,6 +32,7 @@ Matching folds case, accents and separators, so `Génesis`, `genesis` and
 
 | Method | Path | Description |
 |---|---|---|
+| `GET` | `/` | Index of endpoints, with working examples |
 | `GET` | `/translations` | All available translations |
 | `GET` | `/translations/:id` | One translation's metadata plus its book index |
 | `GET` | `/translations/:id/:book` | A book's chapter index with verse counts |
@@ -39,6 +40,12 @@ Matching folds case, accents and separators, so `Génesis`, `genesis` and
 | `GET` | `/translations/:id/:book/:chapter/:verse` | A single verse |
 | `GET` | `/search?q=&translation=&limit=&offset=` | Full-text search |
 | `GET` | `/compare?ref=&translations=` | One verse across translations |
+
+### `GET /`
+
+A browsable index — open `http://localhost:3000/` in a browser and start here.
+Lists every endpoint, explains book addressing, and gives example URLs that are
+covered by a test, so they cannot rot.
 
 ### `GET /translations`
 

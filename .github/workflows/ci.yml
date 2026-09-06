@@ -29,6 +29,11 @@ jobs:
       # No --strict: versification warnings are legitimate and must not fail
       # the build. See CLAUDE.md → Critical Rules → Data validation.
       - run: python scripts/validate.py
+      # The canon is defined in three places, in two languages. This checks
+      # they still agree with each other and with the committed data — the
+      # discipline was manual until canon.ts drifted on 45 of 66 books
+      # unnoticed, because nothing read the field.
+      - run: python scripts/check-canon-sync.py
 
   build-and-test:
     name: Build & test

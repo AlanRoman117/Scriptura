@@ -22,6 +22,7 @@ npm run lint                   # TypeScript type-check (tsc --build; see note be
 npm run dev:api                # Run the REST API with hot reload (tsx watch) on :3000
 npm run start:api              # Build, then run the compiled REST API on :3000
 npm run validate               # Validate all translation data (python scripts/validate.py)
+npm run check:canon            # Verify the three canon definitions agree (python scripts/check-canon-sync.py)
 npm run build:api              # Compile data/ into a static JSON API tree in dist/ (node scripts/build-static-api.mjs)
 npm run schema:gen             # Generate JSON schemas from types (ts-node scripts/schema-gen.ts)
 npm run start:api              # Start example Express server (examples/node-server)
@@ -74,7 +75,8 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 - **@scriptura/api** (`packages/api/`) — Depends on core + search.
   - `src/router.ts` — Framework-agnostic `createRouter(req)` matching REST routes. Returns `{ status, body }` — integrate with Express, Fastify, etc.
-  - Routes: `/translations`, `/translations/:id`, `/translations/:id/:book`, `/translations/:id/:book/:chapter`, `/translations/:id/:book/:chapter/:verse`, `/search?q=&translation=&limit=&offset=`, `/compare?ref=&translations=`
+  - Routes: `/` (a browsable index of endpoints and working examples — without it opening the server in a browser answers "Route not found"), `/translations`, `/translations/:id`, `/translations/:id/:book`, `/translations/:id/:book/:chapter`, `/translations/:id/:book/:chapter/:verse`, `/search?q=&translation=&limit=&offset=`, `/compare?ref=&translations=`
+  - The `/` index advertises example URLs, and a test asserts every one of them still returns 200.
   - `src/format.ts` — response formatters. **These shapes are the contract and are deliberately identical to what `scripts/build-static-api.mjs` writes.** A client must be able to point at a local server or at the CDN and get the same JSON. The static builder is zero-dependency `.mjs` that runs without a TS build, so it cannot import these; `tests/integration/static-parity.test.ts` diffs the two implementations instead. **Change a shape in one place and you must change it in the other.**
   - `/search` is paginated (`limit` default 100, max 500). It has to be: `q=the` matches ~28,000 KJV verses.
   - This is the **dynamic** serving path. There is also a **static** serving path (see Deployment) that pre-renders the same data to files for S3/CloudFront.
@@ -99,6 +101,7 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
   - `JA_BOOK_NAMES` supplies Japanese book names for `bungo`, since zText modules carry no per-book localized headers. It is display metadata keyed off `CANONICAL_BOOKS`' USFM codes — **not** a fourth canon definition, and it carries no canon-sync burden.
   - Downloads cache under `.cache/` (gitignored). Flags: `--list`, `--only <id...>`, `--output-dir`, `--no-cache`. Embeds a `CANONICAL_BOOKS` table (USFM codes, slugs, abbreviations) — a canon definition that must stay in sync (see Critical Rules).
 - **`validate.py`** — Data integrity gate run by CI (see below).
+- **`check-canon-sync.py`** — Cross-checks the three canon definitions against each other and against `data/`. Stdlib-only; parses the TypeScript table with a regex rather than building it. See Critical Rules → Canon sync.
 - **`build-static-api.mjs`** — Node (ESM, zero-dependency) builder that compiles `data/` into a tree of static JSON files under `dist/`, one per REST endpoint, for S3/CloudFront hosting. Endpoints carry a `.json` extension (`/translations/kjv/john/3/16.json`) because the nested verse path forces the chapter segment to be a directory. Emits `/translations.json`, `/translations/:id.json`, `/translations/:id/:book.json`, `/translations/:id/:book/:chapter.json`, and `/translations/:id/:book/:chapter/:verse.json`. Flags: `--data-dir`, `--out-dir`, `--skip-verses` (chapters only — leaner; per-verse files produce a very large object count), `--pretty`. Wire it up as `npm run build:api`.
 - **`schema-gen.ts`** — Generates `data/schemas/metadata.schema.json` and `data/schemas/book.schema.json` from the canonical format.
 
@@ -137,7 +140,7 @@ Two config details that are load-bearing:
 ### CI (`.github/workflows/ci.yml`)
 
 Runs on push/PR to `main` and `develop`. Two jobs, deliberately separate so a data problem and a code problem are visibly different failures:
-- **`validate-data`** — `python scripts/validate.py` on Python 3.12. No pip install (the script is stdlib-only) and no `--strict`, so versification warnings don't fail the build.
+- **`validate-data`** — `python scripts/validate.py` then `python scripts/check-canon-sync.py`, on Python 3.12. No pip install (both are stdlib-only) and no `--strict`, so versification warnings don't fail the build.
 - **`build-and-test`** — `npm ci`, `npm run lint`, `npm test`, then `npm run build:api -- --skip-verses` to smoke the static builder. Node comes from `node-version-file: .nvmrc` so the version lives in exactly one place.
 
 `npm ci` requires `package-lock.json` to be committed and current — that is the most likely way to break this workflow.
@@ -181,7 +184,9 @@ There are now **three** canon definitions that must be kept consistent when any 
 
 Book numbers, names, and chapter counts must match across all three.
 
-**`canon.ts`'s `abbreviation` column is wrong and unused.** 45 of its 66 abbreviations disagree with the data (`canon.ts` says `Exod`/`Deut`/`1Sam`/`Ps`; the files say `Exo`/`Deu`/`1Sa`/`Psa`). `packages/validate/src/index.ts` only reads `number` and `chapters`, so nothing has noticed. Do **not** wire book lookup to it — routing derives slugs from filenames precisely to avoid becoming a fourth consumer. Either fix the column or delete it.
+**`scripts/check-canon-sync.py` enforces this** — run by CI, and by `npm run check:canon`. It parses all three definitions plus the committed data and fails on any disagreement about book numbers, names, testaments, chapter counts, abbreviations, or filename slugs. Keeping the three in step used to be a manual discipline, which is exactly how the bug below survived.
+
+**`canon.ts` no longer has an `abbreviation` field, and must not regain one.** It carried OSIS-style values (`Exod`, `1Sam`, `1Kgs`) where the data has `Exo`, `1Sa`, `1Ki` — wrong for 45 of 66 books, undetected because `packages/validate/src/index.ts` reads only `number` and `chapters`. Abbreviations belong to `ingest.py`, which writes them, and to each book's JSON, which carries them; the sync checker verifies those two agree.
 
 Book *addressing* (slug/name/abbreviation/number resolution in `packages/core/src/books.ts`) is deliberately **not** a canon definition: it derives everything from the book filenames, so it needs no table.
 

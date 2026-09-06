@@ -12,6 +12,7 @@
     "build": "tsc --build",
     "test": "jest",
     "validate": "python scripts/validate.py",
+    "check:canon": "python scripts/check-canon-sync.py",
     "lint": "tsc --build",
     "start:api": "npm run build && node examples/node-server/dist/index.js",
     "dev:api": "tsx watch --tsconfig tsconfig.dev.json examples/node-server/src/index.ts",

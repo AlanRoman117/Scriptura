@@ -89,6 +89,39 @@ function withBook(
 
 const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
   {
+    // A browsable index. Without it `/` answers "Route not found", which is a
+    // poor first impression when someone opens the server in a browser.
+    pattern: /^\/$/,
+    handler: async () => {
+      const translations = await listTranslations();
+      return ok({
+        name: 'Scriptura API',
+        translations: translations.length,
+        endpoints: {
+          translations: '/translations',
+          translation: '/translations/{id}',
+          book: '/translations/{id}/{book}',
+          chapter: '/translations/{id}/{book}/{chapter}',
+          verse: '/translations/{id}/{book}/{chapter}/{verse}',
+          search: '/search?q={query}&translation={id}&limit=100&offset=0',
+          compare: '/compare?ref={Book Chapter:Verse}&translations={id,id}',
+        },
+        book_addressing:
+          'The {book} segment is the English slug from the book filename (john, 1-samuel) ' +
+          'and is the same in every translation. Localized name, abbreviation and ' +
+          'canonical book number also resolve.',
+        examples: [
+          '/translations/kjv/john/3/16',
+          '/translations/bungo/john/3/16',
+          '/translations/rv1909/1-samuel/1/1',
+          '/search?q=love&translation=kjv&limit=5',
+          '/compare?ref=John+3:16&translations=kjv,rv1909,bungo',
+        ],
+        docs: 'https://github.com/AlanRoman117/Scriptura/blob/main/docs/API.md',
+      });
+    },
+  },
+  {
     pattern: /^\/translations$/,
     handler: async () => ok(await listTranslations()),
   },

@@ -20,6 +20,30 @@ beforeAll(async () => {
 
 afterAll(() => clearCache());
 
+describe('GET /', () => {
+  test('is a browsable index rather than a 404', async () => {
+    // Opening the server in a browser lands here; answering "Route not found"
+    // is a poor first impression.
+    const res = await get('/');
+    expect(res.status).toBe(200);
+    const body = res.body as { endpoints: Record<string, string>; examples: string[] };
+    expect(Object.keys(body.endpoints).length).toBeGreaterThan(0);
+    expect(body.examples.length).toBeGreaterThan(0);
+  });
+
+  test('every advertised example actually works', async () => {
+    const { examples } = (await get('/')).body as { examples: string[] };
+    for (const example of examples) {
+      const [path, qs] = example.split('?');
+      const query = Object.fromEntries(new URLSearchParams(qs ?? ''));
+      expect({ example, status: (await get(path, query)).status }).toEqual({
+        example,
+        status: 200,
+      });
+    }
+  });
+});
+
 describe('GET /translations', () => {
   test('lists the ingested translations', async () => {
     const res = await get('/translations');
