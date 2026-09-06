@@ -14,6 +14,9 @@ into Scriptura's canonical JSON schema:
         └── ...  (66 Protestant-canon books, zero-padded for sort order)
 
 It supports two source formats:
+  • "sword"    — a CrossWire SWORD zText module (compiled OSIS in a binary
+                 block/index format). Used for translations no plain-text
+                 source still carries.
   • "usfx"     — a single USFX XML file inside a .zip (eBible.org). One parser
                  handles many translations across many languages.
   • "aruljohn" — clean per-book JSON from github.com/aruljohn/Bible-kjv.
@@ -53,9 +56,11 @@ import argparse
 import io
 import json
 import re
+import struct
 import sys
 import time
 import zipfile
+import zlib
 from pathlib import Path
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
@@ -149,6 +154,7 @@ CODE_TO_BOOK = {row[1]: row for row in CANONICAL_BOOKS}
 # fetch it. `source` is one of:
 #   "usfx"     -> needs `ebible_id`; downloaded from eBible.org as a USFX zip.
 #   "aruljohn" -> per-book JSON from the aruljohn/Bible-kjv repo.
+#   "sword"    -> needs `sword_url` + `sword_module`; a CrossWire zText module.
 #   "manual"   -> no automated parser yet; the script will skip it and explain.
 #
 # `verify: True` just means the eBible id is a best guess — if the download
@@ -234,7 +240,7 @@ TRANSLATIONS = {
         "source": "usfx",
         "ebible_id": "engbsb",
     },
-    # --- Configured but not yet automated (need a dedicated parser/source) ---
+    # --- Configured but not yet automated (needs a dedicated parser/source) ---
     "martin1744": {
         "name": "Bible Martin",
         "language": "fr",
@@ -260,11 +266,12 @@ TRANSLATIONS = {
         "language": "ja",
         "license": "public-domain",
         "attribution": "文語訳聖書 (Bungo-yaku, 1887/1917) — Public Domain",
-        "source_url": "https://bible.salterrae.net",
+        "source_url": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo",
         "year": 1917,
-        "source": "manual",
-        "note": "No clean structured download exists; text on bible.salterrae.net "
-                "needs a dedicated scraper/converter. Hardest of the set.",
+        "source": "sword",
+        "sword_url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/JapBungo.zip",
+        "sword_module": "japbungo",
+        "book_names": "JA_BOOK_NAMES",
     },
 }
 
@@ -468,6 +475,188 @@ def fetch_aruljohn(cache_dir: Path, use_cache: bool) -> dict:
 # =============================================================================
 # Writing canonical output
 # =============================================================================
+# =============================================================================
+# SWORD zText parsing (CrossWire modules)
+# =============================================================================
+# CrossWire ships its Bibles as a compiled binary format rather than as plain
+# XML, so this parser is a little more involved than the USFX one. Three files
+# per testament:
+#
+#   {ot,nt}.bzs   block index  — 12 bytes per block: offset, compressed size,
+#                                uncompressed size. BlockType=BOOK, so block N
+#                                holds book N (block 0 is the module header).
+#   {ot,nt}.bzz   the zlib-compressed blocks themselves.
+#   {ot,nt}.bzv   verse index  — 10 bytes per entry: block, start, size. Entries
+#                                run in versification order and address a BYTE
+#                                slice of the *uncompressed* block.
+#
+# osis2mod strips <verse> milestones when it compiles a module, so verse
+# boundaries exist only in the .bzv index. What survives inside the block text
+# are the <div type="book"> and <chapter osisID="Book.N"> markers, which get
+# their own index entries — that is how we recover book/chapter structure
+# without needing a versification table: walk the entries in order, treat the
+# marker entries as structure, and number everything else sequentially within
+# the current chapter.
+#
+# Entries of size 0 are verses this translation does not contain. They still
+# advance the verse counter, so surrounding verses keep their canonical
+# numbers (the Bungo module has two such gaps, both Hebrew/English
+# versification offsets).
+
+# OSIS book identifiers -> our USFM codes. OSIS and USFM disagree on many
+# abbreviations (Deut/DEU, Song/SNG, Phil/PHP, Nah/NAM …), so this is spelled
+# out rather than inferred.
+OSIS_TO_USFM = {
+    "Gen": "GEN", "Exod": "EXO", "Lev": "LEV", "Num": "NUM", "Deut": "DEU",
+    "Josh": "JOS", "Judg": "JDG", "Ruth": "RUT", "1Sam": "1SA", "2Sam": "2SA",
+    "1Kgs": "1KI", "2Kgs": "2KI", "1Chr": "1CH", "2Chr": "2CH", "Ezra": "EZR",
+    "Neh": "NEH", "Esth": "EST", "Job": "JOB", "Ps": "PSA", "Prov": "PRO",
+    "Eccl": "ECC", "Song": "SNG", "Isa": "ISA", "Jer": "JER", "Lam": "LAM",
+    "Ezek": "EZK", "Dan": "DAN", "Hos": "HOS", "Joel": "JOL", "Amos": "AMO",
+    "Obad": "OBA", "Jonah": "JON", "Mic": "MIC", "Nah": "NAM", "Hab": "HAB",
+    "Zeph": "ZEP", "Hag": "HAG", "Zech": "ZEC", "Mal": "MAL",
+    "Matt": "MAT", "Mark": "MRK", "Luke": "LUK", "John": "JHN", "Acts": "ACT",
+    "Rom": "ROM", "1Cor": "1CO", "2Cor": "2CO", "Gal": "GAL", "Eph": "EPH",
+    "Phil": "PHP", "Col": "COL", "1Thess": "1TH", "2Thess": "2TH",
+    "1Tim": "1TI", "2Tim": "2TI", "Titus": "TIT", "Phlm": "PHM", "Heb": "HEB",
+    "Jas": "JAS", "1Pet": "1PE", "2Pet": "2PE", "1John": "1JN", "2John": "2JN",
+    "3John": "3JN", "Jude": "JUD", "Rev": "REV",
+}
+
+# Japanese book names for the Bungo module.
+#
+# zText modules carry no per-book localized headers (only a testament-level
+# <title>), so without this the Japanese Bible would land with English book
+# names. Taken from SWORD's own locales.d/ja-utf8.conf (sword-1.9.0), with four
+# upstream kana typos corrected: テモテヘ/テトスヘ/ピレモンヘ use the katakana ヘ
+# where the particle へ is meant, and Zephaniah is ゼバニヤ for ゼパニヤ.
+#
+# Caveat: these are the modern (口語訳-era) names. The 1887/1917 text itself
+# would write several of them in classical forms (出埃及記, 使徒行傳,
+# ヨハネ傳福音書 …). They identify each book correctly, which is the job of this
+# field; swap the table if you'd rather ship period-accurate spellings.
+#
+# This is display metadata keyed off CANONICAL_BOOKS' USFM codes — it defines
+# no book numbers, order, or chapter counts, so it is NOT a fourth canon
+# definition and carries no canon-sync burden.
+JA_BOOK_NAMES = {
+    "GEN": "創世記", "EXO": "出エジプト記", "LEV": "レビ記", "NUM": "民数記",
+    "DEU": "申命記", "JOS": "ヨシュア記", "JDG": "士師記", "RUT": "ルツ記",
+    "1SA": "サムエル記上", "2SA": "サムエル記下", "1KI": "列王紀上",
+    "2KI": "列王紀下", "1CH": "歴代志上", "2CH": "歴代志下", "EZR": "エズラ記",
+    "NEH": "ネヘミヤ記", "EST": "エステル記", "JOB": "ヨブ記", "PSA": "詩篇",
+    "PRO": "箴言", "ECC": "伝道の書", "SNG": "雅歌", "ISA": "イザヤ書",
+    "JER": "エレミヤ書", "LAM": "哀歌", "EZK": "エゼキエル書", "DAN": "ダニエル書",
+    "HOS": "ホセア書", "JOL": "ヨエル書", "AMO": "アモス書", "OBA": "オバデヤ書",
+    "JON": "ヨナ書", "MIC": "ミカ書", "NAM": "ナホム書", "HAB": "ハバクク書",
+    "ZEP": "ゼパニヤ書", "HAG": "ハガイ書", "ZEC": "ゼカリヤ書", "MAL": "マラキ書",
+    "MAT": "マタイによる福音書", "MRK": "マルコによる福音書",
+    "LUK": "ルカによる福音書", "JHN": "ヨハネによる福音書", "ACT": "使徒行伝",
+    "ROM": "ローマ人への手紙", "1CO": "コリント人への第一の手紙",
+    "2CO": "コリント人への第二の手紙", "GAL": "ガラテヤ人への手紙",
+    "EPH": "エペソ人への手紙", "PHP": "ピリピ人への手紙",
+    "COL": "コロサイ人への手紙", "1TH": "テサロニケ人への第一の手紙",
+    "2TH": "テサロニケ人への第二の手紙", "1TI": "テモテへの第一の手紙",
+    "2TI": "テモテへの第二の手紙", "TIT": "テトスへの手紙",
+    "PHM": "ピレモンへの手紙", "HEB": "ヘブル人への手紙", "JAS": "ヤコブの手紙",
+    "1PE": "ペテロの第一の手紙", "2PE": "ペテロの第二の手紙",
+    "1JN": "ヨハネの第一の手紙", "2JN": "ヨハネの第二の手紙",
+    "3JN": "ヨハネの第三の手紙", "JUD": "ユダの手紙", "REV": "ヨハネの黙示録",
+}
+
+
+_OSIS_BOOK_RE = re.compile(r'<div\s+osisID="([^"]+)"[^>]*type="book"')
+_OSIS_CHAP_RE = re.compile(r'<chapter\s+osisID="([^".]+)\.(\d+)"')
+_OSIS_NOTE_RE = re.compile(r"<note\b.*?</note>", re.S)
+_OSIS_TITLE_RE = re.compile(r"<title\b.*?</title>", re.S)
+_OSIS_TAG_RE = re.compile(r"<[^>]*>")
+
+
+def _clean_osis(fragment: str) -> str:
+    """
+    Strip OSIS markup down to running text.
+
+    Drops footnotes and section headings outright. Everything else is
+    unwrapped rather than removed, which matters for <w gloss="…">漢字</w>:
+    that is furigana (a reading gloss on the kanji), so we keep the kanji and
+    discard the gloss. Translator additions (<transChange>) are kept, matching
+    what the USFX parser does.
+    """
+    fragment = _OSIS_NOTE_RE.sub("", fragment)
+    fragment = _OSIS_TITLE_RE.sub("", fragment)
+    fragment = _OSIS_TAG_RE.sub("", fragment)
+    return re.sub(r"\s+", " ", fragment).strip()
+
+
+def parse_sword_ztext(zip_bytes: bytes, module: str,
+                      book_names: dict | None = None) -> dict:
+    """
+    Parse a CrossWire zText module into:
+        { usfm_code: {"name": <english name>, "chapters": {chap: {verse: text}}} }
+
+    The module carries no per-book localized headers (only a testament-level
+    title), so book names come from `book_names` (USFM code -> localized name)
+    when given, and fall back to the canonical English ones otherwise.
+    """
+    books: dict = {}
+
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+        names = {n.rsplit("/", 1)[-1]: n for n in zf.namelist()
+                 if f"/{module}/" in n or n.startswith(f"{module}/")}
+
+        for testament in ("ot", "nt"):
+            try:
+                bzs = zf.read(names[f"{testament}.bzs"])
+                bzz = zf.read(names[f"{testament}.bzz"])
+                bzv = zf.read(names[f"{testament}.bzv"])
+            except KeyError:
+                continue  # NT-only or OT-only module
+
+            blocks: dict = {}
+            for i in range(len(bzs) // 12):
+                offset, csize, _usize = struct.unpack("<III", bzs[i * 12:(i + 1) * 12])
+                blocks[i] = zlib.decompress(bzz[offset:offset + csize]) if csize else b""
+
+            code = None
+            chapter = None
+            verse_no = 0
+
+            for i in range(len(bzv) // 10):
+                block, start, size = struct.unpack("<IIH", bzv[i * 10:(i + 1) * 10])
+                # .bzv offsets are byte offsets into the decompressed block, so
+                # slice the bytes and decode after — slicing decoded text would
+                # corrupt every multi-byte (i.e. every Japanese) verse.
+                raw = (blocks.get(block, b"")[start:start + size]
+                       .decode("utf-8", "replace") if size else "")
+
+                match = _OSIS_BOOK_RE.search(raw)
+                if match:
+                    code = OSIS_TO_USFM.get(match.group(1))
+                    chapter, verse_no = None, 0
+                    continue
+
+                match = _OSIS_CHAP_RE.search(raw)
+                if match:
+                    code = OSIS_TO_USFM.get(match.group(1))
+                    chapter, verse_no = int(match.group(2)), 0
+                    continue
+
+                if code is None or chapter is None:
+                    continue
+
+                verse_no += 1                      # empty slices still count
+                text = _clean_osis(raw)
+                if not text:
+                    continue
+                entry = books.setdefault(code, {"name": None, "chapters": {}})
+                entry["chapters"].setdefault(chapter, {})[verse_no] = text
+
+    for code, entry in books.items():
+        if not entry["name"]:
+            entry["name"] = (book_names or {}).get(code) or CODE_TO_BOOK[code][2]
+    return books
+
+
 def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict:
     """Write metadata.json + books/NN-slug.json. Returns a small stats dict."""
     base = out_dir / tid
@@ -556,6 +745,14 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
                     return False
                 xml_bytes = zf.read(xml_name)
             books = parse_usfx(xml_bytes)
+
+        elif source == "sword":
+            url = entry["sword_url"]
+            cache_path = cache_dir / url.rsplit("/", 1)[-1]
+            print(f"    · downloading {url}")
+            zip_bytes = fetch_bytes(url, cache_path, use_cache)
+            names = globals().get(entry.get("book_names", ""), None)
+            books = parse_sword_ztext(zip_bytes, entry["sword_module"], names)
 
         elif source == "aruljohn":
             print(f"    · downloading 66 book files from aruljohn/Bible-kjv")

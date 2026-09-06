@@ -1,11 +1,11 @@
 {
   "id": "bungo",
-  "name": "文語訳聖書",
+  "name": "文語訳聖書 (Classical)",
   "language": "ja",
   "license": "public-domain",
-  "attribution": "文語訳聖書 (Classical Japanese) — Public Domain",
-  "source_url": "https://bible.salterrae.net",
-  "year": 1887,
+  "attribution": "文語訳聖書 (Bungo-yaku, 1887/1917) — Public Domain",
+  "source_url": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo",
+  "year": 1917,
   "testament": "both",
   "book_count": 66
 }
