@@ -30,10 +30,12 @@ import {
   type Proposal,
 } from './lib/webmcp';
 import {
+  boardToMarkdown,
   deleteBoard as removeBoard,
   freeSlot,
   listBoards,
   newBoard,
+  nodeLabel,
   saveBoard,
   type Board,
   type BoardNode,
@@ -59,6 +61,7 @@ import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/
 import { SearchBar } from './components/SearchBar';
 import { runQuery, resolveReference, type ResolvedReference } from './lib/search';
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
+import { boardEmbed } from './lib/markdown';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -489,23 +492,29 @@ export function App() {
 
   /** A card in one line, for the export. */
   const describeCard = useCallback(
-    (node: BoardNode): string => {
-      if (node.kind === 'verse') {
-        const book = bible?.book(node.book_slug ?? '');
-        const where = `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`;
-        return node.translation ? `${where} (${node.translation.toUpperCase()})` : where;
-      }
-      if (node.kind === 'note') {
-        return notes.find((n) => n.id === node.noteId)?.title || 'Untitled note';
-      }
-      return node.text?.split('\n')[0] || 'Card';
-    },
+    (node: BoardNode): string => nodeLabel(node, { bible, notes }),
     [bible, notes]
   );
 
+  /**
+   * An embedded board, written out as Markdown for the export.
+   *
+   * In the app the fence draws the board; a `.md` opened anywhere else would
+   * otherwise show a code block containing a UUID, which is worse than useless.
+   */
+  const renderEmbeddedBoard = useCallback(
+    (id: string): string | null => {
+      const board = boards.find((b) => b.id === id);
+      return board ? boardToMarkdown(board, describeCard) : null;
+    },
+    [boards, describeCard]
+  );
+
   const doExport = useCallback(() => {
-    void downloadNotes(notes, boards, describeCard).then(() => setStaleExport(false));
-  }, [notes, boards, describeCard]);
+    void downloadNotes(notes, boards, describeCard, renderEmbeddedBoard).then(() =>
+      setStaleExport(false)
+    );
+  }, [notes, boards, describeCard, renderEmbeddedBoard]);
 
   const doChooseFolder = useCallback(() => {
     void chooseNotesFolder().then((ok) => {
@@ -752,6 +761,10 @@ export function App() {
             goTo(bookSlug, chapter, verse);
             setCanvasOpen(false);
           }}
+          onAddToNote={(id) => {
+            insertIntoNote(boardEmbed(id));
+            setCanvasOpen(false);
+          }}
         />
       </>
     );
@@ -912,6 +925,12 @@ export function App() {
             }}
             describeLink={describeLink}
             onFollowLink={followLink}
+            bible={bible}
+            boards={boards}
+            onOpenBoard={(id) => {
+              setBoardId(id);
+              setCanvasOpen(true);
+            }}
           />
         }
       />

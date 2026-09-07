@@ -12,8 +12,9 @@
  * note's id, so editing the note updates the board. Copying the text in would
  * make a board a snapshot that silently goes stale.
  */
+import type { Bible } from '@scriptura/core/types';
 import { BOARDS, del, readSafely, writeSafely } from './db';
-import type { HighlightColor } from './notes';
+import type { HighlightColor, Note } from './notes';
 
 export type NodeKind = 'verse' | 'note' | 'text';
 
@@ -30,8 +31,13 @@ export interface BoardNode {
   translation?: string;
   /** `note`: which note this card stands for. */
   noteId?: string;
-  /** `text`: the card's own words. Also the caption on any other kind. */
+  /** `text`: the card's own words. */
   text?: string;
+  /** `text`: what the reader called it. Other kinds derive their title. */
+  title?: string;
+  /** Optional per-card size, when the reader has resized it. */
+  w?: number;
+  h?: number;
   color?: HighlightColor;
 }
 
@@ -105,6 +111,44 @@ export function freeSlot(nodes: BoardNode[]): { x: number; y: number } {
     if (!overlaps) return slot;
   }
   return BASE;
+}
+
+/**
+ * What a card says, resolved from the anchor it holds.
+ *
+ * One implementation because three places need it — the board, the thumbnail
+ * embedded in a note, and the export — and a card that reads differently in the
+ * export than on screen is a bug nobody would think to look for.
+ */
+export function describeNode(
+  node: BoardNode,
+  ctx: { bible: Bible | null; notes: Note[] }
+): { title: string; body: string } {
+  if (node.kind === 'verse') {
+    const book = ctx.bible?.book(node.book_slug ?? '');
+    const verse = book?.chapters
+      .find((c) => c.number === node.chapter)
+      ?.verses.find((v) => v.number === node.verse);
+    return {
+      title: `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`,
+      body: verse?.text ?? 'Not in this translation.',
+    };
+  }
+  if (node.kind === 'note') {
+    const note = ctx.notes.find((n) => n.id === node.noteId);
+    return {
+      title: note?.title || 'Untitled note',
+      body: note ? note.body || 'Empty note.' : 'This note has been deleted.',
+    };
+  }
+  return { title: node.title?.trim() || 'Card', body: node.text ?? '' };
+}
+
+/** One line naming a card, for the export and for connection lists. */
+export function nodeLabel(node: BoardNode, ctx: { bible: Bible | null; notes: Note[] }): string {
+  const { title } = describeNode(node, ctx);
+  if (node.kind === 'verse' && node.translation) return `${title} (${node.translation.toUpperCase()})`;
+  return title;
 }
 
 export const verseNodeId = (n: Pick<BoardNode, 'book_slug' | 'chapter' | 'verse'>): string =>

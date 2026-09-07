@@ -101,6 +101,8 @@ test.describe('a board', () => {
     await page.getByTestId(`card-text-${id}`).fill('The Word made flesh');
     await expect(page.getByTestId(`card-text-${id}`)).toHaveValue('The Word made flesh');
 
+    // The resize grip lives in this corner; the remove button must still be
+    // reachable rather than sitting underneath it.
     await page.getByTestId(`card-remove-${id}`).click();
     await expect(page.locator('.card')).toHaveCount(0);
   });
@@ -149,5 +151,105 @@ test.describe('a board', () => {
     ]).then(([d]) => d);
     expect(download.suggestedFilename()).toMatch(/\.zip$/);
     expect(await download.path()).toBeTruthy();
+  });
+});
+
+test.describe('getting around the board', () => {
+  test('dragging the background pans it', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+
+    // The plane is absolutely positioned over the whole frame, so a press
+    // always lands on it and never on the frame — comparing target with
+    // currentTarget meant background dragging did nothing at all.
+    const card = page.locator('.card').first();
+    const before = (await card.boundingBox())!;
+
+    await page.mouse.move(900, 600);
+    await page.mouse.down();
+    await page.mouse.move(700, 480, { steps: 10 });
+    await page.mouse.up();
+
+    const after = (await card.boundingBox())!;
+    expect(Math.round(after.x - before.x)).toBe(-200);
+    expect(Math.round(after.y - before.y)).toBe(-120);
+  });
+
+  test('the wheel moves the board, and ctrl-wheel zooms at the pointer', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const card = page.locator('.card').first();
+    const before = (await card.boundingBox())!;
+
+    await page.mouse.move(700, 500);
+    await page.mouse.wheel(0, 200);
+    const panned = (await card.boundingBox())!;
+    expect(panned.y).toBeLessThan(before.y - 100);
+
+    await page.keyboard.down('Control');
+    await page.mouse.wheel(0, -200);
+    await page.keyboard.up('Control');
+    await expect(page.getByTestId('zoom-reset')).not.toHaveText('100%');
+  });
+
+  test('a card can be resized, and holds a long note without clipping it', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('Long');
+    await page.getByTestId('notes-surface').fill('word '.repeat(200));
+
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-new').click();
+    await page.getByTestId('board-add-note').click();
+
+    const card = page.locator('.card').first();
+    const id = await card.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
+
+    // The body scrolls rather than clipping: a whole note never fit any fixed
+    // height, and clipping simply put the rest out of reach.
+    const body = card.locator('.card__body');
+    const overflows = await body.evaluate((el) => el.scrollHeight > el.clientHeight + 2);
+    expect(overflows).toBe(true);
+    await body.evaluate((el) => el.scrollBy(0, 200));
+    expect(await body.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+
+    const before = (await card.boundingBox())!;
+    const grip = page.getByTestId(`card-resize-${id}`);
+    const at = (await grip.boundingBox())!;
+    await page.mouse.move(at.x + 4, at.y + 4);
+    await page.mouse.down();
+    await page.mouse.move(at.x + 180, at.y + 140, { steps: 10 });
+    await page.mouse.up();
+
+    const after = (await card.boundingBox())!;
+    expect(after.width).toBeGreaterThan(before.width + 100);
+    expect(after.height).toBeGreaterThan(before.height + 80);
+  });
+
+  test('a card the reader wrote can be named', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-new').click();
+    await page.getByTestId('board-add-text').click();
+
+    const card = page.locator('.card').first();
+    const id = await card.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
+    await page.getByTestId(`card-title-${id}`).fill('The argument');
+    await page.getByTestId(`card-text-${id}`).fill('Light overcomes darkness.');
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('canvas-open').click();
+    await expect(page.getByTestId(`card-title-${id}`)).toHaveValue('The argument');
+
+    // Verse cards derive their title from what they point at, so there is
+    // nothing to edit — and nothing to drift.
+    await page.getByTestId('canvas-close').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('canvas-open').click();
+    const verseCard = page.locator('.card[data-kind="verse"]').first();
+    const verseId = await verseCard.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
+    await expect(page.getByTestId(`card-title-${verseId}`)).toHaveCount(0);
   });
 });

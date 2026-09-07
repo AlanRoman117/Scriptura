@@ -12,14 +12,18 @@
 import { get, put, SETTINGS } from './db';
 import { markExported, type Note } from './notes';
 import { boardToMarkdown, type Board, type BoardNode } from './canvas';
+import { inlineBoardEmbeds } from './markdown';
 import { createZip, safeFilename } from './zip';
 
 const DIR_HANDLE = 'notesDirectory';
 
 /** Markdown, with the metadata a note needs to be worth something on its own. */
-function toMarkdown(note: Note): string {
+function toMarkdown(note: Note, renderBoard?: (id: string) => string | null): string {
   const stamp = new Date(note.updated).toISOString();
-  return `# ${note.title}\n\n<!-- scriptura:note ${note.id} updated:${stamp} -->\n\n${note.body}\n`;
+  // An embedded board is a fence holding a UUID. In the app that draws a
+  // diagram; in a file it is noise, so it is replaced with what it stood for.
+  const body = renderBoard ? inlineBoardEmbeds(note.body, renderBoard) : note.body;
+  return `# ${note.title}\n\n<!-- scriptura:note ${note.id} updated:${stamp} -->\n\n${body}\n`;
 }
 
 /**
@@ -32,7 +36,8 @@ function toMarkdown(note: Note): string {
 export function exportNotes(
   notes: Note[],
   boards: Board[] = [],
-  describe: (node: BoardNode) => string = defaultDescribe
+  describe: (node: BoardNode) => string = defaultDescribe,
+  renderBoard?: (id: string) => string | null
 ): Blob {
   const seen = new Map<string, number>();
   const unique = (folder: string, title: string, id: string) => {
@@ -46,7 +51,7 @@ export function exportNotes(
     ...notes.map((note) => ({
       // Two notes may share a title; a zip with duplicate paths is ambiguous.
       name: unique('notes', note.title, note.id),
-      content: toMarkdown(note),
+      content: toMarkdown(note, renderBoard),
     })),
     ...boards.map((board) => ({
       name: unique('boards', board.name, board.id),
@@ -64,9 +69,10 @@ function defaultDescribe(node: BoardNode): string {
 export async function downloadNotes(
   notes: Note[],
   boards: Board[] = [],
-  describe?: (node: BoardNode) => string
+  describe?: (node: BoardNode) => string,
+  renderBoard?: (id: string) => string | null
 ): Promise<void> {
-  const blob = exportNotes(notes, boards, describe);
+  const blob = exportNotes(notes, boards, describe, renderBoard);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

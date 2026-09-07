@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
-import { CARD_H, CARD_W, freeSlot, type Board, type BoardNode } from '../lib/canvas';
+import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -15,6 +15,8 @@ interface CanvasViewProps {
   onClose: () => void;
   /** Open a card's passage in the reader. */
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
+  /** Embed this board in the open note, where it renders as a diagram. */
+  onAddToNote?: (boardId: string) => void;
 }
 
 /**
@@ -39,6 +41,7 @@ export function CanvasView({
   onChange,
   onClose,
   onGo,
+  onAddToNote,
 }: CanvasViewProps) {
   const board = boards.find((b) => b.id === activeId) ?? null;
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -47,6 +50,7 @@ export function CanvasView({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const resize = useRef<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
   const panning = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => setConfirmingDelete(false), [activeId]);
@@ -55,6 +59,44 @@ export function CanvasView({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  /**
+   * Wheel to move, ctrl/⌘-wheel to zoom — the convention every other canvas
+   * uses, and the plane has no scrollbars of its own to fall back on.
+   *
+   * Bound here rather than with React's `onWheel` because that listener is
+   * passive: `preventDefault()` is ignored, and the browser scrolls the page
+   * out from under the board instead.
+   */
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.ctrlKey || e.metaKey) {
+        const box = node.getBoundingClientRect();
+        const px = e.clientX - box.left;
+        const py = e.clientY - box.top;
+        setZoom((current) => {
+          const next = Math.min(2, Math.max(0.3, current * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
+          // Anchored on the pointer: zooming towards the middle of the screen
+          // loses whatever you were looking at, which is the whole reason to
+          // zoom in the first place.
+          setPan((p) => ({
+            x: px - ((px - p.x) / current) * next,
+            y: py - ((py - p.y) / current) * next,
+          }));
+          return next;
+        });
+        return;
+      }
+      setPan((p) => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
+    };
+
+    node.addEventListener('wheel', onWheel, { passive: false });
+    return () => node.removeEventListener('wheel', onWheel);
+  }, [activeId]);
 
   const patch = useCallback(
     (next: Partial<Pick<Board, 'name' | 'nodes' | 'edges'>>) => {
@@ -72,9 +114,21 @@ export function CanvasView({
         setPan({ x: e.clientX - panning.current.x, y: e.clientY - panning.current.y });
         return;
       }
-      const held = drag.current;
       const box = frame.current?.getBoundingClientRect();
-      if (!held || !box || !board) return;
+      if (!board || !box) return;
+
+      const sizing = resize.current;
+      if (sizing) {
+        // Cards hold whole verses and whole notes, so a fixed size cannot be
+        // right for both. Floors keep the grip and the title reachable.
+        const w = Math.max(160, sizing.w + (e.clientX - sizing.x) / zoom);
+        const h = Math.max(96, sizing.h + (e.clientY - sizing.y) / zoom);
+        patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) });
+        return;
+      }
+
+      const held = drag.current;
+      if (!held) return;
       // Divided by zoom: the pointer moves in screen pixels, the card lives in
       // board coordinates, and at 0.5x every drag would otherwise travel twice
       // as far as the cursor.
@@ -88,6 +142,7 @@ export function CanvasView({
     };
     const up = () => {
       drag.current = null;
+      resize.current = null;
       panning.current = null;
       document.body.classList.remove('dragging');
     };
@@ -128,30 +183,15 @@ export function CanvasView({
   };
 
   /** What a card says. Verse text comes from the open translation, live. */
-  const describe = (node: BoardNode): { title: string; body: string } => {
-    if (node.kind === 'verse') {
-      const book = bible.book(node.book_slug ?? '');
-      const verse = book?.chapters
-        .find((c) => c.number === node.chapter)
-        ?.verses.find((v) => v.number === node.verse);
-      return {
-        title: `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`,
-        body: verse?.text ?? 'Not in this translation.',
-      };
-    }
-    if (node.kind === 'note') {
-      const note = notes.find((n) => n.id === node.noteId);
-      return {
-        title: note?.title || 'Untitled note',
-        body: note ? note.body.slice(0, 240) || 'Empty note.' : 'This note has been deleted.',
-      };
-    }
-    return { title: 'Note to self', body: node.text ?? '' };
-  };
+  const describe = (node: BoardNode) => describeNode(node, { bible, notes });
+
+  const sizeOf = (node: BoardNode) => ({ w: node.w ?? CARD_W, h: node.h ?? CARD_H });
 
   const centre = (id: string) => {
     const node = board?.nodes.find((n) => n.id === id);
-    return node ? { x: node.x + CARD_W / 2, y: node.y + CARD_H / 2 } : null;
+    if (!node) return null;
+    const { w, h } = sizeOf(node);
+    return { x: node.x + w / 2, y: node.y + h / 2, w, h };
   };
 
   /**
@@ -162,13 +202,16 @@ export function CanvasView({
    * invisible at exactly the moment it is drawn. Clipping to the boundary
    * costs one intersection and makes the arrow readable.
    */
-  const boundary = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+  const boundary = (
+    from: { x: number; y: number; w: number; h: number },
+    to: { x: number; y: number }
+  ) => {
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     if (dx === 0 && dy === 0) return from;
     const scale = Math.min(
-      Math.abs(dx) > 0 ? CARD_W / 2 / Math.abs(dx) : Infinity,
-      Math.abs(dy) > 0 ? CARD_H / 2 / Math.abs(dy) : Infinity
+      Math.abs(dx) > 0 ? from.w / 2 / Math.abs(dx) : Infinity,
+      Math.abs(dy) > 0 ? from.h / 2 / Math.abs(dy) : Infinity
     );
     return { x: from.x + dx * scale, y: from.y + dy * scale };
   };
@@ -213,6 +256,17 @@ export function CanvasView({
             >
               Add note
             </button>
+            {onAddToNote && (
+              <button
+                type="button"
+                className="canvas__action"
+                data-testid="board-to-note"
+                title="Put this board into the note you have open"
+                onClick={() => onAddToNote(board.id)}
+              >
+                Add to note
+              </button>
+            )}
             <button
               type="button"
               className="canvas__action canvas__action--danger"
@@ -261,8 +315,13 @@ export function CanvasView({
           ref={frame}
           data-connecting={connecting ? 'true' : undefined}
           onPointerDown={(e) => {
-            // Only the plane itself pans; a card handles its own drag.
-            if (e.target !== e.currentTarget) return;
+            // Anywhere that is not a card pans.
+            //
+            // This used to compare `e.target` with `e.currentTarget`, which was
+            // never equal: `.canvas__plane` is absolutely positioned over the
+            // whole frame, so the press always landed on the plane and dragging
+            // the background did nothing at all.
+            if ((e.target as HTMLElement).closest('.card')) return;
             panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
             document.body.classList.add('dragging');
             setConnecting(null);
@@ -324,7 +383,7 @@ export function CanvasView({
                   data-testid={`card-${node.id}`}
                   data-kind={node.kind}
                   data-color={node.color}
-                  style={{ left: node.x, top: node.y, width: CARD_W, height: CARD_H }}
+                  style={{ left: node.x, top: node.y, width: node.w ?? CARD_W, height: node.h ?? CARD_H }}
                   onClick={() => connecting && connect(node.id)}
                 >
                   <header
@@ -340,7 +399,28 @@ export function CanvasView({
                       document.body.classList.add('dragging');
                     }}
                   >
-                    <span className="card__title">{title}</span>
+                    {node.kind === 'text' ? (
+                      // A card the reader wrote is a card the reader names. The
+                      // other kinds derive their title from what they point at,
+                      // so an editable one there would only drift.
+                      <input
+                        className="card__title-input"
+                        data-testid={`card-title-${node.id}`}
+                        aria-label="Card title"
+                        placeholder="Card"
+                        value={node.title ?? ''}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onChange={(e) =>
+                          patch({
+                            nodes: board.nodes.map((n) =>
+                              n.id === node.id ? { ...n, title: e.target.value } : n
+                            ),
+                          })
+                        }
+                      />
+                    ) : (
+                      <span className="card__title">{title}</span>
+                    )}
                   </header>
 
                   {node.kind === 'text' ? (
@@ -359,6 +439,8 @@ export function CanvasView({
                       }
                     />
                   ) : (
+                    // Scrollable, not clipped: a card can hold a whole note or
+                    // a long verse, and neither fits in any fixed height.
                     <p className="card__body">{body}</p>
                   )}
 
@@ -425,6 +507,18 @@ export function CanvasView({
                       ✕
                     </button>
                   </footer>
+
+                  <span
+                    className="card__resize"
+                    data-testid={`card-resize-${node.id}`}
+                    aria-hidden="true"
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const { w, h } = sizeOf(node);
+                      resize.current = { id: node.id, x: e.clientX, y: e.clientY, w, h };
+                      document.body.classList.add('dragging');
+                    }}
+                  />
                 </article>
               );
             })}

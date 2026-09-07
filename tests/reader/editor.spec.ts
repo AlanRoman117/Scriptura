@@ -1,0 +1,171 @@
+import { expect, test } from '@playwright/test';
+
+/**
+ * The writing surface: tools for people who do not write Markdown, and a way
+ * to see what the syntax actually did.
+ */
+
+async function open(page: import('@playwright/test').Page) {
+  await page.goto('/');
+  await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('note-new').click();
+}
+
+/** Select the whole body, the way a reader would before formatting it. */
+async function selectAll(page: import('@playwright/test').Page) {
+  await page.getByTestId('notes-surface').click();
+  await page.keyboard.press('ControlOrMeta+a');
+}
+
+test.describe('formatting tools', () => {
+  test('appear with focus and withdraw when it leaves', async ({ page }) => {
+    await open(page);
+    // Collapsed by default is the point — but absent is not the same thing.
+    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
+
+    await page.getByTestId('notes-surface').click();
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+
+    await page.getByTestId('note-title').click();
+    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
+  });
+
+  test('a heading applies and toggles back off', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('The prologue');
+    await selectAll(page);
+    await page.getByTestId('tool-h2').click();
+    await expect(page.getByTestId('notes-surface')).toHaveValue('## The prologue');
+
+    // A tool that can only add syntax strands the reader it exists for.
+    await selectAll(page);
+    await page.getByTestId('tool-h2').click();
+    await expect(page.getByTestId('notes-surface')).toHaveValue('The prologue');
+  });
+
+  test('bold wraps the selection and leaves the caret usable', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('the Word');
+    const surface = page.getByTestId('notes-surface');
+    await surface.click();
+    await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 8));
+    await page.getByTestId('tool-bold').click();
+    await expect(surface).toHaveValue('the **Word**');
+
+    // The word stays selected, not its markers — so focus came back to the
+    // textarea and a second style can go on top of the first.
+    const picked = await surface.evaluate((el: HTMLTextAreaElement) =>
+      el.value.slice(el.selectionStart, el.selectionEnd)
+    );
+    expect(picked).toBe('Word');
+
+    await page.getByTestId('tool-italic').click();
+    await expect(surface).toHaveValue('the ***Word***');
+  });
+
+  test('a list numbers every selected line', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('one\ntwo\nthree');
+    await selectAll(page);
+    await page.getByTestId('tool-number').click();
+    await expect(page.getByTestId('notes-surface')).toHaveValue('1. one\n2. two\n3. three');
+  });
+});
+
+test.describe('reading it back', () => {
+  test('renders the syntax, and a click returns to the right place', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill(
+      '# Opening\n\nThe **Word** was with God.\n\n- first\n- second\n\n> a quotation'
+    );
+    await page.getByTestId('note-preview').click();
+
+    const preview = page.getByTestId('notes-preview');
+    await expect(preview.locator('h1')).toHaveText('Opening');
+    await expect(preview.locator('strong')).toHaveText('Word');
+    await expect(preview.locator('ul li')).toHaveCount(2);
+    await expect(preview.locator('blockquote')).toContainText('a quotation');
+
+    // Clicking a block goes back to writing with the caret in that block —
+    // reading and fixing as one gesture rather than a mode to leave first.
+    await preview.locator('blockquote').click();
+    const surface = page.getByTestId('notes-surface');
+    await expect(surface).toBeVisible();
+    const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
+    const body = await surface.inputValue();
+    expect(body.slice(at)).toBe('> a quotation');
+  });
+
+  test('the cursor affordances stay in the editor', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('# Opening\n\nsee [[psalms 23:1]]');
+    await expect(page.getByTestId('notes-heading')).toBeVisible();
+
+    // Both describe where the caret is; in a rendered view the sticky heading
+    // would sit directly above the same heading, rendered.
+    await page.getByTestId('note-preview').click();
+    await expect(page.getByTestId('notes-heading')).toHaveCount(0);
+    await expect(page.getByTestId('notes-follow-link')).toHaveCount(0);
+  });
+
+  test('a link in the preview opens its passage', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('see [[psalms 23:1]]');
+    await page.getByTestId('note-preview').click();
+    await page.getByTestId('preview-link-psalms-23-1').click();
+    await expect(page.getByTestId('chapter-title')).toContainText('Psalms 23');
+  });
+
+  test('markup in a note is rendered as text, never as markup', async ({ page }) => {
+    // A note is arbitrary text and may have been drafted by an assistant.
+    await open(page);
+    await page.getByTestId('notes-surface').fill('<img src=x onerror="window.__pwned=1">');
+    await page.getByTestId('note-preview').click();
+    await expect(page.getByTestId('notes-preview')).toContainText('<img src=x');
+    expect(await page.evaluate(() => (window as unknown as { __pwned?: number }).__pwned)).toBeUndefined();
+    await expect(page.getByTestId('notes-preview').locator('img')).toHaveCount(0);
+  });
+});
+
+test.describe('a board inside a note', () => {
+  test('embeds as a diagram, and opens from there', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-title').fill('Prologue study');
+
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('verse-3').click();
+    await page.getByTestId('canvas-3').click();
+
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-to-note').click();
+
+    // Back in the note, the fence is plain text…
+    await expect(page.getByTestId('notes-surface')).toContainText('scriptura-board');
+    // …and renders as the board, the way a mermaid fence would.
+    await page.getByTestId('note-preview').click();
+    const embed = page.getByTestId('notes-preview').locator('.embed');
+    await expect(embed).toBeVisible();
+    await expect(embed.locator('rect')).toHaveCount(2);
+    await expect(embed.locator('text').first()).toContainText('John 1:1');
+
+    await embed.locator('.embed__open').click();
+    await expect(page.getByTestId('canvas')).toBeVisible();
+  });
+
+  test('an embed whose board is deleted says so rather than vanishing', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-to-note').click();
+
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-delete').click();
+    await page.getByTestId('board-delete').click();
+    await page.getByTestId('canvas-close').click();
+
+    await page.getByTestId('note-preview').click();
+    await expect(page.getByTestId('board-embed-missing')).toBeVisible();
+  });
+});
