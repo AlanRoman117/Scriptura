@@ -1,14 +1,26 @@
+import { useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
+import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
 
 interface BiblePaneProps {
   bible: Bible;
   book: LoadedBook;
   chapter: number;
+  highlights: Highlight[];
   onNavigate: (bookSlug: string, chapter: number) => void;
+  onHighlight: (verse: number, color: HighlightColor) => void;
 }
 
-export function BiblePane({ bible, book, chapter, onNavigate }: BiblePaneProps) {
+export function BiblePane({
+  bible,
+  book,
+  chapter,
+  highlights,
+  onNavigate,
+  onHighlight,
+}: BiblePaneProps) {
+  const [openVerse, setOpenVerse] = useState<number | null>(null);
   const current = book.chapters.find((c) => c.number === chapter);
   const meta = bible.meta;
 
@@ -52,16 +64,59 @@ export function BiblePane({ bible, book, chapter, onNavigate }: BiblePaneProps) 
         </h1>
         {current ? (
           <div className="chapter__text">
-            {current.verses.map((v) => (
-              <p className="verse" key={v.number} data-verse={v.number}>
-                {/* aria-hidden so a screen reader reads scripture as prose rather
-                    than interleaving every verse number into the sentence. */}
-                <sup className="verse__num" aria-hidden="true">
-                  {v.number}
-                </sup>
-                <span className="verse__text">{v.text}</span>
-              </p>
-            ))}
+            {current.verses.map((v) => {
+              const id = highlightId({
+                translation: meta.id,
+                book_slug: book.slug,
+                chapter,
+                verse: v.number,
+              });
+              const mark = highlights.find((h) => h.id === id);
+              return (
+                <p
+                  className="verse"
+                  key={v.number}
+                  data-verse={v.number}
+                  data-highlight={mark?.color ?? undefined}
+                >
+                  {/* aria-hidden so a screen reader reads scripture as prose
+                      rather than interleaving every verse number into the
+                      sentence. The button beside it carries the real label. */}
+                  <sup className="verse__num" aria-hidden="true">
+                    {v.number}
+                  </sup>
+                  <button
+                    type="button"
+                    className="verse__handle"
+                    data-testid={`verse-${v.number}`}
+                    aria-label={`Highlight ${book.name} ${chapter}:${v.number}`}
+                    aria-expanded={openVerse === v.number}
+                    onClick={() => setOpenVerse(openVerse === v.number ? null : v.number)}
+                  />
+                  <span className="verse__text">{v.text}</span>
+
+                  {openVerse === v.number && (
+                    <span className="swatches" role="group" aria-label="Highlight colour">
+                      {HIGHLIGHT_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="swatch"
+                          data-color={color}
+                          data-testid={`swatch-${color}`}
+                          aria-label={color}
+                          aria-pressed={mark?.color === color}
+                          onClick={() => {
+                            onHighlight(v.number, color);
+                            setOpenVerse(null);
+                          }}
+                        />
+                      ))}
+                    </span>
+                  )}
+                </p>
+              );
+            })}
           </div>
         ) : (
           <p className="empty">This chapter is not in {meta.name}.</p>

@@ -8,12 +8,18 @@
  */
 
 const DB_NAME = 'scriptura';
-const DB_VERSION = 1;
+// Bumped when a store is added. The upgrade handler creates only what is
+// missing, so it serves both a fresh install and an existing one.
+const DB_VERSION = 2;
 
 /** Downloaded translations, keyed by id. */
 export const TRANSLATIONS = 'translations';
 /** Small key/value settings — last-read location, export timestamps. */
 export const SETTINGS = 'settings';
+/** Markdown notes the user has written. The thing that must never be lost. */
+export const NOTES = 'notes';
+/** Verse highlights, anchored to {translation, book_slug, chapter, verse}. */
+export const HIGHLIGHTS = 'highlights';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -27,6 +33,8 @@ function open(): Promise<IDBDatabase> {
       // take the user's settings — later, their notes — down with it.
       if (!db.objectStoreNames.contains(TRANSLATIONS)) db.createObjectStore(TRANSLATIONS);
       if (!db.objectStoreNames.contains(SETTINGS)) db.createObjectStore(SETTINGS);
+      if (!db.objectStoreNames.contains(NOTES)) db.createObjectStore(NOTES);
+      if (!db.objectStoreNames.contains(HIGHLIGHTS)) db.createObjectStore(HIGHLIGHTS);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -59,6 +67,64 @@ export const del = (store: string, key: string): Promise<undefined> =>
 
 export const keys = (store: string): Promise<IDBValidKey[]> =>
   run<IDBValidKey[]>(store, 'readonly', (s) => s.getAllKeys());
+
+export const all = <T>(store: string): Promise<T[]> =>
+  run<T[]>(store, 'readonly', (s) => s.getAll() as IDBRequest<T[]>);
+
+/**
+ * Read a store without letting its failure spread.
+ *
+ * Stores are read independently on purpose: a translation that fails to parse
+ * must not take the user's notes down with it. Returns the fallback and reports
+ * rather than throwing, because a reader that renders nothing because one store
+ * is damaged is worse than one that renders what it still has.
+ */
+export async function readSafely<T>(
+  store: string,
+  fallback: T,
+  onFailure?: (store: string, error: unknown) => void
+): Promise<T> {
+  try {
+    return await all<T extends (infer U)[] ? U : never>(store) as T;
+  } catch (error) {
+    onFailure?.(store, error);
+    return fallback;
+  }
+}
+
+/**
+ * Write, reporting failure **once**.
+ *
+ * A quota failure repeats on every keystroke. Warning each time buries the app
+ * in toasts and trains the user to dismiss the one message that matters, so the
+ * first failure per store is reported and the rest are counted silently until
+ * a write succeeds again.
+ */
+const failedStores = new Set<string>();
+
+export async function writeSafely(
+  store: string,
+  key: string,
+  value: unknown,
+  onFirstFailure?: (store: string, error: unknown) => void
+): Promise<boolean> {
+  try {
+    await put(store, key, value);
+    failedStores.delete(store);
+    return true;
+  } catch (error) {
+    if (!failedStores.has(store)) {
+      failedStores.add(store);
+      onFirstFailure?.(store, error);
+    }
+    return false;
+  }
+}
+
+/** Test seam: forget which stores have already reported a failure. */
+export function resetWriteFailures(): void {
+  failedStores.clear();
+}
 
 /**
  * Ask the browser not to evict this origin's storage.
