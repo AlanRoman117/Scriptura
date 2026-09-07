@@ -148,8 +148,9 @@ test.describe('reading two translations at once', () => {
     const body = page.getByTestId('notes-surface');
     await expect(body).toContainText('el principio era el Verbo');
     await expect(body).toContainText('(RV1909)');
-    // Still stored as the slug, so the link resolves in any translation.
-    await expect(body).toContainText('[[john 1:1]]');
+    // The slug so it resolves in any translation, and the qualifier so this
+    // quote is distinguishable from the same verse quoted from another column.
+    await expect(body).toContainText('[[john 1:1@rv1909]]');
   });
 
   test('a CC BY-SA translation carries its notice into the comparison', async ({ page }) => {
@@ -161,5 +162,47 @@ test.describe('reading two translations at once', () => {
 
     await expect(page.getByTestId('compare')).toBeVisible();
     await expect(page.getByTestId('compare-attribution')).toContainText(/CC BY-SA/i);
+  });
+});
+
+test.describe('a link back to the version it quoted', () => {
+  test('following it switches translation', async ({ page }) => {
+    await open(page);
+    await install(page, 'rv1909');
+    await page.getByTestId('library-close').click();
+
+    // Quote the same verse from both translations, into one note.
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-read-rv1909').click();
+    await expect(page.getByTestId('chapter-title')).toContainText('Juan 1');
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+
+    // Two quotes of John 1:1, and two links that say which is which.
+    const body = page.getByTestId('notes-surface');
+    await expect(body).toContainText('[[john 1:1@bsb]]');
+    await expect(body).toContainText('[[john 1:1@rv1909]]');
+
+    // Following the BSB one goes back to BSB, from inside RV1909.
+    //
+    // Placed by offset rather than by arrow keys: ArrowDown in a textarea moves
+    // by *visual* line, so it lands somewhere different whenever the wrapping
+    // changes. The real ArrowRight afterwards is what React's handler sees — a
+    // synthesised `select` does not reach it.
+    await body.click();
+    await body.evaluate((el: HTMLTextAreaElement) => {
+      const at = el.value.indexOf('[[john 1:1@bsb]]');
+      el.setSelectionRange(at + 2, at + 2);
+    });
+    await page.keyboard.press('ArrowRight');
+
+    const follow = page.getByTestId('notes-follow-link');
+    await expect(follow).toContainText('(BSB)');
+    await follow.click();
+    await expect(page.getByTestId('chapter-title')).toContainText('John 1');
   });
 });

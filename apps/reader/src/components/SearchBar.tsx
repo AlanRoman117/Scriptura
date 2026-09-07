@@ -11,6 +11,8 @@ interface SearchBarProps {
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
   onInsert: (result: SearchResult) => void;
   onClose: () => void;
+  /** Opens the full results view, which can walk the whole match set. */
+  onSeeAll: () => void;
 }
 
 /**
@@ -29,6 +31,7 @@ export function SearchBar({
   onGo,
   onInsert,
   onClose,
+  onSeeAll,
 }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
   const open = focused && query.trim().length > 0;
@@ -82,6 +85,25 @@ export function SearchBar({
               : `${total} match${total === 1 ? '' : 'es'}${
                   results.length < total ? ` — showing ${results.length}` : ''
                 }`}
+            {/* The dropdown is for jumping to a verse. Anything past the first
+                few dozen needs somewhere with room to walk them. */}
+            {results.length < total && (
+              <>
+                {' · '}
+                <button
+                  type="button"
+                  className="search__see-all"
+                  data-testid="search-see-all"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onSeeAll();
+                    setFocused(false);
+                  }}
+                >
+                  See all {total}
+                </button>
+              </>
+            )}
           </p>
 
           <ul className="search__results">

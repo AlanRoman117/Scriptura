@@ -90,8 +90,10 @@ test.describe('getting scripture into a note', () => {
     const body = page.getByTestId('notes-surface');
     await expect(body).toContainText('> In the beginning was the Word');
     await expect(body).toContainText('— John 1:1 (BSB)');
-    // The link is stored as the slug, so it resolves in any translation.
-    await expect(body).toContainText('[[john 1:1]]');
+    // The slug so it resolves in any translation, and the translation so a
+    // quote from one version is distinguishable from a quote of the same verse
+    // from another.
+    await expect(body).toContainText('[[john 1:1@bsb]]');
   });
 
   test('Link inserts just the reference, and leaves a line to write on', async ({ page }) => {
@@ -100,7 +102,7 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('verse-3').click();
     await page.getByTestId('link-3').click();
     // The trailing blank line is the point: you insert, then write about it.
-    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:3]]\n\n');
+    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:3@bsb]]\n\n');
   });
 
   test('the cursor lands on the blank line after an insertion', async ({ page }) => {
@@ -116,7 +118,7 @@ test.describe('getting scripture into a note', () => {
 
     // So typing continues below the quote rather than inside it.
     await page.keyboard.type('This is the claim.');
-    await expect(surface).toContainText('[[john 1:1]]\n\nThis is the claim.');
+    await expect(surface).toContainText('[[john 1:1@bsb]]\n\nThis is the claim.');
   });
 
   test('two insertions do not run together', async ({ page }) => {
@@ -126,7 +128,9 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('link-1').click();
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:1]]\n\n[[john 1:2]]\n\n');
+    await expect(page.getByTestId('notes-surface')).toHaveValue(
+      '[[john 1:1@bsb]]\n\n[[john 1:2@bsb]]\n\n'
+    );
   });
 
   test('a search result can be inserted without leaving the search', async ({ page }) => {
@@ -168,5 +172,44 @@ test.describe('keeping your place in a note', () => {
     await page.getByTestId('note-new').click();
     await page.getByTestId('notes-surface').fill('Just prose, no headings.');
     await expect(page.getByTestId('notes-heading')).toHaveCount(0);
+  });
+});
+
+test.describe('following a link back', () => {
+  test('the cursor inside a link offers to open it', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    const body = page.getByTestId('notes-surface');
+    await body.fill('a thought about [[psalms 23:1]] here');
+
+    // A textarea has nothing to click, so the cursor is how a link is picked.
+    await body.click();
+    await page.keyboard.press('ControlOrMeta+Home');
+    for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowRight');
+
+    const follow = page.getByTestId('notes-follow-link');
+    await expect(follow).toContainText('Psalms 23:1');
+    await follow.click();
+    await expect(page.getByTestId('chapter-title')).toContainText('Psalms 23');
+  });
+
+  test('no link under the cursor, no button', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('notes-surface').fill('just prose');
+    await expect(page.getByTestId('notes-follow-link')).toHaveCount(0);
+  });
+
+  test('a link naming a translation that is not here says so', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    const body = page.getByTestId('notes-surface');
+    await body.fill('[[john 3:16@kjv]]');
+    await body.click();
+    await page.keyboard.press('ControlOrMeta+Home');
+    await page.keyboard.press('ArrowRight');
+
+    // Honest rather than silently landing in a different version.
+    await expect(page.getByTestId('notes-follow-link')).toContainText('KJV — not downloaded');
   });
 });

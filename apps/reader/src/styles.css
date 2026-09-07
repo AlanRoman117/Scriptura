@@ -367,6 +367,17 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 .marks__remove:hover { color: var(--ink); border-color: var(--rule); }
 
+/* A link is inert text in a textarea, so the follow action sits beside the
+   heading rather than on the link itself. */
+.notes__link {
+  align-self: flex-start; margin-bottom: .35rem;
+  font: inherit; font-size: .74rem; color: var(--ink);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  border: 1px solid var(--rule); border-radius: 6px;
+  padding: .2rem .45rem; cursor: pointer;
+}
+.notes__link:hover { border-color: var(--ink-soft); }
+
 /* The heading the cursor is under, pinned like an editor's sticky scroll. */
 .notes__heading {
   position: sticky; top: 0; z-index: 1;
@@ -375,6 +386,59 @@ body.dragging { cursor: col-resize; user-select: none; }
   border-bottom: 1px solid var(--rule);
   background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── Search results: every match, and where they fall ─────────────────────── */
+
+.search__see-all {
+  font: inherit; font-size: inherit; color: var(--ink);
+  background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline;
+}
+
+.results { padding: 1rem 1.25rem 2rem; }
+.results__bar { display: flex; align-items: baseline; gap: .5rem; }
+.results__title { font-family: var(--serif); font-size: 1.15rem; margin: 0; flex: 1; font-weight: 600; }
+.results__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+}
+.results__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+/* The breakdown is the better answer to a counting question, and doubles as
+   the filter. Wraps rather than scrolls: 40-odd books is a paragraph. */
+.results__books { display: flex; flex-wrap: wrap; gap: .3rem; margin: .75rem 0 1rem; }
+.results__book {
+  font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 999px; padding: .2rem .5rem;
+}
+.results__book:hover { color: var(--ink); border-color: var(--ink-soft); }
+.results__book[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--paper-raised));
+}
+.results__book-count { color: var(--accent); font-variant-numeric: tabular-nums; }
+
+.results__list { list-style: none; margin: 0; padding: 0; }
+.results__item { display: flex; align-items: stretch; gap: .25rem; border-bottom: 1px solid var(--rule); }
+.results__ref {
+  flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
+  background: transparent; border: none; border-radius: 6px; padding: .45rem .5rem; cursor: pointer;
+}
+.results__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.results__ref-label { display: block; font-size: .72rem; color: var(--accent); }
+.results__ref-text { display: block; font-family: var(--serif); font-size: .92rem; line-height: 1.55; }
+.results__insert {
+  flex: 0 0 auto; width: 2rem; font: inherit; font-size: 1rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.results__insert:hover { color: var(--ink); border-color: var(--rule); }
+
+.results__footer { font-size: .76rem; color: var(--ink-soft); margin-top: 1rem; }
+.results__more {
+  font: inherit; font-size: inherit; color: var(--ink); cursor: pointer;
+  background: none; border: none; padding: 0; text-decoration: underline;
 }
 
 /* ── Library: what exists, what is here, what it costs ────────────────────── */

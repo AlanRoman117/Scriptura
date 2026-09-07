@@ -18,6 +18,7 @@ import {
 } from './lib/library';
 import { LibraryPanel, type DownloadState } from './components/LibraryPanel';
 import { ComparePane } from './components/ComparePane';
+import { SearchResults } from './components/SearchResults';
 import {
   exportIsStale,
   deleteHighlight,
@@ -38,7 +39,7 @@ import { MarksPanel } from './components/MarksPanel';
 import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/export';
 import { SearchBar } from './components/SearchBar';
 import { runQuery, resolveReference, type ResolvedReference } from './lib/search';
-import { quotePassage, toWikiLink } from './lib/references';
+import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -77,8 +78,9 @@ export function App() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [total, setTotal] = useState(0);
+  /** Every match. The dropdown shows a slice; the results view walks them all. */
+  const [hits, setHits] = useState<SearchResult[]>([]);
+  const [resultsOpen, setResultsOpen] = useState(false);
   const [reference, setReference] = useState<ResolvedReference | null>(null);
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
 
@@ -157,17 +159,15 @@ export function App() {
 
   useEffect(() => {
     if (!bible || !query.trim()) {
-      setResults([]);
-      setTotal(0);
+      setHits([]);
       setReference(null);
+      setResultsOpen(false);
       return;
     }
     // A reference jumps; anything else searches. Both run offline against the
     // translation already in memory.
     setReference(resolveReference(bible, query));
-    const hits = runQuery(bible, query);
-    setResults(hits.slice(0, 40));
-    setTotal(hits.length);
+    setHits(runQuery(bible, query));
   }, [bible, query]);
 
   /**
@@ -219,11 +219,18 @@ export function App() {
   const linkVerse = useCallback(
     (verse: number) => {
       insertIntoNote(
-        toWikiLink({ book_slug: position.bookSlug, chapter: position.chapter, verse }),
+        toWikiLink({
+          book_slug: position.bookSlug,
+          chapter: position.chapter,
+          verse,
+          // Which version, not only which passage: the same verse linked from
+          // two translations is otherwise the same string twice.
+          translation: translationId,
+        }),
         { focus: true }
       );
     },
-    [position, insertIntoNote]
+    [position, translationId, insertIntoNote]
   );
 
   // Compared translations are read from IndexedDB — they are only offerable
@@ -448,6 +455,57 @@ export function App() {
     ? [bible, ...compareWith.map((id) => compareBibles[id]).filter((b): b is Bible => !!b)]
     : [];
 
+  /**
+   * How a `[[…]]` link reads, for the follow button in the notes pane.
+   *
+   * Resolved against whatever is open, since the slug is language-independent —
+   * and it says plainly when a link's own translation is not on this device
+   * rather than offering navigation that would quietly land somewhere else.
+   */
+  const describeLink = (inner: string): string | null => {
+    if (!bible) return null;
+    const link = resolveLink(bible, inner);
+    if (!link) return null;
+
+    const span =
+      link.verse === undefined
+        ? ''
+        : link.endVerse !== undefined && link.endVerse !== link.verse
+          ? `:${link.verse}-${link.endVerse}`
+          : `:${link.verse}`;
+    const where = `${link.book.name} ${link.chapter}${span}`;
+    if (!link.translation) return where;
+
+    const id = link.translation.toUpperCase();
+    return installed.includes(link.translation)
+      ? `${where} (${id})`
+      : `${where} (${id} — not downloaded)`;
+  };
+
+  const followLink = (inner: string) => {
+    if (!bible) return;
+    const link = resolveLink(bible, inner);
+    if (!link) return;
+    // Switching is what makes a qualified link worth writing: a note quoting
+    // KJV and VBL of one verse should take you back to the version it quoted.
+    if (
+      link.translation &&
+      link.translation !== translationId &&
+      installed.includes(link.translation)
+    ) {
+      readTranslation(link.translation);
+    }
+    goTo(link.book_slug, link.chapter, link.verse);
+  };
+
+  /** Quote a search hit, from the translation the search ran against. */
+  const insertSearchResult = (r: SearchResult) => {
+    if (!bible) return;
+    const b = bible.book(r.book_slug);
+    const v = b?.chapters.find((c) => c.number === r.chapter)?.verses.find((x) => x.number === r.verse);
+    if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]));
+  };
+
   /** Quote one column of a comparison, in that column's own words. */
   const quoteFrom = (id: string, verse: number) => {
     const from = comparing.find((b) => b.meta.id === id);
@@ -508,11 +566,13 @@ export function App() {
             markCount={highlights.length}
             onToggleMarks={() => {
               setLibraryOpen(false);
+              setResultsOpen(false);
               setMarksOpen((o) => !o);
             }}
             libraryOpen={libraryOpen}
             onToggleLibrary={() => {
               setMarksOpen(false);
+              setResultsOpen(false);
               setLibraryOpen((o) => !o);
             }}
             overlay={
@@ -528,6 +588,18 @@ export function App() {
                   }}
                   onRemove={unmark}
                   onClose={() => setMarksOpen(false)}
+                />
+              ) : resultsOpen ? (
+                <SearchResults
+                  bible={bible}
+                  query={query}
+                  results={hits}
+                  onGo={(bookSlug, chapter, verse) => {
+                    goTo(bookSlug, chapter, verse);
+                    setResultsOpen(false);
+                  }}
+                  onInsert={(r) => insertSearchResult(r)}
+                  onClose={() => setResultsOpen(false)}
                 />
               ) : libraryOpen ? (
                 <LibraryPanel
@@ -559,18 +631,18 @@ export function App() {
             search={
               <SearchBar
                 query={query}
-                results={results}
+                results={hits.slice(0, 40)}
                 reference={reference}
-                total={total}
+                total={hits.length}
                 onQuery={setQuery}
                 onGo={goTo}
-                onInsert={(r) => {
-                  const b = bible.book(r.book_slug);
-                  const ch = b?.chapters.find((c) => c.number === r.chapter);
-                  const v = ch?.verses.find((x) => x.number === r.verse);
-                  if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]));
-                }}
+                onInsert={insertSearchResult}
                 onClose={() => setQuery('')}
+                onSeeAll={() => {
+                  setMarksOpen(false);
+                  setLibraryOpen(false);
+                  setResultsOpen(true);
+                }}
               />
             }
           />
@@ -588,6 +660,8 @@ export function App() {
             onSurfaceReady={(el) => {
               surfaceRef.current = el;
             }}
+            describeLink={describeLink}
+            onFollowLink={followLink}
           />
         }
       />

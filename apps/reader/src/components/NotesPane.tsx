@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Note } from '../lib/notes';
-import { headingAt } from '../lib/references';
+import { headingAt, linkAt } from '../lib/references';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -13,6 +13,9 @@ interface NotesPaneProps {
   onExport: () => void;
   /** Registers the textarea so quoted passages land at the cursor. */
   onSurfaceReady?: (el: HTMLTextAreaElement | null) => void;
+  /** How a `[[…]]` link reads, or null when it resolves to nothing. */
+  describeLink?: (inner: string) => string | null;
+  onFollowLink?: (inner: string) => void;
 }
 
 /**
@@ -33,11 +36,14 @@ export function NotesPane({
   onChange,
   onExport,
   onSurfaceReady,
+  describeLink,
+  onFollowLink,
 }: NotesPaneProps) {
   const active = notes.find((n) => n.id === activeId) ?? null;
   const surface = useRef<HTMLTextAreaElement>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [heading, setHeading] = useState<string | null>(null);
+  const [link, setLink] = useState<string | null>(null);
 
   useEffect(() => setConfirmingDelete(false), [activeId]);
   useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
@@ -49,8 +55,12 @@ export function NotesPane({
     const el = surface.current;
     if (!el) return;
     setHeading(headingAt(el.value, el.selectionStart));
+    // A textarea has nothing to click, so the cursor is how a link is picked.
+    setLink(linkAt(el.value, el.selectionStart));
   };
   useEffect(trackHeading, [active?.id, active?.body]);
+
+  const linkLabel = link ? describeLink?.(link) : null;
 
   return (
     <div className="notes" data-testid="notes">
@@ -109,6 +119,17 @@ export function NotesPane({
             <div className="notes__heading" data-testid="notes-heading" aria-hidden="true">
               {heading}
             </div>
+          )}
+          {link && linkLabel && (
+            <button
+              type="button"
+              className="notes__link"
+              data-testid="notes-follow-link"
+              title="Open this passage in the Bible pane"
+              onClick={() => onFollowLink?.(link)}
+            >
+              Go to {linkLabel}
+            </button>
           )}
           <textarea
             ref={surface}
