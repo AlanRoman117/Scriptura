@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
@@ -21,6 +21,31 @@ export function BiblePane({
   onHighlight,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
+  const title = useRef<HTMLHeadingElement>(null);
+  const [stuck, setStuck] = useState(false);
+
+  // A sticky element gives no signal that it is pinned, so detect it by
+  // comparing the heading's position against where it parks. Only then does it
+  // draw its rule — a permanent divider under an unpinned heading is noise.
+  //
+  // Deliberately not IntersectionObserver: `rootMargin` accepts px and % only,
+  // so the `rem` offset this needs is not expressible there. (It throws on
+  // construction, which takes the whole pane down with it.)
+  useEffect(() => {
+    const node = title.current;
+    const scroller = node?.closest('.pane');
+    if (!node || !scroller) return;
+
+    const check = () => {
+      const barHeight = parseFloat(getComputedStyle(node).top) || 0;
+      const top = node.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+      setStuck(top <= barHeight + 1);
+    };
+
+    check();
+    scroller.addEventListener('scroll', check, { passive: true });
+    return () => scroller.removeEventListener('scroll', check);
+  }, [book.slug, chapter]);
   const current = book.chapters.find((c) => c.number === chapter);
   const meta = bible.meta;
 
@@ -59,7 +84,7 @@ export function BiblePane({
       </header>
 
       <article className="chapter" data-testid="chapter">
-        <h1 className="chapter__title">
+        <h1 className="chapter__title" ref={title} data-stuck={stuck} data-testid="chapter-title">
           {book.name} {chapter}
         </h1>
         {current ? (

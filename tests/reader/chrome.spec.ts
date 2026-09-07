@@ -54,6 +54,51 @@ test.describe('contrast', () => {
   }
 });
 
+test.describe('keeping your place', () => {
+  test('the chapter title stays visible while scrolling, like sticky scroll', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('book-select').selectOption('psalms');
+    await page.getByTestId('chapter-select').selectOption('119');
+
+    const pane = page.getByTestId('pane-bible');
+    const title = page.getByTestId('chapter-title');
+    await expect(title).toContainText('Psalms 119');
+
+    await pane.evaluate((el) => el.scrollTo(0, 4000));
+    await expect.poll(() => title.getAttribute('data-stuck')).toBe('true');
+
+    // Still on screen, inside the pane, below the bar — not scrolled away.
+    const box = (await title.boundingBox())!;
+    const paneBox = (await pane.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(paneBox.y - 1);
+    expect(box.y).toBeLessThan(paneBox.y + 120);
+    await expect(title).toContainText('Psalms 119');
+  });
+
+  test('the title is not pinned when there is nothing to scroll past', async ({ page }) => {
+    await open(page);
+    // Short chapter: the heading should sit normally, with no divider.
+    await page.getByTestId('book-select').selectOption('3-john');
+    await expect(page.getByTestId('chapter-title')).toHaveAttribute('data-stuck', 'false');
+  });
+});
+
+test.describe('the notes dropdown', () => {
+  test('is readable once there is more than one note', async ({ page }) => {
+    await open(page);
+    for (const title of ['First note', 'Second note']) {
+      await page.getByTestId('note-new').click();
+      await page.getByTestId('note-title').fill(title);
+    }
+    const colors = await page.getByTestId('note-select').evaluate((el) => {
+      const s = getComputedStyle(el);
+      return { color: s.color, background: s.backgroundColor };
+    });
+    expect(colors.background).not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
+    expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 test.describe('a narrow Bible pane', () => {
   // Just above the 850px sheet breakpoint, so the split layout is still in
   // play and 25% of it is genuinely tight — at 1280px the minimum pane is
