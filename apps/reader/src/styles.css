@@ -103,7 +103,9 @@ body.dragging { cursor: col-resize; user-select: none; }
 
 /* ── Reader ───────────────────────────────────────────────────────────────── */
 
-.reader { display: flex; flex-direction: column; min-height: 100%; }
+/* Container, not viewport: the pane can be dragged narrow while the window
+   stays wide, so the controls have to respond to their own width. */
+.reader { display: flex; flex-direction: column; min-height: 100%; container-type: inline-size; }
 
 .reader__bar {
   position: sticky; top: 0; z-index: 1;
@@ -113,15 +115,38 @@ body.dragging { cursor: col-resize; user-select: none; }
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--rule);
 }
+
 .reader__select {
-  font: inherit; font-size: .9rem; color: var(--ink);
-  background: transparent; border: 1px solid var(--rule);
-  border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
+  font: inherit; font-size: .9rem;
+  color: var(--ink);
+  /* Explicit, not transparent. A transparent <select> leaves the browser to
+     paint the open dropdown from an unresolved background, which is how the
+     list ended up unreadable — and the options need their own colours because
+     they are rendered outside the page's stacking context. */
+  background-color: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: .3rem .5rem;
+  max-width: 14rem;
+  /* Let it shrink rather than overflow when the pane is narrowed. */
+  min-width: 0;
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
 }
-.reader__select--chapter { max-width: 5.5rem; }
+.reader__select option { background-color: var(--paper-raised); color: var(--ink); }
+.reader__select:hover { border-color: var(--ink-soft); }
+.reader__select--chapter { max-width: 5.5rem; flex: 0 0 auto; }
+
 .reader__translation {
   margin-left: auto; font-size: .72rem; letter-spacing: .08em;
-  color: var(--ink-soft);
+  color: var(--ink-soft); flex: 0 0 auto;
+}
+
+/* Below this the bar cannot hold everything: drop the translation badge first
+   (it is the least load-bearing), then let the book select take what is left. */
+@container (max-width: 22rem) {
+  .reader__translation { display: none; }
+  .reader__select { max-width: none; }
 }
 
 .chapter { padding: 2rem 1.25rem 3rem; margin-inline: auto; max-width: var(--measure); }
