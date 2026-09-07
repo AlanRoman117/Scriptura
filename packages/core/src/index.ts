@@ -11,7 +11,7 @@ export type {
   Verse,
 } from './types.js';
 
-export { normalizeBookKey, slugFromFilename } from './books.js';
+export { foldText, normalizeBookKey, slugFromFilename } from './books.js';
 
 export {
   clearCache,

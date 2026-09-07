@@ -1,4 +1,4 @@
-import { normalizeBookKey, slugFromFilename } from '@scriptura/core';
+import { foldText, normalizeBookKey, slugFromFilename } from '@scriptura/core';
 
 describe('slugFromFilename', () => {
   test('strips the numeric prefix and extension', () => {
@@ -46,5 +46,42 @@ describe('normalizeBookKey', () => {
   test('trims stray separators rather than emitting empty segments', () => {
     expect(normalizeBookKey('  John  ')).toBe('john');
     expect(normalizeBookKey('--john--')).toBe('john');
+  });
+});
+
+describe('foldText', () => {
+  test('folds case', () => {
+    expect(foldText('For God So Loved')).toBe('for god so loved');
+  });
+
+  test('folds Latin diacritics', () => {
+    expect(foldText('amó')).toBe('amo');
+    expect(foldText('péché')).toBe('peche');
+    expect(foldText('GÉNESIS')).toBe('genesis');
+  });
+
+  test('is symmetric — either spelling folds to the same key', () => {
+    expect(foldText('amó')).toBe(foldText('amo'));
+    expect(foldText('Père')).toBe(foldText('pere'));
+  });
+
+  test('preserves spacing and punctuation, unlike normalizeBookKey', () => {
+    // Phrase and substring matching depend on this; the book-key variant
+    // collapses separators, which would be wrong for prose.
+    expect(foldText('In the beginning, God')).toBe('in the beginning, god');
+    expect(normalizeBookKey('In the beginning, God')).toBe('in-the-beginning-god');
+  });
+
+  test('leaves Japanese intact', () => {
+    // Same trap as normalizeBookKey: NFD decomposes the dakuten to a combining
+    // mark, so a blanket \p{M} strip turns ガ into カ — a different word.
+    expect(foldText('ガラテヤ人への手紙')).toBe('ガラテヤ人への手紙');
+    expect(foldText('ガラテヤ')).not.toBe('カラテヤ');
+    expect(foldText('それ神はその獨子を賜ふ')).toBe('それ神はその獨子を賜ふ');
+  });
+
+  test('handles empty and whitespace input', () => {
+    expect(foldText('')).toBe('');
+    expect(foldText('   ')).toBe('   ');
   });
 });

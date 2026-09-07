@@ -25,20 +25,33 @@ export function slugFromFilename(filename: string): string {
 }
 
 /**
- * Fold a book name or slug into a comparable key.
+ * Fold text for comparison: case and Latin diacritics only.
  *
- * Lowercases, strips diacritics, and reduces any run of spaces, underscores or
- * hyphens to a single hyphen — so `Génesis`, `genesis` and `GENESIS` all meet
- * at `genesis`, and `1 Samuel` meets the `1-samuel` slug.
+ * Spacing and punctuation are left alone, so the result still supports
+ * substring and phrase matching. This is *normalization*, not fuzzy matching —
+ * `amó` and `amo` are the same word, so treating them as different is a bug,
+ * not a strictness setting.
+ *
+ * ⚠️ Strips the Latin combining block **only**. A general `\p{M}` strip also
+ * removes the Japanese dakuten (U+3099), silently turning ガラテヤ into
+ * カラテヤ — a different word. There is a regression test; do not "simplify".
  */
-export function normalizeBookKey(value: string): string {
+export function foldText(value: string): string {
   return value
     .normalize('NFD')
-    // Latin combining marks ONLY. A general \p{M} strip would eat the Japanese
-    // dakuten (U+3099) and silently turn ガラテヤ into カラテヤ.
     .replace(/[\u0300-\u036f]/g, '')
     .normalize('NFC')
-    .toLowerCase()
+    .toLowerCase();
+}
+
+/**
+ * Fold a book name or slug into a comparable key.
+ *
+ * `foldText` plus separator collapsing — so `Génesis`, `genesis` and `GENESIS`
+ * all meet at `genesis`, and `1 Samuel` meets the `1-samuel` slug.
+ */
+export function normalizeBookKey(value: string): string {
+  return foldText(value)
     .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
 }

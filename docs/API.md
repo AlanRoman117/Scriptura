@@ -128,6 +128,19 @@ supported — send `?q=love`. Repeated params (`?q=a&q=b`) resolve to the last v
 
 `book_slug` is directly usable as a `:book` path segment.
 
+**Matching semantics.** A **substring** match on **case- and diacritic-folded**
+text:
+
+- `amo` finds `amó`, and `amó` finds `amo` — they are the same word. (Folding is
+  normalization, not fuzzy matching; no edit-distance or approximate matching is
+  performed, and none is planned.)
+- A stem finds its archaic inflections: `love` matches `loveth` and `loved`,
+  which matters for the KJV.
+- The cost of substring matching is over-matching on short queries — `am`
+  matches `Abraham`. Filter client-side if you need whole-word precision.
+- Non-Latin scripts are unaffected by folding: Japanese matches exactly.
+- An empty or whitespace-only query returns no results rather than the corpus.
+
 ### `GET /compare?ref=John+3:16&translations=kjv,rv1909,bungo`
 
 `translations` is a comma-separated list. One English reference resolves across

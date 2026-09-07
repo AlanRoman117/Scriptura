@@ -68,7 +68,9 @@ Single-package builds: `cd packages/<name> && npm run build`
   - Other packages depend on core for types and data loading.
 
 - **@scriptura/search** (`packages/search/`) — Depends on `@scriptura/core`.
-  - `search(translationId, query)` — Case-insensitive full-text search across all verses
+  - `search(translationId, query)` — substring match on case- and **diacritic-folded** text. Folding is normalization, not fuzzy matching: `amo` and `amó` are the same word, and treating them as different was a bug that hid ~a third of Spanish and French matches (`amo` in rv1909: 1,102 → 1,473).
+  - The folded index is built **lazily per translation** into a `WeakMap` keyed by the `Bible`, so translations that are only read never pay the ~23ms and roughly-doubled text memory. Folding at query time instead would cost ~25ms on every search; this way search stays at ~4ms.
+  - Substring, not whole-word, is deliberate: a stem finds archaic inflections (`love` → `loveth`). The cost is over-matching on short queries (`am` → `Abraham`, ~90% spurious). **The fix for that is ranking, not stricter matching** — `score` is currently hardcoded to `1`, so a client has nothing to sort on.
   - `lookup(translationId, reference)` — Reference parser supporting "Book Ch:V" and "Book Ch:V-V" ranges
 
 - **@scriptura/compare** (`packages/compare/`) — Depends on `@scriptura/core`.
