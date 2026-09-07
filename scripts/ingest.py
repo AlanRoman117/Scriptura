@@ -246,10 +246,12 @@ TRANSLATIONS = {
         "language": "fr",
         "license": "public-domain",
         "attribution": "Bible Martin 1744 — Domaine public",
-        "source_url": "https://github.com/scrollmapper/bible_databases",
+        "source_url": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744",
         "year": 1744,
-        "source": "manual",
-        "note": "Available from scrollmapper/bible_databases (SQLite/JSON/CSV).",
+        "source": "sword",
+        "sword_url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/FreBDM1744.zip",
+        "sword_module": "frebdm1744",
+        "book_names": "FR_BOOK_NAMES",
     },
     "ostervald": {
         "name": "Bible Ostervald",
@@ -565,8 +567,100 @@ JA_BOOK_NAMES = {
 }
 
 
-_OSIS_BOOK_RE = re.compile(r'<div\s+osisID="([^"]+)"[^>]*type="book"')
-_OSIS_CHAP_RE = re.compile(r'<chapter\s+osisID="([^".]+)\.(\d+)"')
+# Marker tags, matched WITHOUT assuming attribute order. XML attribute order is
+# not meaningful, and modules differ: JapBungo writes
+#   <div osisID="Gen" sID="gen2" type="book"/>
+# while FreBDM1744 writes
+#   <div canonical="true" osisID="Gen" sID="gen2" type="book"/>
+#   <chapter n="1" osisID="Gen.1" sID="Gen.1"/>
+# An `osisID`-must-come-first regex silently parses zero books from the latter.
+# French book names for Bible Martin.
+#
+# FreBDM1744 embeds only x-usfm-toc1, the long form — "Le Saint Evangile de
+# Notre Seigneur Jésus-Christ selon Saint Matthieu" — and leaves the short
+# toc2/toc3 empty. Those titles are authentic but unusable as picker labels, and
+# they would read oddly beside the other two French translations in a
+# side-by-side view. (The source also carries a typo, "Le Livre deJosué".)
+#
+# These are the standard short French names, taken from the committed
+# `data/ostervald/` corpus (eBible `fra_fob`), so all three French translations
+# agree. Same role as JA_BOOK_NAMES: display metadata keyed off CANONICAL_BOOKS'
+# USFM codes, defining no numbering — not a canon definition.
+FR_BOOK_NAMES = {
+    "GEN": "Genèse", "EXO": "Exode", "LEV": "Lévitique", "NUM": "Nombres",
+    "DEU": "Deutéronome", "JOS": "Josué", "JDG": "Juges", "RUT": "Ruth",
+    "1SA": "1 Samuel", "2SA": "2 Samuel", "1KI": "1 Rois", "2KI": "2 Rois",
+    "1CH": "1 Chroniques", "2CH": "2 Chroniques", "EZR": "Esdras",
+    "NEH": "Néhémie", "EST": "Esther", "JOB": "Job", "PSA": "Psaumes",
+    "PRO": "Proverbes", "ECC": "Ecclésiaste", "SNG": "Cantique",
+    "ISA": "Esaïe", "JER": "Jérémie", "LAM": "Lamentations",
+    "EZK": "Ezéchiel", "DAN": "Daniel", "HOS": "Osée", "JOL": "Joël",
+    "AMO": "Amos", "OBA": "Abdias", "JON": "Jonas", "MIC": "Michée",
+    "NAM": "Nahum", "HAB": "Habacuc", "ZEP": "Sophonie", "HAG": "Aggée",
+    "ZEC": "Zacharie", "MAL": "Malachie", "MAT": "Matthieu", "MRK": "Marc",
+    "LUK": "Luc", "JHN": "Jean", "ACT": "Actes", "ROM": "Romains",
+    "1CO": "1 Corinthiens", "2CO": "2 Corinthiens", "GAL": "Galates",
+    "EPH": "Ephésiens", "PHP": "Philippiens", "COL": "Colossiens",
+    "1TH": "1 Thessalonicien", "2TH": "2 Thessalonicien",
+    "1TI": "1 Timothée", "2TI": "2 Timothée", "TIT": "Tite",
+    "PHM": "Philemon", "HEB": "Hébreux", "JAS": "Jacques", "1PE": "1 Pierre",
+    "2PE": "2 Pierre", "1JN": "1 Jean", "2JN": "2 Jean", "3JN": "3 Jean",
+    "JUD": "Jude", "REV": "Apocalypse",
+}
+
+_OSIS_MARKER_TAG_RE = re.compile(r"<(div|chapter)\b([^>]*?)/?>")
+_OSIS_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+
+
+def _osis_marker(fragment: str):
+    """
+    Classify an index entry's leading tag.
+
+    Returns ("book", code) | ("chapter", (code, number)) | None.
+    """
+    # A marker counts only if no real text precedes it in the same entry. Other
+    # markup may — paragraph divs, milestones, section titles.
+    #
+    # Both simpler rules are wrong, in opposite directions:
+    #  - "first tag only" missed FreBDM1744, where a paragraph div precedes the
+    #    marker: <div sID="gen1423" type="x-p"/><chapter osisID="Mark.3" .../>
+    #    Job came out as 1 chapter instead of 42.
+    #  - "any tag anywhere" broke JapBungo, where a chapter's last verse is
+    #    followed in its own entry by the next chapter's opening marker. That
+    #    silently dropped the closing verse of all 1,189 chapters.
+    #
+    # FreBDM1744 also puts a chapter summary in <transChange> right after the
+    # marker, so "the entry has no text at all" fails too — hence *preceding*
+    # text specifically. Closing markers carry no osisID and are skipped.
+    # The LAST marker in the entry wins, not the first. An entry can hold a run
+    # of markers, and what governs the verses that follow is whatever is still
+    # open at the end of it. FreBDM1744's Haggai is the case that proves it:
+    #
+    #   <chapter osisID="Hag.2" sID/> <chapter eID="Hag.2"/> ... <chapter osisID="Hag.1" sID/>
+    #
+    # a stray empty Hag.2 opens and closes before Hag.1 opens. Taking the first
+    # marker filed all of Haggai 1's verses under chapter 2 and left chapter 1
+    # missing entirely.
+    found = None
+    pos = 0
+    for match in _OSIS_MARKER_TAG_RE.finditer(fragment):
+        if _clean_osis(fragment[pos:match.start()]):
+            break
+        pos = match.end()
+
+        tag, attr_text = match.group(1), match.group(2)
+        attrs = dict(_OSIS_ATTR_RE.findall(attr_text))
+        osis_id = attrs.get("osisID")
+        if not osis_id:
+            continue
+
+        if tag == "div" and attrs.get("type") == "book":
+            found = ("book", osis_id)
+        elif tag == "chapter":
+            book, _, chapter = osis_id.rpartition(".")
+            if book and chapter.isdigit():
+                found = ("chapter", (book, int(chapter)))
+    return found
 _OSIS_NOTE_RE = re.compile(r"<note\b.*?</note>", re.S)
 _OSIS_TITLE_RE = re.compile(r"<title\b.*?</title>", re.S)
 _OSIS_TAG_RE = re.compile(r"<[^>]*>")
@@ -629,16 +723,16 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
                 raw = (blocks.get(block, b"")[start:start + size]
                        .decode("utf-8", "replace") if size else "")
 
-                match = _OSIS_BOOK_RE.search(raw)
-                if match:
-                    code = OSIS_TO_USFM.get(match.group(1))
-                    chapter, verse_no = None, 0
-                    continue
-
-                match = _OSIS_CHAP_RE.search(raw)
-                if match:
-                    code = OSIS_TO_USFM.get(match.group(1))
-                    chapter, verse_no = int(match.group(2)), 0
+                marker = _osis_marker(raw)
+                if marker:
+                    kind, value = marker
+                    if kind == "book":
+                        code = OSIS_TO_USFM.get(value)
+                        chapter, verse_no = None, 0
+                    else:
+                        book_id, chapter_no = value
+                        code = OSIS_TO_USFM.get(book_id)
+                        chapter, verse_no = chapter_no, 0
                     continue
 
                 if code is None or chapter is None:

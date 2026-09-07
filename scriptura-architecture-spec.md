@@ -38,9 +38,8 @@ scriptura/
 │   ├── vbl/                     # Versión Biblia Libre (Spanish) — CC BY-SA 4.0
 │   ├── lsg1910/                 # Louis Segond 1910 (French) — Public domain
 │   ├── ostervald/               # Bible Ostervald 1867 (French) — Public domain
-│   └── bungo/                   # 文語訳 (Japanese Classical) — Public domain
-│                                #   martin1744 is registered but not ingested,
-│                                #   so it has NO directory here (§6)
+│   ├── bungo/                   # 文語訳 (Japanese Classical) — Public domain
+│   └── martin1744/              # Bible Martin 1744 (French) — Public domain
 ├── packages/
 │   ├── core/                    # Loader, parser, canonical types
 │   ├── search/                  # Full-text + reference search
@@ -284,9 +283,9 @@ type Verse {
 | `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | ✅ |
 | `ostervald` | Bible Ostervald (1867) | French | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | ✅ |
-| `martin1744` | Bible Martin 1744 | French | Public domain | *source still needed* | — | ⏳ no `data/` dir |
+| `martin1744` | Bible Martin 1744 | French | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | ✅ |
 
-All ten ingested translations carry the full 66-book Protestant canon and pass
+All eleven translations carry the full 66-book Protestant canon and pass
 `scripts/validate.py --strict` with zero errors and zero warnings.
 
 A translation with no data has **no `data/` directory at all** — an empty
@@ -314,7 +313,7 @@ normalize wildly different upstream formats into the one schema in §3:
 |---|---|---|
 | `usfx` | USFX XML inside an eBible.org `_usfx.zip` | Milestone verse/chapter model; strips footnotes and cross-references, keeps translator additions. Covers eight translations from one consistent source. |
 | `aruljohn` | Per-book JSON from aruljohn/Bible-kjv | Used only by `kjv`. |
-| `sword` | A CrossWire SWORD **zText** module | Compiled OSIS in a binary format. Used by `bungo`. |
+| `sword` | A CrossWire SWORD **zText** module | Compiled OSIS in a binary format. Used by `bungo` and `martin1744`. |
 
 Downloads cache under `.cache/` (gitignored); normalized output in `data/` is
 committed, because that structured data *is* the product.
@@ -445,7 +444,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 
 | Phase | Feature |
 |---|---|
-| v1 | Core loader + search + REST API + translation data ✅ (10 of 11 ingested) |
+| v1 | Core loader + search + REST API + translation data ✅ (all 11 ingested) |
 | v1.1 | GraphQL layer + additional translations |
 | v2 | `compare` package — side-by-side diff for study Bible UI |
 | v2.1 | Cross-reference data (Open Scriptures) |

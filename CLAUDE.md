@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Scriptura is an open-source monorepo for working with Bible data programmatically. It provides freely-licensed Bible translations in canonical JSON format with TypeScript packages for loading, searching, comparing, validating, and serving scripture data.
 
-**Current state.** 10 of the 11 registered translations are ingested and committed (66 books each; `validate.py --strict` reports zero errors and zero warnings). Only `martin1744` is outstanding, and **`data/martin1744/` is deliberately absent** — an empty `books/` dir is a validation error, and CI is worthless if it starts red. Its `TRANSLATIONS` entry in `ingest.py` and its docs rows remain as planned work.
+**Current state.** **All 11 registered translations are ingested and committed** — 66 books each, `validate.py --strict` clean with zero errors and zero warnings.
 
 The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. 49 tests pass. CI exists. The remaining gaps are GraphQL and the AWS deployment workflow — both still design-only (see Docs → Specified but not built).
 
@@ -104,8 +104,11 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 - **`ingest.py`** — Downloads open-license source data and normalizes it into the canonical schema. Implemented with three parsers behind a `TRANSLATIONS` registry:
   - `usfx` — parses a USFX XML file from an eBible.org `_usfx.zip` (handles the milestone verse/chapter model, strips footnotes/cross-refs, keeps translator additions). Covers most translations from one consistent source.
   - `aruljohn` — per-book JSON from the aruljohn/Bible-kjv repo (used for `kjv`).
-  - `sword` — a CrossWire SWORD zText module (used for `bungo`). Compiled OSIS in a binary block/index format: `.bzs` block index, `.bzz` zlib blocks, `.bzv` verse index. `osis2mod` strips `<verse>` milestones, so verse boundaries live only in `.bzv`; book/chapter structure is recovered from the `<div type="book">` and `<chapter osisID>` markers that get their own index entries, which avoids needing a versification table. Note `.bzv` offsets are **byte** offsets into the decompressed block — slice bytes and decode after, or every multi-byte verse is corrupted.
-  - Automated and clean today (10): `rv1909`, `kjv`, `web`, `lsg1910`, `vbl`, `asv`, `ylt`, `bsb`, `ostervald`, `bungo`. All eBible IDs are confirmed against <https://ebible.org/Scriptures/translations.csv> (the authoritative index — check it there before guessing an id). Still registered as `manual`, needing a dedicated source/parser (script skips with a note): `martin1744`.
+  - `sword` — a CrossWire SWORD zText module (used for `bungo` and `martin1744`). Compiled OSIS in a binary block/index format: `.bzs` block index, `.bzz` zlib blocks, `.bzv` verse index. `osis2mod` strips `<verse>` milestones, so verse boundaries live only in `.bzv`; book/chapter structure is recovered from the `<div type="book">` and `<chapter osisID>` markers that get their own index entries, which avoids needing a versification table. Note `.bzv` offsets are **byte** offsets into the decompressed block — slice bytes and decode after, or every multi-byte verse is corrupted.
+    - ⚠️ **`_osis_marker` encodes three rules that modules disagree on. Do not "simplify" any of them.** Attribute order is not fixed (`JapBungo` writes `<div osisID=… type="book"/>`, `FreBDM1744` writes `<div canonical="true" osisID=… type="book"/>`), so matching must be order-independent. A marker only counts if **no real text precedes it** in the entry — `FreBDM1744` puts paragraph divs before it, while `JapBungo` puts the *next* chapter's opening marker after a verse's text. And when an entry holds several markers the **last** one wins: `FreBDM1744`'s Haggai opens and closes an empty `Hag.2` before opening `Hag.1`, so taking the first filed all of Haggai 1 under chapter 2. Each rule has a translation that breaks without it.
+  - **All 11 are automated.** eBible IDs are confirmed against <https://ebible.org/Scriptures/translations.csv> (the authoritative index — check it there before guessing an id); CrossWire module ids and licences against <https://www.crosswire.org/ftpmirror/pub/sword/raw/mods.d/>. There is no `manual` translation left.
+  - `FR_BOOK_NAMES` supplies French book names for `martin1744`, taken from the committed `data/ostervald/` corpus, because FreBDM1744 embeds only the long `x-usfm-toc1` form ("Le Saint Evangile de Notre Seigneur Jésus-Christ selon Saint Matthieu") and leaves the short `toc2` empty. Same role as `JA_BOOK_NAMES` — display metadata, **not** a canon definition.
+  - ⚠️ **CrossWire `DistributionLicense` is meaningful, not boilerplate.** `frebdm1744` declares `Public Domain`; its sibling `frebdm1707` declares `Copyrighted; Permission to distribute granted to CrossWire` and is therefore **not usable here**. Read the `.conf` before adding any module.
   - `JA_BOOK_NAMES` supplies Japanese book names for `bungo`, since zText modules carry no per-book localized headers. It is display metadata keyed off `CANONICAL_BOOKS`' USFM codes — **not** a fourth canon definition, and it carries no canon-sync burden.
   - Downloads cache under `.cache/` (gitignored). Flags: `--list`, `--only <id...>`, `--output-dir`, `--no-cache`. Embeds a `CANONICAL_BOOKS` table (USFM codes, slugs, abbreviations) — a canon definition that must stay in sync (see Critical Rules).
 - **`validate.py`** — Data integrity gate run by CI (see below).
@@ -225,17 +228,16 @@ Book *addressing* (slug/name/abbreviation/number resolution in `packages/core/sr
 - Use scoped imports: `@scriptura/core`, `@scriptura/search`, etc.
 - Packages use project references (`tsconfig.json` `references` field) for build ordering
 
-## Supported Translations (11)
+## Supported Translations (11 — all ingested)
 
 | ID | Language | License |
 |---|---|---|
 | `kjv`, `web`, `bsb`, `asv`, `ylt` | English | Public domain |
 | `rv1909` | Spanish | Public domain |
 | `vbl` | Spanish | CC BY-SA 4.0 |
-| `lsg1910`, `ostervald` | French | Public domain |
-| `martin1744` | French | Public domain — *not yet ingested, no `data/` dir* |
+| `lsg1910`, `ostervald`, `martin1744` | French | Public domain |
 | `bungo` | Japanese | Public domain |
 
-Ingestion status (see `scripts/ingest.py`): 10 of 11 ingest cleanly and pass `validate.py --strict` with **zero errors and zero warnings** — `rv1909`, `kjv`, `web`, `lsg1910`, `vbl`, `asv`, `ylt`, `bsb`, `ostervald`, `bungo`. Only `martin1744` (Bible Martin 1744) still needs a dedicated source; it is not on eBible.org. **`data/martin1744/` does not exist** and should not be recreated until there is data to put in it — its registry entry in `ingest.py` is where it is tracked.
+Ingestion status (see `scripts/ingest.py`): **all 11 ingest cleanly** and pass `validate.py --strict` with zero errors and zero warnings.
 
 **Japanese sources — read before touching `bungo`.** The old planned source, `bible.salterrae.net`, no longer resolves in DNS; CrossWire's `JapBungo` module preserves that text and is what `ingest.py` now uses (`DistributionLicense=Public Domain`, KJV versification, all 66 books). The underlying translations are 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012). **Do not be talked into un-banning 口語訳 (Kougo).** Japan Bible Society now states its copyright has expired, and that is true *in Japan* (50-year term, lapsed ~2004/2005) — but because it was still protected there on 1996-01-01, the URAA restored its **US** copyright until 2049/2050. Japan-PD does not imply US-PD; the forbidden-translation rule stands.

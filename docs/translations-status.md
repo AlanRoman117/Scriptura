@@ -18,7 +18,7 @@ license before its data may be committed.**
 | `lsg1910` | Louis Segond 1910 | fr | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
 | `ostervald` | Bible Ostervald (1867) | fr | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | Complete |
 | `bungo` | 文語訳聖書 (Classical) | ja | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | Complete |
-| `martin1744` | Bible Martin 1744 | fr | Public domain | *source still needed* | — | Not started |
+| `martin1744` | Bible Martin 1744 | fr | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | Complete |
 
 **Status key:**
 - **Complete** — all 66 books ingested; passes `scripts/validate.py --strict` with zero warnings
@@ -57,12 +57,25 @@ arrangement is not protectable in either the US or Japan, so the risk is low —
 but if those mid-century printings introduced substantive editorial revisions,
 that thin layer is an unknown.
 
-### `martin1744` — outstanding
-Not on eBible (no French Martin edition). Leading candidates are
-[scrollmapper/bible_databases](https://github.com/scrollmapper/bible_databases)
-and [seven1m/open-bibles](https://github.com/seven1m/open-bibles); both need a
-dedicated parser. `data/martin1744/` does not exist and should not be created
-until there is data to put in it.
+### `martin1744` — Bible David Martin 1744
+Published 1744; David Martin died 1721. Public domain worldwide by age, with no
+URAA question — the work predates every restoration cutoff by well over a
+century.
+
+Sourced from CrossWire's `FreBDM1744` SWORD module, which declares
+`DistributionLicense=Public Domain`. STEPBible serves the same text (it renders
+CrossWire modules via JSword), so CrossWire is the upstream and the right place
+to cite.
+
+⚠️ **CrossWire's licence field is meaningful, not boilerplate.** The sibling
+module `frebdm1707` (Martin 1707) declares `Copyrighted; Permission to
+distribute granted to CrossWire` — a grant to CrossWire is not a grant to us, so
+that module is **not usable here**. Always read the `.conf`.
+
+Note the module carries a malformed chapter sequence in Haggai (an empty `Hag.2`
+opens and closes before `Hag.1`). `scripts/ingest.py` handles it; see the
+`_osis_marker` notes in CLAUDE.md.
+
 
 ## Forbidden translations
 

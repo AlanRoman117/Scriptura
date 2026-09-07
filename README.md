@@ -3,7 +3,7 @@
 > **Open Bible data ecosystem — multi-translation, multi-language, developer-first.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Translations](https://img.shields.io/badge/translations-10%20ingested%20%C2%B7%2011%20verified-green.svg)](#verified-translations)
+[![Translations](https://img.shields.io/badge/translations-11-green.svg)](#verified-translations)
 [![Languages](https://img.shields.io/badge/languages-4-orange.svg)](#verified-translations)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/contributing.md)
 [![Data: Open License Only](https://img.shields.io/badge/data-open--license--only-important.svg)](#verified-translations)
@@ -155,12 +155,19 @@ Raw downloads are cached under `.cache/` (git-ignored) so re-runs are instant.
 The normalized output in `data/` **is** committed to the repo — that structured
 data is the product.
 
-**Ten of the eleven translations ingest cleanly today** — `kjv`, `web`, `asv`,
-`ylt`, `bsb`, `rv1909`, `vbl`, `lsg1910`, `ostervald`, and `bungo` — covering
-English, Spanish, French, and Japanese. Each is 66 books and passes
-`python scripts/validate.py --strict` with zero warnings. Only `martin1744`
-(Bible Martin 1744, French) still needs a source; it is registered with a note
-and the script skips it. Run `--list` for current status.
+**All eleven translations ingest cleanly** — covering English, Spanish, French
+and Japanese. Each is the full 66-book Protestant canon and passes
+`python scripts/validate.py --strict` with zero errors and zero warnings. Run
+`--list` for the registry.
+
+Source ids are easy to guess wrong, so both are verified against an
+authoritative index rather than constructed: eBible against
+[`translations.csv`](https://ebible.org/Scriptures/translations.csv), CrossWire
+against [`mods.d/`](https://www.crosswire.org/ftpmirror/pub/sword/raw/mods.d/).
+Read a CrossWire module's `.conf` before adding it — `frebdm1744` declares
+`Public Domain`, but its sibling `frebdm1707` declares *"Copyrighted; Permission
+to distribute granted to CrossWire"*, which is a grant to CrossWire and not to
+this project.
 
 Three parsers sit behind the `TRANSLATIONS` registry:
 
@@ -168,7 +175,7 @@ Three parsers sit behind the `TRANSLATIONS` registry:
 |---|---|---|
 | `usfx` | USFX XML in an eBible.org `_usfx.zip` | most translations |
 | `aruljohn` | per-book JSON from aruljohn/Bible-kjv | `kjv` |
-| `sword` | a CrossWire SWORD zText module (compiled OSIS) | `bungo` |
+| `sword` | a CrossWire SWORD zText module (compiled OSIS) | `bungo`, `martin1744` |
 
 eBible translation IDs are easy to guess wrong. Confirm them against
 [eBible's own index](https://ebible.org/Scriptures/translations.csv) rather than
@@ -194,9 +201,8 @@ scriptura/
 │   ├── lsg1910/                 # Louis Segond 1910 (French, public domain)
 │   ├── ostervald/               # Bible Ostervald (French, public domain)
 │   ├── vbl/                     # Versión Biblia Libre (Spanish, CC BY-SA 4.0)
+│   ├── martin1744/              # Bible Martin 1744 (French, public domain)
 │   └── bungo/                   # 文語訳聖書 Classical Japanese (public domain)
-│                                #   (martin1744 is registered but not yet ingested,
-│                                #    so it has no directory here)
 │
 ├── packages/
 │   ├── core/                    # Canonical types, loader, parser
@@ -245,7 +251,7 @@ All translations in this repository are independently verified to be public doma
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
 | `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
-| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | *source still needed* | ⏳ no `data/` dir yet |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
@@ -307,7 +313,7 @@ data/{translation-id}/
 
 | Area | State |
 |---|---|
-| Translation data | 10 of 11 ingested, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
+| Translation data | **All 11 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
 | REST API | Runs locally; every route works in every language |
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
