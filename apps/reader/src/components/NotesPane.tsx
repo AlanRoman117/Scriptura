@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Note } from '../lib/notes';
+import { headingAt } from '../lib/references';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -10,6 +11,8 @@ interface NotesPaneProps {
   onDelete: (id: string) => void;
   onChange: (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => void;
   onExport: () => void;
+  /** Registers the textarea so quoted passages land at the cursor. */
+  onSurfaceReady?: (el: HTMLTextAreaElement | null) => void;
 }
 
 /**
@@ -29,12 +32,25 @@ export function NotesPane({
   onDelete,
   onChange,
   onExport,
+  onSurfaceReady,
 }: NotesPaneProps) {
   const active = notes.find((n) => n.id === activeId) ?? null;
   const surface = useRef<HTMLTextAreaElement>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [heading, setHeading] = useState<string | null>(null);
 
   useEffect(() => setConfirmingDelete(false), [activeId]);
+  useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
+
+  // The heading the cursor sits under, kept in view the way a code editor keeps
+  // the enclosing function visible. A long note's structure is otherwise
+  // invisible from inside it.
+  const trackHeading = () => {
+    const el = surface.current;
+    if (!el) return;
+    setHeading(headingAt(el.value, el.selectionStart));
+  };
+  useEffect(trackHeading, [active?.id, active?.body]);
 
   return (
     <div className="notes" data-testid="notes">
@@ -89,6 +105,11 @@ export function NotesPane({
             placeholder="Untitled"
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
+          {heading && (
+            <div className="notes__heading" data-testid="notes-heading" aria-hidden="true">
+              {heading}
+            </div>
+          )}
           <textarea
             ref={surface}
             className="notes__surface"
@@ -98,6 +119,9 @@ export function NotesPane({
             spellCheck
             value={active.body}
             onChange={(e) => onChange(active.id, { body: e.target.value })}
+            onKeyUp={trackHeading}
+            onClick={trackHeading}
+            onSelect={trackHeading}
           />
         </>
       ) : (

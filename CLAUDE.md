@@ -172,6 +172,12 @@ Two config details that are load-bearing:
   - **`src/lib/zip.ts` is a hand-written store-only ZIP.** Export is the promise that the data is genuinely the user's, so it does not rest on a third-party archiver; notes are small markdown, so skipping deflate removes a whole implementation and leaves a format short enough to audit. `tests/unit/zip.test.ts` verifies it against the **system `unzip`**, including a non-ASCII round-trip — an archive only our own reader can open would defeat the point.
   - Highlights are anchored to `{translation, book_slug, chapter, verse}`, never a display name: a highlight made in `rv1909` still resolves after switching to `kjv`.
   - ⚠️ **Do not assert on the "Saved" label in tests.** Creating a note also reports Saved, so an edit's assertion can match the earlier message and the test then reloads before the autosave debounce flushes. `tests/reader/notes.spec.ts` has a `persisted()` helper that reads IndexedDB directly.
+  - **Search runs offline through the server's own matcher** (`@scriptura/search/matcher`), so results are identical online and off, folding included. `src/lib/search.ts` adds only the *grammar* — quoted phrases and `-exclusions` — and `runQuery` returns **every** match: the caller slices for display but must report the true count, or `God` and `God -love` both read "200 matches".
+  - One search box replaces a verse dropdown: a reference jumps (`John 3:16`, `Juan 3:16`, `jn 3`, `43 3:16`, ranges), anything else searches. Reuses `parseReference` and the book index, so anything the API accepts works here.
+  - **Links persist as the slug** (`[[john 3:16]]`), never a display name — a note written in `rv1909` as `[[Juan 3:16]]` would not resolve after switching to `kjv`. `src/lib/references.ts`.
+  - Quoted passages carry the citation *and* the attribution line when the licence requires it: a note holding `vbl` text inherits CC BY-SA when exported.
+  - The notes editor pins the heading the cursor sits under, and the chapter title is sticky beneath the reading bar — both the sticky-scroll idea, because a long chapter or note gives no clue where you are from inside it.
+  - ⚠️ `IntersectionObserver`'s `rootMargin` takes px and % only. A `rem` value throws on construction and takes the whole pane down; the sticky-title detection compares offsets instead.
   - Attribution renders beside the text whenever `requiresAttribution(meta)` — derived from the licence, not hardcoded to `vbl` — because CC BY-SA requires the notice where the material appears.
 
 ### Examples (`examples/`)

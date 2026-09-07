@@ -19,6 +19,10 @@ import {
   type Note,
 } from './lib/notes';
 import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/export';
+import { SearchBar } from './components/SearchBar';
+import { runQuery, resolveReference, type ResolvedReference } from './lib/search';
+import { quotePassage, toWikiLink } from './lib/references';
+import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
   bookSlug: string;
@@ -44,7 +48,14 @@ export function App() {
   const [staleExport, setStaleExport] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [total, setTotal] = useState(0);
+  const [reference, setReference] = useState<ResolvedReference | null>(null);
+  const [focusVerse, setFocusVerse] = useState<number | null>(null);
+
   const saveTimer = useRef<number | null>(null);
+  const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +80,70 @@ export function App() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    if (!bible || !query.trim()) {
+      setResults([]);
+      setTotal(0);
+      setReference(null);
+      return;
+    }
+    // A reference jumps; anything else searches. Both run offline against the
+    // translation already in memory.
+    setReference(resolveReference(bible, query));
+    const hits = runQuery(bible, query);
+    setResults(hits.slice(0, 40));
+    setTotal(hits.length);
+  }, [bible, query]);
+
+  /** Insert at the cursor, or append when the surface is not focused. */
+  const insertIntoNote = useCallback(
+    (text: string) => {
+      if (!activeId) {
+        const note = newNote();
+        setNotes((c) => [{ ...note, body: text }, ...c]);
+        setActiveId(note.id);
+        void saveNote({ ...note, body: text });
+        return;
+      }
+      const current = notes.find((n) => n.id === activeId);
+      if (!current) return;
+      const el = surfaceRef.current;
+      const at = el && document.activeElement === el ? el.selectionStart : current.body.length;
+      const before = current.body.slice(0, at);
+      const after = current.body.slice(at);
+      const spacer = before && !before.endsWith('\n') ? '\n\n' : '';
+      changeNote(activeId, { body: `${before}${spacer}${text}${after}` });
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeId, notes]
+  );
+
+  const quoteVerse = useCallback(
+    (verse: number) => {
+      if (!bible) return;
+      const b = bible.book(position.bookSlug);
+      const ch = b?.chapters.find((c) => c.number === position.chapter);
+      const v = ch?.verses.find((x) => x.number === verse);
+      if (!b || !ch || !v) return;
+      insertIntoNote(quotePassage(bible, b, position.chapter, [v]));
+    },
+    [bible, position, insertIntoNote]
+  );
+
+  const linkVerse = useCallback(
+    (verse: number) => {
+      insertIntoNote(
+        toWikiLink({ book_slug: position.bookSlug, chapter: position.chapter, verse })
+      );
+    },
+    [position, insertIntoNote]
+  );
+
+  const goTo = useCallback((bookSlug: string, chapter: number, verse?: number) => {
+    setPosition({ bookSlug, chapter });
+    setFocusVerse(verse ?? null);
   }, []);
 
   const reportStoreFailure = (store: string, err: unknown) => {
@@ -194,8 +269,31 @@ export function App() {
             book={book}
             chapter={position.chapter}
             highlights={highlights}
-            onNavigate={(bookSlug, chapter) => setPosition({ bookSlug, chapter })}
+            focusVerse={focusVerse}
+            onNavigate={(bookSlug, chapter) => {
+              setPosition({ bookSlug, chapter });
+              setFocusVerse(null);
+            }}
             onHighlight={highlight}
+            onQuote={quoteVerse}
+            onLink={linkVerse}
+            search={
+              <SearchBar
+                query={query}
+                results={results}
+                reference={reference}
+                total={total}
+                onQuery={setQuery}
+                onGo={goTo}
+                onInsert={(r) => {
+                  const b = bible.book(r.book_slug);
+                  const ch = b?.chapters.find((c) => c.number === r.chapter);
+                  const v = ch?.verses.find((x) => x.number === r.verse);
+                  if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]));
+                }}
+                onClose={() => setQuery('')}
+              />
+            }
           />
         }
         notes={
@@ -208,6 +306,9 @@ export function App() {
             onDelete={deleteNote}
             onChange={changeNote}
             onExport={doExport}
+            onSurfaceReady={(el) => {
+              surfaceRef.current = el;
+            }}
           />
         }
       />

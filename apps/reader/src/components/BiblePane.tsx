@@ -10,6 +10,10 @@ interface BiblePaneProps {
   highlights: Highlight[];
   onNavigate: (bookSlug: string, chapter: number) => void;
   onHighlight: (verse: number, color: HighlightColor) => void;
+  onQuote: (verse: number) => void;
+  onLink: (verse: number) => void;
+  focusVerse?: number | null;
+  search?: React.ReactNode;
 }
 
 export function BiblePane({
@@ -19,6 +23,10 @@ export function BiblePane({
   highlights,
   onNavigate,
   onHighlight,
+  onQuote,
+  onLink,
+  focusVerse,
+  search,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -31,6 +39,15 @@ export function BiblePane({
   // Deliberately not IntersectionObserver: `rootMargin` accepts px and % only,
   // so the `rem` offset this needs is not expressible there. (It throws on
   // construction, which takes the whole pane down with it.)
+  useEffect(() => {
+    if (focusVerse == null) return;
+    const el = document.querySelector(`.verse[data-verse="${focusVerse}"]`);
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el?.classList.add('verse--flash');
+    const t = window.setTimeout(() => el?.classList.remove('verse--flash'), 1600);
+    return () => window.clearTimeout(t);
+  }, [focusVerse, book.slug, chapter]);
+
   useEffect(() => {
     const node = title.current;
     const scroller = node?.closest('.pane');
@@ -83,6 +100,8 @@ export function BiblePane({
         </span>
       </header>
 
+      {search}
+
       <article className="chapter" data-testid="chapter">
         <h1 className="chapter__title" ref={title} data-stuck={stuck} data-testid="chapter-title">
           {book.name} {chapter}
@@ -121,7 +140,7 @@ export function BiblePane({
                   <span className="verse__text">{v.text}</span>
 
                   {openVerse === v.number && (
-                    <span className="swatches" role="group" aria-label="Highlight colour">
+                    <span className="swatches" role="group" aria-label={`Actions for verse ${v.number}`}>
                       {HIGHLIGHT_COLORS.map((color) => (
                         <button
                           key={color}
@@ -129,7 +148,7 @@ export function BiblePane({
                           className="swatch"
                           data-color={color}
                           data-testid={`swatch-${color}`}
-                          aria-label={color}
+                          aria-label={`Highlight ${color}`}
                           aria-pressed={mark?.color === color}
                           onClick={() => {
                             onHighlight(v.number, color);
@@ -137,6 +156,31 @@ export function BiblePane({
                           }}
                         />
                       ))}
+                      <span className="swatches__rule" aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="swatches__action"
+                        data-testid={`quote-${v.number}`}
+                        title="Add to note"
+                        onClick={() => {
+                          onQuote(v.number);
+                          setOpenVerse(null);
+                        }}
+                      >
+                        Quote
+                      </button>
+                      <button
+                        type="button"
+                        className="swatches__action"
+                        data-testid={`link-${v.number}`}
+                        title="Insert a link into the note"
+                        onClick={() => {
+                          onLink(v.number);
+                          setOpenVerse(null);
+                        }}
+                      >
+                        Link
+                      </button>
                     </span>
                   )}
                 </p>
