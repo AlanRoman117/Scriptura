@@ -145,3 +145,35 @@ test.describe('a narrow Bible pane', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Genesis 1');
   });
 });
+
+test.describe('a narrow notes pane', () => {
+  test.use({ viewport: { width: 1000, height: 800 } });
+
+  test('keeps every action usable rather than squeezing them to slivers', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('note-new').click();
+
+    // Drag the divider hard right, leaving the notes pane at its floor.
+    const divider = page.getByTestId('divider');
+    await divider.focus();
+    for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
+
+    const pane = (await page.getByTestId('pane-notes').boundingBox())!;
+    for (const id of ['note-new', 'note-preview', 'canvas-open', 'note-export', 'note-delete']) {
+      const box = (await page.getByTestId(id).boundingBox())!;
+      expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(30);
+      expect
+        .soft(box.x + box.width, `${id} must not overflow the pane`)
+        .toBeLessThanOrEqual(pane.x + pane.width + 1);
+    }
+
+    // And the picker keeps enough width to read a note's name.
+    const picker = (await page.getByTestId('note-select').boundingBox())!;
+    expect.soft(picker.width, 'the note picker must not collapse').toBeGreaterThan(100);
+
+    // Still usable, not merely present.
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
+  });
+});

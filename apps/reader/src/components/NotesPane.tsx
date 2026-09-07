@@ -187,6 +187,21 @@ export function NotesPane({
             placeholder="Untitled"
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
+          {/* Reserved whether or not the tools are showing, so they do not
+              shove the text you just clicked on down the pane. */}
+          {mode === 'write' && (
+            <div className="tools__slot">
+              {focused && (
+                <EditorToolbar
+                  onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
+                  onWrap={(marker) => apply((t, a, b) => toggleWrap(t, a, b, marker))}
+                  onLineStyle={(style: LineStyle) => apply((t, a, b) => toggleLineStyle(t, a, b, style))}
+                  onLink={() => apply((t, a, b) => insertAt(t, a, b, '[[]]'))}
+                />
+              )}
+            </div>
+          )}
+
           {/* Both describe where the *cursor* is, so neither belongs in a
               rendered view — and the sticky heading would sit directly above
               the same heading, rendered. */}
@@ -234,14 +249,6 @@ export function NotesPane({
                 // Delayed so a toolbar click lands before the tools withdraw.
                 onBlur={() => window.setTimeout(() => setFocused(false), 150)}
               />
-              {focused && (
-                <EditorToolbar
-                  onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
-                  onWrap={(marker) => apply((t, a, b) => toggleWrap(t, a, b, marker))}
-                  onLineStyle={(style: LineStyle) => apply((t, a, b) => toggleLineStyle(t, a, b, style))}
-                  onLink={() => apply((t, a, b) => insertAt(t, a, b, '[[]]'))}
-                />
-              )}
             </>
           )}
         </>

@@ -13,6 +13,17 @@ interface BoardThumbnailProps {
 /** How wide the drawing is allowed to be before it scales down. */
 const WIDTH = 560;
 const MAX_HEIGHT = 420;
+/**
+ * How far it may shrink before it scrolls instead.
+ *
+ * A genealogy from Adam to Jesus is a wide board, and squeezing one into 560px
+ * gives illegible boxes rather than a diagram. Past this the drawing keeps its
+ * size and the figure scrolls sideways.
+ */
+const MIN_SCALE = 0.45;
+/** Label metrics, used to fit the title to the box it is drawn in. */
+const LABEL_SIZE = 10;
+const LABEL_PAD = 6;
 
 /**
  * An embedded board, drawn where it was written.
@@ -33,7 +44,7 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
     const w = Math.max(right - left, 1);
     const h = Math.max(bottom - top, 1);
     // Scaled to fit rather than cropped: half a board is not a diagram.
-    const scale = Math.min(1, WIDTH / w, MAX_HEIGHT / h);
+    const scale = Math.max(MIN_SCALE, Math.min(1, WIDTH / w, MAX_HEIGHT / h));
     return { left, top, w, h, scale };
   }, [board]);
 
@@ -49,6 +60,21 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
   // whichever `defs` lost the race would take the other's arrowheads with it.
   const arrow = `embed-arrow-${board.id}`;
 
+  /**
+   * The title, cut to what the box can actually hold.
+   *
+   * The card shrinks with the board and the label does not, so a fixed
+   * character limit spills out of the box at any real scale — which is what
+   * "Genesis 1:27" did. Measured against the drawn width instead, with a clip
+   * behind it in case the font is wider than the estimate.
+   */
+  const fit = (title: string, drawnWidth: number): string => {
+    const room = Math.max(0, drawnWidth - LABEL_PAD * 2);
+    const max = Math.floor(room / (LABEL_SIZE * 0.56));
+    if (max <= 1) return '';
+    return title.length <= max ? title : `${title.slice(0, max - 1)}…`;
+  };
+
   const centre = (id: string) => {
     const n = board.nodes.find((node) => node.id === id);
     if (!n || !layout) return null;
@@ -61,6 +87,7 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
   return (
     <figure className="embed" data-testid={`board-embed-${board.id}`}>
       {layout ? (
+        <div className="embed__scroll">
         <svg
           className="embed__canvas"
           viewBox={`0 0 ${layout.w * layout.scale} ${layout.h * layout.scale}`}
@@ -84,18 +111,28 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
             const { title } = describeNode(n, { bible, notes });
             const w = (n.w ?? CARD_W) * layout.scale;
             const h = (n.h ?? CARD_H) * layout.scale;
+            const clip = `embed-clip-${board.id}-${n.id}`;
             return (
               <g key={n.id} transform={`translate(${(n.x - layout.left) * layout.scale}, ${(n.y - layout.top) * layout.scale})`}>
+                <clipPath id={clip}>
+                  <rect width={w} height={h} rx={6} />
+                </clipPath>
                 <rect width={w} height={h} rx={6} className="embed__card" data-color={n.color} />
                 {/* Titles only. At this size the verse text would be a grey
                     smudge, and the shape of the argument is the point. */}
-                <text x={8} y={16} className="embed__label">
-                  {title.length > 26 ? `${title.slice(0, 25)}…` : title}
+                <text
+                  x={LABEL_PAD}
+                  y={LABEL_SIZE + LABEL_PAD}
+                  className="embed__label"
+                  clipPath={`url(#${clip})`}
+                >
+                  {fit(title, w)}
                 </text>
               </g>
             );
           })}
         </svg>
+        </div>
       ) : (
         <p className="embed__empty">This board is empty.</p>
       )}

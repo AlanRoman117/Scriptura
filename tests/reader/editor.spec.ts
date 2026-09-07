@@ -146,11 +146,54 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('note-preview').click();
     const embed = page.getByTestId('notes-preview').locator('.embed');
     await expect(embed).toBeVisible();
-    await expect(embed.locator('rect')).toHaveCount(2);
+    // `.embed__card` rather than `rect`: each card also carries a rect inside
+    // its clipPath, which is geometry, not a drawn box.
+    await expect(embed.locator('.embed__card')).toHaveCount(2);
     await expect(embed.locator('text').first()).toContainText('John 1:1');
 
     await embed.locator('.embed__open').click();
     await expect(page.getByTestId('canvas')).toBeVisible();
+  });
+
+  test('a card title never spills out of the box it is drawn in', async ({ page }) => {
+    // The shape a wide board takes — a genealogy from Adam to Jesus, say. The
+    // card shrinks with the board and the label does not, so a fixed character
+    // limit spills out of the box at any real scale.
+    await open(page);
+    for (let v = 1; v <= 10; v++) {
+      await page.getByTestId(`verse-${v}`).click();
+      await page.getByTestId(`canvas-${v}`).click();
+    }
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-add-text').click();
+    const cards = await page.locator('.card').evaluateAll((all) =>
+      all.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''))
+    );
+    await page
+      .getByTestId(`card-title-${cards[cards.length - 1]}`)
+      .fill('From Adam through Abraham to David');
+
+    await page.getByTestId('board-to-note').click();
+    await page.getByTestId('note-preview').click();
+
+    const embed = page.getByTestId('notes-preview').locator('.embed');
+    await expect(embed).toBeVisible();
+
+    // Measured with getComputedTextLength — the advance width of the glyphs
+    // actually drawn. A bounding box would not do: clipping is a paint
+    // operation, so the box still reports the full untruncated width and the
+    // test would pass on the clip alone while the label was really cut off.
+    const overflow = await embed.evaluate((figure) => {
+      const groups = [...figure.querySelectorAll('g')].filter((g) => g.querySelector('text'));
+      return groups.map((g) => {
+        const box = g.querySelector('.embed__card') as SVGRectElement;
+        const text = g.querySelector('text') as SVGTextElement;
+        // 12 = the x offset on each side, matching LABEL_PAD in the component.
+        return Math.round(text.getComputedTextLength() + 12 - box.width.baseVal.value);
+      });
+    });
+    expect(overflow).toHaveLength(11);
+    for (const over of overflow) expect(over).toBeLessThanOrEqual(0);
   });
 
   test('an embed whose board is deleted says so rather than vanishing', async ({ page }) => {
