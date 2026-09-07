@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { createRouter } from '@scriptura/api';
 import { compareVerse } from '@scriptura/compare';
+import { lookup } from '@scriptura/search';
 import { clearCache, getDataDir, listTranslations } from '@scriptura/core';
 
 /**
@@ -123,7 +124,8 @@ describe('response shapes match the static build', () => {
   test('chapter', async () => {
     const res = await get('/translations/kjv/john/3');
     expect(Object.keys(res.body as object).sort()).toEqual(
-      ['book', 'book_number', 'book_slug', 'chapter', 'translation', 'verses'].sort()
+      ['attribution', 'book', 'book_number', 'book_slug', 'chapter', 'license',
+       'translation', 'verses'].sort()
     );
   });
 
@@ -145,6 +147,42 @@ describe('response shapes match the static build', () => {
     const res = await get('/translations/kjv/john');
     expect(res.body).toMatchObject({ translation: 'kjv', book: 'John', slug: 'john' });
     expect((res.body as { chapters: unknown[] }).chapters).toHaveLength(21);
+  });
+});
+
+describe('attribution travels with the text', () => {
+  // CC BY-SA requires the notice wherever the text appears. An offline client
+  // that caches only chapters previously had no copy of it at all.
+  test.each(['/translations/vbl/john/3', '/translations/vbl/john/3/16'])(
+    '%s carries licence and attribution',
+    async (path) => {
+      const body = (await get(path)) .body as { license: string; attribution: string };
+      expect(body.license).toBe('cc-by-sa-4.0');
+      expect(body.attribution).toContain('CC BY-SA');
+    }
+  );
+
+  test('public-domain translations say so rather than omitting it', async () => {
+    const body = (await get('/translations/kjv/john/3/16')).body as { license: string };
+    expect(body.license).toBe('public-domain');
+  });
+});
+
+describe('reference grammar is shared', () => {
+  // These two used to disagree: lookup accepted ranges, compareVerse 400'd on
+  // them, and chapter-only parsed in neither.
+  test('a range resolves through compare, not just lookup', async () => {
+    const res = await get('/compare', { ref: 'Romans 8:28', translations: 'kjv,rv1909' });
+    expect(res.status).toBe(200);
+  });
+
+  test('chapter-only references parse', async () => {
+    const verses = await lookup('kjv', 'John 3');
+    expect(verses.length).toBe(36);
+  });
+
+  test('a range returns exactly its span', async () => {
+    expect(await lookup('kjv', 'Romans 8:28-30')).toHaveLength(3);
   });
 });
 

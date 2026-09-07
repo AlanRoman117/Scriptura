@@ -6,7 +6,11 @@ const config: Config = {
   roots: ['<rootDir>/packages/', '<rootDir>/tests/'],
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
-    '^@scriptura/(.*)$': '<rootDir>/packages/$1/src',
+    // Subpath first — @scriptura/core/books must land on packages/core/src/books,
+    // not packages/core/books/src. The subpaths exist so browser code can reach
+    // the pure modules without the fs-importing barrel; see the exports maps.
+    '^@scriptura/([^/]+)/(.*)$': '<rootDir>/packages/$1/src/$2',
+    '^@scriptura/([^/]+)$': '<rootDir>/packages/$1/src',
     // The sources use NodeNext-style './loader.js' specifiers, which Jest will
     // not resolve to './loader.ts' on its own. Without this, importing any
     // runtime code from a test fails at resolution.

@@ -169,7 +169,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
           valid_range: [1, found.book.chapters.length],
         });
       }
-      return ok(formatChapter(id, found.book, chapter));
+      return ok(formatChapter(id, loaded.bible.meta, found.book, chapter));
     },
   },
   {
@@ -197,7 +197,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
           `Verse ${verseNum} not found in ${found.book.name} ${chapterNum}`
         );
       }
-      return ok(formatVerse(id, found.book, chapter, verse));
+      return ok(formatVerse(id, loaded.bible.meta, found.book, chapter, verse));
     },
   },
   {

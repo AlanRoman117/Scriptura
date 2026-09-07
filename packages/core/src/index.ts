@@ -11,7 +11,10 @@ export type {
   Verse,
 } from './types.js';
 
-export { foldText, normalizeBookKey, slugFromFilename } from './books.js';
+export { foldText, normalizeBookKey, parseReference, slugFromFilename } from './books.js';
+export type { ParsedReference } from './books.js';
+
+export { buildIndex, createBible } from './bible.js';
 
 export {
   clearCache,

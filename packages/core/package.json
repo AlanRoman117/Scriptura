@@ -4,7 +4,9 @@
   "description": "Loader, parser, and canonical TypeScript types for Scriptura Bible data.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest"
@@ -14,5 +16,24 @@
     "type": "git",
     "url": "https://github.com/AlanRoman117/scriptura.git",
     "directory": "packages/core"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./books": {
+      "types": "./dist/books.d.ts",
+      "default": "./dist/books.js"
+    },
+    "./bible": {
+      "types": "./dist/bible.d.ts",
+      "default": "./dist/bible.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    }
   }
 }

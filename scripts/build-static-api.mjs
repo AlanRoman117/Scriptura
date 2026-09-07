@@ -146,7 +146,9 @@ function build() {
       .filter((f) => f.toLowerCase().endsWith(".json"))
       .sort((a, b) => parseInt(a, 10) - parseInt(b, 10)); // numeric prefix order
 
-    const bookIndex = []; // lightweight list for the translation-level endpoint
+    const bookIndex = [];
+    // Whole books, accumulated for the single-file offline bundle below.
+    const fullBooks = []; // lightweight list for the translation-level endpoint
 
     for (const file of bookFiles) {
       let book;
@@ -180,6 +182,8 @@ function build() {
         // Full-chapter endpoint.
         writeEndpoint(join("translations", id, slug, numericSegment(chapter.number, "chapter.number")), {
           translation: id,
+          license: meta.license,
+          attribution: meta.attribution,
           book: book.name,
           book_slug: slug,
           book_number: book.number,
@@ -201,6 +205,8 @@ function build() {
               ),
               {
                 translation: id,
+                license: meta.license,
+                attribution: meta.attribution,
                 book: book.name,
                 book_slug: slug,
                 book_number: book.number,
@@ -214,6 +220,21 @@ function build() {
         }
         totals.verses += verses.length;
       }
+
+      fullBooks.push({
+        number: book.number,
+        name: book.name,
+        slug,
+        abbreviation: book.abbreviation,
+        testament: book.testament,
+        chapters: chapters.map((c) => ({
+          number: c.number,
+          verses: (Array.isArray(c.verses) ? c.verses : []).map((v) => ({
+            number: v.number,
+            text: v.text,
+          })),
+        })),
+      });
 
       bookIndex.push({
         number: book.number,
@@ -230,6 +251,16 @@ function build() {
 
     // Translation-level endpoint: metadata + navigable book index.
     writeEndpoint(join("translations", id), { ...meta, books: bookIndex });
+
+    // Whole translation in one file, for offline clients.
+    //
+    // The per-chapter endpoints are right for a CDN reader but wrong for a PWA:
+    // precaching a translation chapter-by-chapter is ~1,189 requests and ~1,189
+    // Cache entries, where this is one fetch of about 1.25 MB gzipped. It also
+    // carries `license` and `attribution`, which the chapter and verse payloads
+    // did not — so an offline client had no copy of a notice CC BY-SA requires
+    // it to display.
+    writeEndpoint(join("translations", id, "full"), { ...meta, books: fullBooks });
 
     // Base metadata (no heavy book index) for the top-level list.
     const { books, ...base } = meta;

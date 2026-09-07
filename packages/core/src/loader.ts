@@ -1,7 +1,8 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
-import { normalizeBookKey, slugFromFilename } from './books.js';
-import type { Bible, Book, Chapter, LoadedBook, TranslationMeta, Verse } from './types.js';
+import { slugFromFilename } from './books.js';
+import { createBible } from './bible.js';
+import type { Bible, Book, LoadedBook, TranslationMeta } from './types.js';
 
 /**
  * Where `data/` lives.
@@ -57,58 +58,6 @@ function translationDir(id: string): string {
     throw new Error(`Translation id escapes the data root: ${JSON.stringify(id)}`);
   }
   return dir;
-}
-
-/**
- * Build the lookup table a `Bible` resolves book names against.
- *
- * Callers address books by URL slug (`1-samuel`), but people also reasonably
- * type the abbreviation (`1Sa`) or the localized name (`Génesis`, `ヨハネによる福音書`).
- * All three are indexed under a normalized key, so the same URL works across
- * every translation regardless of the language its book names are written in.
- *
- * The canonical book number works too (`/translations/kjv/43/3/16`).
- *
- * Slugs are registered last and win ties: they are the canonical addressing
- * scheme, and a translation could in principle abbreviate one book to another
- * book's slug.
- */
-function buildIndex(books: LoadedBook[]): Map<string, LoadedBook> {
-  const index = new Map<string, LoadedBook>();
-  const add = (key: string, book: LoadedBook) => {
-    const normalized = normalizeBookKey(key);
-    if (normalized) index.set(normalized, book);
-  };
-
-  for (const book of books) add(book.name, book);
-  for (const book of books) add(book.abbreviation, book);
-  for (const book of books) add(String(book.number), book);
-  for (const book of books) add(book.slug, book);
-
-  return index;
-}
-
-function createBible(meta: TranslationMeta, books: LoadedBook[]): Bible {
-  const index = buildIndex(books);
-  const findBook = (name: string) => index.get(normalizeBookKey(name));
-
-  return {
-    meta,
-    books,
-    verse(bookName: string, chapterNum: number, verseNum: number): Verse | undefined {
-      const chapter = findBook(bookName)?.chapters.find((c) => c.number === chapterNum);
-      return chapter?.verses.find((v) => v.number === verseNum);
-    },
-    chapter(bookName: string, chapterNum: number): Chapter | undefined {
-      return findBook(bookName)?.chapters.find((c) => c.number === chapterNum);
-    },
-    book(name: string): LoadedBook | undefined {
-      return findBook(name);
-    },
-    slugs(): string[] {
-      return books.map((b) => b.slug);
-    },
-  };
 }
 
 /**

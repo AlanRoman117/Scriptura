@@ -28,6 +28,14 @@ Four forms resolve, so these are all the same verse:
 Matching folds case, accents and separators, so `Génesis`, `genesis` and
 `GENESIS` all work, as do `1-samuel`, `1 Samuel` and `1_Samuel`.
 
+## Reference strings
+
+`/compare` and the library `lookup()` share one grammar:
+`Book Chapter`, `Book Chapter:Verse`, `Book Chapter:Start-End`. Chapter-only
+returns the whole chapter. The two used to differ — ranges parsed in `lookup`
+but 400'd in `/compare` — so a note linking `[[Romans 8:28-39]]` failed to
+compare for no visible reason.
+
 ## REST endpoints
 
 | Method | Path | Description |
@@ -83,15 +91,41 @@ Translation metadata, plus a book index you can navigate from.
 }
 ```
 
+### `GET /translations/:id/full.json` — offline bundle (static build only)
+
+The whole translation in one file, for clients that need to work offline.
+Roughly **1.26 MB gzipped**; the alternative is ~1,189 chapter requests.
+
+```json
+{
+  "id": "bsb", "name": "Berean Standard Bible", "license": "public-domain",
+  "attribution": "Berean Standard Bible — Public Domain (2023)", "…": "…",
+  "books": [
+    { "number": 43, "name": "John", "slug": "john", "abbreviation": "Jhn",
+      "testament": "NT",
+      "chapters": [{ "number": 3, "verses": [{ "number": 16, "text": "…" }] }] }
+  ]
+}
+```
+
+Emitted by `npm run build:api`; there is no dynamic equivalent.
+
 ### `GET /translations/kjv/john/3`
 
 ```json
 {
-  "translation": "kjv", "book": "John", "book_slug": "john", "book_number": 43,
+  "translation": "kjv", "license": "public-domain",
+  "attribution": "King James Version — Public Domain",
+  "book": "John", "book_slug": "john", "book_number": 43,
   "chapter": 3,
   "verses": [{ "number": 1, "text": "There was a man of the Pharisees…" }]
 }
 ```
+
+**`license` and `attribution` are on every text payload**, not just the
+translation endpoint. `vbl` is CC BY-SA 4.0 — the only non-public-domain
+translation — and a client that caches chapters offline still owes the notice.
+Treat `license !== 'public-domain' && license !== 'cc0'` as "must display".
 
 ### `GET /translations/kjv/john/3/16`
 

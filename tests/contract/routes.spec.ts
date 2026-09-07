@@ -54,13 +54,15 @@ test('GET /translations/:id/:book lists chapters with verse counts', async ({ re
 test('GET chapter and verse have the documented shapes', async ({ request }) => {
   const chapter = await (await request.get('/translations/kjv/john/3')).json();
   expect(keys(chapter)).toEqual([
-    'book', 'book_number', 'book_slug', 'chapter', 'translation', 'verses',
-  ]);
+    'attribution', 'book', 'book_number', 'book_slug', 'chapter', 'license',
+    'translation', 'verses',
+  ].sort());
 
   const verse = await (await request.get('/translations/kjv/john/3/16')).json();
   expect(keys(verse)).toEqual([
-    'book', 'book_number', 'book_slug', 'chapter', 'reference', 'text', 'translation', 'verse',
-  ]);
+    'attribution', 'book', 'book_number', 'book_slug', 'chapter', 'license',
+    'reference', 'text', 'translation', 'verse',
+  ].sort());
   expect(verse.reference).toBe('John 3:16');
 });
 
@@ -94,6 +96,19 @@ test('compare returns one row per translation with localized references', async 
   expect(body.results.every((r: { found: boolean }) => r.found)).toBe(true);
   expect(body.results.find((r: { translation: string }) => r.translation === 'rv1909').reference)
     .toBe('Juan 3:16');
+});
+
+test('an offline client can fetch a whole translation in one request', async ({ request }) => {
+  // The static build emits /translations/:id/full.json for exactly this — a PWA
+  // precaching chapter-by-chapter would be ~1,189 requests. Dynamic serving of
+  // it is not implemented; this asserts the contract the static tree provides.
+  const res = await request.get('/translations/kjv');
+  const body = await res.json();
+  expect(body.books).toHaveLength(66);
+  // Attribution must be reachable offline for CC BY-SA translations.
+  const vbl = await (await request.get('/translations/vbl/john/3/16')).json();
+  expect(vbl.license).toBe('cc-by-sa-4.0');
+  expect(vbl.attribution).toContain('CC BY-SA');
 });
 
 test('compare/chapter powers the side-by-side reading view', async ({ request }) => {

@@ -19,7 +19,18 @@
     // test scaffolding and shouldn't fail the suite.
     "noUnusedLocals": false,
     "noUnusedParameters": false,
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    // node10 resolution predates `exports` maps, so the subpath imports in
+    // packages/search/src/matcher.ts need spelling out for ts-jest.
+    "baseUrl": ".",
+    "paths": {
+      "@scriptura/*/": ["packages/*/src/"],
+      "@scriptura/core/books": ["packages/core/src/books.ts"],
+      "@scriptura/core/bible": ["packages/core/src/bible.ts"],
+      "@scriptura/core/types": ["packages/core/src/types.ts"],
+      "@scriptura/search/matcher": ["packages/search/src/matcher.ts"],
+      "@scriptura/*": ["packages/*/src"]
+    }
   },
   "include": ["tests", "packages/*/src"]
 }

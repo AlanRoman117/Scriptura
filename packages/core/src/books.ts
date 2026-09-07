@@ -55,3 +55,43 @@ export function normalizeBookKey(value: string): string {
     .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
 }
+
+/**
+ * A parsed scripture reference.
+ *
+ * `verse` is undefined for a chapter-only reference (`John 3`); `endVerse` is
+ * set only for a range (`Romans 8:28-39`).
+ */
+export interface ParsedReference {
+  book: string;
+  chapter: number;
+  verse?: number;
+  endVerse?: number;
+}
+
+/**
+ * Parse `Book Chapter[:Verse[-Verse]]`.
+ *
+ * One grammar, deliberately. `@scriptura/search` and `@scriptura/compare` each
+ * carried their own regex and they disagreed: ranges parsed in one and 400'd in
+ * the other, and chapter-only parsed in neither although the REST route serves
+ * it. A note linking `[[Romans 8:28-39]]` then hitting "compare translations"
+ * was an error for no reason a reader could see.
+ *
+ * The book part stays a raw string — resolving it needs a loaded translation,
+ * since it may be a slug, a localized name, an abbreviation or a number.
+ */
+export function parseReference(reference: string): ParsedReference | null {
+  const match = reference
+    .trim()
+    .match(/^(.+?)\s+(\d+)(?::(\d+)(?:\s*-\s*(\d+))?)?$/);
+  if (!match) return null;
+
+  const [, book, chapterStr, verseStr, endStr] = match;
+  const parsed: ParsedReference = { book: book.trim(), chapter: parseInt(chapterStr, 10) };
+  if (verseStr !== undefined) {
+    parsed.verse = parseInt(verseStr, 10);
+    if (endStr !== undefined) parsed.endVerse = parseInt(endStr, 10);
+  }
+  return parsed;
+}

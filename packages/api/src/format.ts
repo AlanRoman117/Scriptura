@@ -12,6 +12,7 @@
  */
 import type {
   Chapter,
+  License,
   LoadedBook,
   TranslationMeta,
   TranslationVerse,
@@ -51,6 +52,8 @@ export interface BookPayload {
 
 export interface ChapterPayload {
   translation: string;
+  license: License;
+  attribution: string;
   book: string;
   book_slug: string;
   book_number: number;
@@ -60,6 +63,8 @@ export interface ChapterPayload {
 
 export interface VersePayload {
   translation: string;
+  license: License;
+  attribution: string;
   book: string;
   book_slug: string;
   book_number: number;
@@ -124,11 +129,16 @@ export function formatBook(translationId: string, book: LoadedBook): BookPayload
 /** `/translations/:id/:book/:chapter` — the full chapter text. */
 export function formatChapter(
   translationId: string,
+  meta: TranslationMeta,
   book: LoadedBook,
   chapter: Chapter
 ): ChapterPayload {
   return {
     translation: translationId,
+    // Carried on every payload, not just the translation endpoint: a client that
+    // caches chapters offline still owes CC BY-SA attribution for `vbl`.
+    license: meta.license,
+    attribution: meta.attribution,
     book: book.name,
     book_slug: book.slug,
     book_number: book.number,
@@ -140,12 +150,15 @@ export function formatChapter(
 /** `/translations/:id/:book/:chapter/:verse` — a single verse with its reference. */
 export function formatVerse(
   translationId: string,
+  meta: TranslationMeta,
   book: LoadedBook,
   chapter: Chapter,
   verse: Verse
 ): VersePayload {
   return {
     translation: translationId,
+    license: meta.license,
+    attribution: meta.attribution,
     book: book.name,
     book_slug: book.slug,
     book_number: book.number,

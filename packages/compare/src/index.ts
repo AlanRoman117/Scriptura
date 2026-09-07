@@ -1,7 +1,5 @@
-import { loadTranslation } from '@scriptura/core';
+import { loadTranslation, parseReference } from '@scriptura/core';
 import type { TranslationVerse } from '@scriptura/core';
-
-const VERSE_REF = /^(.+?)\s+(\d+):(\d+)$/;
 
 /**
  * Compare a single verse across multiple translations.
@@ -19,14 +17,14 @@ export async function compareVerse(
   reference: string,
   translationIds: string[]
 ): Promise<TranslationVerse[]> {
-  const match = reference.match(VERSE_REF);
-  if (!match) {
+  const parsed = parseReference(reference);
+  // Shares the grammar with `lookup` so a reference that resolves in one cannot
+  // 400 in the other — a note linking [[Romans 8:28-39]] used to do exactly that.
+  if (!parsed || parsed.verse === undefined) {
     throw new Error(`Invalid reference format: "${reference}". Expected "Book Chapter:Verse".`);
   }
 
-  const [, bookName, chapterStr, verseStr] = match;
-  const chapterNum = parseInt(chapterStr, 10);
-  const verseNum = parseInt(verseStr, 10);
+  const { book: bookName, chapter: chapterNum, verse: verseNum } = parsed;
 
   // Translations are cached, so loading them concurrently is cheap and keeps a
   // wide comparison from serialising 66-file reads one translation at a time.

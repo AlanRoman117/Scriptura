@@ -4,7 +4,9 @@
   "description": "Full-text and reference-based search engine for Scriptura Bible data.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest"
@@ -17,5 +19,16 @@
     "type": "git",
     "url": "https://github.com/AlanRoman117/scriptura.git",
     "directory": "packages/search"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./matcher": {
+      "types": "./dist/matcher.d.ts",
+      "default": "./dist/matcher.js"
+    }
   }
 }
