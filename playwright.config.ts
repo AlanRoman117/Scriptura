@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 /**
  * HTTP contract tests.
@@ -13,27 +13,55 @@ import { defineConfig } from '@playwright/test';
  * "does the assertion need a real socket?"
  */
 const PORT = Number(process.env.SCRIPTURA_TEST_PORT ?? 3333);
+const READER_PORT = Number(process.env.SCRIPTURA_READER_PORT ?? 4173);
 
 export default defineConfig({
-  testDir: './tests/contract',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
   reporter: process.env.CI ? [['github'], ['list']] : [['list']],
 
-  use: {
-    baseURL: `http://127.0.0.1:${PORT}`,
-    extraHTTPHeaders: { Accept: 'application/json' },
-  },
+  projects: [
+    {
+      // HTTP contract against the API. No browser is used or installed.
+      name: 'contract',
+      testDir: './tests/contract',
+      use: {
+        baseURL: `http://127.0.0.1:${PORT}`,
+        extraHTTPHeaders: { Accept: 'application/json' },
+      },
+    },
+    {
+      // The reader PWA, in a real browser. Runs against the *built* app: the
+      // service worker and precache manifest only exist in a production build,
+      // and offline reading is the promise being tested.
+      name: 'reader',
+      testDir: './tests/reader',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${READER_PORT}`,
+      },
+    },
+  ],
 
-  webServer: {
-    // The compiled server, not tsx — the contract we ship is the built one.
-    command: 'npm run build && node examples/node-server/dist/index.js',
-    url: `http://127.0.0.1:${PORT}/`,
-    env: { PORT: String(PORT) },
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      // The compiled server, not tsx — the contract we ship is the built one.
+      command: 'npm run build && node examples/node-server/dist/index.js',
+      url: `http://127.0.0.1:${PORT}/`,
+      env: { PORT: String(PORT) },
+      reuseExistingServer: !process.env.CI,
+      timeout: 120_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      command: `npm run build --workspace @scriptura/reader && npm run preview --workspace @scriptura/reader -- --port ${READER_PORT} --strictPort --host 127.0.0.1`,
+      url: `http://127.0.0.1:${READER_PORT}/`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+  ],
 });

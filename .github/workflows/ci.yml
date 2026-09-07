@@ -72,6 +72,29 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-contract
+          path: playwright-report/
+          retention-days: 7
+
+  # The reader PWA in a real browser. Separate from `contract` because this one
+  # needs a Chromium download (~115MB) and a production build of the app, where
+  # the contract job needs neither — Playwright's request fixture speaks HTTP
+  # without a browser.
+  reader:
+    name: Reader (browser)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:reader
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-reader
           path: playwright-report/
           retention-days: 7

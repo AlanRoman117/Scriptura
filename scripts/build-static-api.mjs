@@ -39,6 +39,7 @@
  *   node scripts/build-static-api.mjs --data-dir data --out-dir dist
  *   node scripts/build-static-api.mjs --skip-verses   # chapters only (lean)
  *   node scripts/build-static-api.mjs --pretty        # indent output (debug)
+ *   node scripts/build-static-api.mjs --only bsb      # one translation only
  *
  * Zero dependencies — Node built-ins only (Node 18+).
  */
@@ -56,6 +57,14 @@ const getOpt = (name, fallback) => {
 const DATA_DIR = getOpt("--data-dir", "data");
 const OUT_DIR = getOpt("--out-dir", "dist");
 const SKIP_VERSES = args.includes("--skip-verses");
+// --only kjv bsb → build just those. The reader app uses it to emit the single
+// translation it bundles for offline use, without building all eleven.
+const ONLY = (() => {
+  const i = args.indexOf("--only");
+  if (i === -1) return null;
+  const ids = args.slice(i + 1).filter((a) => !a.startsWith("--"));
+  return ids.length ? new Set(ids) : null;
+})();
 const PRETTY = args.includes("--pretty");
 
 const serialize = (obj) => JSON.stringify(obj, null, PRETTY ? 2 : 0);
@@ -110,6 +119,7 @@ function build() {
 
   const translationDirs = readdirSync(DATA_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory() && !d.name.startsWith(".") && !NON_TRANSLATION_DIRS.has(d.name))
+    .filter((d) => !ONLY || ONLY.has(d.name))
     .map((d) => d.name)
     .sort();
 

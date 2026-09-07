@@ -76,3 +76,8 @@ ehthumbs.db
 playwright-report/
 test-results/
 .playwright/
+
+# ─── Reader app (generated) ───
+# The bundled translation is emitted by apps/reader/scripts/bundle-translation.mjs
+apps/reader/public/bible/
+apps/reader/dev-dist/

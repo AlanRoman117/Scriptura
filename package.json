@@ -1,24 +1,28 @@
 {
   "name": "scriptura",
   "version": "0.1.0",
-  "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
+  "description": "Open Bible data ecosystem \u2014 multi-translation, multi-language, developer-first.",
   "private": true,
   "workspaces": [
     "packages/*",
+    "apps/*",
     "examples/node-server",
     "examples/cli-demo"
   ],
   "scripts": {
     "build": "tsc --build",
     "test": "jest",
-    "test:contract": "playwright test",
+    "test:contract": "playwright test --project=contract",
     "validate": "python scripts/validate.py",
     "check:canon": "python scripts/check-canon-sync.py",
     "lint": "tsc --build",
     "start:api": "npm run build && node examples/node-server/dist/index.js",
     "dev:api": "tsx watch --tsconfig tsconfig.dev.json examples/node-server/src/index.ts",
     "build:api": "node scripts/build-static-api.mjs",
-    "schema:gen": "tsx scripts/schema-gen.ts"
+    "schema:gen": "tsx scripts/schema-gen.ts",
+    "dev:reader": "npm run dev --workspace @scriptura/reader",
+    "build:reader": "npm run build --workspace @scriptura/reader",
+    "test:reader": "playwright test --project=reader"
   },
   "repository": {
     "type": "git",

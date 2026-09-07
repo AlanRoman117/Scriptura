@@ -19,6 +19,9 @@ npm install                    # Install all workspace dependencies
 npm run build                  # Build all packages (tsc --build)
 npm test                       # Run all tests (jest, config in jest.config.ts)
 npm run test:contract          # HTTP contract tests (playwright, API mode — no browsers)
+npm run test:reader            # Reader PWA in Chromium (playwright; needs `npx playwright install chromium`)
+npm run dev:reader             # Reader app dev server on :5173
+npm run build:reader           # Production build of the reader
 npm run lint                   # TypeScript type-check (tsc --build; see note below)
 npm run dev:api                # Run the REST API with hot reload (tsx watch) on :3000
 npm run start:api              # Build, then run the compiled REST API on :3000
@@ -132,7 +135,8 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 | Runner | Command | Owns |
 |---|---|---|
 | jest | `npm test` | Anything provable in-process: book resolution, canon, parsers, `createRouter` logic, static/dynamic parity |
-| Playwright | `npm run test:contract` | Anything needing a real socket: status lines, headers, CORS, HTTP methods, actual JSON serialisation |
+| Playwright `contract` | `npm run test:contract` | Anything needing a real socket: status lines, headers, CORS, HTTP methods, actual JSON serialisation. **No browser** — the `request` fixture needs none. |
+| Playwright `reader` | `npm run test:reader` | The PWA in Chromium, against a **production build** — the service worker and precache manifest do not exist in dev, and offline reading is the promise being tested. Needs `npx playwright install chromium`. |
 
 Playwright runs in **API mode** — the `request` fixture needs no browser, so `npx playwright install` is never run and CI installs none. `tests/contract/` is in `testPathIgnorePatterns` so jest never tries to run those specs.
 
@@ -151,6 +155,16 @@ Jest with ts-jest. Config in root `jest.config.ts`. 70 tests, plus 33 Playwright
 Two config details that are load-bearing:
 - `moduleNameMapper` needs `'^(\.{1,2}/.*)\.js$': '$1'`. The sources use NodeNext-style `./loader.js` specifiers, which Jest will not resolve to `.ts`. Without it **no test can import any runtime code** — which is why the original 6 tests passed while exercising almost nothing.
 - ts-jest points at `tsconfig.test.json`, not `tsconfig.json`. The root config is a solution file with no `compilerOptions`, so ts-jest pointed there silently falls back to defaults and drops `strict`/`esModuleInterop` from every test.
+
+### Apps (`apps/`)
+
+- **`apps/reader`** — the local-first reading and note-taking PWA. Vite + React 19 + TypeScript. `npm run dev:reader` / `npm run build:reader`.
+  - **Imports only the pure subpaths** — `@scriptura/core/bible`, `@scriptura/core/types`, `@scriptura/search/matcher`. Importing `@scriptura/core` itself would pull `node:fs` into the bundle. Its `tsconfig.json` sets `verbatimModuleSyntax`, which the CommonJS packages cannot, so a missing `type` keyword fails the build here.
+  - The `Bible` is rebuilt in the browser with the server's own `createBible`, so book resolution and search folding are identical online and off rather than a second implementation that drifts.
+  - **The bundled translation is not precached.** `apps/reader/scripts/bundle-translation.mjs` emits `public/bible/bsb.json` (~4.4MB) by calling the real static builder, so it is byte-identical to what the CDN serves. `vite.config.ts` sets `globIgnores: ['**/bible/**']` — putting 4.4MB in the Workbox precache manifest would block service-worker install on a large download and re-download the lot whenever its hash changed. The app fetches it once into IndexedDB instead. The precache is 9 entries / 200KB.
+  - Generated output (`public/bible/`, `dev-dist/`) is gitignored.
+  - Fonts are **system stacks, not webfonts**. A local-first reader should not need a font download to render scripture, and self-hosting a face would put binary assets in a repository whose product is text.
+  - Attribution renders beside the text whenever `requiresAttribution(meta)` — derived from the licence, not hardcoded to `vbl` — because CC BY-SA requires the notice where the material appears.
 
 ### Examples (`examples/`)
 
