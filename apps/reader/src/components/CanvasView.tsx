@@ -1,0 +1,450 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Bible } from '@scriptura/core/types';
+import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
+import { CARD_H, CARD_W, freeSlot, type Board, type BoardNode } from '../lib/canvas';
+
+interface CanvasViewProps {
+  bible: Bible;
+  notes: Note[];
+  boards: Board[];
+  activeId: string | null;
+  onSelect: (id: string) => void;
+  onCreate: () => void;
+  onDelete: (id: string) => void;
+  onChange: (board: Board) => void;
+  onClose: () => void;
+  /** Open a card's passage in the reader. */
+  onGo: (bookSlug: string, chapter: number, verse?: number) => void;
+}
+
+/**
+ * The board: verses and notes on a plane, with the connections drawn.
+ *
+ * Full width rather than a third pane, because a map squeezed into 400px is a
+ * list with extra steps — and the readers this is for are the ones who were
+ * exporting passages into GoodNotes to lay them out by hand.
+ *
+ * Cards hold anchors, not text: a verse card is read out of whichever
+ * translation is open and a note card follows the note, so a board does not
+ * quietly become a stale snapshot of either.
+ */
+export function CanvasView({
+  bible,
+  notes,
+  boards,
+  activeId,
+  onSelect,
+  onCreate,
+  onDelete,
+  onChange,
+  onClose,
+  onGo,
+}: CanvasViewProps) {
+  const board = boards.find((b) => b.id === activeId) ?? null;
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const frame = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
+  const panning = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => setConfirmingDelete(false), [activeId]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setConnecting(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const patch = useCallback(
+    (next: Partial<Pick<Board, 'name' | 'nodes' | 'edges'>>) => {
+      if (!board) return;
+      onChange({ ...board, ...next, updated: Date.now() });
+    },
+    [board, onChange]
+  );
+
+  /* ── dragging a card, and panning the plane ───────────────────────────── */
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      if (panning.current) {
+        setPan({ x: e.clientX - panning.current.x, y: e.clientY - panning.current.y });
+        return;
+      }
+      const held = drag.current;
+      const box = frame.current?.getBoundingClientRect();
+      if (!held || !box || !board) return;
+      // Divided by zoom: the pointer moves in screen pixels, the card lives in
+      // board coordinates, and at 0.5x every drag would otherwise travel twice
+      // as far as the cursor.
+      // Clamped at the origin: a card dragged past the top-left is off the
+      // plane in the one direction panning back from is least obvious.
+      const x = Math.max(0, (e.clientX - box.left - pan.x) / zoom - held.dx);
+      const y = Math.max(0, (e.clientY - box.top - pan.y) / zoom - held.dy);
+      patch({
+        nodes: board.nodes.map((n) => (n.id === held.id ? { ...n, x, y } : n)),
+      });
+    };
+    const up = () => {
+      drag.current = null;
+      panning.current = null;
+      document.body.classList.remove('dragging');
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+    return () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+  }, [board, pan, zoom, patch]);
+
+  /* ── cards ────────────────────────────────────────────────────────────── */
+
+  const addCard = (node: Omit<BoardNode, 'id' | 'x' | 'y'>) => {
+    if (!board) return;
+    const slot = freeSlot(board.nodes);
+    patch({ nodes: [...board.nodes, { ...node, id: crypto.randomUUID(), ...slot }] });
+  };
+
+  const removeCard = (id: string) => {
+    if (!board) return;
+    // Edges to a card that no longer exists would draw to nowhere.
+    patch({
+      nodes: board.nodes.filter((n) => n.id !== id),
+      edges: board.edges.filter((e) => e.from !== id && e.to !== id),
+    });
+  };
+
+  const connect = (to: string) => {
+    if (!board || !connecting || connecting === to) return setConnecting(null);
+    const exists = board.edges.some(
+      (e) => (e.from === connecting && e.to === to) || (e.from === to && e.to === connecting)
+    );
+    if (!exists) {
+      patch({ edges: [...board.edges, { id: crypto.randomUUID(), from: connecting, to }] });
+    }
+    setConnecting(null);
+  };
+
+  /** What a card says. Verse text comes from the open translation, live. */
+  const describe = (node: BoardNode): { title: string; body: string } => {
+    if (node.kind === 'verse') {
+      const book = bible.book(node.book_slug ?? '');
+      const verse = book?.chapters
+        .find((c) => c.number === node.chapter)
+        ?.verses.find((v) => v.number === node.verse);
+      return {
+        title: `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`,
+        body: verse?.text ?? 'Not in this translation.',
+      };
+    }
+    if (node.kind === 'note') {
+      const note = notes.find((n) => n.id === node.noteId);
+      return {
+        title: note?.title || 'Untitled note',
+        body: note ? note.body.slice(0, 240) || 'Empty note.' : 'This note has been deleted.',
+      };
+    }
+    return { title: 'Note to self', body: node.text ?? '' };
+  };
+
+  const centre = (id: string) => {
+    const node = board?.nodes.find((n) => n.id === id);
+    return node ? { x: node.x + CARD_W / 2, y: node.y + CARD_H / 2 } : null;
+  };
+
+  /**
+   * Where a connection meets a card's edge, rather than its centre.
+   *
+   * Centre-to-centre is the easy version and it hides the line under both
+   * cards — which, in the grid new cards land in, leaves a connection almost
+   * invisible at exactly the moment it is drawn. Clipping to the boundary
+   * costs one intersection and makes the arrow readable.
+   */
+  const boundary = (from: { x: number; y: number }, to: { x: number; y: number }) => {
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    if (dx === 0 && dy === 0) return from;
+    const scale = Math.min(
+      Math.abs(dx) > 0 ? CARD_W / 2 / Math.abs(dx) : Infinity,
+      Math.abs(dy) > 0 ? CARD_H / 2 / Math.abs(dy) : Infinity
+    );
+    return { x: from.x + dx * scale, y: from.y + dy * scale };
+  };
+
+  return (
+    <div className="canvas" data-testid="canvas">
+      <header className="canvas__bar">
+        <select
+          className="canvas__select"
+          aria-label="Board"
+          data-testid="board-select"
+          value={activeId ?? ''}
+          onChange={(e) => onSelect(e.target.value)}
+        >
+          {boards.length === 0 && <option value="">No boards yet</option>}
+          {boards.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name || 'Untitled board'}
+            </option>
+          ))}
+        </select>
+        <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
+          New
+        </button>
+        {board && (
+          <>
+            <button
+              type="button"
+              className="canvas__action"
+              data-testid="board-add-text"
+              onClick={() => addCard({ kind: 'text', text: '' })}
+            >
+              Add card
+            </button>
+            <button
+              type="button"
+              className="canvas__action"
+              data-testid="board-add-note"
+              disabled={notes.length === 0}
+              title={notes.length === 0 ? 'Write a note first' : 'Put a note on the board'}
+              onClick={() => addCard({ kind: 'note', noteId: notes[0].id })}
+            >
+              Add note
+            </button>
+            <button
+              type="button"
+              className="canvas__action canvas__action--danger"
+              data-testid="board-delete"
+              onClick={() => (confirmingDelete ? onDelete(board.id) : setConfirmingDelete(true))}
+            >
+              {confirmingDelete ? 'Sure?' : 'Delete board'}
+            </button>
+          </>
+        )}
+
+        <span className="canvas__spacer" />
+        <div className="canvas__zoom" role="group" aria-label="Zoom">
+          <button type="button" data-testid="zoom-out" aria-label="Zoom out" onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))}>
+            −
+          </button>
+          <button
+            type="button"
+            data-testid="zoom-reset"
+            title="Back to full size, showing your cards"
+            onClick={() => {
+              setZoom(1);
+              // Panned to the content, not to the origin: a board whose cards
+              // all sit at x=2000 would otherwise "reset" to empty space.
+              const nodes = board?.nodes ?? [];
+              if (nodes.length === 0) return setPan({ x: 0, y: 0 });
+              const left = Math.min(...nodes.map((n) => n.x));
+              const top = Math.min(...nodes.map((n) => n.y));
+              setPan({ x: 40 - left, y: 40 - top });
+            }}
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button type="button" data-testid="zoom-in" aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(2, z + 0.2))}>
+            +
+          </button>
+        </div>
+        <button type="button" className="canvas__action" data-testid="canvas-close" onClick={onClose}>
+          Back to reading
+        </button>
+      </header>
+
+      {board ? (
+        <div
+          className="canvas__frame"
+          ref={frame}
+          data-connecting={connecting ? 'true' : undefined}
+          onPointerDown={(e) => {
+            // Only the plane itself pans; a card handles its own drag.
+            if (e.target !== e.currentTarget) return;
+            panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+            document.body.classList.add('dragging');
+            setConnecting(null);
+          }}
+        >
+          <div
+            className="canvas__plane"
+            style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
+          >
+            <svg className="canvas__edges" aria-hidden="true">
+              <defs>
+                {/* A flowchart, not a graph: the direction is part of what the
+                    reader is recording. */}
+                <marker
+                  id="canvas-arrow"
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="6"
+                  markerHeight="6"
+                  orient="auto-start-reverse"
+                >
+                  <path d="M 0 0 L 10 5 L 0 10 z" />
+                </marker>
+              </defs>
+              {board.edges.map((edge) => {
+                const a = centre(edge.from);
+                const b = centre(edge.to);
+                if (!a || !b) return null;
+                const start = boundary(a, b);
+                const end = boundary(b, a);
+                return (
+                  <g key={edge.id}>
+                    <line
+                      x1={start.x}
+                      y1={start.y}
+                      x2={end.x}
+                      y2={end.y}
+                      markerEnd="url(#canvas-arrow)"
+                    />
+                    <circle
+                      className="canvas__edge-cut"
+                      cx={(start.x + end.x) / 2}
+                      cy={(start.y + end.y) / 2}
+                      r={9}
+                      onClick={() => patch({ edges: board.edges.filter((e) => e.id !== edge.id) })}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {board.nodes.map((node) => {
+              const { title, body } = describe(node);
+              return (
+                <article
+                  className="card"
+                  key={node.id}
+                  data-testid={`card-${node.id}`}
+                  data-kind={node.kind}
+                  data-color={node.color}
+                  style={{ left: node.x, top: node.y, width: CARD_W, height: CARD_H }}
+                  onClick={() => connecting && connect(node.id)}
+                >
+                  <header
+                    className="card__grip"
+                    onPointerDown={(e) => {
+                      const box = frame.current?.getBoundingClientRect();
+                      if (!box) return;
+                      drag.current = {
+                        id: node.id,
+                        dx: (e.clientX - box.left - pan.x) / zoom - node.x,
+                        dy: (e.clientY - box.top - pan.y) / zoom - node.y,
+                      };
+                      document.body.classList.add('dragging');
+                    }}
+                  >
+                    <span className="card__title">{title}</span>
+                  </header>
+
+                  {node.kind === 'text' ? (
+                    <textarea
+                      className="card__editor"
+                      data-testid={`card-text-${node.id}`}
+                      aria-label="Card text"
+                      placeholder="Write here…"
+                      value={node.text ?? ''}
+                      onChange={(e) =>
+                        patch({
+                          nodes: board.nodes.map((n) =>
+                            n.id === node.id ? { ...n, text: e.target.value } : n
+                          ),
+                        })
+                      }
+                    />
+                  ) : (
+                    <p className="card__body">{body}</p>
+                  )}
+
+                  <footer className="card__actions">
+                    <button
+                      type="button"
+                      className="card__action"
+                      data-testid={`card-connect-${node.id}`}
+                      aria-pressed={connecting === node.id}
+                      title="Connect this card to another"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConnecting(connecting === node.id ? null : node.id);
+                      }}
+                    >
+                      ⇢
+                    </button>
+                    {node.kind === 'verse' && (
+                      <button
+                        type="button"
+                        className="card__action"
+                        data-testid={`card-open-${node.id}`}
+                        title="Open this passage"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
+                        }}
+                      >
+                        ↗
+                      </button>
+                    )}
+                    <span className="card__swatches">
+                      {HIGHLIGHT_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="card__dot"
+                          data-color={color}
+                          aria-label={`Colour ${color}`}
+                          aria-pressed={node.color === color}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            patch({
+                              nodes: board.nodes.map((n) =>
+                                n.id === node.id
+                                  ? { ...n, color: n.color === color ? undefined : (color as HighlightColor) }
+                                  : n
+                              ),
+                            });
+                          }}
+                        />
+                      ))}
+                    </span>
+                    <button
+                      type="button"
+                      className="card__action card__action--danger"
+                      data-testid={`card-remove-${node.id}`}
+                      title="Take this card off the board"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeCard(node.id);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </footer>
+                </article>
+              );
+            })}
+          </div>
+
+          {board.nodes.length === 0 && (
+            <p className="canvas__empty">
+              Nothing on this board yet. Add a card here, or use <strong>Canvas</strong> beside a
+              verse while reading.
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="canvas__empty">
+          <p>No board open.</p>
+          <button type="button" className="canvas__action" onClick={onCreate}>
+            Start one
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

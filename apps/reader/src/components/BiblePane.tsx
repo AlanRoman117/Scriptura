@@ -12,6 +12,7 @@ interface BiblePaneProps {
   onHighlight: (verse: number, color: HighlightColor) => void;
   onQuote: (verse: number) => void;
   onLink: (verse: number) => void;
+  onSendToCanvas?: (verse: number) => void;
   focusVerse?: number | null;
   search?: React.ReactNode;
   /** Marks or the library, rendered over the text while open. */
@@ -23,6 +24,8 @@ interface BiblePaneProps {
   onToggleMarks?: () => void;
   libraryOpen?: boolean;
   onToggleLibrary?: () => void;
+  settingsOpen?: boolean;
+  onToggleSettings?: () => void;
 }
 
 export function BiblePane({
@@ -34,6 +37,7 @@ export function BiblePane({
   onHighlight,
   onQuote,
   onLink,
+  onSendToCanvas,
   focusVerse,
   search,
   overlay,
@@ -43,6 +47,8 @@ export function BiblePane({
   onToggleMarks,
   libraryOpen = false,
   onToggleLibrary,
+  settingsOpen = false,
+  onToggleSettings,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -149,6 +155,17 @@ export function BiblePane({
             {markCount}
           </span>
         </button>
+        <button
+          type="button"
+          className="reader__chip reader__chip--icon"
+          data-testid="settings-open"
+          aria-pressed={settingsOpen}
+          aria-label="Settings"
+          title="Storage, export, and assistant access"
+          onClick={onToggleSettings}
+        >
+          ⚙
+        </button>
       </header>
 
       {search}
@@ -254,6 +271,20 @@ export function BiblePane({
                       >
                         Link
                       </button>
+                      {onSendToCanvas && (
+                        <button
+                          type="button"
+                          className="swatches__action"
+                          data-testid={`canvas-${v.number}`}
+                          title="Put this verse on the board"
+                          onClick={() => {
+                            onSendToCanvas(v.number);
+                            setOpenVerse(null);
+                          }}
+                        >
+                          Canvas
+                        </button>
+                      )}
                     </span>
                   )}
                 </p>

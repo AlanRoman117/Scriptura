@@ -388,6 +388,188 @@ body.dragging { cursor: col-resize; user-select: none; }
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
+/* ── Settings, and what an assistant may do ───────────────────────────────── */
+
+.reader__chip--icon { padding: .3rem .45rem; font-size: .9rem; line-height: 1; }
+
+.settings { padding: 1rem 1.25rem 2rem; max-width: 40rem; }
+.settings__bar { display: flex; align-items: center; gap: .5rem; }
+.settings__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.settings__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+}
+.settings__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.settings__group { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
+.settings__heading { font-size: .95rem; margin: 0 0 .5rem; }
+.settings__body { font-size: .82rem; line-height: 1.6; color: var(--ink-soft); margin: 0 0 .6rem; }
+.settings__body strong { color: var(--ink); }
+.settings__note { font-size: .76rem; color: var(--ink-soft); font-style: italic; margin: 0 0 .8rem; }
+.settings__actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.settings__action {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.settings__action:hover { color: var(--ink); border-color: var(--ink-soft); }
+.settings__toggle { display: flex; align-items: center; gap: .5rem; font-size: .85rem; margin: .5rem 0 .6rem; cursor: pointer; }
+.settings__tools { font-size: .78rem; color: var(--ink-soft); margin-top: .6rem; }
+.settings__tools summary { cursor: pointer; }
+.settings__tools ul { list-style: none; margin: .6rem 0 0; padding: 0; }
+.settings__tools li { padding: .4rem 0; border-top: 1px solid var(--rule); }
+.settings__tools code { font-size: .76rem; color: var(--ink); }
+.settings__tag {
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .04em;
+  padding: .1rem .3rem; border-radius: 4px; margin-left: .3rem;
+  background: color-mix(in srgb, var(--rule) 70%, transparent); color: var(--ink-soft);
+}
+.settings__tag--write { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
+.settings__tool-desc { display: block; margin-top: .2rem; line-height: 1.5; }
+
+/* ── A staged proposal: contents, not counts ──────────────────────────────── */
+
+.proposal {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  background: color-mix(in srgb, #000 45%, transparent);
+}
+.proposal__box {
+  display: flex; flex-direction: column; width: min(42rem, 100%); max-height: 85vh;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / .35); overflow: hidden;
+}
+.proposal__bar { padding: 1rem 1.25rem .25rem; }
+.proposal__title { font-family: var(--serif); font-size: 1.2rem; margin: 0; }
+.proposal__lede {
+  margin: 0; padding: .5rem 1.25rem 1rem; font-size: .8rem; line-height: 1.6; color: var(--ink-soft);
+}
+.proposal__body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 1.25rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.proposal__meta { font-size: .82rem; margin: 0; }
+.proposal__field {
+  font: inherit; font-size: .95rem; color: var(--ink); background-color: var(--paper-raised);
+  border: 1px solid var(--rule); border-radius: 6px; padding: .45rem .6rem;
+}
+.proposal__text {
+  font: inherit; font-size: .88rem; line-height: 1.6; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px;
+  padding: .6rem; min-height: 14rem; resize: vertical;
+}
+.proposal__list { list-style: none; margin: 0; padding: 0; }
+.proposal__item { padding: .5rem 0; border-bottom: 1px solid var(--rule); }
+.proposal__item[data-dropped] { opacity: .45; }
+.proposal__item label { display: flex; align-items: center; gap: .45rem; cursor: pointer; }
+.proposal__ref { font-size: .78rem; color: var(--accent); font-weight: 600; }
+.proposal__verse { margin: .2rem 0 0 1.5rem; font-family: var(--serif); font-size: .88rem; line-height: 1.5; }
+.proposal__actions {
+  display: flex; justify-content: flex-end; gap: .5rem;
+  padding: .85rem 1.25rem; border-top: 1px solid var(--rule); background: var(--paper-raised);
+}
+.proposal__action {
+  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: .4rem .8rem;
+}
+.proposal__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.proposal__action:disabled { opacity: .5; cursor: default; }
+.proposal__action--primary { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 20%, var(--paper)); }
+
+/* ── Canvas: verses and notes on a plane ──────────────────────────────────── */
+
+.canvas { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper); }
+.canvas__bar {
+  display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
+  padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.canvas__spacer { flex: 1; }
+.canvas__select {
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
+}
+.canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
+.canvas__action {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.canvas__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.canvas__action:disabled { opacity: .55; cursor: default; }
+.canvas__action--danger:hover { color: #b3261e; border-color: #b3261e; }
+
+.canvas__zoom { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.canvas__zoom button {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: none; padding: .3rem .5rem; min-width: 2.2rem;
+}
+.canvas__zoom button:hover { color: var(--ink); }
+.canvas__zoom button + button { border-left: 1px solid var(--rule); }
+
+/* The plane is dotted so panning and zooming have something to read against —
+   an empty white field gives no sense of having moved at all. */
+.canvas__frame {
+  position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 14%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.canvas__frame[data-connecting] { cursor: crosshair; }
+.canvas__plane { position: absolute; inset: 0; transform-origin: 0 0; }
+.canvas__edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.canvas__edges line { stroke: var(--ink-soft); stroke-width: 2; }
+.canvas__edges marker path { fill: var(--ink-soft); }
+.canvas__edge-cut { fill: transparent; pointer-events: auto; cursor: pointer; }
+.canvas__edge-cut:hover { fill: color-mix(in srgb, #b3261e 30%, transparent); }
+.canvas__empty {
+  position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
+  color: var(--ink-soft); font-size: .85rem; pointer-events: none;
+}
+
+/* Cards are a fixed size on purpose: an edge can then be drawn from centre to
+   centre without measuring the DOM on every drag frame. */
+.card {
+  position: absolute; display: flex; flex-direction: column;
+  background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 10px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / .12); overflow: hidden;
+}
+.card[data-color='amber']  { border-color: #f0b429; box-shadow: 0 2px 10px color-mix(in srgb, #f0b429 35%, transparent); }
+.card[data-color='rose']   { border-color: #e0607e; box-shadow: 0 2px 10px color-mix(in srgb, #e0607e 35%, transparent); }
+.card[data-color='sky']    { border-color: #4c9be8; box-shadow: 0 2px 10px color-mix(in srgb, #4c9be8 35%, transparent); }
+.card[data-color='mint']   { border-color: #3fb984; box-shadow: 0 2px 10px color-mix(in srgb, #3fb984 35%, transparent); }
+.card[data-color='violet'] { border-color: #9b7bd4; box-shadow: 0 2px 10px color-mix(in srgb, #9b7bd4 35%, transparent); }
+
+.card__grip {
+  cursor: grab; padding: .35rem .5rem; border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--rule) 35%, transparent);
+}
+.card__title {
+  display: block; font-size: .72rem; font-weight: 600; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card__body {
+  flex: 1; margin: 0; padding: .4rem .5rem; font-family: var(--serif); font-size: .8rem;
+  line-height: 1.45; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+}
+.card__editor {
+  flex: 1; margin: 0; padding: .4rem .5rem; font: inherit; font-size: .8rem;
+  line-height: 1.45; color: var(--ink); background: transparent;
+  border: none; resize: none; outline: none;
+}
+.card__actions { display: flex; align-items: center; gap: .15rem; padding: .2rem .3rem; border-top: 1px solid var(--rule); }
+.card__action {
+  font: inherit; font-size: .75rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 5px; padding: .05rem .3rem;
+}
+.card__action:hover { color: var(--ink); border-color: var(--rule); }
+.card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
+.card__action--danger:hover { color: #b3261e; border-color: #b3261e; }
+.card__swatches { display: inline-flex; gap: .15rem; margin-left: auto; }
+.card__dot { width: .6rem; height: .6rem; border-radius: 50%; border: 1px solid rgb(0 0 0 / .2); padding: 0; cursor: pointer; }
+.card__dot[data-color='amber']  { background: #f0b429; }
+.card__dot[data-color='rose']   { background: #e0607e; }
+.card__dot[data-color='sky']    { background: #4c9be8; }
+.card__dot[data-color='mint']   { background: #3fb984; }
+.card__dot[data-color='violet'] { background: #9b7bd4; }
+.card__dot[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
+
 /* ── Search results: every match, and where they fall ─────────────────────── */
 
 .search__see-all {

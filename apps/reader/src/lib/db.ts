@@ -10,7 +10,7 @@
 const DB_NAME = 'scriptura';
 // Bumped when a store is added. The upgrade handler creates only what is
 // missing, so it serves both a fresh install and an existing one.
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 /** Downloaded translations, keyed by id. */
 export const TRANSLATIONS = 'translations';
@@ -18,8 +18,10 @@ export const TRANSLATIONS = 'translations';
 export const SETTINGS = 'settings';
 /** Markdown notes the user has written. The thing that must never be lost. */
 export const NOTES = 'notes';
-/** Verse highlights, anchored to {translation, book_slug, chapter, verse}. */
+/** Verse highlights, anchored to {book_slug, chapter, verse}. */
 export const HIGHLIGHTS = 'highlights';
+/** Canvas boards — the spatial map of verses and notes, and its layout. */
+export const BOARDS = 'boards';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -35,6 +37,7 @@ function open(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(SETTINGS)) db.createObjectStore(SETTINGS);
       if (!db.objectStoreNames.contains(NOTES)) db.createObjectStore(NOTES);
       if (!db.objectStoreNames.contains(HIGHLIGHTS)) db.createObjectStore(HIGHLIGHTS);
+      if (!db.objectStoreNames.contains(BOARDS)) db.createObjectStore(BOARDS);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);

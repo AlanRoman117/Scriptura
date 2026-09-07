@@ -318,7 +318,7 @@ data/{translation-id}/
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
 | Tests | 49, incl. integration coverage of every route |
-| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, and a downloadable library with side-by-side comparison (Stage 4 of 5) |
+| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages) |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |

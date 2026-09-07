@@ -11,6 +11,7 @@
  */
 import { get, put, SETTINGS } from './db';
 import { markExported, type Note } from './notes';
+import { boardToMarkdown, type Board, type BoardNode } from './canvas';
 import { createZip, safeFilename } from './zip';
 
 const DIR_HANDLE = 'notesDirectory';
@@ -21,24 +22,51 @@ function toMarkdown(note: Note): string {
   return `# ${note.title}\n\n<!-- scriptura:note ${note.id} updated:${stamp} -->\n\n${note.body}\n`;
 }
 
-export function exportNotes(notes: Note[]): Blob {
+/**
+ * Everything the reader has written, as files.
+ *
+ * Boards go in too. The whole reason the canvas exists is that people were
+ * exporting passages into GoodNotes to lay them out; a board that could only be
+ * read inside this app would recreate the problem it was built to solve.
+ */
+export function exportNotes(
+  notes: Note[],
+  boards: Board[] = [],
+  describe: (node: BoardNode) => string = defaultDescribe
+): Blob {
   const seen = new Map<string, number>();
-  return createZip(
-    notes.map((note) => {
+  const unique = (folder: string, title: string, id: string) => {
+    const base = safeFilename(title, id);
+    const n = (seen.get(`${folder}/${base}`) ?? 0) + 1;
+    seen.set(`${folder}/${base}`, n);
+    return `${folder}/${base}${n > 1 ? ` (${n})` : ''}.md`;
+  };
+
+  return createZip([
+    ...notes.map((note) => ({
       // Two notes may share a title; a zip with duplicate paths is ambiguous.
-      const base = safeFilename(note.title, note.id);
-      const n = (seen.get(base) ?? 0) + 1;
-      seen.set(base, n);
-      return {
-        name: `notes/${base}${n > 1 ? ` (${n})` : ''}.md`,
-        content: toMarkdown(note),
-      };
-    })
-  );
+      name: unique('notes', note.title, note.id),
+      content: toMarkdown(note),
+    })),
+    ...boards.map((board) => ({
+      name: unique('boards', board.name, board.id),
+      content: boardToMarkdown(board, describe),
+    })),
+  ]);
 }
 
-export async function downloadNotes(notes: Note[]): Promise<void> {
-  const blob = exportNotes(notes);
+/** A card, when the caller has no translation loaded to name it from. */
+function defaultDescribe(node: BoardNode): string {
+  if (node.kind === 'verse') return `${node.book_slug} ${node.chapter}:${node.verse}`;
+  return node.text?.split('\n')[0] || 'Card';
+}
+
+export async function downloadNotes(
+  notes: Note[],
+  boards: Board[] = [],
+  describe?: (node: BoardNode) => string
+): Promise<void> {
+  const blob = exportNotes(notes, boards, describe);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

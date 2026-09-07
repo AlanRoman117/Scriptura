@@ -19,6 +19,25 @@ import {
 import { LibraryPanel, type DownloadState } from './components/LibraryPanel';
 import { ComparePane } from './components/ComparePane';
 import { SearchResults } from './components/SearchResults';
+import { CanvasView } from './components/CanvasView';
+import { SettingsPanel } from './components/SettingsPanel';
+import { ProposalPreview } from './components/ProposalPreview';
+import {
+  configureAgent,
+  isEnabled as agentIsEnabled,
+  isSupported as agentIsSupported,
+  setEnabled as setAgentEnabled,
+  type Proposal,
+} from './lib/webmcp';
+import {
+  deleteBoard as removeBoard,
+  freeSlot,
+  listBoards,
+  newBoard,
+  saveBoard,
+  type Board,
+  type BoardNode,
+} from './lib/canvas';
 import {
   exportIsStale,
   deleteHighlight,
@@ -69,6 +88,15 @@ export function App() {
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [boardId, setBoardId] = useState<string | null>(null);
+  const [canvasOpen, setCanvasOpen] = useState(false);
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [agentEnabled, setAgentOn] = useState(() => agentIsEnabled());
+  /** One at a time: a second would swap the contents under an open preview. */
+  const [proposal, setProposal] = useState<Proposal | null>(null);
   const [compareWith, setCompareWith] = useState<string[]>([]);
   const [compareBibles, setCompareBibles] = useState<Record<string, Bible>>({});
 
@@ -148,6 +176,11 @@ export function App() {
     });
     void listHighlights(reportStoreFailure).then((h) => !cancelled && setHighlights(h));
     void loadColorLabels().then((l) => !cancelled && setColorLabels(l));
+    void listBoards(reportStoreFailure).then((b) => {
+      if (cancelled) return;
+      setBoards(b);
+      setBoardId(b[0]?.id ?? null);
+    });
 
     void requestPersistence().then((p) => !cancelled && setPersistence(p));
     void mirroring().then((m) => !cancelled && setIsMirroring(m));
@@ -314,9 +347,165 @@ export function App() {
     []
   );
 
+  /**
+   * What the agent tools may see.
+   *
+   * Held in a ref and re-pointed on every render, so tools registered once
+   * still answer from current state rather than the closure they were built
+   * with. `propose` refuses a second proposal while one is open — the preview
+   * would otherwise swap contents under someone mid-review.
+   */
+  const agentState = useRef({ bible, notes, highlights, colorLabels, boards, translationId, installed });
+  agentState.current = { bible, notes, highlights, colorLabels, boards, translationId, installed };
+
+  /**
+   * Whether a proposal is already open — held in a ref, not read from state.
+   *
+   * State is only current after a render, so two tool calls in the same tick
+   * both saw "nothing pending" and the second replaced the first: the reader
+   * would have been looking at one draft and confirming another. The guard has
+   * to be true the instant it is set, which is what a ref is for.
+   */
+  const pendingProposal = useRef<Proposal | null>(null);
+
+  const clearProposal = useCallback(() => {
+    pendingProposal.current = null;
+    setProposal(null);
+  }, []);
+
+  useEffect(() => {
+    configureAgent({
+      bible: () => agentState.current.bible,
+      translationId: () => agentState.current.translationId,
+      installed: () => agentState.current.installed,
+      notes: () => agentState.current.notes,
+      highlights: () => agentState.current.highlights,
+      labels: () => agentState.current.colorLabels,
+      boards: () => agentState.current.boards,
+      propose: (next) => {
+        if (pendingProposal.current) return false;
+        pendingProposal.current = next;
+        setProposal(next);
+        return true;
+      },
+    });
+  }, []);
+
+  /**
+   * Apply what the reader accepted — never what was proposed.
+   *
+   * The argument comes back from the preview, so an edited title or a verse
+   * they unticked is what lands. Re-reading the staged proposal here would
+   * quietly discard their review.
+   */
+  const acceptProposal = useCallback(
+    (accepted: Proposal) => {
+      clearProposal();
+      if (accepted.kind === 'note') {
+        const note = { ...newNote(accepted.title), body: accepted.body };
+        setNotes((c) => [note, ...c]);
+        setActiveId(note.id);
+        setSaving('saving');
+        void saveNote(note).then((ok) => setSaving(ok ? 'saved' : 'failed'));
+        return;
+      }
+      // Sequential rather than concurrent: each toggle derives from the list
+      // before it, and firing them in parallel would have them overwrite.
+      void accepted.refs
+        .reduce(
+          (chain, ref) =>
+            chain.then((current) =>
+              toggleHighlight(
+                { translation: agentState.current.translationId, ...ref },
+                accepted.color,
+                current
+              )
+            ),
+          Promise.resolve(agentState.current.highlights)
+        )
+        .then(setHighlights);
+    },
+    [clearProposal]
+  );
+
+  const changeBoard = useCallback((board: Board) => {
+    setBoards((current) => current.map((b) => (b.id === board.id ? board : b)));
+    void saveBoard(board, (_store, err) => console.error('Saving the board failed:', err));
+  }, []);
+
+  const createBoard = useCallback(() => {
+    const board = newBoard();
+    setBoards((c) => [board, ...c]);
+    setBoardId(board.id);
+    void saveBoard(board);
+  }, []);
+
+  const deleteBoard = useCallback((id: string) => {
+    void removeBoard(id);
+    setBoards((current) => {
+      const next = current.filter((b) => b.id !== id);
+      setBoardId(next[0]?.id ?? null);
+      return next;
+    });
+  }, []);
+
+  /**
+   * Put a verse on a board without leaving the text.
+   *
+   * Creates the first board rather than refusing: "add to canvas" should not
+   * answer "make a canvas first" the one time someone tries it.
+   */
+  const sendToCanvas = useCallback(
+    (verse: number) => {
+      const target = boards.find((b) => b.id === boardId) ?? newBoard('Study board');
+      const node: BoardNode = {
+        id: crypto.randomUUID(),
+        kind: 'verse',
+        book_slug: position.bookSlug,
+        chapter: position.chapter,
+        verse,
+        translation: translationId,
+        ...freeSlot(target.nodes),
+      };
+      const already = target.nodes.some(
+        (n) =>
+          n.kind === 'verse' &&
+          n.book_slug === node.book_slug &&
+          n.chapter === node.chapter &&
+          n.verse === node.verse
+      );
+      const next = already ? target : { ...target, nodes: [...target.nodes, node], updated: Date.now() };
+
+      setBoards((current) =>
+        current.some((b) => b.id === next.id)
+          ? current.map((b) => (b.id === next.id ? next : b))
+          : [next, ...current]
+      );
+      setBoardId(next.id);
+      void saveBoard(next);
+    },
+    [boards, boardId, position, translationId]
+  );
+
+  /** A card in one line, for the export. */
+  const describeCard = useCallback(
+    (node: BoardNode): string => {
+      if (node.kind === 'verse') {
+        const book = bible?.book(node.book_slug ?? '');
+        const where = `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`;
+        return node.translation ? `${where} (${node.translation.toUpperCase()})` : where;
+      }
+      if (node.kind === 'note') {
+        return notes.find((n) => n.id === node.noteId)?.title || 'Untitled note';
+      }
+      return node.text?.split('\n')[0] || 'Card';
+    },
+    [bible, notes]
+  );
+
   const doExport = useCallback(() => {
-    void downloadNotes(notes).then(() => setStaleExport(false));
-  }, [notes]);
+    void downloadNotes(notes, boards, describeCard).then(() => setStaleExport(false));
+  }, [notes, boards, describeCard]);
 
   const doChooseFolder = useCallback(() => {
     void chooseNotesFolder().then((ok) => {
@@ -535,8 +724,42 @@ export function App() {
 
   const book = bible.book(position.bookSlug) ?? bible.books[0];
 
+  const staged = proposal && bible && (
+    <ProposalPreview
+      bible={bible}
+      proposal={proposal}
+      labels={colorLabels}
+      onAccept={acceptProposal}
+      onDiscard={clearProposal}
+    />
+  );
+
+  if (canvasOpen) {
+    return (
+      <>
+        {staged}
+        <CanvasView
+          bible={bible}
+          notes={notes}
+          boards={boards}
+          activeId={boardId}
+          onSelect={setBoardId}
+          onCreate={createBoard}
+          onDelete={deleteBoard}
+          onChange={changeBoard}
+          onClose={() => setCanvasOpen(false)}
+          onGo={(bookSlug, chapter, verse) => {
+            goTo(bookSlug, chapter, verse);
+            setCanvasOpen(false);
+          }}
+        />
+      </>
+    );
+  }
+
   return (
     <>
+      {staged}
       {!bannerDismissed && (
         <DurabilityBanner
           persistence={persistence}
@@ -562,18 +785,28 @@ export function App() {
             onHighlight={highlight}
             onQuote={quoteVerse}
             onLink={linkVerse}
+            onSendToCanvas={sendToCanvas}
             marksOpen={marksOpen}
             markCount={highlights.length}
             onToggleMarks={() => {
               setLibraryOpen(false);
               setResultsOpen(false);
+              setSettingsOpen(false);
               setMarksOpen((o) => !o);
             }}
             libraryOpen={libraryOpen}
             onToggleLibrary={() => {
               setMarksOpen(false);
               setResultsOpen(false);
+              setSettingsOpen(false);
               setLibraryOpen((o) => !o);
+            }}
+            settingsOpen={settingsOpen}
+            onToggleSettings={() => {
+              setMarksOpen(false);
+              setResultsOpen(false);
+              setLibraryOpen(false);
+              setSettingsOpen((o) => !o);
             }}
             overlay={
               marksOpen ? (
@@ -600,6 +833,21 @@ export function App() {
                   }}
                   onInsert={(r) => insertSearchResult(r)}
                   onClose={() => setResultsOpen(false)}
+                />
+              ) : settingsOpen ? (
+                <SettingsPanel
+                  persistence={persistence}
+                  mirroring={isMirroring}
+                  storage={storage}
+                  agentSupported={agentIsSupported()}
+                  agentEnabled={agentEnabled}
+                  onAgentToggle={(on) => {
+                    setAgentEnabled(on);
+                    setAgentOn(on);
+                  }}
+                  onChooseFolder={doChooseFolder}
+                  onExport={doExport}
+                  onClose={() => setSettingsOpen(false)}
                 />
               ) : libraryOpen ? (
                 <LibraryPanel
@@ -657,6 +905,8 @@ export function App() {
             onDelete={deleteNote}
             onChange={changeNote}
             onExport={doExport}
+            onOpenCanvas={() => setCanvasOpen(true)}
+            boardCount={boards.length}
             onSurfaceReady={(el) => {
               surfaceRef.current = el;
             }}

@@ -11,6 +11,10 @@ interface NotesPaneProps {
   onDelete: (id: string) => void;
   onChange: (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => void;
   onExport: () => void;
+  /** Opens the board view — the spatial half of the same content. */
+  onOpenCanvas?: () => void;
+  /** Boards export alongside notes, so they count towards having something to export. */
+  boardCount?: number;
   /** Registers the textarea so quoted passages land at the cursor. */
   onSurfaceReady?: (el: HTMLTextAreaElement | null) => void;
   /** How a `[[…]]` link reads, or null when it resolves to nothing. */
@@ -35,6 +39,8 @@ export function NotesPane({
   onDelete,
   onChange,
   onExport,
+  onOpenCanvas,
+  boardCount = 0,
   onSurfaceReady,
   describeLink,
   onFollowLink,
@@ -86,10 +92,19 @@ export function NotesPane({
         <button
           type="button"
           className="notes__action"
+          data-testid="canvas-open"
+          onClick={onOpenCanvas}
+          title="Lay verses and notes out on a board"
+        >
+          Canvas
+        </button>
+        <button
+          type="button"
+          className="notes__action"
           data-testid="note-export"
           onClick={onExport}
-          disabled={notes.length === 0}
-          title="Download every note as Markdown in a .zip"
+          disabled={notes.length === 0 && boardCount === 0}
+          title="Download every note and board as Markdown in a .zip"
         >
           Export
         </button>
