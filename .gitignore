@@ -15,7 +15,10 @@ node_modules/
 # ─── TypeScript / package build output ───
 dist/
 build/
-lib/
+# Anchored to the repo root, not bare. A bare `lib/` matches every directory
+# named lib at any depth, which silently swallowed apps/reader/src/lib/ — the
+# app built locally and failed in CI with "cannot find module './lib/db'".
+/lib/
 packages/*/dist/
 packages/*/lib/
 *.tsbuildinfo
