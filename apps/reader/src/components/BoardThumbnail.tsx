@@ -26,12 +26,41 @@ const LABEL_SIZE = 10;
 const LABEL_PAD = 6;
 
 /**
- * An embedded board, drawn where it was written.
+ * Measure a label the way it will actually be drawn.
  *
- * The same role a mermaid fence plays: the note keeps a plain-text reference,
- * and the reader sees the diagram. Deliberately not interactive — this is the
- * note's illustration, and editing belongs on the board itself, one click away.
+ * A character-count estimate is not portable — the same system font stack
+ * resolves to different faces on different machines, and a factor tuned on one
+ * of them overflowed by 2px on CI. Canvas `measureText` is close, but it and
+ * SVG disagree by about a pixel on the same string, which is another margin to
+ * guess at. So the measurement is taken from an offscreen `<text>` carrying the
+ * very class the real labels use: same engine, same font, same metrics, nothing
+ * left to estimate.
  */
+let ruler: SVGTextElement | null | undefined;
+
+function measure(text: string): number {
+  if (ruler === undefined) {
+    if (typeof document === 'undefined') {
+      ruler = null;
+    } else {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('style', 'position:absolute;width:0;height:0;overflow:hidden;visibility:hidden');
+      ruler = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      ruler.setAttribute('class', 'embed__label');
+      svg.appendChild(ruler);
+      document.body.appendChild(svg);
+    }
+  }
+  if (!ruler) {
+    // No DOM to measure with: guess wide rather than narrow, since a title cut
+    // a character early reads fine and one that spills does not.
+    return text.length * LABEL_SIZE * 0.62;
+  }
+  ruler.textContent = text;
+  return ruler.getComputedTextLength();
+}
+
 export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailProps) {
   const layout = useMemo(() => {
     if (!board || board.nodes.length === 0) return null;
@@ -65,14 +94,17 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
    *
    * The card shrinks with the board and the label does not, so a fixed
    * character limit spills out of the box at any real scale — which is what
-   * "Genesis 1:27" did. Measured against the drawn width instead, with a clip
-   * behind it in case the font is wider than the estimate.
+   * "Genesis 1:27" did. Trimmed against a real measurement of the drawn text,
+   * with a clip behind it as a last guarantee.
    */
   const fit = (title: string, drawnWidth: number): string => {
     const room = Math.max(0, drawnWidth - LABEL_PAD * 2);
-    const max = Math.floor(room / (LABEL_SIZE * 0.56));
-    if (max <= 1) return '';
-    return title.length <= max ? title : `${title.slice(0, max - 1)}…`;
+    if (room <= 0) return '';
+    if (measure(title) <= room) return title;
+
+    let cut = title.length - 1;
+    while (cut > 0 && measure(`${title.slice(0, cut)}…`) > room) cut -= 1;
+    return cut > 0 ? `${title.slice(0, cut)}…` : '';
   };
 
   const centre = (id: string) => {

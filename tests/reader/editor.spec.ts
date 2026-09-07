@@ -169,9 +169,11 @@ test.describe('a board inside a note', () => {
     const cards = await page.locator('.card').evaluateAll((all) =>
       all.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''))
     );
+    // Wide glyphs as well as a long title: a proportional estimate passes on
+    // narrow letters and spills on these.
     await page
       .getByTestId(`card-title-${cards[cards.length - 1]}`)
-      .fill('From Adam through Abraham to David');
+      .fill('WWWWW From Adam through Abraham to David MMMMM');
 
     await page.getByTestId('board-to-note').click();
     await page.getByTestId('note-preview').click();
