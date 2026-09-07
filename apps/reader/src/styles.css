@@ -177,10 +177,6 @@ body.dragging { cursor: col-resize; user-select: none; }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
 
 .verse { margin: 0 0 .85rem; }
-.verse__num {
-  font-family: var(--sans); font-size: .68em; color: var(--accent);
-  margin-right: .35em; vertical-align: super; line-height: 0;
-}
 
 .attribution {
   margin-top: auto; padding: .75rem 1.25rem;
@@ -242,25 +238,50 @@ body.dragging { cursor: col-resize; user-select: none; }
 .verse[data-highlight='mint']   { background: color-mix(in srgb, #3fb984 24%, transparent); }
 .verse[data-highlight='violet'] { background: color-mix(in srgb, #9b7bd4 26%, transparent); }
 
-/* A hit target on the verse number, not the prose: selecting text to read is
-   the common act, and hijacking it to highlight would fight the reader. */
-.verse__handle {
-  position: absolute; left: -1.5rem; top: .15rem;
-  width: 1.35rem; height: 1.35rem; padding: 0;
-  border: none; border-radius: 4px; background: transparent; cursor: pointer;
-  opacity: 0;
+/* The whole verse is the target.
+ *
+ * It used to be a small square in the left margin — which meant reaching out to
+ * the margin, clicking, then travelling back across the line to reach the
+ * swatches at the far end. That is a lot of mouse for one quick act, so the
+ * verse itself takes the click and the swatches open directly beneath it.
+ *
+ * A drag that selects text is excluded in the handler, so reading and copying
+ * still work: the click only counts when the selection is collapsed. */
+.verse { cursor: pointer; transition: background-color .12s ease, box-shadow .12s ease; }
+.verse:not([data-highlight]):hover { background: color-mix(in srgb, var(--rule) 42%, transparent); }
+.verse[data-highlight]:hover { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 16%, transparent); }
+/* The verse you are acting on, held visibly while the swatches are open. */
+.verse[data-open],
+.verse[data-open]:hover {
+  background: color-mix(in srgb, var(--focus) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--focus) 55%, transparent);
 }
-.verse:hover .verse__handle,
-.verse__handle:focus-visible { opacity: 1; background: color-mix(in srgb, var(--rule) 60%, transparent); }
-@media (pointer: coarse) { .verse__handle { opacity: 1; } }
+/* Touch has no hover, so the number stays the visible affordance there. */
+@media (hover: none) { .verse:hover { background: none; } }
 
+/* The verse number is the control, rather than an invisible one beside it.
+ *
+ * Raised with `position: relative` rather than `vertical-align: super`, which
+ * needs `line-height: 0` to keep from stretching the line box — and a zero line
+ * height collapses a button to no height at all, leaving it unclickable. */
+.verse__num {
+  font-family: var(--sans); font-size: .68em; color: var(--accent);
+  margin-right: .35em; padding: .05em .15em; line-height: 1;
+  position: relative; top: -.35em;
+  background: none; border: none; cursor: pointer; border-radius: 3px;
+}
+.verse__num:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Centred under the verse it belongs to: short travel from anywhere in it. */
 .swatches {
-  display: inline-flex; gap: .3rem; margin-left: .5rem;
-  vertical-align: middle; padding: .2rem;
+  display: flex; justify-content: center; align-items: center; gap: .3rem;
+  width: fit-content; margin: .5rem auto 0; padding: .25rem .45rem;
+  cursor: default;
   background: var(--paper-raised); border: 1px solid var(--rule);
-  border-radius: 999px; box-shadow: 0 2px 8px rgb(0 0 0 / .1);
+  border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
 }
 .swatch { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 1px solid rgb(0 0 0 / .18); cursor: pointer; padding: 0; }
+.swatch--static { display: inline-block; flex: 0 0 auto; cursor: default; }
 .swatch[data-color='amber']  { background: #f0b429; }
 .swatch[data-color='rose']   { background: #e0607e; }
 .swatch[data-color='sky']    { background: #4c9be8; }
@@ -278,6 +299,64 @@ body.dragging { cursor: col-resize; user-select: none; }
 /* A jumped-to verse announces itself, then settles. */
 @keyframes verse-flash { from { background: color-mix(in srgb, var(--accent) 34%, transparent); } }
 .verse--flash { animation: verse-flash 1.6s ease-out; }
+
+/* ── Marks: the five colours, read back as five collections ───────────────── */
+
+.reader__marks {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .35rem;
+  font: inherit; font-size: .78rem; color: var(--ink-soft);
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
+}
+.reader__marks:hover { color: var(--ink); border-color: var(--ink-soft); }
+.reader__marks[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised)); }
+.reader__marks-count {
+  font-size: .7rem; line-height: 1; padding: .15rem .3rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink);
+}
+
+.marks { padding: 1rem 1.25rem 2rem; overflow-y: auto; }
+.marks__bar { display: flex; align-items: center; gap: .5rem; }
+.marks__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.marks__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+}
+.marks__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.marks__hint { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+
+.marks__group { margin-bottom: 1.4rem; }
+.marks__group-bar { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+.marks__label {
+  flex: 1; min-width: 0; font: inherit; font-size: .88rem; font-weight: 600; color: var(--ink);
+  background-color: transparent; border: 1px solid transparent; border-radius: 6px;
+  padding: .25rem .35rem;
+}
+/* Editable, but not shouting about it until you go near it — the label is read
+   far more often than it is changed. */
+.marks__label:hover { border-color: var(--rule); }
+.marks__label:focus { border-color: var(--ink-soft); background-color: var(--paper-raised); outline: none; }
+.marks__label::placeholder { color: var(--ink-soft); font-weight: 500; }
+.marks__count { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.marks__empty { font-size: .78rem; color: var(--ink-soft); font-style: italic; margin: 0 0 0 1.55rem; }
+.marks__list { list-style: none; margin: 0; padding: 0 0 0 1.55rem; }
+.marks__item { display: flex; align-items: stretch; gap: .25rem; }
+.marks__ref {
+  flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
+  background: transparent; border: none; border-radius: 6px; padding: .35rem .45rem; cursor: pointer;
+}
+.marks__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.marks__ref-label { display: block; font-size: .74rem; color: var(--accent); }
+.marks__ref-text {
+  display: -webkit-box; font-family: var(--serif); font-size: .85rem; line-height: 1.45;
+  overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.marks__remove {
+  flex: 0 0 auto; width: 1.9rem; font: inherit; font-size: .8rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.marks__remove:hover { color: var(--ink); border-color: var(--rule); }
 
 /* The heading the cursor is under, pinned like an editor's sticky scroll. */
 .notes__heading {

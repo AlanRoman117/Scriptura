@@ -94,12 +94,39 @@ test.describe('getting scripture into a note', () => {
     await expect(body).toContainText('[[john 1:1]]');
   });
 
-  test('Link inserts just the reference', async ({ page }) => {
+  test('Link inserts just the reference, and leaves a line to write on', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-new').click();
     await page.getByTestId('verse-3').click();
     await page.getByTestId('link-3').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:3]]');
+    // The trailing blank line is the point: you insert, then write about it.
+    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:3]]\n\n');
+  });
+
+  test('the cursor lands on the blank line after an insertion', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+
+    const surface = page.getByTestId('notes-surface');
+    await expect
+      .poll(() => surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart))
+      .toBe(await surface.evaluate((el: HTMLTextAreaElement) => el.value.length));
+
+    // So typing continues below the quote rather than inside it.
+    await page.keyboard.type('This is the claim.');
+    await expect(surface).toContainText('[[john 1:1]]\n\nThis is the claim.');
+  });
+
+  test('two insertions do not run together', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('link-1').click();
+    await page.getByTestId('verse-2').click();
+    await page.getByTestId('link-2').click();
+    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:1]]\n\n[[john 1:2]]\n\n');
   });
 
   test('a search result can be inserted without leaving the search', async ({ page }) => {

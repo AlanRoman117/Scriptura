@@ -14,6 +14,11 @@ interface BiblePaneProps {
   onLink: (verse: number) => void;
   focusVerse?: number | null;
   search?: React.ReactNode;
+  /** The collections view, rendered over the text when open. */
+  marks?: React.ReactNode;
+  marksOpen?: boolean;
+  markCount?: number;
+  onToggleMarks?: () => void;
 }
 
 export function BiblePane({
@@ -27,18 +32,25 @@ export function BiblePane({
   onLink,
   focusVerse,
   search,
+  marks,
+  marksOpen = false,
+  markCount = 0,
+  onToggleMarks,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const [stuck, setStuck] = useState(false);
 
-  // A sticky element gives no signal that it is pinned, so detect it by
-  // comparing the heading's position against where it parks. Only then does it
-  // draw its rule — a permanent divider under an unpinned heading is noise.
-  //
-  // Deliberately not IntersectionObserver: `rootMargin` accepts px and % only,
-  // so the `rem` offset this needs is not expressible there. (It throws on
-  // construction, which takes the whole pane down with it.)
+  // Swatches left open on a verse you have navigated away from are stale.
+  useEffect(() => setOpenVerse(null), [book.slug, chapter]);
+
+  // Escape closes them, like any other transient surface.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenVerse(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   useEffect(() => {
     if (focusVerse == null) return;
     const el = document.querySelector(`.verse[data-verse="${focusVerse}"]`);
@@ -48,6 +60,13 @@ export function BiblePane({
     return () => window.clearTimeout(t);
   }, [focusVerse, book.slug, chapter]);
 
+  // A sticky element gives no signal that it is pinned, so detect it by
+  // comparing the heading's position against where it parks. Only then does it
+  // draw its rule — a permanent divider under an unpinned heading is noise.
+  //
+  // Deliberately not IntersectionObserver: `rootMargin` accepts px and % only,
+  // so the `rem` offset this needs is not expressible there. (It throws on
+  // construction, which takes the whole pane down with it.)
   useEffect(() => {
     const node = title.current;
     const scroller = node?.closest('.pane');
@@ -98,49 +117,76 @@ export function BiblePane({
         <span className="reader__translation" title={meta.name}>
           {meta.id.toUpperCase()}
         </span>
+        <button
+          type="button"
+          className="reader__marks"
+          data-testid="marks-open"
+          aria-pressed={marksOpen}
+          title="Verses you have marked, by colour"
+          onClick={onToggleMarks}
+        >
+          Marks
+          {markCount > 0 && <span className="reader__marks-count">{markCount}</span>}
+        </button>
       </header>
 
       {search}
 
-      <article className="chapter" data-testid="chapter">
+      {marksOpen && marks}
+
+      <article className="chapter" data-testid="chapter" hidden={marksOpen}>
         <h1 className="chapter__title" ref={title} data-stuck={stuck} data-testid="chapter-title">
           {book.name} {chapter}
         </h1>
         {current ? (
           <div className="chapter__text">
             {current.verses.map((v) => {
-              const id = highlightId({
-                translation: meta.id,
-                book_slug: book.slug,
-                chapter,
-                verse: v.number,
-              });
+              const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
+              const open = openVerse === v.number;
               return (
                 <p
                   className="verse"
                   key={v.number}
                   data-verse={v.number}
                   data-highlight={mark?.color ?? undefined}
+                  data-open={open || undefined}
+                  // The whole verse is the target. Reaching for a control at
+                  // the margin and then back out to the far end of the line is
+                  // a lot of travel for what should be one quick act.
+                  onClick={() => {
+                    // …but a drag that selected text is not a click on the
+                    // verse. Reading and copying must not trip the swatches.
+                    if (!window.getSelection()?.isCollapsed) return;
+                    setOpenVerse(open ? null : v.number);
+                  }}
                 >
-                  {/* aria-hidden so a screen reader reads scripture as prose
-                      rather than interleaving every verse number into the
-                      sentence. The button beside it carries the real label. */}
-                  <sup className="verse__num" aria-hidden="true">
-                    {v.number}
-                  </sup>
+                  {/* The verse number is the keyboard path to the same action.
+                      Tabbing 176 verses of Psalm 119 is no worse than before —
+                      but it is now a control that was already on the page,
+                      rather than an invisible one hiding in the margin. */}
                   <button
                     type="button"
-                    className="verse__handle"
+                    className="verse__num"
                     data-testid={`verse-${v.number}`}
-                    aria-label={`Highlight ${book.name} ${chapter}:${v.number}`}
-                    aria-expanded={openVerse === v.number}
-                    onClick={() => setOpenVerse(openVerse === v.number ? null : v.number)}
-                  />
+                    aria-label={`Mark ${book.name} ${chapter}:${v.number}`}
+                    aria-expanded={open}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenVerse(open ? null : v.number);
+                    }}
+                  >
+                    {v.number}
+                  </button>
                   <span className="verse__text">{v.text}</span>
 
-                  {openVerse === v.number && (
-                    <span className="swatches" role="group" aria-label={`Actions for verse ${v.number}`}>
+                  {open && (
+                    <span
+                      className="swatches"
+                      role="group"
+                      aria-label={`Actions for verse ${v.number}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {HIGHLIGHT_COLORS.map((color) => (
                         <button
                           key={color}

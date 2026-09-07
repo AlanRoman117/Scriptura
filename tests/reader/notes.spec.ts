@@ -78,6 +78,55 @@ test.describe('notes', () => {
   });
 });
 
+test.describe('marking a verse', () => {
+  test('the whole verse is the target, and the swatches open beneath it', async ({ page }) => {
+    await open(page);
+    const verse = page.locator('.verse[data-verse="2"]');
+
+    // No control to find first: click the prose itself.
+    await verse.click();
+    await expect(verse).toHaveAttribute('data-open', 'true');
+
+    const swatches = verse.locator('.swatches');
+    await expect(swatches).toBeVisible();
+
+    // "Centred below" is the whole point of the change — the old row sat at the
+    // end of the line, which is a long way from wherever the click landed.
+    const [box, row] = [await verse.boundingBox(), await swatches.boundingBox()];
+    expect(box && row).toBeTruthy();
+    expect(row!.y).toBeGreaterThan(box!.y);
+    const drift = Math.abs(row!.x + row!.width / 2 - (box!.x + box!.width / 2));
+    expect(drift).toBeLessThan(24);
+  });
+
+  test('selecting text to read does not open the swatches', async ({ page }) => {
+    await open(page);
+    const verse = page.locator('.verse[data-verse="2"]');
+    const box = (await verse.boundingBox())!;
+
+    // A real drag across the words: mousedown, move, mouseup — which fires a
+    // click with a non-collapsed selection. Reading and copying must not trip
+    // the swatches, or the verse becomes hostile to the thing it is for.
+    await page.mouse.move(box.x + 30, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 40, box.y + box.height / 2, { steps: 12 });
+    await page.mouse.up();
+
+    await expect(await page.evaluate(() => window.getSelection()?.toString() ?? '')).not.toBe('');
+    await expect(verse).not.toHaveAttribute('data-open', /./);
+  });
+
+  test('the verse number keeps a keyboard path to the same action', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.verse[data-verse="1"]')).toHaveAttribute('data-open', 'true');
+
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.verse[data-verse="1"]')).not.toHaveAttribute('data-open', /./);
+  });
+});
+
 test.describe('highlights', () => {
   test('a highlight is coloured, recoloured, cleared, and survives a reload', async ({ page }) => {
     await open(page);
@@ -108,13 +157,96 @@ test.describe('highlights', () => {
     await page.getByTestId('verse-1').click();
     await page.getByTestId('swatch-mint').click();
 
-    // Navigate away and back: the anchor is {translation, book_slug, chapter,
-    // verse}, not a position in the rendered list.
+    // Navigate away and back: the anchor is {book_slug, chapter, verse}, not a
+    // position in the rendered list.
     await page.getByTestId('book-select').selectOption('genesis');
     await expect(page.locator('.verse[data-verse="1"]')).not.toHaveAttribute('data-highlight', /./);
 
     await page.getByTestId('book-select').selectOption('john');
     await expect(page.locator('.verse[data-verse="1"]')).toHaveAttribute('data-highlight', 'mint');
+  });
+});
+
+test.describe('colours as collections', () => {
+  /** Marks are keyed on the passage, so read the store to prove the key shape. */
+  const storedIds = (page: import('@playwright/test').Page) =>
+    page.evaluate(
+      () =>
+        new Promise<string[]>((resolve) => {
+          const req = indexedDB.open('scriptura');
+          req.onsuccess = () => {
+            const keys = req.result
+              .transaction('highlights')
+              .objectStore('highlights')
+              .getAllKeys();
+            keys.onsuccess = () => resolve(keys.result as string[]);
+            keys.onerror = () => resolve([]);
+          };
+          req.onerror = () => resolve([]);
+        })
+    );
+
+  async function mark(page: import('@playwright/test').Page, verse: number, color: string) {
+    await page.locator(`.verse[data-verse="${verse}"]`).click();
+    await page.getByTestId(`swatch-${color}`).click();
+    await expect(page.locator(`.verse[data-verse="${verse}"]`)).toHaveAttribute(
+      'data-highlight',
+      color
+    );
+  }
+
+  test('each colour lists the verses marked with it', async ({ page }) => {
+    await open(page);
+    await mark(page, 1, 'amber');
+    await mark(page, 3, 'amber');
+    await mark(page, 2, 'sky');
+
+    await page.getByTestId('marks-open').click();
+    await expect(page.getByTestId('marks-count-amber')).toHaveText('2');
+    await expect(page.getByTestId('marks-count-sky')).toHaveText('1');
+    await expect(page.getByTestId('marks-count-rose')).toHaveText('0');
+
+    // Canonical order within a colour: a subject is walked in order, not by
+    // the accident of when each verse was noticed.
+    const refs = page.getByTestId('marks-group-amber').locator('.marks__ref-label');
+    await expect(refs).toHaveText(['John 1:1', 'John 1:3']);
+  });
+
+  test('a colour can be named for the subject it tracks, and the name sticks', async ({ page }) => {
+    await open(page);
+    await mark(page, 1, 'rose');
+    await page.getByTestId('marks-open').click();
+    await page.getByTestId('marks-label-rose').fill('Covenant promises');
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('marks-open').click();
+    await expect(page.getByTestId('marks-label-rose')).toHaveValue('Covenant promises');
+  });
+
+  test('a mark jumps to its verse, and can be removed from the list', async ({ page }) => {
+    await open(page);
+    await mark(page, 2, 'mint');
+    await page.getByTestId('book-select').selectOption('genesis');
+
+    await page.getByTestId('marks-open').click();
+    await page.getByTestId('marks-go-john-1-2').click();
+    await expect(page.getByTestId('chapter-title')).toContainText('John 1');
+    await expect(page.locator('.verse[data-verse="2"]')).toHaveAttribute('data-highlight', 'mint');
+
+    await page.getByTestId('marks-open').click();
+    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
+    await page.getByTestId('marks-close').click();
+    await expect(page.locator('.verse[data-verse="2"]')).not.toHaveAttribute('data-highlight', /./);
+  });
+
+  test('a mark is keyed on the passage, not the translation it was made in', async ({ page }) => {
+    // This is what lets a colour stay a collection once Stage 4 can switch
+    // translations: `bsb:john:1:1` would empty every list on the switch.
+    await open(page);
+    await mark(page, 1, 'violet');
+    await expect.poll(() => storedIds(page)).toContain('john:1:1');
   });
 });
 

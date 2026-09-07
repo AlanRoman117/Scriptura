@@ -8,16 +8,21 @@ import { loadTranslation, type LoadStage } from './lib/translation';
 import { requestPersistence } from './lib/db';
 import {
   exportIsStale,
+  deleteHighlight,
   listHighlights,
   listNotes,
+  loadColorLabels,
   newNote,
+  saveColorLabels,
   saveNote,
   deleteNote as removeNote,
   toggleHighlight,
+  type ColorLabels,
   type Highlight,
   type HighlightColor,
   type Note,
 } from './lib/notes';
+import { MarksPanel } from './components/MarksPanel';
 import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/export';
 import { SearchBar } from './components/SearchBar';
 import { runQuery, resolveReference, type ResolvedReference } from './lib/search';
@@ -42,6 +47,8 @@ export function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  const [colorLabels, setColorLabels] = useState<ColorLabels>({});
+  const [marksOpen, setMarksOpen] = useState(false);
 
   const [persistence, setPersistence] = useState<Persistence>('unknown');
   const [isMirroring, setIsMirroring] = useState(false);
@@ -56,6 +63,20 @@ export function App() {
 
   const saveTimer = useRef<number | null>(null);
   const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Where to leave the cursor after an insertion, applied once React repaints. */
+  const caret = useRef<{ at: number; focus: boolean } | null>(null);
+
+  useEffect(() => {
+    const pending = caret.current;
+    const el = surfaceRef.current;
+    if (!pending || !el) return;
+    caret.current = null;
+    // Focus follows a quote from the Bible — you insert, then write. It does
+    // not follow an insert from the search panel: that panel stays open on
+    // purpose so several results can be added in a row.
+    if (pending.focus) el.focus();
+    el.setSelectionRange(pending.at, pending.at);
+  }, [notes, activeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +94,7 @@ export function App() {
       void exportIsStale(loaded.length > 0).then((s) => !cancelled && setStaleExport(s));
     });
     void listHighlights(reportStoreFailure).then((h) => !cancelled && setHighlights(h));
+    void loadColorLabels().then((l) => !cancelled && setColorLabels(l));
 
     void requestPersistence().then((p) => !cancelled && setPersistence(p));
     void mirroring().then((m) => !cancelled && setIsMirroring(m));
@@ -97,14 +119,24 @@ export function App() {
     setTotal(hits.length);
   }, [bible, query]);
 
-  /** Insert at the cursor, or append when the surface is not focused. */
+  /**
+   * Insert at the cursor, or append when the surface is not focused.
+   *
+   * Always leaves a blank line after the passage and parks the cursor on it:
+   * quoting is nearly always followed by writing about what was quoted, and
+   * spacing it out by hand afterwards is a chore the app can just not create.
+   */
   const insertIntoNote = useCallback(
-    (text: string) => {
+    (text: string, { focus = false }: { focus?: boolean } = {}) => {
+      // One blank line after, however the caller punctuated its own text.
+      const block = `${text.replace(/\n+$/, '')}\n\n`;
+
       if (!activeId) {
         const note = newNote();
-        setNotes((c) => [{ ...note, body: text }, ...c]);
+        setNotes((c) => [{ ...note, body: block }, ...c]);
         setActiveId(note.id);
-        void saveNote({ ...note, body: text });
+        caret.current = { at: block.length, focus };
+        void saveNote({ ...note, body: block });
         return;
       }
       const current = notes.find((n) => n.id === activeId);
@@ -114,7 +146,8 @@ export function App() {
       const before = current.body.slice(0, at);
       const after = current.body.slice(at);
       const spacer = before && !before.endsWith('\n') ? '\n\n' : '';
-      changeNote(activeId, { body: `${before}${spacer}${text}${after}` });
+      caret.current = { at: at + spacer.length + block.length, focus };
+      changeNote(activeId, { body: `${before}${spacer}${block}${after}` });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeId, notes]
@@ -127,7 +160,7 @@ export function App() {
       const ch = b?.chapters.find((c) => c.number === position.chapter);
       const v = ch?.verses.find((x) => x.number === verse);
       if (!b || !ch || !v) return;
-      insertIntoNote(quotePassage(bible, b, position.chapter, [v]));
+      insertIntoNote(quotePassage(bible, b, position.chapter, [v]), { focus: true });
     },
     [bible, position, insertIntoNote]
   );
@@ -135,7 +168,8 @@ export function App() {
   const linkVerse = useCallback(
     (verse: number) => {
       insertIntoNote(
-        toWikiLink({ book_slug: position.bookSlug, chapter: position.chapter, verse })
+        toWikiLink({ book_slug: position.bookSlug, chapter: position.chapter, verse }),
+        { focus: true }
       );
     },
     [position, insertIntoNote]
@@ -220,6 +254,8 @@ export function App() {
       if (!bible) return;
       void toggleHighlight(
         {
+          // Kept as provenance. The mark itself is keyed on the passage, so a
+          // colour's collection survives a change of translation.
           translation: bible.meta.id,
           book_slug: position.bookSlug,
           chapter: position.chapter,
@@ -231,6 +267,19 @@ export function App() {
     },
     [bible, position, highlights]
   );
+
+  const labelColor = useCallback((color: HighlightColor, label: string) => {
+    setColorLabels((current) => {
+      const next = { ...current, [color]: label };
+      void saveColorLabels(next);
+      return next;
+    });
+  }, []);
+
+  const unmark = useCallback((id: string) => {
+    void deleteHighlight(id);
+    setHighlights((current) => current.filter((h) => h.id !== id));
+  }, []);
 
   if (error) {
     return (
@@ -277,6 +326,23 @@ export function App() {
             onHighlight={highlight}
             onQuote={quoteVerse}
             onLink={linkVerse}
+            marksOpen={marksOpen}
+            markCount={highlights.length}
+            onToggleMarks={() => setMarksOpen((o) => !o)}
+            marks={
+              <MarksPanel
+                bible={bible}
+                highlights={highlights}
+                labels={colorLabels}
+                onLabel={labelColor}
+                onGo={(bookSlug, chapter, verse) => {
+                  goTo(bookSlug, chapter, verse);
+                  setMarksOpen(false);
+                }}
+                onRemove={unmark}
+                onClose={() => setMarksOpen(false)}
+              />
+            }
             search={
               <SearchBar
                 query={query}
