@@ -14,6 +14,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const PORT = Number(process.env.SCRIPTURA_TEST_PORT ?? 3333);
 const READER_PORT = Number(process.env.SCRIPTURA_READER_PORT ?? 4173);
+const READER_DEV_PORT = Number(process.env.SCRIPTURA_READER_DEV_PORT ?? 5174);
 
 export default defineConfig({
   fullyParallel: true,
@@ -42,6 +43,19 @@ export default defineConfig({
         baseURL: `http://127.0.0.1:${READER_PORT}`,
       },
     },
+    {
+      // The dev server, which resolves modules completely differently from the
+      // production build — Vite pre-bundles dependencies there and does not
+      // here. Shipping a reader that only works when built is not shipping a
+      // reader; this project is small on purpose and only asserts that it boots
+      // clean.
+      name: 'reader-dev',
+      testDir: './tests/reader-dev',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${READER_DEV_PORT}`,
+      },
+    },
   ],
 
   webServer: [
@@ -58,6 +72,14 @@ export default defineConfig({
     {
       command: `npm run build --workspace @scriptura/reader && npm run preview --workspace @scriptura/reader -- --port ${READER_PORT} --strictPort --host 127.0.0.1`,
       url: `http://127.0.0.1:${READER_PORT}/`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 180_000,
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
+    {
+      command: `npm run dev --workspace @scriptura/reader -- --port ${READER_DEV_PORT} --strictPort --host 127.0.0.1`,
+      url: `http://127.0.0.1:${READER_DEV_PORT}/`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
       stdout: 'pipe',

@@ -137,6 +137,9 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 | jest | `npm test` | Anything provable in-process: book resolution, canon, parsers, `createRouter` logic, static/dynamic parity |
 | Playwright `contract` | `npm run test:contract` | Anything needing a real socket: status lines, headers, CORS, HTTP methods, actual JSON serialisation. **No browser** — the `request` fixture needs none. |
 | Playwright `reader` | `npm run test:reader` | The PWA in Chromium, against a **production build** — the service worker and precache manifest do not exist in dev, and offline reading is the promise being tested. Needs `npx playwright install chromium`. |
+| Playwright `reader-dev` | (same command) | The PWA against the **dev server**, which resolves modules completely differently. Small on purpose: it asserts the app boots clean. |
+
+⚠️ **Dev and production resolve modules differently, and only production was tested at first.** `vite build` runs the `@scriptura/*` CommonJS output through Rollup's commonjs plugin; the dev server does **not** pre-bundle *linked* workspace dependencies, so it served `dist/bible.js` raw and the browser rejected it — *"does not provide an export named 'createBible'"*. The app was broken in the mode a developer uses all day while every test passed. `optimizeDeps.include` in `apps/reader/vite.config.ts` lists the subpaths; `tests/reader-dev/` is the guard. The lasting fix is emitting ESM from the packages, which is a workspace-wide change tracked separately.
 
 Playwright runs in **API mode** — the `request` fixture needs no browser, so `npx playwright install` is never run and CI installs none. `tests/contract/` is in `testPathIgnorePatterns` so jest never tries to run those specs.
 

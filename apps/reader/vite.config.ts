@@ -3,6 +3,22 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // The @scriptura/* packages emit CommonJS (NodeNext with no "type": "module").
+  // Rollup's commonjs plugin converts that during `vite build`, but the dev
+  // server does not pre-bundle *linked* workspace dependencies by default — it
+  // served dist/bible.js raw, and the browser rejected it with "does not
+  // provide an export named 'createBible'". Listing the subpaths forces Vite to
+  // pre-bundle them to ESM, so dev and production consume the same artefacts.
+  //
+  // The lasting fix is emitting ESM from the packages; that is a workspace-wide
+  // change and is tracked separately.
+  optimizeDeps: {
+    include: [
+      '@scriptura/core/bible',
+      '@scriptura/core/books',
+      '@scriptura/search/matcher',
+    ],
+  },
   plugins: [
     react(),
     VitePWA({

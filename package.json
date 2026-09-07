@@ -22,7 +22,7 @@
     "schema:gen": "tsx scripts/schema-gen.ts",
     "dev:reader": "npm run dev --workspace @scriptura/reader",
     "build:reader": "npm run build --workspace @scriptura/reader",
-    "test:reader": "playwright test --project=reader"
+    "test:reader": "playwright test --project=reader --project=reader-dev"
   },
   "repository": {
     "type": "git",
