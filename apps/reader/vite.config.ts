@@ -2,6 +2,24 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * Where `/api` goes in dev and preview.
+ *
+ * The reader downloads additional translations from `/translations/:id/full.json`,
+ * which the running API serves (the router accepts the `.json` suffix precisely
+ * so one URL works against a local server and the static CDN tree alike).
+ * `npm run dev:api` listens on 3000; the Playwright reader project points this
+ * at the compiled server it already starts for the contract suite.
+ */
+const API_ORIGIN = process.env.SCRIPTURA_API_ORIGIN ?? 'http://127.0.0.1:3000';
+const proxy = {
+  '/api': {
+    target: API_ORIGIN,
+    changeOrigin: true,
+    rewrite: (path: string) => path.replace(/^\/api/, ''),
+  },
+};
+
 export default defineConfig({
   // The @scriptura/* packages emit CommonJS (NodeNext with no "type": "module").
   // Rollup's commonjs plugin converts that during `vite build`, but the dev
@@ -17,6 +35,7 @@ export default defineConfig({
       '@scriptura/core/bible',
       '@scriptura/core/books',
       '@scriptura/search/matcher',
+      '@scriptura/compare/chapters',
     ],
   },
   plugins: [
@@ -48,5 +67,6 @@ export default defineConfig({
       devOptions: { enabled: true, type: 'module' },
     }),
   ],
-  server: { port: 5173 },
+  server: { port: 5173, proxy },
+  preview: { proxy },
 });

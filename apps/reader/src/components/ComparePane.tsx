@@ -1,0 +1,119 @@
+import { useMemo } from 'react';
+import { alignChapters, compareChapterOf } from '@scriptura/compare/chapters';
+import type { Bible } from '@scriptura/core/types';
+import { requiresAttribution } from '../lib/translation';
+
+interface ComparePaneProps {
+  /** The active translation first, then each comparison, in the order chosen. */
+  bibles: Bible[];
+  bookSlug: string;
+  chapter: number;
+  onDrop: (id: string) => void;
+  onQuote: (translationId: string, verse: number) => void;
+}
+
+/**
+ * One chapter, side by side.
+ *
+ * The comparison itself is `@scriptura/compare/chapters` — the server's own
+ * implementation, running here against the translations in IndexedDB, so an
+ * offline comparison is the same computation as `/compare/chapter` rather than
+ * a second one that drifts.
+ *
+ * ⚠️ Rows align on the **verse number**, never the array index: critical-text
+ * translations legitimately omit verses (Acts 8:37 is the standard case), and
+ * index alignment would silently show different verses beside each other from
+ * the omission onward — the exact failure a comparison exists to prevent.
+ */
+export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: ComparePaneProps) {
+  const { columns, rows } = useMemo(() => {
+    const comparisons = compareChapterOf(bibles, bookSlug, chapter);
+    return { columns: comparisons, rows: alignChapters(comparisons) };
+  }, [bibles, bookSlug, chapter]);
+
+  const owed = bibles.filter((b) => requiresAttribution(b.meta));
+
+  return (
+    <section className="compare" data-testid="compare" aria-label="Translations side by side">
+      <div className="compare__scroll">
+        <table className="compare__table">
+          <thead>
+            <tr>
+              <th scope="col" className="compare__num-head">
+                <span className="visually-hidden">Verse</span>
+              </th>
+              {columns.map((c, i) => (
+                <th scope="col" key={c.translation} className="compare__head">
+                  <span className="compare__head-name">{c.book ?? bookSlug}</span>
+                  <span className="compare__head-id">{c.translation.toUpperCase()}</span>
+                  {/* The first column is what you are reading; dropping it
+                      would leave the pane with no primary text. */}
+                  {i > 0 && (
+                    <button
+                      type="button"
+                      className="compare__drop"
+                      data-testid={`compare-drop-${c.translation}`}
+                      aria-label={`Stop comparing ${c.translation.toUpperCase()}`}
+                      onClick={() => onDrop(c.translation)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.number} data-verse={row.number}>
+                <th scope="row" className="compare__num">
+                  {row.number}
+                </th>
+                {row.cells.map((text, i) => (
+                  <td key={columns[i].translation} className="compare__cell">
+                    {text === null ? (
+                      // Absent, not empty: say so, because a blank cell reads
+                      // as a rendering bug rather than a versification fact.
+                      <span className="compare__absent" title="Not present in this translation">
+                        —
+                      </span>
+                    ) : (
+                      <>
+                        <span className="compare__text">{text}</span>
+                        <button
+                          type="button"
+                          className="compare__quote"
+                          data-testid={`compare-quote-${columns[i].translation}-${row.number}`}
+                          title={`Quote ${columns[i].translation.toUpperCase()} into the open note`}
+                          aria-label={`Quote ${columns[i].translation.toUpperCase()} verse ${row.number}`}
+                          onClick={() => onQuote(columns[i].translation, row.number)}
+                        >
+                          +
+                        </button>
+                      </>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* CC BY-SA wants the notice where the material appears — and in a
+          comparison the material can be in any column. */}
+      {owed.length > 0 && (
+        <footer className="attribution" data-testid="compare-attribution">
+          {owed.map((b) => (
+            <span key={b.meta.id} className="attribution__line">
+              {b.meta.attribution} ·{' '}
+              <a href={b.meta.source_url} target="_blank" rel="noreferrer noopener">
+                source
+              </a>
+            </span>
+          ))}
+        </footer>
+      )}
+    </section>
+  );
+}

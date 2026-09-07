@@ -1,5 +1,9 @@
 import { loadTranslation, parseReference } from '@scriptura/core';
-import type { TranslationVerse } from '@scriptura/core';
+import type { Bible, TranslationVerse } from '@scriptura/core';
+import { compareChapterOf, type ChapterComparison } from './chapters.js';
+
+export { alignChapters, compareChapterOf } from './chapters.js';
+export type { ChapterComparison, ComparisonRow } from './chapters.js';
 
 /**
  * Compare a single verse across multiple translations.
@@ -58,37 +62,32 @@ export async function compareVerse(
 /**
  * Compare a full chapter across multiple translations.
  * Returns one entry per translation, each holding that chapter's verses.
+ *
+ * Loading is all this does. The comparison itself lives in the I/O-free
+ * `chapters.ts`, which the reader PWA calls directly against the translations
+ * it holds in IndexedDB — so a side-by-side chapter is the same computation
+ * online and off rather than two implementations that drift apart.
  */
 export async function compareChapter(
   bookName: string,
   chapterNum: number,
   translationIds: string[]
-): Promise<{ translation: string; book?: string; verses: TranslationVerse[] }[]> {
-  return Promise.all(
-    translationIds.map(async (id) => {
-      let bible;
+): Promise<ChapterComparison[]> {
+  const loaded = await Promise.all(
+    translationIds.map(async (id): Promise<Bible | null> => {
       try {
-        bible = await loadTranslation(id);
+        return await loadTranslation(id);
       } catch {
-        return { translation: id, verses: [] };
+        return null;
       }
-
-      const book = bible.book(bookName);
-      const chapter = book?.chapters.find((c) => c.number === chapterNum);
-
-      return {
-        translation: id,
-        book: book?.name,
-        verses: (chapter?.verses ?? []).map((v) => ({
-          translation: id,
-          // Keep the verse number: without it callers can only align chapters
-          // across translations by array index, which breaks wherever a
-          // translation omits a verse.
-          number: v.number,
-          text: v.text,
-          found: true,
-        })),
-      };
     })
+  );
+
+  // A translation that cannot be read degrades to an empty row rather than
+  // failing the whole comparison, exactly as compareVerse does.
+  return loaded.map((bible, i) =>
+    bible
+      ? compareChapterOf([bible], bookName, chapterNum)[0]
+      : { translation: translationIds[i], verses: [] as TranslationVerse[] }
   );
 }

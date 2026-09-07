@@ -141,16 +141,38 @@ body.dragging { cursor: col-resize; user-select: none; }
 .reader__select:hover { border-color: var(--ink-soft); }
 .reader__select--chapter { max-width: 5.5rem; flex: 0 0 auto; }
 
-.reader__translation {
-  margin-left: auto; font-size: .72rem; letter-spacing: .08em;
-  color: var(--ink-soft); flex: 0 0 auto;
+/* Both chips are controls — the translation opens the library, Marks opens the
+   collections — so neither is dropped when the bar runs short. */
+.reader__chip {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .35rem;
+  font: inherit; font-size: .78rem; color: var(--ink-soft);
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
 }
+.reader__chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+.reader__chip[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
+.reader__chip--translation { margin-left: auto; letter-spacing: .06em; }
+.reader__chip-count {
+  font-size: .7rem; line-height: 1; padding: .15rem .3rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink);
+}
+/* A zero count is noise beside a word that already says what the button is. */
+.reader__chip-count[data-empty] { display: none; }
 
-/* Below this the bar cannot hold everything: drop the translation badge first
-   (it is the least load-bearing), then let the book select take what is left. */
+/* Below this the bar cannot hold every label. Drop the word, not the control:
+   the count stands in for it, and is shown even at zero so the button keeps a
+   visible target.
+   The selects then need floors, or flexbox happily squeezes the book name to
+   18px — present, inside the pane, and completely unusable. */
 @container (max-width: 22rem) {
-  .reader__translation { display: none; }
-  .reader__select { max-width: none; }
+  .reader__bar { gap: .35rem; padding-right: 2.4rem; }
+  .reader__chip-label { display: none; }
+  .reader__chip-count[data-empty] { display: inline; }
+  .reader__select { max-width: none; min-width: 5.5rem; }
+  .reader__select--chapter { max-width: 4rem; min-width: 3.4rem; }
 }
 
 .chapter { padding: 2rem 1.25rem 3rem; margin-inline: auto; max-width: var(--measure); }
@@ -302,19 +324,6 @@ body.dragging { cursor: col-resize; user-select: none; }
 
 /* ── Marks: the five colours, read back as five collections ───────────────── */
 
-.reader__marks {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .35rem;
-  font: inherit; font-size: .78rem; color: var(--ink-soft);
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
-  border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
-}
-.reader__marks:hover { color: var(--ink); border-color: var(--ink-soft); }
-.reader__marks[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised)); }
-.reader__marks-count {
-  font-size: .7rem; line-height: 1; padding: .15rem .3rem; border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink);
-}
-
 .marks { padding: 1rem 1.25rem 2rem; overflow-y: auto; }
 .marks__bar { display: flex; align-items: center; gap: .5rem; }
 .marks__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
@@ -367,6 +376,105 @@ body.dragging { cursor: col-resize; user-select: none; }
   background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+
+/* ── Library: what exists, what is here, what it costs ────────────────────── */
+
+.library { padding: 1rem 1.25rem 2rem; }
+.library__bar { display: flex; align-items: center; gap: .5rem; }
+.library__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.library__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+}
+.library__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.library__storage { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+
+.library__group { margin-bottom: 1.3rem; }
+.library__language {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft); margin: 0 0 .4rem; font-weight: 600;
+}
+.library__list { list-style: none; margin: 0; padding: 0; }
+.library__item {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .5rem 0; border-bottom: 1px solid var(--rule);
+}
+.library__meta { flex: 1 1 12rem; min-width: 0; }
+.library__name { display: block; font-size: .92rem; font-weight: 600; }
+.library__badge {
+  margin-left: .4rem; font-size: .62rem; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; padding: .1rem .3rem; border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--ink);
+}
+.library__detail { display: block; font-size: .74rem; color: var(--ink-soft); }
+.library__error { display: block; font-size: .74rem; color: #b3261e; margin-top: .15rem; }
+@media (prefers-color-scheme: dark) { .library__error { color: #f2b8b5; } }
+
+.library__progress {
+  display: block; height: 4px; margin-top: .35rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--rule) 70%, transparent); overflow: hidden;
+}
+.library__progress-fill { display: block; height: 100%; background: var(--accent); transition: width .15s linear; }
+
+.library__actions { display: flex; gap: .35rem; flex: 0 0 auto; }
+.library__action {
+  font: inherit; font-size: .76rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.library__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.library__action:disabled { opacity: .55; cursor: default; }
+.library__action[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
+.library__action--primary { color: var(--ink); border-color: var(--ink-soft); }
+.library__action--danger:hover:not(:disabled) { color: #b3261e; border-color: #b3261e; }
+.library__note { font-size: .74rem; color: var(--ink-soft); margin-top: 1rem; line-height: 1.5; }
+
+/* ── Compare: one chapter, side by side ───────────────────────────────────── */
+
+/* `--measure` is the right width for one column of prose and the wrong one for
+   a table: it squeezed two columns into 544px of an 812px pane. */
+.chapter--compare { max-width: none; }
+
+/* The table scrolls inside its own box. A comparison must never make the page
+   scroll sideways — the notes pane is right there and would go with it. */
+.compare__scroll { overflow-x: auto; }
+.compare__table { border-collapse: collapse; width: 100%; font-family: var(--serif); }
+.compare__head, .compare__num-head {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; font-family: var(--sans); font-weight: 600; font-size: .78rem;
+  padding: .4rem .5rem; vertical-align: bottom;
+  background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+.compare__head-name { display: block; }
+.compare__head-id { display: block; font-size: .68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: .06em; }
+.compare__drop {
+  position: absolute; top: .2rem; right: .2rem;
+  font: inherit; font-size: .7rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: none; border-radius: 4px; padding: .1rem .25rem;
+}
+.compare__head { position: sticky; }
+.compare__drop:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.compare__num {
+  font-family: var(--sans); font-size: .7rem; font-weight: 500; color: var(--accent);
+  text-align: right; vertical-align: top; padding: .5rem .4rem 0 0; width: 2.2rem;
+}
+.compare__cell {
+  vertical-align: top; padding: .45rem .5rem; min-width: 12rem;
+  font-size: .95rem; line-height: 1.6; border-bottom: 1px solid var(--rule);
+}
+.compare__absent { color: var(--ink-soft); }
+.compare__quote {
+  opacity: 0; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: .8rem;
+  color: var(--ink-soft); background: transparent; border: 1px solid var(--rule);
+  border-radius: 5px; padding: 0 .3rem; cursor: pointer; vertical-align: middle;
+}
+.compare__cell:hover .compare__quote, .compare__quote:focus-visible { opacity: 1; }
+@media (pointer: coarse) { .compare__quote { opacity: 1; } }
+
+.attribution__line { display: block; }
 
 /* ── Notes ────────────────────────────────────────────────────────────────── */
 

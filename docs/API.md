@@ -43,6 +43,7 @@ compare for no visible reason.
 | `GET` | `/` | Index of endpoints, with working examples |
 | `GET` | `/translations` | All available translations |
 | `GET` | `/translations/:id` | One translation's metadata plus its book index |
+| `GET` | `/translations/:id/full` | The whole translation in one payload (offline bundle) |
 | `GET` | `/translations/:id/:book` | A book's chapter index with verse counts |
 | `GET` | `/translations/:id/:book/:chapter` | A full chapter |
 | `GET` | `/translations/:id/:book/:chapter/:verse` | A single verse |
@@ -91,10 +92,13 @@ Translation metadata, plus a book index you can navigate from.
 }
 ```
 
-### `GET /translations/:id/full.json` — offline bundle (static build only)
+### `GET /translations/:id/full` — offline bundle
 
-The whole translation in one file, for clients that need to work offline.
-Roughly **1.26 MB gzipped**; the alternative is ~1,189 chapter requests.
+The whole translation in one payload, for clients that need to work offline.
+Roughly **1.26 MB gzipped**; the alternative is ~1,189 chapter requests. It
+carries `license` and `attribution`, which the chapter and verse payloads also
+do — a client holding the text offline still owes the notice CC BY-SA requires
+it to display.
 
 ```json
 {
@@ -108,7 +112,12 @@ Roughly **1.26 MB gzipped**; the alternative is ~1,189 chapter requests.
 }
 ```
 
-Emitted by `npm run build:api`; there is no dynamic equivalent.
+Served by the live API **and** emitted by `npm run build:api`. Uniquely among
+the endpoints, the router also accepts the `.json` suffix
+(`/translations/bsb/full.json`), because the static tree appends `.json` to
+every path and this is the one URL a browser client fetches directly — the same
+string has to resolve against a local server and against the CDN. The reader PWA
+uses exactly that URL.
 
 ### `GET /translations/kjv/john/3`
 

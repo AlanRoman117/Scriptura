@@ -5,6 +5,7 @@ import { compareChapter, compareVerse } from '@scriptura/compare';
 import {
   formatBook,
   formatChapter,
+  formatFullTranslation,
   formatTranslation,
   formatVerse,
   sampleSlugs,
@@ -109,6 +110,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
         endpoints: {
           translations: '/translations',
           translation: '/translations/{id}',
+          full: '/translations/{id}/full',
           book: '/translations/{id}/{book}',
           chapter: '/translations/{id}/{book}/{chapter}',
           verse: '/translations/{id}/{book}/{chapter}/{verse}',
@@ -142,6 +144,21 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
       const loaded = await withTranslation(id);
       if ('error' in loaded) return loaded.error;
       return ok(formatTranslation(loaded.bible.meta, loaded.bible.books));
+    },
+  },
+  {
+    // Must precede the book route, which would otherwise read "full.json" as a
+    // book name and 404 with a list of valid slugs.
+    //
+    // The `.json` suffix is optional, and this is the one route where that
+    // matters: the static tree appends `.json` to every endpoint, and this is
+    // the single URL a browser client fetches directly. Accepting both means
+    // the reader points at a local server or at the CDN with the same string.
+    pattern: /^\/translations\/([^/]+)\/full(?:\.json)?$/,
+    handler: async ([id]) => {
+      const loaded = await withTranslation(id);
+      if ('error' in loaded) return loaded.error;
+      return ok(formatFullTranslation(loaded.bible.meta, loaded.bible.books));
     },
   },
   {

@@ -4,8 +4,20 @@ import { Layout } from './components/Layout';
 import { BiblePane } from './components/BiblePane';
 import { NotesPane } from './components/NotesPane';
 import { DurabilityBanner, type Persistence } from './components/DurabilityBanner';
-import { loadTranslation, type LoadStage } from './lib/translation';
-import { requestPersistence } from './lib/db';
+import { DEFAULT_TRANSLATION, loadTranslation, type LoadStage } from './lib/translation';
+import { requestPersistence, storageEstimate } from './lib/db';
+import {
+  MAX_COMPARE,
+  downloadTranslation,
+  installedIds,
+  loadCatalog,
+  loadPrefs,
+  removeTranslation,
+  savePrefs,
+  type CatalogEntry,
+} from './lib/library';
+import { LibraryPanel, type DownloadState } from './components/LibraryPanel';
+import { ComparePane } from './components/ComparePane';
 import {
   exportIsStale,
   deleteHighlight,
@@ -50,6 +62,15 @@ export function App() {
   const [colorLabels, setColorLabels] = useState<ColorLabels>({});
   const [marksOpen, setMarksOpen] = useState(false);
 
+  const [translationId, setTranslationId] = useState(DEFAULT_TRANSLATION);
+  const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  const [installed, setInstalled] = useState<string[]>([]);
+  const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
+  const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [compareWith, setCompareWith] = useState<string[]>([]);
+  const [compareBibles, setCompareBibles] = useState<Record<string, Bible>>({});
+
   const [persistence, setPersistence] = useState<Persistence>('unknown');
   const [isMirroring, setIsMirroring] = useState(false);
   const [staleExport, setStaleExport] = useState(false);
@@ -81,9 +102,39 @@ export function App() {
   useEffect(() => {
     let cancelled = false;
 
-    loadTranslation(undefined, (s) => !cancelled && setStage(s))
-      .then((b) => !cancelled && setBible(b))
-      .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : String(e)));
+    // The stored choice decides what to open, so it is read first. A stored
+    // translation that has since been removed falls back to the bundled one
+    // rather than showing an error screen — the app must always have something
+    // to read.
+    void loadPrefs().then(async (prefs) => {
+      if (cancelled) return;
+      const wanted = prefs.active ?? DEFAULT_TRANSLATION;
+      setCompareWith((prefs.compareWith ?? []).slice(0, MAX_COMPARE));
+
+      for (const id of [wanted, DEFAULT_TRANSLATION]) {
+        try {
+          const loaded = await loadTranslation(id, (st) => !cancelled && setStage(st));
+          if (cancelled) return;
+          setBible(loaded);
+          setTranslationId(id);
+          // Re-read after loading, not only before: on a first run the bundled
+          // translation is written to IndexedDB *by* this call, so a listing
+          // taken beforehand shows the library nothing — including the copy the
+          // reader is at that moment reading from.
+          void installedIds().then((ids) => !cancelled && setInstalled(ids));
+          void storageEstimate().then((e) => !cancelled && setStorage(e));
+          return;
+        } catch (e: unknown) {
+          if (id === DEFAULT_TRANSLATION && !cancelled) {
+            setError(e instanceof Error ? e.message : String(e));
+          }
+        }
+      }
+    });
+
+    void loadCatalog().then((c) => !cancelled && setCatalog(c));
+    void installedIds().then((ids) => !cancelled && setInstalled(ids));
+    void storageEstimate().then((e) => !cancelled && setStorage(e));
 
     // Each store is read independently: a translation that fails to parse must
     // not take the user's notes with it.
@@ -174,6 +225,25 @@ export function App() {
     },
     [position, insertIntoNote]
   );
+
+  // Compared translations are read from IndexedDB — they are only offerable
+  // once installed — so this never touches the network.
+  useEffect(() => {
+    let cancelled = false;
+    for (const id of compareWith) {
+      if (compareBibles[id]) continue;
+      void loadTranslation(id)
+        .then((loaded) => !cancelled && setCompareBibles((c) => ({ ...c, [id]: loaded })))
+        .catch(() => {
+          // A translation that will not load is dropped from the comparison
+          // rather than leaving a column that never arrives.
+          if (!cancelled) setCompareWith((current) => current.filter((x) => x !== id));
+        });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [compareWith, compareBibles]);
 
   const goTo = useCallback((bookSlug: string, chapter: number, verse?: number) => {
     setPosition({ bookSlug, chapter });
@@ -268,6 +338,98 @@ export function App() {
     [bible, position, highlights]
   );
 
+  const refreshLocal = useCallback(() => {
+    void installedIds().then(setInstalled);
+    void storageEstimate().then(setStorage);
+  }, []);
+
+  /** Read a translation that is already on the device. */
+  const readTranslation = useCallback(
+    (id: string) => {
+      setStage('cache');
+      void loadTranslation(id)
+        .then((loaded) => {
+          setBible(loaded);
+          setTranslationId(id);
+          setLibraryOpen(false);
+          // Reading it and comparing against it are the same column, so drop
+          // the duplicate rather than showing the text twice.
+          setCompareWith((current) => {
+            const next = current.filter((x) => x !== id);
+            void savePrefs({ active: id, compareWith: next });
+            return next;
+          });
+        })
+        .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+    },
+    []
+  );
+
+  const download = useCallback(
+    (id: string) => {
+      const approx = catalog.find((t) => t.id === id)?.approxBytes;
+      setDownloads((d) => ({ ...d, [id]: { received: 0, total: approx ?? 0 } }));
+
+      void downloadTranslation(
+        id,
+        (received, total) => setDownloads((d) => ({ ...d, [id]: { received, total } })),
+        approx
+      )
+        .then(() => {
+          setDownloads(({ [id]: _done, ...rest }) => rest);
+          refreshLocal();
+        })
+        .catch((e: unknown) => {
+          // Kept on the row rather than thrown: one failed download must not
+          // take down a library the rest of which is perfectly usable, and
+          // "you are offline" is the likeliest cause.
+          setDownloads((d) => ({
+            ...d,
+            [id]: {
+              received: 0,
+              total: 0,
+              error: navigator.onLine
+                ? e instanceof Error
+                  ? e.message
+                  : String(e)
+                : 'No connection — try again when you are online.',
+            },
+          }));
+        });
+    },
+    [catalog, refreshLocal]
+  );
+
+  const removeFromDevice = useCallback(
+    (id: string) => {
+      void removeTranslation(id).then((removed) => {
+        if (!removed) return;
+        setCompareBibles(({ [id]: _gone, ...rest }) => rest);
+        setCompareWith((current) => {
+          const next = current.filter((x) => x !== id);
+          void savePrefs({ active: translationId, compareWith: next });
+          return next;
+        });
+        refreshLocal();
+      });
+    },
+    [translationId, refreshLocal]
+  );
+
+  const toggleCompare = useCallback(
+    (id: string) => {
+      setCompareWith((current) => {
+        const next = current.includes(id)
+          ? current.filter((x) => x !== id)
+          : [...current, id].slice(-MAX_COMPARE);
+        void savePrefs({ active: translationId, compareWith: next });
+        return next;
+      });
+      setLibraryOpen(false);
+    },
+    [translationId]
+  );
+
   const labelColor = useCallback((color: HighlightColor, label: string) => {
     setColorLabels((current) => {
       const next = { ...current, [color]: label };
@@ -280,6 +442,22 @@ export function App() {
     void deleteHighlight(id);
     setHighlights((current) => current.filter((h) => h.id !== id));
   }, []);
+
+  /** The active translation first, then each comparison that has loaded. */
+  const comparing = bible
+    ? [bible, ...compareWith.map((id) => compareBibles[id]).filter((b): b is Bible => !!b)]
+    : [];
+
+  /** Quote one column of a comparison, in that column's own words. */
+  const quoteFrom = (id: string, verse: number) => {
+    const from = comparing.find((b) => b.meta.id === id);
+    const book = from?.book(position.bookSlug);
+    const v = book?.chapters
+      .find((c) => c.number === position.chapter)
+      ?.verses.find((x) => x.number === verse);
+    if (!from || !book || !v) return;
+    insertIntoNote(quotePassage(from, book, position.chapter, [v]), { focus: true });
+  };
 
   if (error) {
     return (
@@ -328,20 +506,55 @@ export function App() {
             onLink={linkVerse}
             marksOpen={marksOpen}
             markCount={highlights.length}
-            onToggleMarks={() => setMarksOpen((o) => !o)}
-            marks={
-              <MarksPanel
-                bible={bible}
-                highlights={highlights}
-                labels={colorLabels}
-                onLabel={labelColor}
-                onGo={(bookSlug, chapter, verse) => {
-                  goTo(bookSlug, chapter, verse);
-                  setMarksOpen(false);
-                }}
-                onRemove={unmark}
-                onClose={() => setMarksOpen(false)}
-              />
+            onToggleMarks={() => {
+              setLibraryOpen(false);
+              setMarksOpen((o) => !o);
+            }}
+            libraryOpen={libraryOpen}
+            onToggleLibrary={() => {
+              setMarksOpen(false);
+              setLibraryOpen((o) => !o);
+            }}
+            overlay={
+              marksOpen ? (
+                <MarksPanel
+                  bible={bible}
+                  highlights={highlights}
+                  labels={colorLabels}
+                  onLabel={labelColor}
+                  onGo={(bookSlug, chapter, verse) => {
+                    goTo(bookSlug, chapter, verse);
+                    setMarksOpen(false);
+                  }}
+                  onRemove={unmark}
+                  onClose={() => setMarksOpen(false)}
+                />
+              ) : libraryOpen ? (
+                <LibraryPanel
+                  catalog={catalog}
+                  installed={installed}
+                  active={translationId}
+                  compareWith={compareWith}
+                  downloads={downloads}
+                  storage={storage}
+                  onRead={readTranslation}
+                  onDownload={download}
+                  onRemove={removeFromDevice}
+                  onCompare={toggleCompare}
+                  onClose={() => setLibraryOpen(false)}
+                />
+              ) : null
+            }
+            compare={
+              comparing.length > 1 ? (
+                <ComparePane
+                  bibles={comparing}
+                  bookSlug={position.bookSlug}
+                  chapter={position.chapter}
+                  onDrop={toggleCompare}
+                  onQuote={quoteFrom}
+                />
+              ) : null
             }
             search={
               <SearchBar

@@ -3,9 +3,28 @@ import type { ReactNode } from 'react';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
 const NARROW = 850;
-/** Neither pane may be squeezed below this share of the width. */
+/**
+ * Neither pane may be squeezed below this, in pixels.
+ *
+ * A *fraction* was the wrong unit: a quarter of a 1400px window is a workable
+ * 350px column, but a quarter of a 900px one is 225px — narrow enough that the
+ * reading bar cannot hold its own controls and the text runs about four words
+ * to the line. The floor is a width, so it means the same thing at every window
+ * size. The share limits remain as an upper bound on a very wide screen.
+ */
+const MIN_PANE = 320;
 const MIN_SPLIT = 0.25;
 const MAX_SPLIT = 0.75;
+
+/** The usable split range for a given frame width. */
+function splitLimits(width: number): [number, number] {
+  if (width <= 0) return [MIN_SPLIT, MAX_SPLIT];
+  const floor = Math.max(MIN_SPLIT, MIN_PANE / width);
+  const ceiling = Math.min(MAX_SPLIT, 1 - MIN_PANE / width);
+  // On a frame too small to give both panes the floor, fall back to halves
+  // rather than inverting the bounds.
+  return floor > ceiling ? [0.5, 0.5] : [floor, ceiling];
+}
 
 export type Maximized = 'none' | 'bible' | 'notes';
 /** How far the mobile notes sheet is pulled up. */
@@ -52,8 +71,15 @@ export function Layout({ bible, notes }: LayoutProps) {
   const onDrag = useCallback((clientX: number) => {
     const box = frame.current?.getBoundingClientRect();
     if (!box) return;
-    const next = (clientX - box.left) / box.width;
-    setSplit(Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, next)));
+    const [min, max] = splitLimits(box.width);
+    setSplit(Math.min(max, Math.max(min, (clientX - box.left) / box.width)));
+  }, []);
+
+  /** Nudge by keyboard, against the same floor a drag respects. */
+  const nudge = useCallback((delta: number) => {
+    const width = frame.current?.getBoundingClientRect().width ?? 0;
+    const [min, max] = splitLimits(width);
+    setSplit((s) => Math.min(max, Math.max(min, s + delta)));
   }, []);
 
   useEffect(() => {
@@ -99,6 +125,13 @@ export function Layout({ bible, notes }: LayoutProps) {
     );
   }
 
+  // The frame fills the window in this layout, so `innerWidth` is the right
+  // stand-in on the first render, before the ref is attached — the alternative
+  // is announcing 25/75 once and correcting it a beat later.
+  const limits = splitLimits(
+    frame.current?.getBoundingClientRect().width ?? window.innerWidth
+  );
+
   return (
     <div
       className="layout"
@@ -125,8 +158,8 @@ export function Layout({ bible, notes }: LayoutProps) {
           aria-orientation="vertical"
           aria-label="Resize panes"
           aria-valuenow={Math.round(split * 100)}
-          aria-valuemin={Math.round(MIN_SPLIT * 100)}
-          aria-valuemax={Math.round(MAX_SPLIT * 100)}
+          aria-valuemin={Math.round(limits[0] * 100)}
+          aria-valuemax={Math.round(limits[1] * 100)}
           tabIndex={0}
           onPointerDown={() => {
             dragging.current = true;
@@ -134,8 +167,8 @@ export function Layout({ bible, notes }: LayoutProps) {
           }}
           // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
           onKeyDown={(e) => {
-            if (e.key === 'ArrowLeft') setSplit((s) => Math.max(MIN_SPLIT, s - 0.02));
-            if (e.key === 'ArrowRight') setSplit((s) => Math.min(MAX_SPLIT, s + 0.02));
+            if (e.key === 'ArrowLeft') nudge(-0.02);
+            if (e.key === 'ArrowRight') nudge(0.02);
           }}
         />
       )}

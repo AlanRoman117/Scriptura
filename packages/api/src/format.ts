@@ -40,6 +40,20 @@ export interface TranslationPayload extends TranslationMeta {
   books: BookIndexEntry[];
 }
 
+/** A whole translation in one payload — every book, chapter and verse. */
+export interface FullBookEntry {
+  number: number;
+  name: string;
+  slug: string;
+  abbreviation: string;
+  testament: 'OT' | 'NT';
+  chapters: Array<{ number: number; verses: Array<{ number: number; text: string }> }>;
+}
+
+export interface FullTranslationPayload extends TranslationMeta {
+  books: FullBookEntry[];
+}
+
 export interface BookPayload {
   translation: string;
   book: string;
@@ -106,6 +120,39 @@ export function formatTranslation(
       abbreviation: b.abbreviation,
       testament: b.testament,
       chapters: b.chapters.length,
+    })),
+  };
+}
+
+/**
+ * `/translations/:id/full` — the whole translation in one payload.
+ *
+ * What an offline client fetches. Per-chapter endpoints are right for a CDN
+ * reader and wrong for a PWA: precaching a translation chapter-by-chapter is
+ * ~1,189 requests and as many cache entries, against one fetch of ~1.25MB
+ * gzipped here. Carries `license` and `attribution` because a client holding
+ * the text offline still owes the notice CC BY-SA requires it to display.
+ *
+ * Kept in step with `writeEndpoint(join("translations", id, "full"), …)` in
+ * scripts/build-static-api.mjs; tests/integration/static-parity.test.ts diffs
+ * the two.
+ */
+export function formatFullTranslation(
+  meta: TranslationMeta,
+  books: LoadedBook[]
+): FullTranslationPayload {
+  return {
+    ...meta,
+    books: books.map((b) => ({
+      number: b.number,
+      name: b.name,
+      slug: b.slug,
+      abbreviation: b.abbreviation,
+      testament: b.testament,
+      chapters: b.chapters.map((c) => ({
+        number: c.number,
+        verses: c.verses.map((v) => ({ number: v.number, text: v.text })),
+      })),
     })),
   };
 }

@@ -9,9 +9,10 @@ import { join } from 'node:path';
  * `@scriptura/core`'s barrel re-exports `loader.js`, which imports
  * `node:fs/promises` and touches `process.env` and `__dirname` at module scope
  * — importing it from a browser bundle is a build error. The pure subpaths
- * (`/books`, `/bible`, and `@scriptura/search/matcher`) exist so the front-end
- * gets the same folding and book-resolution rules instead of a second
- * implementation that drifts.
+ * (`/books`, `/bible`, `@scriptura/search/matcher` and
+ * `@scriptura/compare/chapters`) exist so the front-end gets the same folding,
+ * book-resolution and comparison rules instead of a second implementation that
+ * drifts.
  *
  * This bundles those subpaths for a browser target and fails if anything
  * Node-only leaks in. Without it, someone adds one convenient barrel import and
@@ -37,7 +38,8 @@ describe('pure subpaths stay browser-safe', () => {
       `import { foldText, normalizeBookKey, slugFromFilename, parseReference } from '@scriptura/core/books';
        import { createBible, buildIndex } from '@scriptura/core/bible';
        import { searchBible } from '@scriptura/search/matcher';
-       globalThis.x = [foldText, normalizeBookKey, slugFromFilename, parseReference, createBible, buildIndex, searchBible];`
+       import { alignChapters, compareChapterOf } from '@scriptura/compare/chapters';
+       globalThis.x = [foldText, normalizeBookKey, slugFromFilename, parseReference, createBible, buildIndex, searchBible, alignChapters, compareChapterOf];`
     );
 
     try {

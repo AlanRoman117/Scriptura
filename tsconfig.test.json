@@ -29,6 +29,7 @@
       "@scriptura/core/bible": ["packages/core/src/bible.ts"],
       "@scriptura/core/types": ["packages/core/src/types.ts"],
       "@scriptura/search/matcher": ["packages/search/src/matcher.ts"],
+      "@scriptura/compare/chapters": ["packages/compare/src/chapters.ts"],
       "@scriptura/*": ["packages/*/src"]
     }
   },

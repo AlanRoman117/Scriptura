@@ -14,11 +14,15 @@ interface BiblePaneProps {
   onLink: (verse: number) => void;
   focusVerse?: number | null;
   search?: React.ReactNode;
-  /** The collections view, rendered over the text when open. */
-  marks?: React.ReactNode;
+  /** Marks or the library, rendered over the text while open. */
+  overlay?: React.ReactNode;
+  /** Side-by-side reading, rendered *instead of* the single-column chapter. */
+  compare?: React.ReactNode;
   marksOpen?: boolean;
   markCount?: number;
   onToggleMarks?: () => void;
+  libraryOpen?: boolean;
+  onToggleLibrary?: () => void;
 }
 
 export function BiblePane({
@@ -32,10 +36,13 @@ export function BiblePane({
   onLink,
   focusVerse,
   search,
-  marks,
+  overlay,
+  compare,
   marksOpen = false,
   markCount = 0,
   onToggleMarks,
+  libraryOpen = false,
+  onToggleLibrary,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -114,31 +121,51 @@ export function BiblePane({
             </option>
           ))}
         </select>
-        <span className="reader__translation" title={meta.name}>
-          {meta.id.toUpperCase()}
-        </span>
+        {/* The translation badge used to be decoration, and was the first thing
+            dropped when the bar ran out of room. It is a control now — the way
+            in to the library — so nothing here is dropped; only the Marks label
+            is, and its count stands in for it. */}
         <button
           type="button"
-          className="reader__marks"
+          className="reader__chip reader__chip--translation"
+          data-testid="library-open"
+          aria-pressed={libraryOpen}
+          title={`${meta.name} — choose or add a translation`}
+          onClick={onToggleLibrary}
+        >
+          {meta.id.toUpperCase()}
+        </button>
+        <button
+          type="button"
+          className="reader__chip"
           data-testid="marks-open"
           aria-pressed={marksOpen}
+          aria-label={`Marks (${markCount})`}
           title="Verses you have marked, by colour"
           onClick={onToggleMarks}
         >
-          Marks
-          {markCount > 0 && <span className="reader__marks-count">{markCount}</span>}
+          <span className="reader__chip-label">Marks</span>
+          <span className="reader__chip-count" data-empty={markCount === 0 || undefined}>
+            {markCount}
+          </span>
         </button>
       </header>
 
       {search}
 
-      {marksOpen && marks}
+      {overlay}
 
-      <article className="chapter" data-testid="chapter" hidden={marksOpen}>
+      <article
+        className={compare ? 'chapter chapter--compare' : 'chapter'}
+        data-testid="chapter"
+        hidden={!!overlay}
+      >
         <h1 className="chapter__title" ref={title} data-stuck={stuck} data-testid="chapter-title">
           {book.name} {chapter}
         </h1>
-        {current ? (
+        {compare ? (
+          compare
+        ) : current ? (
           <div className="chapter__text">
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });

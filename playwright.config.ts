@@ -71,6 +71,11 @@ export default defineConfig({
     },
     {
       command: `npm run build --workspace @scriptura/reader && npm run preview --workspace @scriptura/reader -- --port ${READER_PORT} --strictPort --host 127.0.0.1`,
+      // The reader downloads translations through /api, which vite's preview
+      // proxy forwards to the compiled server already running above for the
+      // contract suite. Without it the library can list translations (from the
+      // bundled catalogue) but never install one.
+      env: { SCRIPTURA_API_ORIGIN: `http://127.0.0.1:${PORT}` },
       url: `http://127.0.0.1:${READER_PORT}/`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
@@ -79,6 +84,7 @@ export default defineConfig({
     },
     {
       command: `npm run dev --workspace @scriptura/reader -- --port ${READER_DEV_PORT} --strictPort --host 127.0.0.1`,
+      env: { SCRIPTURA_API_ORIGIN: `http://127.0.0.1:${PORT}` },
       url: `http://127.0.0.1:${READER_DEV_PORT}/`,
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,

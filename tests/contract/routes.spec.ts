@@ -122,3 +122,43 @@ test('compare/chapter powers the side-by-side reading view', async ({ request })
   expect(body.results[0].verses[0]).toHaveProperty('number');
   expect(body.results[0].verses.length).toBeGreaterThan(30);
 });
+
+test.describe('the offline bundle', () => {
+  /**
+   * What the reader PWA downloads to work offline.
+   *
+   * The `.json` suffix is accepted as well as the bare path, and that is not
+   * cosmetic: the static CDN tree appends `.json` to every endpoint, so this is
+   * the one URL a browser client must be able to fetch unchanged from either a
+   * live server or a bucket. If the two ever disagree, the reader installs
+   * translations from one origin and 404s against the other.
+   */
+  test('serves a whole translation, with or without the .json suffix', async ({ request }) => {
+    const bare = await request.get('/translations/kjv/full');
+    const suffixed = await request.get('/translations/kjv/full.json');
+
+    expect(bare.status()).toBe(200);
+    expect(suffixed.status()).toBe(200);
+    expect(await suffixed.json()).toEqual(await bare.json());
+  });
+
+  test('carries the licence, the attribution, and every verse', async ({ request }) => {
+    const body = await request.get('/translations/vbl/full.json').then((r) => r.json());
+
+    // A client caching the text offline still owes the notice CC BY-SA requires
+    // it to display, so both travel with the payload.
+    expect(body.license).toBe('cc-by-sa-4.0');
+    expect(body.attribution).toBeTruthy();
+    expect(body.books).toHaveLength(66);
+
+    const john = body.books.find((b: { slug: string }) => b.slug === 'john');
+    expect(john.name).toBeTruthy();
+    expect(john.chapters[2].verses[15].text).toContain('Dios');
+  });
+
+  test('an unknown translation is a 404, not a book lookup', async ({ request }) => {
+    const response = await request.get('/translations/nope/full.json');
+    expect(response.status()).toBe(404);
+    expect((await response.json()).error).toContain('Translation "nope" not found');
+  });
+});

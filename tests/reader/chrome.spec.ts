@@ -113,7 +113,12 @@ test.describe('a narrow Bible pane', () => {
     await divider.focus();
     for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowLeft');
 
+    // The divider stops at a real width, not a share of one: a quarter of a
+    // 900px window is 225px, which cannot hold the bar's controls and runs the
+    // text about four words to the line.
     const pane = (await page.getByTestId('pane-bible').boundingBox())!;
+    expect.soft(pane.width, 'the Bible pane keeps a readable floor').toBeGreaterThanOrEqual(319);
+
     for (const id of ['book-select', 'chapter-select']) {
       const box = (await page.getByTestId(id).boundingBox())!;
       expect
@@ -123,8 +128,17 @@ test.describe('a narrow Bible pane', () => {
       expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(24);
     }
 
-    // The translation badge is the first thing dropped, so the selects keep room.
-    await expect(page.getByTestId('pane-bible').locator('.reader__translation')).toBeHidden();
+    // Nothing is dropped any more: the translation chip opens the library and
+    // Marks opens the collections, so both must stay reachable however narrow
+    // the pane gets. Only the Marks *word* goes, with its count standing in.
+    for (const id of ['library-open', 'marks-open']) {
+      const chip = page.getByTestId('pane-bible').getByTestId(id);
+      await expect(chip).toBeVisible();
+      const box = (await chip.boundingBox())!;
+      expect
+        .soft(box.x + box.width, `${id} must not overflow the pane`)
+        .toBeLessThanOrEqual(pane.x + pane.width + 1);
+    }
 
     // Still usable, not merely contained.
     await page.getByTestId('book-select').selectOption('genesis');

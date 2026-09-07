@@ -22,6 +22,10 @@ import { clearCache, setDataDir } from '@scriptura/core';
 const REPO = join(__dirname, '..', '..');
 const ROUTES = [
   'translations/tkjv',
+  // The offline bundle. It is the payload the reader downloads, so a drift
+  // here breaks every installed translation rather than one endpoint.
+  'translations/tkjv/full',
+  'translations/tja/full',
   'translations/tkjv/obadiah',
   'translations/tkjv/obadiah/1',
   'translations/tkjv/obadiah/1/1',
