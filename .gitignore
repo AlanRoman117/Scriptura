@@ -72,3 +72,7 @@ pnpm-debug.log*
 .Trashes
 Thumbs.db
 ehthumbs.db
+# ─── Playwright ───
+playwright-report/
+test-results/
+.playwright/

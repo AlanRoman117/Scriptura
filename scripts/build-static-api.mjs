@@ -219,6 +219,10 @@ function build() {
         number: book.number,
         name: book.name,
         slug,
+        // Keep in step with formatTranslation in packages/api/src/format.ts —
+        // tests/integration/static-parity.test.ts asserts the two agree.
+        abbreviation: book.abbreviation,
+        testament: book.testament,
         chapters: chapters.length,
       });
       totals.books++;

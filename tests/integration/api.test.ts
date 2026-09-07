@@ -70,8 +70,14 @@ describe('GET /translations/:id', () => {
       number: 1,
       name: 'Genesis',
       slug: 'genesis',
+      abbreviation: 'Gen',
+      testament: 'OT',
       chapters: 50,
     });
+
+    // The book picker needs OT/NT grouping without 66 extra requests.
+    const testaments = new Set(body.books.map((b) => (b as { testament: string }).testament));
+    expect(testaments).toEqual(new Set(['OT', 'NT']));
   });
 
   test('404s on an unknown translation', async () => {

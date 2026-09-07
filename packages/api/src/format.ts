@@ -10,23 +10,103 @@
  * honest by the parity test in `tests/integration/api.test.ts` instead. If you
  * change a shape here, change it there too.
  */
-import type { Chapter, LoadedBook, TranslationMeta, Verse } from '@scriptura/core';
+import type {
+  Chapter,
+  LoadedBook,
+  TranslationMeta,
+  TranslationVerse,
+  Verse,
+} from '@scriptura/core';
+
+/**
+ * Response envelopes.
+ *
+ * Declared and exported so a TypeScript consumer imports them rather than
+ * redeclaring them by hand. Inferred return types were not enough: they are not
+ * nameable, and `ScripturaResponse.body` is `unknown`, so nothing kept a
+ * client's own copy honest. A compile error beats a failing test.
+ */
+export interface BookIndexEntry {
+  number: number;
+  name: string;
+  slug: string;
+  abbreviation: string;
+  testament: 'OT' | 'NT';
+  chapters: number;
+}
+
+export interface TranslationPayload extends TranslationMeta {
+  books: BookIndexEntry[];
+}
+
+export interface BookPayload {
+  translation: string;
+  book: string;
+  slug: string;
+  number: number;
+  abbreviation: string;
+  testament: 'OT' | 'NT';
+  chapters: Array<{ number: number; verses: number }>;
+}
+
+export interface ChapterPayload {
+  translation: string;
+  book: string;
+  book_slug: string;
+  book_number: number;
+  chapter: number;
+  verses: Array<{ number: number; text: string }>;
+}
+
+export interface VersePayload {
+  translation: string;
+  book: string;
+  book_slug: string;
+  book_number: number;
+  chapter: number;
+  verse: number;
+  reference: string;
+  text: string;
+}
+
+export interface CompareVersePayload {
+  reference: string;
+  results: TranslationVerse[];
+}
+
+export interface CompareChapterPayload {
+  book: string;
+  chapter: number;
+  results: Array<{
+    translation: string;
+    book?: string;
+    verses: TranslationVerse[];
+  }>;
+}
 
 /** `/translations/:id` — metadata plus a navigable book index. */
-export function formatTranslation(meta: TranslationMeta, books: LoadedBook[]) {
+export function formatTranslation(
+  meta: TranslationMeta,
+  books: LoadedBook[]
+): TranslationPayload {
   return {
     ...meta,
     books: books.map((b) => ({
       number: b.number,
       name: b.name,
       slug: b.slug,
+      // abbreviation and testament are what a book picker needs to render the
+      // standard OT/NT-grouped, abbreviation-labelled grid. Without them a
+      // client needs 66 requests or a hardcoded canon.
+      abbreviation: b.abbreviation,
+      testament: b.testament,
       chapters: b.chapters.length,
     })),
   };
 }
 
 /** `/translations/:id/:book` — chapter numbers and verse counts. */
-export function formatBook(translationId: string, book: LoadedBook) {
+export function formatBook(translationId: string, book: LoadedBook): BookPayload {
   return {
     translation: translationId,
     book: book.name,
@@ -42,7 +122,11 @@ export function formatBook(translationId: string, book: LoadedBook) {
 }
 
 /** `/translations/:id/:book/:chapter` — the full chapter text. */
-export function formatChapter(translationId: string, book: LoadedBook, chapter: Chapter) {
+export function formatChapter(
+  translationId: string,
+  book: LoadedBook,
+  chapter: Chapter
+): ChapterPayload {
   return {
     translation: translationId,
     book: book.name,
@@ -59,7 +143,7 @@ export function formatVerse(
   book: LoadedBook,
   chapter: Chapter,
   verse: Verse
-) {
+): VersePayload {
   return {
     translation: translationId,
     book: book.name,

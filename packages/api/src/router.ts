@@ -1,7 +1,7 @@
 import { listTranslations, loadTranslation } from '@scriptura/core';
 import type { Bible, LoadedBook } from '@scriptura/core';
 import { search } from '@scriptura/search';
-import { compareVerse } from '@scriptura/compare';
+import { compareChapter, compareVerse } from '@scriptura/compare';
 import {
   formatBook,
   formatChapter,
@@ -87,6 +87,15 @@ function withBook(
   };
 }
 
+/** Split the comma-separated `translations` param, capped to keep one request sane. */
+const MAX_COMPARE_TRANSLATIONS = 10;
+
+function parseTranslationList(raw: string): string[] | null {
+  const ids = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (ids.length === 0 || ids.length > MAX_COMPARE_TRANSLATIONS) return null;
+  return ids;
+}
+
 const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
   {
     // A browsable index. Without it `/` answers "Route not found", which is a
@@ -105,6 +114,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
           verse: '/translations/{id}/{book}/{chapter}/{verse}',
           search: '/search?q={query}&translation={id}&limit=100&offset=0',
           compare: '/compare?ref={Book Chapter:Verse}&translations={id,id}',
+          compare_chapter: '/compare/chapter?book={slug}&chapter={n}&translations={id,id}',
         },
         book_addressing:
           'The {book} segment is the English slug from the book filename (john, 1-samuel) ' +
@@ -116,6 +126,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
           '/translations/rv1909/1-samuel/1/1',
           '/search?q=love&translation=kjv&limit=5',
           '/compare?ref=John+3:16&translations=kjv,rv1909,bungo',
+          '/compare/chapter?book=john&chapter=3&translations=kjv,rv1909',
         ],
         docs: 'https://github.com/AlanRoman117/Scriptura/blob/main/docs/API.md',
       });
@@ -225,9 +236,11 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
       if (!ref || !translations) {
         return badRequest('Missing required query params: ref, translations');
       }
-      const ids = translations.split(',').map((s) => s.trim()).filter(Boolean);
-      if (ids.length === 0) {
-        return badRequest('No translation ids given in "translations"');
+      const ids = parseTranslationList(translations);
+      if (!ids) {
+        return badRequest(
+          `"translations" must list 1-${MAX_COMPARE_TRANSLATIONS} comma-separated ids`
+        );
       }
       try {
         return ok({ reference: ref, results: await compareVerse(ref, ids) });
@@ -236,6 +249,33 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
         // mistake, so report 400 rather than letting it surface as a 500.
         return badRequest(err instanceof Error ? err.message : String(err));
       }
+    },
+  },
+  {
+    // Side-by-side chapter reading: the study-Bible view the roadmap calls the
+    // v2 flagship. `compareChapter` has existed in @scriptura/compare all along
+    // with no HTTP route, so the feature was library-only and unreachable.
+    pattern: /^\/compare\/chapter$/,
+    handler: async (_params, req) => {
+      const { book, chapter, translations } = req.query;
+      if (!book || !chapter || !translations) {
+        return badRequest('Missing required query params: book, chapter, translations');
+      }
+      if (!/^\d+$/.test(chapter)) {
+        return badRequest('"chapter" must be a positive integer');
+      }
+      const ids = parseTranslationList(translations);
+      if (!ids) {
+        return badRequest(
+          `"translations" must list 1-${MAX_COMPARE_TRANSLATIONS} comma-separated ids`
+        );
+      }
+      const chapterNum = parseInt(chapter, 10);
+      const results = await compareChapter(book, chapterNum, ids);
+      if (results.every((r) => r.verses.length === 0)) {
+        return notFound(`No translation had ${book} ${chapterNum}`);
+      }
+      return ok({ book, chapter: chapterNum, results });
     },
   },
 ];

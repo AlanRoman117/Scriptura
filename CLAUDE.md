@@ -18,6 +18,7 @@ Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). I
 npm install                    # Install all workspace dependencies
 npm run build                  # Build all packages (tsc --build)
 npm test                       # Run all tests (jest, config in jest.config.ts)
+npm run test:contract          # HTTP contract tests (playwright, API mode — no browsers)
 npm run lint                   # TypeScript type-check (tsc --build; see note below)
 npm run dev:api                # Run the REST API with hot reload (tsx watch) on :3000
 npm run start:api              # Build, then run the compiled REST API on :3000
@@ -113,7 +114,22 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 
 ### Tests (`tests/`)
 
-Jest with ts-jest. Config in root `jest.config.ts`. 49 tests.
+**Two test runners, with a deliberate split.** The rule is *does the assertion need a real socket?*
+
+| Runner | Command | Owns |
+|---|---|---|
+| jest | `npm test` | Anything provable in-process: book resolution, canon, parsers, `createRouter` logic, static/dynamic parity |
+| Playwright | `npm run test:contract` | Anything needing a real socket: status lines, headers, CORS, HTTP methods, actual JSON serialisation |
+
+Playwright runs in **API mode** — the `request` fixture needs no browser, so `npx playwright install` is never run and CI installs none. `tests/contract/` is in `testPathIgnorePatterns` so jest never tries to run those specs.
+
+The path-traversal regression lives in **both** suites on purpose: it is a security invariant, and the bug it guards was an *adapter*-layer bug (query strings are percent-decoded, path segments are not), so it has to be proven where that difference exists.
+
+⚠️ **`examples/node-server/src/app.ts` must keep exporting `createApp()` without binding a port.** `index.ts` is the only place that calls `listen`. When the app was built at module scope the server could not be tested over HTTP at all — which is how the traversal bug stayed hidden.
+
+⚠️ **A raw socket is required to test encoded paths.** Every HTTP client normalises a URL before sending, so `/translations/%2e%2e` is collapsed to `/` client-side and never reaches the server. `tests/contract/errors.spec.ts` has a `rawGet()` helper that writes the request line verbatim.
+
+Jest with ts-jest. Config in root `jest.config.ts`. 70 tests, plus 33 Playwright contract tests.
 - `tests/unit/` — canon completeness (`validate`), type conformance (`core`), and book-key normalization (`books.test.ts`, including the Japanese-dakuten regression).
 - `tests/integration/api.test.ts` — drives `createRouter` directly. It is framework-agnostic, so there is no HTTP server, no supertest, no port. Covers every route, book resolution in five languages, error bodies, and pagination.
 - `tests/integration/static-parity.test.ts` — runs `build-static-api.mjs` over a two-book slice and asserts each emitted file deep-equals the router's body for the same path. **This is the anti-drift mechanism between the two serving paths.**

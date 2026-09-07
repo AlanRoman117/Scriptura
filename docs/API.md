@@ -40,6 +40,7 @@ Matching folds case, accents and separators, so `Génesis`, `genesis` and
 | `GET` | `/translations/:id/:book/:chapter/:verse` | A single verse |
 | `GET` | `/search?q=&translation=&limit=&offset=` | Full-text search |
 | `GET` | `/compare?ref=&translations=` | One verse across translations |
+| `GET` | `/compare/chapter?book=&chapter=&translations=` | A whole chapter across translations |
 
 ### `GET /`
 
@@ -152,6 +153,46 @@ otherwise be an empty string. A translation that cannot be read at all comes
 back as one row with `found: false` and an `error`, rather than failing the
 whole request.
 
+### `GET /compare/chapter?book=john&chapter=3&translations=kjv,rv1909`
+
+Side-by-side chapter reading. Verse `number` is preserved on every row so columns
+stay aligned even where a translation omits a verse.
+
+```json
+{
+  "book": "john", "chapter": 3,
+  "results": [
+    { "translation": "kjv", "book": "John",
+      "verses": [{ "translation": "kjv", "number": 1, "text": "There was a man…", "found": true }] },
+    { "translation": "rv1909", "book": "Juan",
+      "verses": [{ "translation": "rv1909", "number": 1, "text": "Y HABIA un hombre…", "found": true }] }
+  ]
+}
+```
+
+Up to 10 translations per request.
+
+## HTTP behaviour
+
+| | |
+|---|---|
+| Methods | `GET`, `HEAD`, `OPTIONS`. Anything else returns **405** with an `Allow` header — the API is read-only. |
+| CORS | `Access-Control-Allow-Origin: *` on every response, including errors, so a browser can read a 404 body. `OPTIONS` preflight returns **204**. |
+| Content-Type | `application/json; charset=utf-8`. The charset matters — the corpus includes Japanese, Spanish and French. |
+| Caching | Successful responses are `public, max-age=3600`; errors are `no-store`. Express also emits a weak `ETag` and honours conditional GETs. |
+
+## Types
+
+A TypeScript client should import the response types rather than redeclaring
+them — they are exported from `@scriptura/api`:
+
+```typescript
+import type {
+  TranslationPayload, BookPayload, ChapterPayload, VersePayload,
+  CompareVersePayload, CompareChapterPayload, BookIndexEntry,
+} from '@scriptura/api';
+```
+
 ## Errors
 
 All errors are `{ "error": "…" }`, sometimes with extra fields to act on.
@@ -160,6 +201,7 @@ All errors are `{ "error": "…" }`, sometimes with extra fields to act on.
 |---|---|
 | `400` | Missing or malformed query params; an unparseable `ref` |
 | `404` | Unknown translation, book, chapter, verse, or route |
+| `405` | A method other than GET/HEAD/OPTIONS |
 
 An unresolvable book tells you what valid slugs look like:
 

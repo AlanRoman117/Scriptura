@@ -15,7 +15,9 @@ const config: Config = {
   transform: {
     '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
   },
-  testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  // tests/contract/ belongs to Playwright — see playwright.config.ts. Jest must
+  // not try to run those specs; they import @playwright/test, not jest globals.
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/contract/'],
   // Integration tests read real translations off disk on first touch.
   testTimeout: 30000,
 };

@@ -53,3 +53,25 @@ jobs:
       # Smoke the static API builder. --skip-verses keeps it to a few hundred
       # files rather than ~12,500 while still exercising every code path.
       - run: npm run build:api -- --skip-verses
+
+  # HTTP contract tests. Separate from build-and-test because these boot a real
+  # server and assert things jest structurally cannot see — status lines,
+  # headers, CORS, HTTP methods. Playwright runs in API mode, so no browsers are
+  # installed; `npx playwright install` is deliberately absent.
+  contract:
+    name: API contract (HTTP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:contract
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
