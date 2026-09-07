@@ -1,6 +1,9 @@
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, relative } from 'node:path';
 import { createRouter } from '@scriptura/api';
 import { compareVerse } from '@scriptura/compare';
-import { clearCache, listTranslations } from '@scriptura/core';
+import { clearCache, getDataDir, listTranslations } from '@scriptura/core';
 
 /**
  * Integration tests against the real `data/` corpus.
@@ -157,6 +160,99 @@ describe('errors are actionable', () => {
 
   test('unknown route', async () => {
     expect((await get('/nope')).status).toBe(404);
+  });
+});
+
+describe('path traversal via translation id', () => {
+  // Regression. Route *path* segments were always safe — the router allows one
+  // segment and Express does not percent-decode req.path — but query strings
+  // ARE decoded, so ?translation=../../.. reached the loader with real ../
+  // sequences and would read any directory shaped like a translation, returning
+  // its verses in the response body.
+  const ESCAPES = [
+    '../../../../../../etc',
+    '../..',
+    '..',
+    '/etc/passwd',
+    'kjv/../../../etc',
+    './kjv',
+    '',
+  ];
+
+  test.each(ESCAPES)('/search rejects translation=%p', async (id) => {
+    const res = await get('/search', { q: 'a', translation: id });
+    expect(res.status).not.toBe(200);
+  });
+
+  test.each(ESCAPES)('/translations/:id rejects %p', async (id) => {
+    const res = await get(`/translations/${id}`);
+    expect(res.status).not.toBe(200);
+  });
+
+  test('/compare degrades the bad row without reading anything', async () => {
+    const res = await get('/compare', {
+      ref: 'Genesis 1:1',
+      translations: `kjv,../../../../../../etc`,
+    });
+    expect(res.status).toBe(200);
+    const { results } = res.body as { results: Array<{ found: boolean; text: string }> };
+    expect(results[0].found).toBe(true);
+    expect(results[1]).toMatchObject({ found: false, text: '' });
+  });
+
+  test('rejection never discloses a filesystem path', async () => {
+    const res = await get('/search', { q: 'a', translation: '../../../../etc' });
+    const body = JSON.stringify(res.body);
+    expect(body).not.toContain('/home/');
+    expect(body).not.toContain(process.cwd());
+  });
+
+  // The test that actually proves the fix: stand up a real, well-formed
+  // translation OUTSIDE the data root and confirm it cannot be read. Without
+  // the guard this returns 200 with the marker text in the body.
+  test('a well-formed translation outside the data root is unreachable', async () => {
+    const outside = mkdtempSync(join(tmpdir(), 'scriptura-traversal-'));
+    const victim = join(outside, 'secret');
+    try {
+      mkdirSync(join(victim, 'books'), { recursive: true });
+      writeFileSync(
+        join(victim, 'metadata.json'),
+        JSON.stringify({
+          id: 'secret', name: 'Secret', language: 'en', license: 'public-domain',
+          attribution: 'x', source_url: 'x', year: 2026, testament: 'both', book_count: 1,
+        })
+      );
+      writeFileSync(
+        join(victim, 'books', '01-genesis.json'),
+        JSON.stringify({
+          number: 1, name: 'Genesis', abbreviation: 'Gen', testament: 'OT',
+          chapters: [{ number: 1, verses: [{ number: 1, text: 'CONFIDENTIAL-EXFIL-MARKER' }] }],
+        })
+      );
+
+      // The traversal an attacker would send: a relative path from data/ to the victim.
+      const escape = relative(getDataDir(), victim);
+      expect(escape).toContain('..'); // sanity: this really does leave the root
+
+      const search = await get('/search', { q: 'CONFIDENTIAL', translation: escape });
+      expect(JSON.stringify(search.body)).not.toContain('EXFIL-MARKER');
+      expect(search.status).not.toBe(200);
+
+      const compare = await get('/compare', { ref: 'Genesis 1:1', translations: escape });
+      expect(JSON.stringify(compare.body)).not.toContain('EXFIL-MARKER');
+
+      const direct = await get(`/translations/${escape}`);
+      expect(JSON.stringify(direct.body)).not.toContain('Secret');
+      expect(direct.status).not.toBe(200);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  test('legitimate ids still resolve', async () => {
+    for (const id of ['kjv', 'rv1909', 'lsg1910', 'bungo']) {
+      expect((await get(`/translations/${id}`)).status).toBe(200);
+    }
   });
 });
 

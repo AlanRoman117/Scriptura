@@ -1,5 +1,5 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { normalizeBookKey, slugFromFilename } from './books.js';
 import type { Bible, Book, Chapter, LoadedBook, TranslationMeta, Verse } from './types.js';
 
@@ -21,6 +21,42 @@ export function getDataDir(): string {
 export function setDataDir(dir: string | undefined): void {
   dataDirOverride = dir;
   clearCache();
+}
+
+/**
+ * Translation ids that are safe to join onto a filesystem path.
+ *
+ * Every id we ship is a short lowercase slug (`kjv`, `rv1909`, `lsg1910`), so
+ * the allowlist costs nothing and closes the traversal below.
+ */
+const SAFE_TRANSLATION_ID = /^[a-z0-9][a-z0-9_-]*$/i;
+
+/**
+ * Resolve `data/<id>`, refusing anything that escapes the data root.
+ *
+ * This has to live here rather than in the caller. Route *path* segments were
+ * already safe — the router's `[^/]+` allows only one segment and Express does
+ * not percent-decode `req.path` — but **query strings are decoded**, so
+ * `/search?translation=../../../etc` arrived here with real `../` sequences and
+ * would read any directory shaped like a translation, returning its verses in
+ * the response body. Validating at the sink covers `/search`, `/compare`, the
+ * CLI, and any future caller at once, instead of relying on each one to sanitise
+ * first.
+ *
+ * The regex is the real guard; the resolve/prefix check is belt and braces
+ * against anything the pattern fails to anticipate (Windows `\` separators,
+ * say, which `path.join` also treats as a separator).
+ */
+function translationDir(id: string): string {
+  if (!SAFE_TRANSLATION_ID.test(id)) {
+    throw new Error(`Invalid translation id: ${JSON.stringify(id)}`);
+  }
+  const root = resolve(getDataDir());
+  const dir = resolve(root, id);
+  if (dir !== root && !dir.startsWith(root + sep)) {
+    throw new Error(`Translation id escapes the data root: ${JSON.stringify(id)}`);
+  }
+  return dir;
 }
 
 /**
@@ -96,15 +132,15 @@ export function clearCache(): void {
  * `loadTranslation` for them would parse all 66 books to throw them away.
  */
 export async function loadMetadata(id: string): Promise<TranslationMeta> {
-  const raw = await readFile(join(getDataDir(), id, 'metadata.json'), 'utf-8');
+  const raw = await readFile(join(translationDir(id), 'metadata.json'), 'utf-8');
   return JSON.parse(raw) as TranslationMeta;
 }
 
 async function readTranslation(id: string): Promise<Bible> {
-  const translationDir = join(getDataDir(), id);
+  const dir = translationDir(id);
   const meta = await loadMetadata(id);
 
-  const booksDir = join(translationDir, 'books');
+  const booksDir = join(dir, 'books');
   const files = (await readdir(booksDir)).filter((f) => f.endsWith('.json')).sort();
 
   const books: LoadedBook[] = (

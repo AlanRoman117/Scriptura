@@ -45,7 +45,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync, existsSync }
   from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, resolve, sep } from "node:path";
 
 // --- tiny arg parser ---------------------------------------------------------
 const args = process.argv.slice(2);
@@ -60,10 +60,29 @@ const PRETTY = args.includes("--pretty");
 
 const serialize = (obj) => JSON.stringify(obj, null, PRETTY ? 2 : 0);
 
+// A chapter or verse number used as a path segment.
+//
+// These come out of the book JSON, and JSON happily holds a string where a
+// number belongs. `join` then resolves any "../" right out of OUT_DIR, so a
+// crafted or corrupted book file could write anywhere the process can reach.
+// scripts/validate.py already rejects non-integer numbers, but this script can
+// be run on freshly-ingested data before the validator sees it.
+function numericSegment(value, what) {
+  if (!Number.isInteger(value) || value < 1) {
+    throw new Error(`${what} must be a positive integer, got ${JSON.stringify(value)}`);
+  }
+  return String(value);
+}
+
 // Write `obj` to <OUT_DIR>/<relPath>.json, creating parent directories.
 let filesWritten = 0;
 function writeEndpoint(relPath, obj) {
   const full = join(OUT_DIR, `${relPath}.json`);
+  // Belt and braces: never write outside the output tree, whatever built relPath.
+  const root = resolve(OUT_DIR);
+  if (resolve(full) !== root && !resolve(full).startsWith(root + sep)) {
+    throw new Error(`refusing to write outside --out-dir: ${relPath}`);
+  }
   mkdirSync(dirname(full), { recursive: true });
   writeFileSync(full, serialize(obj), "utf8");
   filesWritten++;
@@ -159,7 +178,7 @@ function build() {
         const verses = Array.isArray(chapter.verses) ? chapter.verses : [];
 
         // Full-chapter endpoint.
-        writeEndpoint(join("translations", id, slug, String(chapter.number)), {
+        writeEndpoint(join("translations", id, slug, numericSegment(chapter.number, "chapter.number")), {
           translation: id,
           book: book.name,
           book_slug: slug,
@@ -173,7 +192,13 @@ function build() {
         if (!SKIP_VERSES) {
           for (const v of verses) {
             writeEndpoint(
-              join("translations", id, slug, String(chapter.number), String(v.number)),
+              join(
+                "translations",
+                id,
+                slug,
+                numericSegment(chapter.number, "chapter.number"),
+                numericSegment(v.number, "verse.number")
+              ),
               {
                 translation: id,
                 book: book.name,
