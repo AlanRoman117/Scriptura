@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 /**
  * The PWA must be able to reuse our search and book-resolution semantics.
@@ -19,7 +20,8 @@ import { join } from 'node:path';
  * the front-end build breaks weeks later for reasons nobody connects back here.
  */
 
-const REPO = join(__dirname, '..', '..');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const REPO = join(HERE, '..', '..');
 
 describe('pure subpaths stay browser-safe', () => {
   let work: string;

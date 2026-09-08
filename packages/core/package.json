@@ -1,6 +1,7 @@
 {
   "name": "@scriptura/core",
   "version": "0.1.0",
+  "type": "module",
   "description": "Loader, parser, and canonical TypeScript types for Scriptura Bible data.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

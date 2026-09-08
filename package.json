@@ -1,7 +1,7 @@
 {
   "name": "scriptura",
   "version": "0.1.0",
-  "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
+  "description": "Open Bible data ecosystem \u2014 multi-translation, multi-language, developer-first.",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "build": "tsc --build",
-    "test": "jest",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules --disable-warning=ExperimentalWarning\" jest",
     "test:contract": "playwright test --project=contract",
     "validate": "python3 scripts/validate.py",
     "check:canon": "python3 scripts/check-canon-sync.py",

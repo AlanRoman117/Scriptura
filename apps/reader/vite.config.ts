@@ -21,23 +21,17 @@ const proxy = {
 };
 
 export default defineConfig({
-  // The @scriptura/* packages emit CommonJS (NodeNext with no "type": "module").
-  // Rollup's commonjs plugin converts that during `vite build`, but the dev
-  // server does not pre-bundle *linked* workspace dependencies by default — it
-  // served dist/bible.js raw, and the browser rejected it with "does not
-  // provide an export named 'createBible'". Listing the subpaths forces Vite to
-  // pre-bundle them to ESM, so dev and production consume the same artefacts.
+  // No `optimizeDeps.include` here, and that is the point.
   //
-  // The lasting fix is emitting ESM from the packages; that is a workspace-wide
-  // change and is tracked separately.
-  optimizeDeps: {
-    include: [
-      '@scriptura/core/bible',
-      '@scriptura/core/books',
-      '@scriptura/search/matcher',
-      '@scriptura/compare/chapters',
-    ],
-  },
+  // The @scriptura/* packages used to emit CommonJS, which `vite build`
+  // converted through Rollup while the dev server served raw — so dev rejected
+  // `dist/bible.js` with "does not provide an export named 'createBible'" while
+  // every production test passed. Listing each subpath forced Vite to
+  // pre-bundle them, which worked but had to be remembered for every new
+  // subpath: `@scriptura/compare/chapters` was forgotten and broke dev alone.
+  //
+  // The packages emit ESM now, so the browser reads them directly and dev and
+  // production resolve them the same way. `tests/reader-dev/` still guards it.
   plugins: [
     react(),
     VitePWA({

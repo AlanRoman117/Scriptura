@@ -1,6 +1,7 @@
 {
   "name": "scriptura-cli-demo",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "description": "CLI demo using @scriptura/search.",
   "main": "dist/index.js",

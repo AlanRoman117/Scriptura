@@ -1,10 +1,13 @@
 {
   "name": "@scriptura/api",
   "version": "0.1.0",
+  "type": "module",
   "description": "REST handlers for serving Scriptura Bible data.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest"

@@ -16,8 +16,13 @@ const config: Config = {
     // runtime code from a test fails at resolution.
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  // ESM, matching what the packages ship. Requires `--experimental-vm-modules`,
+  // which the `test` script passes; without it jest cannot load an ES module at
+  // all. `.ts` is not ESM to jest by default however the package.json reads, so
+  // it has to be named explicitly.
+  extensionsToTreatAsEsm: ['.ts'],
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json' }],
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.test.json', useESM: true }],
   },
   // tests/contract/ belongs to Playwright — see playwright.config.ts. Jest must
   // not try to run those specs; they import @playwright/test, not jest globals.

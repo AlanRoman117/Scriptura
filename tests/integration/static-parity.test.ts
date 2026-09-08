@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRouter } from '@scriptura/api';
 import { clearCache, setDataDir } from '@scriptura/core';
 
@@ -19,7 +20,8 @@ import { clearCache, setDataDir } from '@scriptura/core';
  * files instead of ~64,000.
  */
 
-const REPO = join(__dirname, '..', '..');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const REPO = join(HERE, '..', '..');
 const ROUTES = [
   'translations/tkjv',
   // The offline bundle. It is the payload the reader downloads, so a drift

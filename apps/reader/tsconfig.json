@@ -13,8 +13,8 @@
     "isolatedModules": true,
     // A type imported without the `type` keyword survives transpilation under
     // Vite, which is how `import { Verse } from '@scriptura/core'` would drag
-    // node:fs into the bundle. Here — unlike the CommonJS packages — we can
-    // make that a build error.
+    // node:fs into the bundle. The packages set this too now that they emit
+    // ESM, so the rule is the same everywhere rather than only here.
     "verbatimModuleSyntax": true,
     "resolveJsonModule": true
   },

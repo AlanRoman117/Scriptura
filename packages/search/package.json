@@ -1,6 +1,7 @@
 {
   "name": "@scriptura/search",
   "version": "0.1.0",
+  "type": "module",
   "description": "Full-text and reference-based search engine for Scriptura Bible data.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

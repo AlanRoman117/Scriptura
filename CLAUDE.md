@@ -8,7 +8,7 @@ Scriptura is an open-source monorepo for working with Bible data programmaticall
 
 **Current state.** **All 11 registered translations are ingested and committed** — 66 books each, `validate.py --strict` clean with zero errors and zero warnings.
 
-The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. The reader PWA (`apps/reader`) is **complete through Stage 5**: offline reading, notes, colour collections, export, offline search and linking, a downloadable translation library, side-by-side comparison, canvas boards, and opt-in WebMCP tools. 147 jest and 145 Playwright tests pass. CI exists. The remaining gaps are GraphQL and the AWS deployment workflow — both still design-only (see Docs → Specified but not built).
+The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. The reader PWA (`apps/reader`) is **complete through Stage 5**: offline reading, notes, colour collections, export, offline search and linking, a downloadable translation library, side-by-side comparison, canvas boards, and opt-in WebMCP tools. 169 jest and 155 Playwright tests pass. CI exists. The remaining gaps are GraphQL and the AWS deployment workflow — both still design-only (see Docs → Specified but not built).
 
 Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). Individual translations in `data/` carry their own licenses, recorded per-translation in each `metadata.json`.
 
@@ -64,7 +64,12 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 ## Architecture
 
-**Monorepo** using npm workspaces (`packages/*`). Root `tsconfig.base.json` sets strict mode, `NodeNext` module resolution, ES2022 target, and `composite: true` (required of every project that is referenced by another). Each package extends it.
+**Monorepo** using npm workspaces (`packages/*`). Root `tsconfig.base.json` sets strict mode, `NodeNext` module resolution, ES2022 target, `verbatimModuleSyntax`, and `composite: true` (required of every project that is referenced by another). Each package extends it.
+
+**The packages emit ESM.** Every one declares `"type": "module"`, and `module: NodeNext` emits ES modules accordingly; the sources' `./loader.js` specifiers were always the ESM form. This was CommonJS until the divergence it caused became expensive — see *Tests* below. Consequences worth knowing:
+- ⚠️ **`__dirname` does not exist.** `packages/core/src/loader.ts` derives its own location from `import.meta.url`; that is the only place that needed it.
+- ⚠️ **Changing `"type"` does not invalidate `tsc --build`'s incremental cache.** After a change like that, run `tsc --build --force`, or the stale CommonJS `dist/` sits there looking like a runtime failure.
+- `verbatimModuleSyntax` is now on for the **packages as well as the reader**, so a type imported without the `type` keyword is a build error everywhere. That is the rule that keeps `node:fs` out of the browser bundle, and it could not be enforced under CommonJS.
 
 ### Packages (`packages/`)
 
@@ -74,7 +79,7 @@ Single-package builds: `cd packages/<name> && npm run build`
   - `getDataDir()` / `setDataDir()` / `SCRIPTURA_DATA_DIR` — the corpus location, resolved per call rather than frozen at import. Lets tests run against a fixture tree and a deployment relocate `data/`.
   - `src/bible.ts` — the in-memory `Bible` model and its book-resolution index (`buildIndex`, `createBible`). **No I/O, no `process`, no `__dirname`.** Split out of `loader.ts` so a browser can rebuild a `Bible` from IndexedDB and get the server's exact resolution rules.
   - ⚠️ **Browser-safety invariant.** `packages/core`'s barrel re-exports `loader.js`, which imports `node:fs` and reads `process.env`/`__dirname` at module scope — importing it from a browser bundle is a build error, and under esbuild/Vite even `import { Verse } from '@scriptura/core'` (no `type` keyword) drags it in. The pure modules are therefore reachable by **subpath**: `@scriptura/core/books`, `@scriptura/core/bible`, `@scriptura/core/types`, `@scriptura/search/matcher`, `@scriptura/compare/chapters`. `packages/{core,search,compare}/package.json` declare `exports` and `sideEffects: false`.
-    - ⚠️ **A new subpath must be added in four places**, or it will pass one gate and fail another: the package's `exports` map, `tsconfig.test.json`'s `paths` and jest's `moduleNameMapper` (node10 resolution predates `exports`), `tests/unit/browser-safety.test.ts`, and **`optimizeDeps.include` in `apps/reader/vite.config.ts`**. Missing the last one builds fine and breaks only the dev server — `@scriptura/compare/chapters` did exactly that, and `tests/reader-dev/` caught it.
+    - **A new subpath must be added in three places**, or it will pass one gate and fail another: the package's `exports` map, `tsconfig.test.json`'s `paths` plus jest's `moduleNameMapper`, and `tests/unit/browser-safety.test.ts`. There used to be a fourth — `optimizeDeps.include` in `apps/reader/vite.config.ts` — and forgetting it built fine while breaking the dev server alone; `@scriptura/compare/chapters` did exactly that. The ESM migration removed that entry and the failure mode with it.
     - **`packages/search/src/matcher.ts` must never import `@scriptura/core`** — only the subpaths. That file is what the PWA uses to search offline with byte-for-byte the API's semantics.
     - `tests/unit/browser-safety.test.ts` bundles those subpaths for a browser target and fails if `node:fs`, `node:path`, `__dirname` or `process.env` appear. It is 6.7KB of output; one careless barrel import breaks the front-end build weeks later for reasons nobody traces back here.
     - Both jest's `moduleNameMapper` and `tsconfig.test.json`'s `paths` need subpath entries — `node10` resolution predates `exports` maps.
@@ -157,7 +162,9 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 | Playwright `reader` | `npm run test:reader` | The PWA in Chromium, against a **production build** — the service worker and precache manifest do not exist in dev, and offline reading is the promise being tested. Needs `npx playwright install chromium`. Downloads run against the compiled API the contract suite already starts, proxied at `/api`, so the library tests exercise the real `full.json`. |
 | Playwright `reader-dev` | (same command) | The PWA against the **dev server**, which resolves modules completely differently. Small on purpose: it asserts the app boots clean. |
 
-⚠️ **Dev and production resolve modules differently, and only production was tested at first.** `vite build` runs the `@scriptura/*` CommonJS output through Rollup's commonjs plugin; the dev server does **not** pre-bundle *linked* workspace dependencies, so it served `dist/bible.js` raw and the browser rejected it — *"does not provide an export named 'createBible'"*. The app was broken in the mode a developer uses all day while every test passed. `optimizeDeps.include` in `apps/reader/vite.config.ts` lists the subpaths; `tests/reader-dev/` is the guard. The lasting fix is emitting ESM from the packages, which is a workspace-wide change tracked separately.
+⚠️ **Dev and production used to resolve modules differently, and only production was tested.** `vite build` ran the `@scriptura/*` CommonJS output through Rollup's commonjs plugin; the dev server did **not** pre-bundle *linked* workspace dependencies, so it served `dist/bible.js` raw and the browser rejected it — *"does not provide an export named 'createBible'"*. The app was broken in the mode a developer uses all day while every test passed. `optimizeDeps.include` papered over it, but had to be remembered for every new subpath, and `@scriptura/compare/chapters` was duly forgotten.
+
+**The packages emit ESM now, so both modes read the same files and the workaround is gone.** `tests/reader-dev/` remains the guard and still has teeth: replacing an emitted `dist/*.js` with CommonJS content reproduces the original error and fails the job. ⚠️ Note it keys on the emitted **content**, not on the `"type"` field — Vite parses the file rather than trusting the manifest, so reverting `"type"` alone does *not* reproduce it.
 
 Playwright runs in **API mode** — the `request` fixture needs no browser, so `npx playwright install` is never run and CI installs none. `tests/contract/` is in `testPathIgnorePatterns` so jest never tries to run those specs.
 
@@ -167,20 +174,23 @@ The path-traversal regression lives in **both** suites on purpose: it is a secur
 
 ⚠️ **A raw socket is required to test encoded paths.** Every HTTP client normalises a URL before sending, so `/translations/%2e%2e` is collapsed to `/` client-side and never reaches the server. `tests/contract/errors.spec.ts` has a `rawGet()` helper that writes the request line verbatim.
 
-Jest with ts-jest. Config in root `jest.config.ts`. **147 jest tests, plus 145 Playwright** (42 contract, 101 reader, 2 reader-dev).
+Jest with ts-jest. Config in root `jest.config.ts`. **169 jest tests, plus 155 Playwright** (47 contract, 106 reader, 2 reader-dev).
 - `tests/unit/` — canon completeness (`validate`), type conformance (`core`), and book-key normalization (`books.test.ts`, including the Japanese-dakuten regression).
 - `tests/integration/api.test.ts` — drives `createRouter` directly. It is framework-agnostic, so there is no HTTP server, no supertest, no port. Covers every route, book resolution in five languages, error bodies, and pagination.
 - `tests/integration/static-parity.test.ts` — runs `build-static-api.mjs` over a two-book slice and asserts each emitted file deep-equals the router's body for the same path. **This is the anti-drift mechanism between the two serving paths.**
 - `tests/fixtures/` — `sample-metadata.json` and `sample-verse.json` (John 3:16-17 KJV).
 
-Two config details that are load-bearing:
+Config details that are load-bearing:
+- **Jest runs as ESM**, matching what the packages ship: `extensionsToTreatAsEsm: ['.ts']`, ts-jest with `useESM: true`, and `NODE_OPTIONS=--experimental-vm-modules` in the `test` script (without which jest cannot load an ES module at all). Compiling the specs as CommonJS would have reintroduced the very split the migration removed — shipping ESM while testing something else — and TypeScript rejects `import.meta` under CommonJS outright (TS1343), which is exactly what `loader.ts` needs.
+- ⚠️ **`__dirname` is unavailable in the specs too.** `tests/unit/core.test.ts`, `tests/unit/browser-safety.test.ts` and `tests/integration/static-parity.test.ts` derive their paths from `import.meta.url`.
+- `tsconfig.test.json` uses `moduleResolution: Bundler`, not `NodeNext`, so the specs can keep importing `../../apps/reader/src/lib/references` without an extension while the sources' `./loader.js` specifiers still map onto the `.ts` files.
 - `moduleNameMapper` needs `'^(\.{1,2}/.*)\.js$': '$1'`. The sources use NodeNext-style `./loader.js` specifiers, which Jest will not resolve to `.ts`. Without it **no test can import any runtime code** — which is why the original 6 tests passed while exercising almost nothing.
 - ts-jest points at `tsconfig.test.json`, not `tsconfig.json`. The root config is a solution file with no `compilerOptions`, so ts-jest pointed there silently falls back to defaults and drops `strict`/`esModuleInterop` from every test.
 
 ### Apps (`apps/`)
 
 - **`apps/reader`** — the local-first reading and note-taking PWA. Vite + React 19 + TypeScript. `npm run dev:reader` / `npm run build:reader`.
-  - **Imports only the pure subpaths** — `@scriptura/core/bible`, `@scriptura/core/types`, `@scriptura/search/matcher`. Importing `@scriptura/core` itself would pull `node:fs` into the bundle. Its `tsconfig.json` sets `verbatimModuleSyntax`, which the CommonJS packages cannot, so a missing `type` keyword fails the build here.
+  - **Imports only the pure subpaths** — `@scriptura/core/bible`, `@scriptura/core/types`, `@scriptura/search/matcher`. Importing `@scriptura/core` itself would pull `node:fs` into the bundle. `verbatimModuleSyntax` makes a missing `type` keyword a build error — here, and now in the packages too.
   - The `Bible` is rebuilt in the browser with the server's own `createBible`, so book resolution and search folding are identical online and off rather than a second implementation that drifts.
   - **The bundled translation is not precached.** `apps/reader/scripts/bundle-translation.mjs` emits `public/bible/bsb.json` (~4.4MB) by calling the real static builder, so it is byte-identical to what the CDN serves. It also emits `public/bible/catalog.json` — every translation's metadata plus an `approx_bytes` map — so the library renders and stays browsable **offline**; a live `/translations` is merged over it when one is reachable. `vite.config.ts` sets `globIgnores: ['**/bible/**']` — putting 4.4MB in the Workbox precache manifest would block service-worker install on a large download and re-download the lot whenever its hash changed. The app fetches it once into IndexedDB instead. The precache is 9 entries / 200KB.
   - Generated output (`public/bible/`, `dev-dist/`) is gitignored.

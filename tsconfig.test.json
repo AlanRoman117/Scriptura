@@ -5,23 +5,32 @@
   // `esModuleInterop` from every test.
   //
   // `composite` must be off: ts-jest and composite projects fight over emit
-  // and tsbuildinfo. `node10` resolution is what lets Jest follow the
-  // `./loader.js` specifiers in the sources back to the .ts files.
+  // and tsbuildinfo.
+  //
+  // ⚠️ `module` must be an ESM target. The packages emit ESM, and `loader.ts`
+  // uses `import.meta.url` to find `data/` — which TypeScript rejects outright
+  // under CommonJS (TS1343). Compiling the tests as CJS would also reintroduce
+  // exactly the split this migration removed: shipping ESM while testing
+  // something else.
+  //
+  // `Bundler` resolution rather than `NodeNext` so the specs can keep importing
+  // `../../apps/reader/src/lib/references` without an extension; it still maps
+  // the sources' `./loader.js` specifiers onto the `.ts` files.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "composite": false,
     "declaration": false,
     "declarationMap": false,
     "noEmit": true,
-    "module": "CommonJS",
-    "moduleResolution": "node10",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     // Off for tests only: unused fixtures and placeholder params are normal in
     // test scaffolding and shouldn't fail the suite.
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "types": ["jest", "node"],
-    // node10 resolution predates `exports` maps, so the subpath imports in
-    // packages/search/src/matcher.ts need spelling out for ts-jest.
+    // Spelled out for ts-jest: jest's own moduleNameMapper handles resolution
+    // at runtime, and these keep the type-checker agreeing with it.
     "baseUrl": ".",
     "paths": {
       "@scriptura/*/": ["packages/*/src/"],

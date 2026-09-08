@@ -1,10 +1,13 @@
 {
   "name": "@scriptura/validate",
   "version": "0.1.0",
+  "type": "module",
   "description": "Data integrity and schema validation for Scriptura translation directories.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "jest"

@@ -1,8 +1,10 @@
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Book, TranslationMeta } from '@scriptura/core';
 
-const FIXTURES = join(__dirname, '..', 'fixtures');
+const HERE = dirname(fileURLToPath(import.meta.url));
+const FIXTURES = join(HERE, '..', 'fixtures');
 
 describe('@scriptura/core types', () => {
   test('sample metadata conforms to TranslationMeta', () => {

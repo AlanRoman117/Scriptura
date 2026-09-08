@@ -1,5 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { join, resolve, sep } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { slugFromFilename } from './books.js';
 import { createBible } from './bible.js';
 import type { Bible, Book, LoadedBook, TranslationMeta } from './types.js';
@@ -11,11 +12,16 @@ import type { Bible, Book, LoadedBook, TranslationMeta } from './types.js';
  * loader at a fixture tree and a deployment can relocate the corpus. The
  * default walks up from this file (works from both `src/` and `dist/`, which
  * sit at the same depth) rather than trusting the process cwd.
+ *
+ * `import.meta.url` rather than `__dirname`: these packages emit ESM, where
+ * `__dirname` does not exist.
  */
+const HERE = dirname(fileURLToPath(import.meta.url));
+
 let dataDirOverride: string | undefined = process.env.SCRIPTURA_DATA_DIR;
 
 export function getDataDir(): string {
-  return dataDirOverride ?? join(__dirname, '..', '..', '..', 'data');
+  return dataDirOverride ?? join(HERE, '..', '..', '..', 'data');
 }
 
 /** Point the loader at a different `data/` tree. Clears every cache. */
