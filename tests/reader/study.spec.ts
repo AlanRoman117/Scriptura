@@ -48,21 +48,49 @@ test.describe('one box for finding things', () => {
     await expect(page.locator('.verse[data-verse="105"]')).toBeInViewport();
   });
 
+  /**
+   * Type a reference and press Enter.
+   *
+   * ⚠️ Waits for the jump affordance first. Enter only navigates once the
+   * reference has resolved, and resolving happens in an effect — so firing
+   * Enter straight after `fill` races it, and a lost Enter looks exactly like
+   * a reference that failed to parse. Ubuntu won that race; macOS did not.
+   */
+  async function jumpTo(page: import('@playwright/test').Page, reference: string) {
+    await page.getByTestId('search-input').fill(reference);
+    await expect(page.getByTestId('search-jump')).toBeVisible();
+    await page.getByTestId('search-input').press('Enter');
+  }
+
   test('Enter goes straight there', async ({ page }) => {
     await open(page);
-    await page.getByTestId('search-input').fill('Genesis 3');
-    await page.getByTestId('search-input').press('Enter');
+    await jumpTo(page, 'Genesis 3');
     await expect(page.getByTestId('chapter-title')).toContainText('Genesis 3');
+  });
+
+  test('the panel comes back when a second reference is typed', async ({ page }) => {
+    // Enter closes the panel to clear the way for the passage. The input keeps
+    // focus, so nothing would reopen it and a reader typing again would see no
+    // feedback at all.
+    await open(page);
+    await jumpTo(page, 'Genesis 3');
+    await expect(page.getByTestId('search-panel')).toBeHidden();
+
+    await page.getByTestId('search-input').fill('Psalms 23');
+    await expect(page.getByTestId('search-jump')).toBeVisible();
   });
 
   test('an abbreviation and a book number both resolve', async ({ page }) => {
     await open(page);
+    // ⚠️ Never assert John 1 here: the reader opens on it, so the assertion
+    // would pass without anything having happened — which is exactly how the
+    // lost-Enter race stayed invisible until macOS lost it twice in a row.
     for (const [input, expected] of [
-      ['Jhn 1:1', 'John 1'],
-      ['43 3:16', 'John 3'],
+      ['Jhn 3:16', 'John 3'],
+      ['43 1:1', 'John 1'],
+      ['19 23', 'Psalms 23'],
     ]) {
-      await page.getByTestId('search-input').fill(input);
-      await page.getByTestId('search-input').press('Enter');
+      await jumpTo(page, input);
       await expect(page.getByTestId('chapter-title')).toContainText(expected);
     }
   });

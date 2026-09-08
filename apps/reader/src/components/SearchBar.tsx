@@ -49,7 +49,14 @@ export function SearchBar({
         aria-label="Search or go to a reference"
         placeholder='Search, or go to "John 3:16"'
         value={query}
-        onChange={(e) => onQuery(e.target.value)}
+        // Reopens on typing, not only on focus. Enter closes the panel to get
+        // out of the way of the passage it just jumped to — but the input keeps
+        // focus, so without this a reader typing a second reference gets no
+        // panel and no feedback until they click away and back.
+        onChange={(e) => {
+          onQuery(e.target.value);
+          setFocused(true);
+        }}
         onFocus={() => setFocused(true)}
         // Delayed so a click on a result lands before the panel closes.
         onBlur={() => window.setTimeout(() => setFocused(false), 150)}
