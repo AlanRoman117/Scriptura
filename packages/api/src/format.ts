@@ -14,6 +14,7 @@ import type {
   Chapter,
   License,
   LoadedBook,
+  SearchResult,
   TranslationMeta,
   TranslationVerse,
   Verse,
@@ -88,6 +89,18 @@ export interface VersePayload {
   text: string;
 }
 
+export interface SearchPayload {
+  query: string;
+  translation: string;
+  /** `substring` (the default) or `word`. */
+  mode: string;
+  match_case: boolean;
+  total: number;
+  limit: number;
+  offset: number;
+  results: SearchResult[];
+}
+
 export interface CompareVersePayload {
   reference: string;
   results: TranslationVerse[];
@@ -154,6 +167,32 @@ export function formatFullTranslation(
         verses: c.verses.map((v) => ({ number: v.number, text: v.text })),
       })),
     })),
+  };
+}
+
+/**
+ * `/search` — a page of matches, with the total behind it.
+ *
+ * The matching options are echoed because they change what `total` means: a
+ * client showing "1,382 matches" needs to be able to say what was counted.
+ * Results carry `score` — 3 for a whole-word match, 2 for a word starting with
+ * the query, 1 for a match inside a longer word — and arrive sorted by it.
+ */
+export function formatSearch(
+  query: string,
+  translation: string,
+  results: SearchResult[],
+  page: { limit: number; offset: number; mode: string; matchCase: boolean }
+): SearchPayload {
+  return {
+    query,
+    translation,
+    mode: page.mode,
+    match_case: page.matchCase,
+    total: results.length,
+    limit: page.limit,
+    offset: page.offset,
+    results: results.slice(page.offset, page.offset + page.limit),
   };
 }
 

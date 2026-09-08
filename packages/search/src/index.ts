@@ -1,22 +1,35 @@
 import { loadTranslation, parseReference } from '@scriptura/core';
 import type { SearchResult } from '@scriptura/core';
-import { searchBible } from './matcher.js';
+import { searchBible, SCORE_WHOLE_WORD, type MatchOptions } from './matcher.js';
 
-export { searchBible } from './matcher.js';
+export {
+  hasWordBoundaries,
+  matchScore,
+  searchBible,
+  SCORE_INSIDE_WORD,
+  SCORE_NONE,
+  SCORE_WHOLE_WORD,
+  SCORE_WORD_START,
+} from './matcher.js';
+export type { MatchMode, MatchOptions } from './matcher.js';
 
 /**
  * Full-text search within a single translation.
  *
- * Matching is a **substring** match on **case- and diacritic-folded** text —
- * see `searchBible` in ./matcher.ts, which is the whole of it. This wrapper
- * only adds the disk read, so the browser can use the matcher directly and get
- * identical results.
+ * Matching is a **substring** match on **diacritic-folded** text, ranked by
+ * match quality — see `searchBible` in ./matcher.ts, which is the whole of it.
+ * This wrapper only adds the disk read, so the browser can use the matcher
+ * directly and get identical results.
  *
  * Returns every match. Callers that serve this over HTTP should paginate —
  * a common word like "the" matches ~28,000 verses in the KJV.
  */
-export async function search(translationId: string, query: string): Promise<SearchResult[]> {
-  return searchBible(await loadTranslation(translationId), query);
+export async function search(
+  translationId: string,
+  query: string,
+  options?: MatchOptions
+): Promise<SearchResult[]> {
+  return searchBible(await loadTranslation(translationId), query, options);
 }
 
 /**
@@ -58,6 +71,8 @@ export async function lookup(translationId: string, reference: string): Promise<
       chapter: chapterNum,
       verse: v.number,
       text: v.text,
-      score: 1,
+      // A reference lookup has no match quality to report — the caller named
+      // the verse. Ranked equal so a mixed list keeps its given order.
+      score: SCORE_WHOLE_WORD,
     }));
 }

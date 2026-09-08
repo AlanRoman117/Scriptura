@@ -228,9 +228,22 @@ body.dragging { cursor: col-resize; user-select: none; }
   color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
   border: none; border-radius: 6px; padding: .5rem .6rem; cursor: pointer; margin-bottom: .25rem;
 }
+.search__options, .results__options {
+  display: flex; flex-wrap: wrap; gap: .75rem;
+  padding: .35rem .6rem; font-size: .74rem; color: var(--ink-soft);
+}
+.results__options { padding: .5rem 0 0; }
+.search__option { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
+.search__option input { margin: 0; }
+
 .search__count { margin: .25rem .6rem .4rem; font-size: .72rem; color: var(--ink-soft); }
 .search__results { list-style: none; margin: 0; padding: 0; }
-.search__result { display: flex; align-items: stretch; gap: .25rem; }
+.search__result { display: flex; align-items: stretch; gap: .25rem; flex-wrap: wrap; }
+.search__divider {
+  flex: 1 1 100%; margin: .5rem 0 .1rem; padding-top: .35rem;
+  border-top: 1px solid var(--rule);
+  font-size: .68rem; color: var(--ink-soft); font-style: italic;
+}
 .search__ref {
   flex: 1; min-width: 0; text-align: left; font: inherit;
   background: transparent; border: none; border-radius: 6px;
@@ -724,6 +737,13 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .results__insert:hover { color: var(--ink); border-color: var(--rule); }
+
+/* Ranked order needs to say why, or it reads as shuffled. */
+.results__divider {
+  margin: .9rem 0 .3rem; padding-top: .5rem;
+  border-top: 1px solid var(--rule);
+  font-size: .72rem; color: var(--ink-soft); font-style: italic;
+}
 
 .results__footer { font-size: .76rem; color: var(--ink-soft); margin-top: 1rem; }
 .results__more {

@@ -49,3 +49,67 @@ test('a no-match query is an empty page, not an error', async ({ request }) => {
   expect(body.total).toBe(0);
   expect(body.results).toEqual([]);
 });
+
+test.describe('matching options', () => {
+  /**
+   * The Tito problem, over HTTP. Searching a Spanish translation for Titus
+   * returned `apetito` mixed in with him, because every match looked alike.
+   */
+  test('ranking puts the person above the words containing his name', async ({ request }) => {
+    const body = await (await request.get('/search?q=Tito&translation=rv1909&limit=50')).json();
+    expect(body.mode).toBe('substring');
+    expect(body.match_case).toBe(false);
+
+    const scores = body.results.map((r: { score: number }) => r.score);
+    expect(Math.max(...scores)).toBeGreaterThan(Math.min(...scores));
+    expect(scores).toEqual([...scores].sort((a: number, b: number) => b - a));
+    expect(/apetito/i.test(body.results[0].text)).toBe(false);
+  });
+
+  test('word mode narrows, and says that it did', async ({ request }) => {
+    const loose = await (await request.get('/search?q=Tito&translation=rv1909')).json();
+    const strict = await (
+      await request.get('/search?q=Tito&translation=rv1909&mode=word')
+    ).json();
+
+    expect(strict.mode).toBe('word');
+    expect(strict.total).toBeLessThan(loose.total);
+    expect(strict.total).toBeGreaterThan(0);
+  });
+
+  test('word mode leaves Japanese exactly as it was', async ({ request }) => {
+    // Japanese is written without spaces, so a naive whole-word rule takes 神
+    // from thousands of verses to a handful. The toggle must be a no-op there.
+    const loose = await (await request.get('/search?q=%E7%A5%9E&translation=bungo')).json();
+    const strict = await (
+      await request.get('/search?q=%E7%A5%9E&translation=bungo&mode=word')
+    ).json();
+    expect(strict.total).toBe(loose.total);
+    expect(loose.total).toBeGreaterThan(1000);
+  });
+
+  test('match_case is honoured, and diacritics stay folded regardless', async ({ request }) => {
+    const sensitive = await (
+      await request.get('/search?q=Abraham&translation=kjv&match_case=1')
+    ).json();
+    const insensitive = await (
+      await request.get('/search?q=Abraham&translation=kjv')
+    ).json();
+    expect(sensitive.match_case).toBe(true);
+    expect(sensitive.total).toBeGreaterThan(0);
+    expect(sensitive.total).toBeLessThanOrEqual(insensitive.total);
+
+    // Folding is normalization, not strictness: it does not switch off.
+    const accented = await (
+      await request.get('/search?q=Josu%C3%A9&translation=rv1909&match_case=1')
+    ).json();
+    expect(accented.total).toBeGreaterThan(0);
+  });
+
+  test('an unusable option is a 400, not a quietly different answer', async ({ request }) => {
+    for (const bad of ['mode=fuzzy', 'match_case=yes']) {
+      const res = await request.get(`/search?q=love&translation=kjv&${bad}`);
+      expect(res.status(), bad).toBe(400);
+    }
+  });
+});

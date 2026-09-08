@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import type { SearchResult } from '@scriptura/core/types';
-import type { ResolvedReference } from '../lib/search';
+import { startsWeakMatches, type MatchOptions, type ResolvedReference } from '../lib/search';
 
 interface SearchBarProps {
   query: string;
   results: SearchResult[];
   reference: ResolvedReference | null;
   total: number;
+  options: MatchOptions;
+  onOptions: (next: MatchOptions) => void;
   onQuery: (q: string) => void;
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
   onInsert: (result: SearchResult) => void;
@@ -27,6 +29,8 @@ export function SearchBar({
   results,
   reference,
   total,
+  options,
+  onOptions,
   onQuery,
   onGo,
   onInsert,
@@ -79,6 +83,30 @@ export function SearchBar({
             </button>
           )}
 
+          {/* Kept out of the grammar on purpose: `-word` and `"phrase"` are
+              things you type, but a reader who does not know what "whole word"
+              means will never discover a syntax for it. */}
+          <div className="search__options" onMouseDown={(e) => e.preventDefault()}>
+            <label className="search__option">
+              <input
+                type="checkbox"
+                data-testid="search-whole-word"
+                checked={options.mode === 'word'}
+                onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
+              />
+              Whole words only
+            </label>
+            <label className="search__option">
+              <input
+                type="checkbox"
+                data-testid="search-match-case"
+                checked={!!options.caseSensitive}
+                onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
+              />
+              Match case
+            </label>
+          </div>
+
           <p className="search__count" data-testid="search-count">
             {total === 0
               ? 'No matches'
@@ -107,8 +135,16 @@ export function SearchBar({
           </p>
 
           <ul className="search__results">
-            {results.map((r) => (
+            {results.map((r, i) => (
               <li key={`${r.book_slug}-${r.chapter}-${r.verse}`} className="search__result">
+                {/* A short query never reaches the full results view — all 17
+                    matches for `Tito` fit here — so the rule has to be drawn
+                    here too, or the ranking looks like no ranking at all. */}
+                {startsWeakMatches(results[i - 1], r) && (
+                  <p className="search__divider" data-testid="search-divider">
+                    Below: inside a longer word
+                  </p>
+                )}
                 <button
                   type="button"
                   className="search__ref"

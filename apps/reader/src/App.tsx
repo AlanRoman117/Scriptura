@@ -59,7 +59,12 @@ import {
 import { MarksPanel } from './components/MarksPanel';
 import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/export';
 import { SearchBar } from './components/SearchBar';
-import { runQuery, resolveReference, type ResolvedReference } from './lib/search';
+import {
+  runQuery,
+  resolveReference,
+  type MatchOptions,
+  type ResolvedReference,
+} from './lib/search';
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import type { SearchResult } from '@scriptura/core/types';
@@ -112,6 +117,12 @@ export function App() {
   /** Every match. The dropdown shows a slice; the results view walks them all. */
   const [hits, setHits] = useState<SearchResult[]>([]);
   const [resultsOpen, setResultsOpen] = useState(false);
+  /**
+   * Not persisted, deliberately. The toggles are visible whenever the search
+   * panel is open; one that quietly survived a reload is how someone ends up
+   * asking why search has stopped finding anything.
+   */
+  const [matching, setMatching] = useState<MatchOptions>({ mode: 'substring' });
   const [reference, setReference] = useState<ResolvedReference | null>(null);
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
 
@@ -203,8 +214,9 @@ export function App() {
     // A reference jumps; anything else searches. Both run offline against the
     // translation already in memory.
     setReference(resolveReference(bible, query));
-    setHits(runQuery(bible, query));
-  }, [bible, query]);
+    setHits(runQuery(bible, query, matching));
+    // `matching` belongs here: without it, ticking a box leaves stale results.
+  }, [bible, query, matching]);
 
   /**
    * Insert at the cursor, or append when the surface is not focused.
@@ -840,6 +852,8 @@ export function App() {
                   bible={bible}
                   query={query}
                   results={hits}
+                  options={matching}
+                  onOptions={setMatching}
                   onGo={(bookSlug, chapter, verse) => {
                     goTo(bookSlug, chapter, verse);
                     setResultsOpen(false);
@@ -895,6 +909,8 @@ export function App() {
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}
+                options={matching}
+                onOptions={setMatching}
                 onQuery={setQuery}
                 onGo={goTo}
                 onInsert={insertSearchResult}

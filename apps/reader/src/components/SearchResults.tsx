@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react';
 import type { Bible, SearchResult } from '@scriptura/core/types';
+import { startsWeakMatches, type MatchOptions } from '../lib/search';
 
 interface SearchResultsProps {
   bible: Bible;
   query: string;
   /** Every match, not a page of them. */
   results: SearchResult[];
+  options: MatchOptions;
+  onOptions: (next: MatchOptions) => void;
   onGo: (bookSlug: string, chapter: number, verse: number) => void;
   onInsert: (result: SearchResult) => void;
   onClose: () => void;
@@ -32,6 +35,8 @@ export function SearchResults({
   bible,
   query,
   results,
+  options,
+  onOptions,
   onGo,
   onInsert,
   onClose,
@@ -81,6 +86,27 @@ export function SearchResults({
         </button>
       </header>
 
+      <div className="results__options">
+        <label className="search__option">
+          <input
+            type="checkbox"
+            data-testid="results-whole-word"
+            checked={options.mode === 'word'}
+            onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
+          />
+          Whole words only
+        </label>
+        <label className="search__option">
+          <input
+            type="checkbox"
+            data-testid="results-match-case"
+            checked={!!options.caseSensitive}
+            onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
+          />
+          Match case
+        </label>
+      </div>
+
       <div className="results__books" data-testid="results-books">
         <button
           type="button"
@@ -105,8 +131,16 @@ export function SearchResults({
       </div>
 
       <ul className="results__list" data-testid="results-list">
-        {visible.map((r) => (
+        {visible.map((r, i) => (
           <li className="results__item" key={`${r.book_slug}-${r.chapter}-${r.verse}`}>
+            {/* Ranked order looks arbitrary unless it says why. The rule is
+                drawn once, where whole-word matches give way to verses that
+                merely contain the query inside a longer word. */}
+            {startsWeakMatches(visible[i - 1], r) && (
+              <p className="results__divider" data-testid="results-divider">
+                Below: “{query.trim()}” inside a longer word
+              </p>
+            )}
             <button
               type="button"
               className="results__ref"

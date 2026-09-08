@@ -79,7 +79,18 @@ test('the same slug addresses every translation, in every language', async ({ re
 test('search paginates and reports a total the UI can page on', async ({ request }) => {
   const res = await request.get('/search?q=love&translation=kjv&limit=5');
   const body = await res.json();
-  expect(keys(body)).toEqual(['limit', 'offset', 'query', 'results', 'total', 'translation']);
+  // The matching options are echoed because they change what `total` counts —
+  // a client showing "1,382 matches" has to be able to say what was counted.
+  expect(keys(body)).toEqual([
+    'limit',
+    'match_case',
+    'mode',
+    'offset',
+    'query',
+    'results',
+    'total',
+    'translation',
+  ]);
   expect(body.results).toHaveLength(5);
   expect(body.total).toBeGreaterThan(5);
 

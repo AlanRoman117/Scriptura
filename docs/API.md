@@ -47,7 +47,7 @@ compare for no visible reason.
 | `GET` | `/translations/:id/:book` | A book's chapter index with verse counts |
 | `GET` | `/translations/:id/:book/:chapter` | A full chapter |
 | `GET` | `/translations/:id/:book/:chapter/:verse` | A single verse |
-| `GET` | `/search?q=&translation=&limit=&offset=` | Full-text search |
+| `GET` | `/search?q=&translation=&limit=&offset=&mode=&match_case=` | Full-text search |
 | `GET` | `/compare?ref=&translations=` | One verse across translations |
 | `GET` | `/compare/chapter?book=&chapter=&translations=` | A whole chapter across translations |
 
@@ -161,10 +161,11 @@ supported — send `?q=love`. Repeated params (`?q=a&q=b`) resolve to the last v
 
 ```json
 {
-  "query": "love", "translation": "kjv", "total": 442, "limit": 5, "offset": 0,
+  "query": "love", "translation": "kjv", "mode": "substring", "match_case": false,
+  "total": 546, "limit": 5, "offset": 0,
   "results": [
     { "ref": "Genesis 27:4", "book": "Genesis", "book_slug": "genesis",
-      "chapter": 27, "verse": 4, "text": "And make me savoury meat…", "score": 1 }
+      "chapter": 27, "verse": 4, "text": "And make me savoury meat…", "score": 3 }
   ]
 }
 ```
@@ -172,17 +173,37 @@ supported — send `?q=love`. Repeated params (`?q=a&q=b`) resolve to the last v
 `book_slug` is directly usable as a `:book` path segment.
 
 **Matching semantics.** A **substring** match on **case- and diacritic-folded**
-text:
+text, **ranked by match quality**:
 
 - `amo` finds `amó`, and `amó` finds `amo` — they are the same word. (Folding is
   normalization, not fuzzy matching; no edit-distance or approximate matching is
   performed, and none is planned.)
 - A stem finds its archaic inflections: `love` matches `loveth` and `loved`,
   which matters for the KJV.
-- The cost of substring matching is over-matching on short queries — `am`
-  matches `Abraham`. Filter client-side if you need whole-word precision.
-- Non-Latin scripts are unaffected by folding: Japanese matches exactly.
+- Results carry a `score` and arrive sorted by it, canonical within a rank:
+
+  | `score` | meaning | example |
+  |---|---|---|
+  | 3 | the query is a whole word | `Tito` in `á Tito mi hermano` |
+  | 2 | a word begins with the query | `love` in `loveth` |
+  | 1 | the query sits inside a word | `Tito` in `apetito` |
+
 - An empty or whitespace-only query returns no results rather than the corpus.
+
+**`mode`** — `substring` (default) or `word`. Substring is the default because
+whole-word matching costs 49% of `love` in the KJV and 55% of `amor` in
+`rv1909`: the inflections are wanted. Use `mode=word` when a name is the point
+and near-misses are not.
+
+**`match_case`** — `0` (default) or `1`. Diacritics are folded either way;
+folding is normalization, and turning it off would hide about a third of the
+Spanish and French corpus.
+
+⚠️ **Scripts without word separators.** Japanese is written without spaces, so
+a query containing no word-forming character has no boundaries to match on. For
+such a query `mode=word` is a **no-op** — it returns exactly what `substring`
+returns, and every result scores 3. Without that rule, `mode=word` would take
+`神` in `bungo` from 3,945 verses to 3.
 
 ### `GET /compare?ref=John+3:16&translations=kjv,rv1909,bungo`
 

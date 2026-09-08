@@ -214,7 +214,10 @@ export const TOOLS: Tool[] = [
     name: `${PREFIX}search_scripture`,
     description:
       'Search the open translation for a word or phrase. Quote a phrase to require it exactly, '
-      + 'and prefix a term with "-" to exclude it. Returns the true total plus the first matches.',
+      + 'and prefix a term with "-" to exclude it. Matching is a substring by default, so '
+      + '"love" finds "loveth"; results are ranked so whole-word matches come first. Set '
+      + 'whole_word when a name is wanted and near-misses are not — searching "Tito" otherwise '
+      + 'also finds "apetito". Returns the true total plus the first matches.',
     annotations: { readOnlyHint: true, untrustedContentHint: true },
     inputSchema: {
       type: 'object',
@@ -222,6 +225,11 @@ export const TOOLS: Tool[] = [
         query: { type: 'string', description: 'e.g. living water, "in the beginning", God -love' },
         book: { type: 'string', description: 'Optional book slug to narrow to, e.g. "john".' },
         limit: { type: 'number', description: `How many to return (max ${MAX_SEARCH_RESULTS}).` },
+        whole_word: {
+          type: 'boolean',
+          description: 'Match whole words only. Has no effect on Japanese, which has no word separators.',
+        },
+        match_case: { type: 'boolean', description: 'Match capitalisation. Accents are always folded.' },
       },
       required: ['query'],
     },
@@ -232,7 +240,10 @@ export const TOOLS: Tool[] = [
       const query = typeof args?.query === 'string' ? args.query.trim() : '';
       if (!query) return failure('No query was given.');
 
-      let results = runQuery(bible, query);
+      let results = runQuery(bible, query, {
+        mode: args?.whole_word === true ? 'word' : 'substring',
+        caseSensitive: args?.match_case === true,
+      });
       const book = typeof args?.book === 'string' ? args.book : undefined;
       if (book) {
         const resolved = bible.book(book);

@@ -25,23 +25,34 @@ export function slugFromFilename(filename: string): string {
 }
 
 /**
+ * Strip Latin diacritics, leaving case alone.
+ *
+ * Split out of `foldText` because case and diacritics are *different*
+ * questions: a case-sensitive search still wants `amó` and `amo` to be the
+ * same word. Turning off diacritic folding would hide about a third of the
+ * Spanish and French corpus, so it is never optional; case is.
+ *
+ * ⚠️ Strips the Latin combining block **only**. A general `\p{M}` strip also
+ * removes the Japanese dakuten (U+3099), silently turning ガラテヤ into
+ * カラテヤ — a different word. There is a regression test; do not "simplify".
+ */
+export function foldDiacritics(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .normalize('NFC');
+}
+
+/**
  * Fold text for comparison: case and Latin diacritics only.
  *
  * Spacing and punctuation are left alone, so the result still supports
  * substring and phrase matching. This is *normalization*, not fuzzy matching —
  * `amó` and `amo` are the same word, so treating them as different is a bug,
  * not a strictness setting.
- *
- * ⚠️ Strips the Latin combining block **only**. A general `\p{M}` strip also
- * removes the Japanese dakuten (U+3099), silently turning ガラテヤ into
- * カラテヤ — a different word. There is a regression test; do not "simplify".
  */
 export function foldText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .normalize('NFC')
-    .toLowerCase();
+  return foldDiacritics(value).toLowerCase();
 }
 
 /**

@@ -89,3 +89,74 @@ test.describe('all the matches', () => {
     await expect(page.locator('.verse[data-verse="13"]')).toBeInViewport();
   });
 });
+
+test.describe('precision', () => {
+  /**
+   * The reason ranking exists. Searching a Spanish translation for Titus
+   * returned `apetito` alongside him, because every match looked alike.
+   */
+  /** Install a Spanish translation and read it, so `Tito` means Titus. */
+  async function readSpanish(page: import('@playwright/test').Page) {
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-get-rv1909').click();
+    await expect(page.getByTestId('library-read-rv1909')).toBeVisible({ timeout: 60_000 });
+    await page.getByTestId('library-read-rv1909').click();
+    // Wait for the text itself to change, not just the click: searching before
+    // the swap lands measures the English translation and reads 1, not 17.
+    await expect(page.getByTestId('chapter-title')).toContainText('Juan');
+  }
+
+  test('a name outranks the words that merely contain it', async ({ page }) => {
+    await open(page);
+    await readSpanish(page);
+    await searchFor(page, 'Tito');
+
+    // Seventeen matches all fit the dropdown, so this is where a reader
+    // searching a name actually sees the result — `see all` is not offered.
+    const texts = page.getByTestId('search-panel').locator('.search__result-text');
+    await expect(texts.first()).not.toContainText('apetito');
+    await expect(page.getByTestId('search-divider')).toBeVisible();
+
+    // Every Titus verse precedes every coincidence.
+    const all = await texts.allTextContents();
+    const lastPerson = all.map((t) => /apetito|empr/i.test(t)).lastIndexOf(false);
+    const firstNoise = all.map((t) => /apetito|empr/i.test(t)).indexOf(true);
+    expect(firstNoise).toBeGreaterThan(-1);
+    expect(lastPerson).toBeLessThan(firstNoise);
+  });
+
+  test('whole words only drops them entirely', async ({ page }) => {
+    await open(page);
+    await readSpanish(page);
+    await searchFor(page, 'Tito');
+
+    const count = async () =>
+      Number((await page.getByTestId('search-count').textContent())!.match(/^(\d+)/)![1]);
+    const loose = await count();
+
+    await page.getByTestId('search-whole-word').check();
+    await expect.poll(count).toBeLessThan(loose);
+    await expect(page.getByTestId('search-panel')).not.toContainText('apetito');
+    await expect(page.getByTestId('search-divider')).toHaveCount(0);
+  });
+
+  test('but a stem still finds its inflections by default', async ({ page }) => {
+    // Whole-word costs 49% of `love` in the KJV, so it must stay opt-in.
+    await open(page);
+    await searchFor(page, 'love');
+    await page.getByTestId('search-see-all').click();
+    await expect(page.getByTestId('results-list')).toContainText(/loveth|loved/);
+  });
+
+  test('the toggle is reachable from the dropdown too', async ({ page }) => {
+    await open(page);
+    await searchFor(page, 'love');
+    const before = Number((await page.getByTestId('search-count').textContent())!.match(/^(\d+)/)![1]);
+    await page.getByTestId('search-whole-word').check();
+    await expect
+      .poll(async () =>
+        Number((await page.getByTestId('search-count').textContent())!.match(/^(\d+)/)![1])
+      )
+      .toBeLessThan(before);
+  });
+});

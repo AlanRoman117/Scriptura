@@ -1,11 +1,12 @@
 import { listTranslations, loadTranslation } from '@scriptura/core';
 import type { Bible, LoadedBook } from '@scriptura/core';
-import { search } from '@scriptura/search';
+import { search, type MatchMode } from '@scriptura/search';
 import { compareChapter, compareVerse } from '@scriptura/compare';
 import {
   formatBook,
   formatChapter,
   formatFullTranslation,
+  formatSearch,
   formatTranslation,
   formatVerse,
   sampleSlugs,
@@ -41,6 +42,20 @@ function badRequest(error: string): ScripturaResponse {
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
+
+/**
+ * Parse a query-string boolean, or null if it is present but unusable.
+ *
+ * Deliberately strict, like `parseBounded`: `match_case=yes` is a caller
+ * mistake, and silently reading it as false would hand back results that do
+ * not answer the question asked.
+ */
+function parseFlag(raw: string | undefined): boolean | null {
+  if (raw === undefined || raw === '') return false;
+  if (raw === '1' || raw === 'true') return true;
+  if (raw === '0' || raw === 'false') return false;
+  return null;
+}
 
 /** Parse a query-string integer, or null if it is present but unusable. */
 function parseBounded(
@@ -114,7 +129,7 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
           book: '/translations/{id}/{book}',
           chapter: '/translations/{id}/{book}/{chapter}',
           verse: '/translations/{id}/{book}/{chapter}/{verse}',
-          search: '/search?q={query}&translation={id}&limit=100&offset=0',
+          search: '/search?q={query}&translation={id}&limit=100&offset=0&mode=substring&match_case=0',
           compare: '/compare?ref={Book Chapter:Verse}&translations={id,id}',
           compare_chapter: '/compare/chapter?book={slug}&chapter={n}&translations={id,id}',
         },
@@ -232,18 +247,26 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
       if (limit === null) return badRequest(`"limit" must be an integer between 1 and ${MAX_LIMIT}`);
       if (offset === null) return badRequest('"offset" must be a non-negative integer');
 
+      // Substring is the default and stays it: whole-word costs 49% of `love`
+      // in the KJV and 55% of `amor` in Spanish, and returns almost nothing at
+      // all for Japanese unless the query has word boundaries to match on.
+      const mode = req.query.mode ?? 'substring';
+      if (mode !== 'substring' && mode !== 'word') {
+        return badRequest('"mode" must be "substring" or "word"');
+      }
+      const matchCase = parseFlag(req.query.match_case);
+      if (matchCase === null) return badRequest('"match_case" must be 0 or 1');
+
       const loaded = await withTranslation(translation);
       if ('error' in loaded) return loaded.error;
 
-      const all = await search(translation, q);
-      return ok({
-        query: q,
-        translation,
-        total: all.length,
-        limit,
-        offset,
-        results: all.slice(offset, offset + limit),
+      const all = await search(translation, q, {
+        mode: mode as MatchMode,
+        caseSensitive: matchCase,
       });
+      return ok(
+        formatSearch(q, translation, all, { limit, offset, mode, matchCase })
+      );
     },
   },
   {
