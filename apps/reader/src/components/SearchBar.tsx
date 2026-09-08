@@ -7,6 +7,8 @@ interface SearchBarProps {
   results: SearchResult[];
   reference: ResolvedReference | null;
   total: number;
+  /** The query `results` and `total` were computed for; see App. */
+  resultsFor: string;
   options: MatchOptions;
   onOptions: (next: MatchOptions) => void;
   onQuery: (q: string) => void;
@@ -29,6 +31,7 @@ export function SearchBar({
   results,
   reference,
   total,
+  resultsFor,
   options,
   onOptions,
   onQuery,
@@ -114,7 +117,7 @@ export function SearchBar({
             </label>
           </div>
 
-          <p className="search__count" data-testid="search-count">
+          <p className="search__count" data-testid="search-count" data-query={resultsFor}>
             {total === 0
               ? 'No matches'
               : `${total} match${total === 1 ? '' : 'es'}${

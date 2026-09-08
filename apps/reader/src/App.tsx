@@ -116,6 +116,15 @@ export function App() {
   const [query, setQuery] = useState('');
   /** Every match. The dropdown shows a slice; the results view walks them all. */
   const [hits, setHits] = useState<SearchResult[]>([]);
+  /**
+   * The query `hits` were computed for.
+   *
+   * `hits` lags `query` by one render — the effect that recomputes it runs
+   * after. Carrying the query the results actually belong to lets the panel
+   * label itself honestly, and lets a test wait for the count that answers the
+   * question it just asked instead of the one before it.
+   */
+  const [hitsQuery, setHitsQuery] = useState('');
   const [resultsOpen, setResultsOpen] = useState(false);
   /**
    * Not persisted, deliberately. The toggles are visible whenever the search
@@ -207,6 +216,7 @@ export function App() {
   useEffect(() => {
     if (!bible || !query.trim()) {
       setHits([]);
+      setHitsQuery('');
       setReference(null);
       setResultsOpen(false);
       return;
@@ -215,6 +225,7 @@ export function App() {
     // translation already in memory.
     setReference(resolveReference(bible, query));
     setHits(runQuery(bible, query, matching));
+    setHitsQuery(query);
     // `matching` belongs here: without it, ticking a box leaves stale results.
   }, [bible, query, matching]);
 
@@ -909,6 +920,7 @@ export function App() {
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}
+                resultsFor={hitsQuery}
                 options={matching}
                 onOptions={setMatching}
                 onQuery={setQuery}

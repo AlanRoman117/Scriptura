@@ -49,22 +49,28 @@ test.describe('one box for finding things', () => {
   });
 
   /**
-   * Type a reference and press Enter.
+   * Type a reference and press Enter, once it actually resolves to `destination`.
    *
-   * ⚠️ Waits for the jump affordance first. Enter only navigates once the
-   * reference has resolved, and resolving happens in an effect — so firing
-   * Enter straight after `fill` races it, and a lost Enter looks exactly like
-   * a reference that failed to parse. Ubuntu won that race; macOS did not.
+   * ⚠️ Waiting for the jump button to be *visible* is not enough. The reference
+   * resolves in an effect, so between typing and that effect React re-renders
+   * with the new query and the **previous** reference — the button is on screen
+   * the whole time, showing the old destination, and Enter jumps back to where
+   * it already was. Waiting on the button's *text* is what proves the new
+   * reference has landed. Ubuntu won that race; macOS lost it.
    */
-  async function jumpTo(page: import('@playwright/test').Page, reference: string) {
+  async function jumpTo(
+    page: import('@playwright/test').Page,
+    reference: string,
+    destination: string
+  ) {
     await page.getByTestId('search-input').fill(reference);
-    await expect(page.getByTestId('search-jump')).toBeVisible();
+    await expect(page.getByTestId('search-jump')).toContainText(destination);
     await page.getByTestId('search-input').press('Enter');
   }
 
   test('Enter goes straight there', async ({ page }) => {
     await open(page);
-    await jumpTo(page, 'Genesis 3');
+    await jumpTo(page, 'Genesis 3', 'Genesis 3');
     await expect(page.getByTestId('chapter-title')).toContainText('Genesis 3');
   });
 
@@ -73,7 +79,7 @@ test.describe('one box for finding things', () => {
     // focus, so nothing would reopen it and a reader typing again would see no
     // feedback at all.
     await open(page);
-    await jumpTo(page, 'Genesis 3');
+    await jumpTo(page, 'Genesis 3', 'Genesis 3');
     await expect(page.getByTestId('search-panel')).toBeHidden();
 
     await page.getByTestId('search-input').fill('Psalms 23');
@@ -90,7 +96,7 @@ test.describe('one box for finding things', () => {
       ['43 1:1', 'John 1'],
       ['19 23', 'Psalms 23'],
     ]) {
-      await jumpTo(page, input);
+      await jumpTo(page, input, expected);
       await expect(page.getByTestId('chapter-title')).toContainText(expected);
     }
   });
@@ -106,7 +112,10 @@ test.describe('one box for finding things', () => {
     await open(page);
     const countFor = async (q: string) => {
       await page.getByTestId('search-input').fill(q);
-      await expect(page.getByTestId('search-count')).toBeVisible();
+      // For *this* query: the count element is visible throughout, still
+      // showing the previous answer, so waiting on visibility alone reads the
+      // wrong number with no retry.
+      await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', q);
       const text = (await page.getByTestId('search-count').textContent()) ?? '';
       return Number(text.match(/^(\d+)/)?.[1] ?? 0);
     };

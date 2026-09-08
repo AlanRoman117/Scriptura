@@ -15,7 +15,9 @@ async function open(page: import('@playwright/test').Page) {
 
 async function searchFor(page: import('@playwright/test').Page, q: string) {
   await page.getByTestId('search-input').fill(q);
-  await expect(page.getByTestId('search-count')).toBeVisible();
+  // For *this* query — the element is visible throughout, showing the previous
+  // answer, so visibility alone is not a signal that the count has caught up.
+  await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', q);
 }
 
 test.describe('all the matches', () => {
