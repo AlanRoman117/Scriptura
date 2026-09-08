@@ -22,6 +22,17 @@ const hasUnzip = (() => {
   }
 })();
 
+/**
+ * Reported as skipped when there is no `unzip`, rather than passing silently.
+ *
+ * These two tests used to `return` early, so an environment without the binary
+ * showed green with the only tests that actually open the archive doing
+ * nothing. Both Linux and macOS ship Info-ZIP 6.00 — the same implementation,
+ * with the same flags — so a skip here means something is genuinely missing and
+ * should say so.
+ */
+const withUnzip = hasUnzip ? test : test.skip;
+
 describe('createZip', () => {
   let work: string;
   beforeEach(() => {
@@ -35,8 +46,7 @@ describe('createZip', () => {
     return path;
   };
 
-  test('produces a file the system unzip accepts', async () => {
-    if (!hasUnzip) return; // environment without unzip; the extract test covers intent
+  withUnzip('produces a file the system unzip accepts', async () => {
     const path = await write(
       createZip([
         { name: 'notes/first.md', content: '# First\n\nBody.\n' },
@@ -48,8 +58,7 @@ describe('createZip', () => {
     expect(output).toContain('No errors detected');
   });
 
-  test('round-trips content exactly, including non-ASCII', async () => {
-    if (!hasUnzip) return;
+  withUnzip('round-trips content exactly, including non-ASCII', async () => {
     const content = '# Génesis\n\nそれ神はその獨子を賜ふ — amó.\n';
     const path = await write(createZip([{ name: 'notes/unicode.md', content }]));
 

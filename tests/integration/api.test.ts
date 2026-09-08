@@ -1,5 +1,5 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { createRouter } from '@scriptura/api';
 import { compareVerse } from '@scriptura/compare';
@@ -247,7 +247,9 @@ describe('path traversal via translation id', () => {
   test('rejection never discloses a filesystem path', async () => {
     const res = await get('/search', { q: 'a', translation: '../../../../etc' });
     const body = JSON.stringify(res.body);
-    expect(body).not.toContain('/home/');
+    // `os.homedir()` rather than a literal '/home/': macOS homes are under
+    // /Users, so the literal quietly stopped asserting anything there.
+    expect(body).not.toContain(homedir());
     expect(body).not.toContain(process.cwd());
   });
 

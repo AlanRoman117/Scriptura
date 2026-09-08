@@ -41,10 +41,16 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 ## 🚀 Quick start
 
-**Prerequisites:** Node 24 (pinned in [`.nvmrc`](.nvmrc)) and Python 3.9+ for the
-data tooling. Any `.nvmrc`-aware version manager works — `nvm use`, `fnm use`, or
-`mise install` (mise reads `.nvmrc` once `idiomatic_version_file_enable_tools`
-includes `node`).
+**Platforms:** Linux and macOS (Apple Silicon or Intel). Both are covered by CI.
+
+**Prerequisites:**
+
+| | |
+|---|---|
+| Node 24 | pinned in [`.nvmrc`](.nvmrc); any `.nvmrc`-aware manager works — `nvm use`, `fnm use`, or `mise install` (mise reads `.nvmrc` once `idiomatic_version_file_enable_tools` includes `node`) |
+| Python 3.9+ | for the data tooling, invoked as `python3`. Standard library only — there is nothing to `pip install` |
+| `unzip` | for the export round-trip test. Ships with both Linux and macOS |
+| Chromium | only for the reader tests: `npx playwright install chromium` |
 
 ```bash
 # Clone the repo
@@ -142,13 +148,13 @@ into the canonical JSON schema below.
 
 ```bash
 # List every configured translation with its license and source
-python scripts/ingest.py --list
+python3 scripts/ingest.py --list
 
 # Ingest all automated translations
-python scripts/ingest.py
+python3 scripts/ingest.py
 
 # Ingest a single translation (a good first run)
-python scripts/ingest.py --only kjv
+python3 scripts/ingest.py --only kjv
 ```
 
 Raw downloads are cached under `.cache/` (git-ignored) so re-runs are instant.
@@ -157,7 +163,7 @@ data is the product.
 
 **All eleven translations ingest cleanly** — covering English, Spanish, French
 and Japanese. Each is the full 66-book Protestant canon and passes
-`python scripts/validate.py --strict` with zero errors and zero warnings. Run
+`python3 scripts/validate.py --strict` with zero errors and zero warnings. Run
 `--list` for the registry.
 
 Source ids are easy to guess wrong, so both are verified against an
@@ -353,7 +359,7 @@ Contributions are welcome and encouraged. Please read [`docs/contributing.md`](d
 CI runs data validation, the type-check and the test suite on every PR. Run them locally first:
 
 ```bash
-python scripts/validate.py --strict   # stricter than CI: warnings fail too
+python3 scripts/validate.py --strict   # stricter than CI: warnings fail too
 npm run lint && npm test
 ```
 

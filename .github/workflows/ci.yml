@@ -18,26 +18,39 @@ jobs:
   # job so a bad translation and a bad build are visibly different failures,
   # and so this still runs if the code job breaks.
   validate-data:
-    name: Validate translation data
-    runs-on: ubuntu-latest
+    name: Validate translation data (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      # ⚠️ setup-python puts a `python` shim on PATH on every runner, macOS
+      # included — so a macOS job here would happily have passed while a real
+      # Mac failed, since macOS has shipped no bare `python` since 12.3. The
+      # scripts are invoked as `python3` for that reason, matching their
+      # shebangs and the npm scripts.
       # No pip install: scripts/validate.py is standard library only.
       # No --strict: versification warnings are legitimate and must not fail
       # the build. See CLAUDE.md → Critical Rules → Data validation.
-      - run: python scripts/validate.py
+      - run: python3 scripts/validate.py
       # The canon is defined in three places, in two languages. This checks
       # they still agree with each other and with the committed data — the
       # discipline was manual until canon.ts drifted on 45 of 66 books
       # unnoticed, because nothing read the field.
-      - run: python scripts/check-canon-sync.py
+      - run: python3 scripts/check-canon-sync.py
 
   build-and-test:
-    name: Build & test
-    runs-on: ubuntu-latest
+    name: Build & test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -59,8 +72,12 @@ jobs:
   # headers, CORS, HTTP methods. Playwright runs in API mode, so no browsers are
   # installed; `npx playwright install` is deliberately absent.
   contract:
-    name: API contract (HTTP)
-    runs-on: ubuntu-latest
+    name: API contract (HTTP) (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -72,7 +89,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report-contract
+          name: playwright-report-contract-${{ matrix.os }}
           path: playwright-report/
           retention-days: 7
 
@@ -81,8 +98,12 @@ jobs:
   # the contract job needs neither — Playwright's request fixture speaks HTTP
   # without a browser.
   reader:
-    name: Reader (browser)
-    runs-on: ubuntu-latest
+    name: Reader (browser) (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -90,11 +111,16 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
       - run: npm ci
+      # --with-deps shells out to apt-get, so it is Linux-only. macOS needs no
+      # system libraries for Chromium.
       - run: npx playwright install chromium --with-deps
+        if: runner.os == 'Linux'
+      - run: npx playwright install chromium
+        if: runner.os != 'Linux'
       - run: npm run test:reader
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report-reader
+          name: playwright-report-reader-${{ matrix.os }}
           path: playwright-report/
           retention-days: 7

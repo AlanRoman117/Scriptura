@@ -186,9 +186,11 @@ test.describe('getting around the board', () => {
     const panned = (await card.boundingBox())!;
     expect(panned.y).toBeLessThan(before.y - 100);
 
-    await page.keyboard.down('Control');
+    // ControlOrMeta, like the rest of the suite: a Mac user presses ⌘, and the
+    // handler accepts either.
+    await page.keyboard.down('ControlOrMeta');
     await page.mouse.wheel(0, -200);
-    await page.keyboard.up('Control');
+    await page.keyboard.up('ControlOrMeta');
     await expect(page.getByTestId('zoom-reset')).not.toHaveText('100%');
   });
 

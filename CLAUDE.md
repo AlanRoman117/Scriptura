@@ -25,8 +25,8 @@ npm run build:reader           # Production build of the reader
 npm run lint                   # TypeScript type-check (tsc --build; see note below)
 npm run dev:api                # Run the REST API with hot reload (tsx watch) on :3000
 npm run start:api              # Build, then run the compiled REST API on :3000
-npm run validate               # Validate all translation data (python scripts/validate.py)
-npm run check:canon            # Verify the three canon definitions agree (python scripts/check-canon-sync.py)
+npm run validate               # Validate all translation data (python3 scripts/validate.py)
+npm run check:canon            # Verify the three canon definitions agree (python3 scripts/check-canon-sync.py)
 npm run build:api              # Compile data/ into a static JSON API tree in dist/ (node scripts/build-static-api.mjs)
 npm run schema:gen             # Generate JSON schemas from types (ts-node scripts/schema-gen.ts)
 npm run start:api              # Start example Express server (examples/node-server)
@@ -35,10 +35,10 @@ npm run start:api              # Start example Express server (examples/node-ser
 Data tooling (Python, standard library only — no install step):
 
 ```bash
-python scripts/ingest.py --list      # Show configured translations + licenses/sources
-python scripts/ingest.py             # Download & normalize all automated translations into data/
-python scripts/ingest.py --only kjv  # Ingest a single translation
-python scripts/validate.py           # Validate data/ (npm run validate wraps this; add --strict locally)
+python3 scripts/ingest.py --list      # Show configured translations + licenses/sources
+python3 scripts/ingest.py             # Download & normalize all automated translations into data/
+python3 scripts/ingest.py --only kjv  # Ingest a single translation
+python3 scripts/validate.py           # Validate data/ (npm run validate wraps this; add --strict locally)
 ```
 
 Single-package builds: `cd packages/<name> && npm run build`
@@ -47,7 +47,15 @@ Single-package builds: `cd packages/<name> && npm run build`
 
 **Node version:** `.nvmrc` pins **Node 24** — the current Active LTS (EOL 2028-04-30). It was Node 20 until that line went end-of-life on 2026-04-30. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
 
-⚠️ **This machine's default Node is newer than `.nvmrc`**, so a bare `npm test` does not prove anything about the pinned version. Use `mise exec node@24 -- …` when it matters.
+⚠️ **A machine's default Node may not be the pinned one**, in which case a bare `npm test` proves nothing about Node 24. Use `mise exec node@24 -- …` when it matters. (`engines` in the root `package.json` states the requirement, but npm only warns.)
+
+**Platforms: Linux and macOS**, both covered by the CI matrix.
+- ⚠️ **Invoke Python as `python3`, never `python`.** macOS has shipped no bare `python` since 12.3, and Homebrew does not add one either. The shebangs were always `#!/usr/bin/env python3`; only the npm scripts and the docs were wrong. The scripts are stdlib-only with `from __future__ import annotations` throughout, so macOS's bundled 3.9 is sufficient — the interpreter *name* was the whole problem.
+- ⚠️ **`actions/setup-python` puts a `python` shim on PATH on every runner, macOS included**, so a macOS CI job would have passed happily with the broken invocation. CI could not have caught that bug; only a real Mac could. This is why the workflow calls `python3` explicitly.
+- ⚠️ **`npx playwright install --with-deps` is Linux-only** — it shells out to `apt-get`. The reader job branches on `runner.os`.
+- `examples/node-server` binds **127.0.0.1** by default (`HOST` overrides). Binding every interface makes macOS raise its "accept incoming network connections?" prompt, and a Deny leaves Playwright's `webServer` check waiting out its 120s timeout — the classic "the tests hang on my Mac".
+- ⚠️ **Regenerate `package-lock.json` on Linux, never on macOS.** It carries the `darwin-arm64` binaries for esbuild, rollup, rolldown, lightningcss and the rest, plus `fsevents`; regenerating on a Mac drops the Linux-only entries and breaks the Ubuntu runners.
+- Already portable, and worth not breaking: no hardcoded `/tmp` (everything uses `os.tmpdir()`), no `/proc` or `XDG_*`, no `process.platform` branching, no GNU-only tool flags (`unzip` is Info-ZIP 6.00 on both), no screenshot baselines, and no filename case collisions. `forceConsistentCasingInFileNames` is on — APFS is case-insensitive, so a casing typo written on a Mac compiles there and breaks Ubuntu.
 
 **Do not upgrade TypeScript past 5.x.** `ts-jest` declares `typescript: ">=4.3 <7"`, so TypeScript 7 (the current `latest`, and the Go rewrite) breaks the test suite. `.github/dependabot.yml` holds it back for the same reason.
 
@@ -242,7 +250,7 @@ Two config details that are load-bearing:
 ### CI & security (`.github/workflows/`)
 
 Runs on push/PR to `main` and `develop`. Two jobs, deliberately separate so a data problem and a code problem are visibly different failures:
-- **`validate-data`** — `python scripts/validate.py` then `python scripts/check-canon-sync.py`, on Python 3.12. No pip install (both are stdlib-only) and no `--strict`, so versification warnings don't fail the build.
+- **`validate-data`** — `python3 scripts/validate.py` then `python3 scripts/check-canon-sync.py`, on Python 3.12. No pip install (both are stdlib-only) and no `--strict`, so versification warnings don't fail the build.
 - **`build-and-test`** — `npm ci`, `npm run lint`, `npm test`, then `npm run build:api -- --skip-verses` to smoke the static builder. Node comes from `node-version-file: .nvmrc` so the version lives in exactly one place.
 
 `npm ci` requires `package-lock.json` to be committed and current — that is the most likely way to break this workflow.

@@ -86,8 +86,8 @@ Full request/response shapes are in [API.md](API.md).
 
 ```bash
 # Validate all translations
-python scripts/validate.py
+python3 scripts/validate.py
 
 # Validate a specific directory
-python scripts/validate.py data/kjv
+python3 scripts/validate.py data/kjv
 ```
