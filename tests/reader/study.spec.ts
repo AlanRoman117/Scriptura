@@ -12,6 +12,31 @@ async function open(page: import('@playwright/test').Page) {
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
 }
 
+/**
+ * Put the caret at a character offset in the note body.
+ *
+ * ⚠️ Not `ControlOrMeta+Home`. That alias is right for Cmd+A and Cmd+C, but
+ * macOS does not bind Home to "start of document" in a text field at all — so
+ * on a Mac the caret simply stayed where it was and these tests asserted
+ * against whatever the click happened to land on. Ubuntu passed; macOS did not.
+ *
+ * The offset is set directly and then a real ArrowRight moves it one further,
+ * because React's handler listens for key and click events — a synthesised
+ * `select` does not reach it.
+ */
+async function caretAt(page: import('@playwright/test').Page, needle: string, into = 1) {
+  const body = page.getByTestId('notes-surface');
+  await body.click();
+  await body.evaluate(
+    (el: HTMLTextAreaElement, [text, offset]) => {
+      const at = el.value.indexOf(text) + (offset as number) - 1;
+      el.setSelectionRange(at, at);
+    },
+    [needle, into] as [string, number]
+  );
+  await page.keyboard.press('ArrowRight');
+}
+
 test.describe('one box for finding things', () => {
   test('a reference jumps, and the verse is brought into view', async ({ page }) => {
     await open(page);
@@ -158,12 +183,8 @@ test.describe('keeping your place in a note', () => {
     await body.fill('# Opening\n\nsome text\n\n## On the Word\n\nmore text here');
     await expect(page.getByTestId('notes-heading')).toContainText('On the Word');
 
-    // Move the cursor back up into the first section, by keyboard — a
-    // synthesised `select` event does not reach React's handler.
-    await body.click();
-    await page.keyboard.press('ControlOrMeta+Home');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
+    // Move the cursor back up into the first section.
+    await caretAt(page, 'some text');
     await expect(page.getByTestId('notes-heading')).toContainText('Opening');
   });
 
@@ -183,9 +204,7 @@ test.describe('following a link back', () => {
     await body.fill('a thought about [[psalms 23:1]] here');
 
     // A textarea has nothing to click, so the cursor is how a link is picked.
-    await body.click();
-    await page.keyboard.press('ControlOrMeta+Home');
-    for (let i = 0; i < 20; i++) await page.keyboard.press('ArrowRight');
+    await caretAt(page, 'psalms 23:1');
 
     const follow = page.getByTestId('notes-follow-link');
     await expect(follow).toContainText('Psalms 23:1');
@@ -205,9 +224,7 @@ test.describe('following a link back', () => {
     await page.getByTestId('note-new').click();
     const body = page.getByTestId('notes-surface');
     await body.fill('[[john 3:16@kjv]]');
-    await body.click();
-    await page.keyboard.press('ControlOrMeta+Home');
-    await page.keyboard.press('ArrowRight');
+    await caretAt(page, 'john 3:16');
 
     // Honest rather than silently landing in a different version.
     await expect(page.getByTestId('notes-follow-link')).toContainText('KJV — not downloaded');
