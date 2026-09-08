@@ -18,7 +18,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 - 📚 **Multi-translation** — 11 verified translations, 10 fully ingested
 - 🌍 **Multi-language** — English, Spanish, French, and Japanese
-- 🔍 **Search** — full-text and reference-based lookup via `@scriptura/search`
+- 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
 - 🔌 **API-ready** — framework-agnostic REST handlers in `@scriptura/api`; run it locally with one command (GraphQL is planned — see [Project status](#-project-status))
@@ -91,6 +91,62 @@ const results = await search('rv1909', 'amor eterno');
 results.forEach(r => console.log(`${r.ref}: ${r.text}`));
 ```
 
+Search is a **substring** match on **diacritic-folded** text, **ranked by match
+quality**. Folding means `amo` finds `amó` and vice versa — they are the same
+word. Substring means a stem finds its inflections, which the KJV needs: `love`
+matches `loveth`.
+
+The cost of substring matching is that searching Spanish for `Tito` also finds
+*apetito*. Ranking answers that without hiding anything:
+
+| `score` | meaning | example |
+|---|---|---|
+| **3** | the query is a whole word | `Tito` in *á Tito mi hermano* |
+| **2** | a word begins with the query | `love` in *loveth* |
+| **1** | the query sits inside a word | `Tito` in *apetito* |
+
+Results arrive sorted by score, canonical within a rank — so all 14 verses about
+Titus come before the 3 that merely contain his name, and `loveth` still turns
+up when you search `love`.
+
+```mermaid
+flowchart LR
+    Q["“Tito”"] --> F["Fold<br/><i>case + accents</i>"]
+    F --> S["Scan the translation"]
+    S --> R{"Score each match"}
+    R -->|"whole word"| A["3 — Tito"]
+    R -->|"word starts with it"| B["2 — Titoense"]
+    R -->|"inside a word"| C["1 — apetito"]
+    A --> O["Sorted: 3, then 2, then 1"]
+    B --> O
+    C --> O
+```
+
+When you want exactness rather than ranking, ask for it:
+
+```typescript
+// Whole words only — 14 results instead of 17, no apetito
+await search('rv1909', 'Tito', { mode: 'word' });
+
+// Match capitalisation too. Accents stay folded either way.
+await search('kjv', 'Abraham', { caseSensitive: true });
+```
+
+Both are **opt-in**, because whole-word matching is expensive in inflected
+languages — it costs 49% of `love` in the KJV and 55% of `amor` in Spanish — and
+because Japanese has no word separators at all. For a query with no word-forming
+character, `mode: 'word'` is an exact no-op rather than a filter that would take
+神 from 3,945 verses down to 3.
+
+Over HTTP the same options are query parameters:
+
+```bash
+curl "http://localhost:3000/search?q=Tito&translation=rv1909&mode=word&match_case=0"
+```
+
+The reader PWA runs this identical matcher against IndexedDB, so search results
+are the same online and offline — including the folding.
+
 ### Compare a verse across translations
 
 ```typescript
@@ -126,8 +182,11 @@ curl http://localhost:3000/translations/rv1909/1-samuel/1/1
 curl http://localhost:3000/translations/lsg1910/song-of-solomon/1
 curl http://localhost:3000/translations/kjv/john
 
-# Search (paginated; `the` matches ~28,000 KJV verses)
+# Search (ranked and paginated; `the` matches ~28,000 KJV verses)
 curl "http://localhost:3000/search?q=love&translation=kjv&limit=5"
+
+# Whole words only — no `apetito` when you meant Titus
+curl "http://localhost:3000/search?q=Tito&translation=rv1909&mode=word"
 
 # Compare across translations
 curl "http://localhost:3000/compare?ref=John+3:16&translations=kjv,rv1909,lsg1910,bungo"

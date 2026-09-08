@@ -167,12 +167,150 @@ const translations = await listTranslations();
 // Full-text search within one translation
 const results = await search('rv1909', 'amor eterno');
 
+// Whole words only, when a name is the point and near-misses are not
+const titus = await search('rv1909', 'Tito', { mode: 'word' });
+
 // Reference lookup (supports ranges)
 const passage = await lookup('kjv', 'Romans 8:28-39');
 
 // Cross-reference lookup (future)
 const refs = await crossRefs('John 3:16');
 ```
+
+#### How search works
+
+Matching is a **substring** match on **diacritic-folded** text, **ranked by
+match quality**. Every stage below runs in `packages/search/src/matcher.ts`,
+which has no I/O — so the REST API and the offline PWA run the same code over
+the same rules rather than two implementations that drift.
+
+```mermaid
+flowchart TD
+    Q["Query<br/>“Tito”"] --> G["Grammar<br/><i>reader only</i><br/>quoted phrases, -exclusions"]
+    G --> F["Fold<br/>NFD → strip U+0300-U+036F → NFC<br/>+ lowercase, unless matching case"]
+    F --> S{"Scan the folded index<br/><i>lazy, per translation, in a WeakMap</i>"}
+    S -->|"no match"| X["Dropped"]
+    S -->|"match"| T["Score each occurrence,<br/>keep the best"]
+    T --> M{"mode"}
+    M -->|"word"| W["Keep only score 3"]
+    M -->|"substring<br/><i>default</i>"| K["Keep all"]
+    W --> R["Sort by score, descending<br/><i>stable, so canonical order<br/>survives within a rank</i>"]
+    K --> R
+    R --> P["Paginate<br/><i>API — limit and offset<br/>reader — 40, then 100 a page</i>"]
+```
+
+**Folding is normalization, not fuzziness.** `amo` finds `amó` and `amó` finds
+`amo` — they are the same word, and treating them as different once hid about a
+third of the Spanish and French corpus. There is no edit distance and no
+approximate matching, and none is planned. Only **case** is optional
+(`caseSensitive`); diacritics are always folded.
+
+⚠️ The strip range is the Latin combining block **only** (`U+0300–U+036F`). A
+general `\p{M}` strip also removes the Japanese dakuten (`U+3099`), silently
+turning ガラテヤ into カラテヤ — a different word.
+
+#### Ranking
+
+Substring matching finds `loveth` from `love`, which the KJV needs. The cost is
+that it also finds `apetito` from `Tito`. Ranking resolves both: nothing is
+hidden, but the good matches come first.
+
+| `score` | meaning | example |
+|---|---|---|
+| **3** | the query is a whole word | `Tito` in *á Tito mi hermano* |
+| **2** | a word begins with the query | `love` in *loveth* |
+| **1** | the query sits inside a word | `Tito` in *apetito* |
+
+```mermaid
+flowchart LR
+    A["Occurrence<br/>of the query"] --> B{"Does the query<br/>contain a word-forming<br/>character?"}
+    B -->|"no — e.g. 神, イエス"| C["Score 3<br/><i>no boundaries exist<br/>to measure against</i>"]
+    B -->|"yes"| D{"Word character<br/>immediately before?"}
+    D -->|"yes"| E["Score 1<br/><i>apetito</i>"]
+    D -->|"no"| F{"Word character<br/>immediately after?"}
+    F -->|"yes"| G["Score 2<br/><i>loveth</i>"]
+    F -->|"no"| H["Score 3<br/><i>Tito</i>"]
+```
+
+Measured over the real corpus, the tiers separate cleanly:
+
+```
+kjv "love":     whole 281   word-start 161   interior 104
+   whole:  love, loved, loveth        ← wanted
+   starts: lovely, lover, loveth      ← wanted, the archaic inflections
+   interior: cloven, clovenfooted     ← unrelated, sinks to the bottom
+
+rv1909 "Tito":  whole 14    word-start 0     interior 3
+   whole:  Tito                       ← the person
+   interior: apetito, empréstito      ← coincidence, sinks
+```
+
+#### Matching modes
+
+`mode: 'word'` keeps only score-3 matches. It is **opt-in, never the default**,
+because whole-word matching is expensive in inflected languages:
+
+| translation | query | substring | whole word | |
+|---|---|---|---|---|
+| `kjv` | love | 546 | 281 | **−49%** — loses *loveth*, *loved* |
+| `kjv` | faith | 338 | 231 | −32% |
+| `rv1909` | amor | 356 | 160 | **−55%** — loses *amores*, *amoroso* |
+| `rv1909` | Tito | 17 | 14 | −18% — the intended effect |
+| `kjv` | Abraham | 230 | 230 | unchanged — proper nouns are whole words |
+
+That last row is why there is **no index of biblical people, and none is
+planned**. A name is exactly the kind of word that is always whole, so ranking
+already answers "find this character" — without a new dataset keyed across 11
+translations in 4 languages, and without a fourth definition to keep in sync.
+
+#### ⚠️ Scripts without word separators
+
+Japanese is written without spaces. Treating its characters as word-forming
+makes *every* match an interior one, and `mode: 'word'` becomes a wipeout rather
+than a filter:
+
+| translation | query | substring | naïve whole word | with the rule below |
+|---|---|---|---|---|
+| `bungo` | 神 | 3,945 | **3** | 3,945 |
+| `bungo` | イエス | 1,411 | **53** | 1,411 |
+
+Two rules together make word mode an exact no-op there rather than an
+approximate one:
+
+1. **Han, Hiragana and Katakana are not word characters.** Each CJK character is
+   its own word, which is the convention search engines use.
+2. **`hasWordBoundaries()` decides per query, not per occurrence.** A query with
+   no word-forming character has nothing to measure against, so every match
+   scores 3 and word mode returns exactly what substring mode does.
+
+Rule 1 alone was not enough — it still quietly dropped 52 of 3,945 matches for
+神. The integration suite asserts *equality*, not similarity, for 神, イエス and
+ヨハネ.
+
+#### Where it runs
+
+```mermaid
+flowchart TD
+    subgraph shared["packages/search/src/matcher.ts — no I/O"]
+        MS["matchScore<br/>hasWordBoundaries<br/>searchBible"]
+    end
+    API["REST API<br/>GET /search"] --> LOAD["loadTranslation<br/><i>reads data/ from disk</i>"]
+    LOAD --> MS
+    PWA["Reader PWA<br/>runQuery"] --> IDB["IndexedDB<br/><i>full.json, rebuilt with createBible</i>"]
+    IDB --> MS
+    MS --> OUT["Identical results,<br/>online and offline"]
+```
+
+The reader adds only the **grammar** on top — quoted phrases and `-exclusions` —
+and scores every term through the same `matchScore`. A result keeps its *worst*
+term's score, so "every word matched cleanly" ranks above "one of them landed
+inside a longer word". Exclusions stay substring even in word mode: asking to
+drop `love` should drop `loveth` too.
+
+The index is built lazily per translation into a `WeakMap` keyed by the `Bible`,
+so translations that are only read never pay the ~23ms and the roughly doubled
+text memory. A case-sensitive search builds a second index the same way, only if
+one is ever asked for.
 
 ### `@scriptura/compare`
 
@@ -220,7 +358,7 @@ The API package exposes framework-agnostic REST handlers that drop into any Node
 | `GET` | `/translations/:id/:book/:chapter` | Full chapter as JSON | ✅ |
 | `GET` | `/translations/:id/:book/:chapter/:verse` | Single verse | ✅ |
 | `GET` | `/translations/:id/:book` | Book index: chapter numbers + verse counts | ✅ |
-| `GET` | `/search?q=&translation=&limit=&offset=` | Full-text search, paginated | ✅ |
+| `GET` | `/search?q=&translation=&limit=&offset=&mode=&match_case=` | Full-text search, ranked and paginated | ✅ |
 | `GET` | `/compare?ref=&translations=` | Cross-translation verse comparison | ✅ |
 
 > These routes are served **dynamically** by `createRouter` (Express/Fastify/edge). The metadata/book/chapter/verse routes are **also** pre-rendered as static `.json` files for CDN hosting — see §8, and their bodies are **identical** between the two paths. `/search` and `/compare` are dynamic-only.

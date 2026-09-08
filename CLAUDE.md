@@ -258,6 +258,14 @@ Config details that are load-bearing:
 - `docs/translations-status.md` — the per-translation license verification log; update it whenever a translation's source, license, or ingestion state changes.
 - `docs/API.md`, `docs/usage-examples.md`, `docs/contributing.md`.
 
+**Search is documented in three places, at three depths.** `README.md` has the
+short version with one diagram, `docs/Architecture.md` (and its root duplicate)
+carries the full pipeline, the scoring rule and the CJK case, and `docs/API.md`
+covers the HTTP surface. All three carry the measured numbers rather than
+adjectives — change the behaviour and the tables need re-measuring, not just
+rewording. The mermaid diagrams were validated against the real mermaid parser;
+GitHub renders them, so a syntax error is visible to everyone.
+
 **Specified but not built.** These appear in the docs but do not exist in the repo. Keep them labelled *planned* until the code lands:
 - **Deployment workflow and AWS infrastructure** — `deploy.yml` is unwritten and nothing is provisioned. (CI *does* exist now.)
 - **GraphQL** — `packages/api` is REST only. There is no schema, resolver, or dependency. Roadmap slots it at v1.1.
