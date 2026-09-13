@@ -70,7 +70,7 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | F3 | Focus utilities and native dialog | `briefs/03-focus.md` | open |
 | F4 | Viewport, safe area and pointer helper | `briefs/04-viewport.md` | open |
 | F5 | Live-region announcer | `briefs/05-announcer.md` | open |
-| F6 | Test infrastructure (axe, touch project, helpers) | `briefs/06-test-infra.md` | open |
+| F6 | Test infrastructure (axe, touch project, helpers) | `briefs/06-test-infra.md` | done (f4ef575); `targets`/`keyboard` scaffolds land with briefs 16 and 02 |
 | T1 | Draggable, keyboard-aware notes sheet | `briefs/11-sheet.md` | open |
 | T2 | Verse actions at 44 px, docked on narrow | `briefs/12-verse-actions.md` | open |
 | T3 | Search as a form; results reachable under a keyboard | `briefs/13-search.md` | open |
