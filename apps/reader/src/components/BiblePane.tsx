@@ -37,6 +37,8 @@ interface BiblePaneProps {
   onToggleLibrary?: () => void;
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
+  helpOpen?: boolean;
+  onToggleHelp?: () => void;
 }
 
 export function BiblePane({
@@ -61,6 +63,8 @@ export function BiblePane({
   onToggleLibrary,
   settingsOpen = false,
   onToggleSettings,
+  helpOpen = false,
+  onToggleHelp,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
@@ -213,6 +217,18 @@ export function BiblePane({
           onClick={onToggleSettings}
         >
           ⚙
+        </button>
+        {/* Help lives here in every state (3.2.6), last in the bar. */}
+        <button
+          type="button"
+          className="reader__chip reader__chip--icon"
+          data-testid="help-open"
+          aria-expanded={helpOpen}
+          aria-controls="help-panel"
+          aria-label="Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean"
+          onClick={onToggleHelp}
+        >
+          ?
         </button>
       </header>
 

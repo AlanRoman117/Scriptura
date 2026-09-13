@@ -27,6 +27,7 @@ interface SettingsPanelProps {
   onChooseFolder: () => void;
   onExport: () => void;
   onClose: () => void;
+  onHelp?: () => void;
   prefs: DisplayPrefs;
   onPrefs: (patch: Partial<DisplayPrefs>) => void;
 }
@@ -55,9 +56,9 @@ const MOTION_LABEL: Record<Motion, string> = {
 };
 
 const PERSISTENCE_COPY: Record<Persistence, string> = {
-  persisted: 'The browser has agreed to keep this data. Clearing site data still removes it.',
-  denied: 'The browser has NOT agreed to keep this data — it can be cleared automatically to reclaim space.',
-  unsupported: 'This browser will not say whether it keeps data. Assume it can be cleared.',
+  persisted: 'This browser has agreed to keep your notes. Clearing site data still removes them.',
+  denied: 'This browser has not agreed to keep your notes. It may delete them to free up space.',
+  unsupported: 'This browser will not say whether it keeps your notes. Assume it may delete them.',
   unknown: 'Checking…',
 };
 
@@ -78,6 +79,7 @@ export function SettingsPanel({
   onChooseFolder,
   onExport,
   onClose,
+  onHelp,
   prefs,
   onPrefs,
 }: SettingsPanelProps) {
@@ -213,8 +215,8 @@ export function SettingsPanel({
         )}
         <p className="settings__body">
           {mirroring
-            ? 'Notes are also being written to a folder you chose.'
-            : 'Notes live only in this browser unless you export them or mirror them to a folder.'}
+            ? 'Your notes are also saved to a folder you chose.'
+            : 'Your notes live only in this browser. Export them, or save a copy to a folder, to keep them safe.'}
         </p>
         <div className="settings__actions">
           <button type="button" className="settings__action" data-testid="settings-export" onClick={onExport}>
@@ -229,10 +231,9 @@ export function SettingsPanel({
       <section className="settings__group">
         <h2 className="settings__heading">Assistant access</h2>
         <p className="settings__body">
-          Scriptura can offer itself to an AI assistant running in this browser, so it can read
-          your library and draft things for you. It is <strong>off</strong> until you turn it on,
-          and nothing is ever sent to Scriptura&rsquo;s servers — the assistant runs in your browser
-          and reads the same local data the app does.
+          An AI assistant running in this browser can read your library and draft notes or marks
+          for you. This is <strong>off</strong> until you turn it on. Nothing is sent to Scriptura:
+          the assistant runs in your browser and reads the same data the app does.
         </p>
 
         <label className="settings__toggle">
@@ -254,10 +255,9 @@ export function SettingsPanel({
         </p>
 
         <p className="settings__body">
-          <strong>Reading is answered; writing is not.</strong> An assistant can read your notes,
-          marks and passages, but it cannot change anything. Anything it wants to write — a note,
-          a set of highlights — is shown to you in full first, and takes effect only when you
-          accept it.
+          <strong>It can read, not write.</strong> An assistant can read your notes, marks and
+          passages, but it cannot change anything. Anything it wants to add is shown to you in
+          full first, and is saved only when you accept it.
         </p>
 
         <details className="settings__tools">
@@ -275,6 +275,21 @@ export function SettingsPanel({
           </ul>
         </details>
       </section>
+
+      {onHelp && (
+        <section className="settings__group">
+          <h2 className="settings__heading">Help</h2>
+          <p className="settings__body">
+            How to find a passage, search, write notes, mark verses and use boards; what the
+            abbreviations mean; and what this app promises about accessibility.
+          </p>
+          <div className="settings__actions">
+            <button type="button" className="settings__action" data-testid="settings-help" onClick={onHelp}>
+              Open help
+            </button>
+          </div>
+        </section>
+      )}
     </section>
   );
 }

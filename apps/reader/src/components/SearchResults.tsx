@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState } from 'react';
+import { useId, useRef, useMemo, useState } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { Bible, SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions } from '../lib/search';
@@ -44,6 +44,8 @@ export function SearchResults({
 }: SearchResultsProps) {
   const [book, setBook] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
+  const wordHint = useId();
+  const caseHint = useId();
 
   const books = useMemo(() => {
     const counts = new Map<string, number>();
@@ -99,19 +101,27 @@ export function SearchResults({
           <input
             type="checkbox"
             data-testid="results-whole-word"
+            aria-describedby={wordHint}
             checked={options.mode === 'word'}
             onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
           />
           Whole words only
+          <span id={wordHint} className="visually-hidden">
+            Finds love but not loveth. Off, the search also looks inside longer words.
+          </span>
         </label>
         <label className="search__option">
           <input
             type="checkbox"
             data-testid="results-match-case"
+            aria-describedby={caseHint}
             checked={!!options.caseSensitive}
             onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
           />
           Match case
+          <span id={caseHint} className="visually-hidden">
+            Capital letters matter: God and god are different.
+          </span>
         </label>
       </fieldset>
 

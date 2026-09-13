@@ -34,9 +34,9 @@ export function DurabilityBanner({
 
   const message =
     persistence === 'denied'
-      ? 'This browser has not granted persistent storage, so your notes could be cleared automatically.'
+      ? 'This browser may delete your notes to free up space. Save a copy.'
       : exportStale
-        ? 'Your notes have not been exported recently.'
+        ? 'You have not exported your notes for a while.'
         : 'Your notes live in this browser only.';
 
   return (

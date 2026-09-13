@@ -215,9 +215,8 @@ export function LibraryPanel({
       ))}
 
       <p className="library__note">
-        Downloaded text stays on this device and is readable offline. Removing a
-        translation never touches your notes or marks — both are anchored to the
-        passage, not to a translation.
+        A downloaded translation stays on this device and can be read offline. Removing one
+        never touches your notes or marks: both belong to the passage, not to a translation.
       </p>
     </section>
   );

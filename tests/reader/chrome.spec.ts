@@ -124,7 +124,7 @@ test.describe('a narrow Bible pane', () => {
     // Nothing is dropped any more: the translation chip opens the library and
     // Marks opens the collections, so both must stay reachable however narrow
     // the pane gets. Only the Marks *word* goes, with its count standing in.
-    for (const id of ['library-open', 'marks-open']) {
+    for (const id of ['library-open', 'marks-open', 'settings-open', 'help-open']) {
       const chip = page.getByTestId('pane-bible').getByTestId(id);
       await expect(chip).toBeVisible();
       const box = (await chip.boundingBox())!;

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions, type ResolvedReference } from '../lib/search';
 import { useDismissable } from '../lib/focus';
@@ -47,6 +47,9 @@ export function SearchBar({
   const [focused, setFocused] = useState(false);
   const open = focused && query.trim().length > 0;
   const root = useRef<HTMLDivElement>(null);
+  // One sentence each on what the options do (3.3.5), read with the checkbox.
+  const wordHint = useId();
+  const caseHint = useId();
 
   // Escape clears and closes — through the shared stack, so it closes only
   // this if the verse actions or a connection opened later are on top.
@@ -115,19 +118,27 @@ export function SearchBar({
               <input
                 type="checkbox"
                 data-testid="search-whole-word"
+                aria-describedby={wordHint}
                 checked={options.mode === 'word'}
                 onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
               />
               Whole words only
+              <span id={wordHint} className="visually-hidden">
+                Finds love but not loveth. Off, the search also looks inside longer words.
+              </span>
             </label>
             <label className="search__option">
               <input
                 type="checkbox"
                 data-testid="search-match-case"
+                aria-describedby={caseHint}
                 checked={!!options.caseSensitive}
                 onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
               />
               Match case
+              <span id={caseHint} className="visually-hidden">
+                Capital letters matter: God and god are different.
+              </span>
             </label>
           </fieldset>
 

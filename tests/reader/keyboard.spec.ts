@@ -109,6 +109,7 @@ test.describe('closing gives focus back', () => {
     ['marks-open', 'marks-panel'],
     ['library-open', 'library-panel'],
     ['settings-open', 'settings-panel'],
+    ['help-open', 'help-panel'],
   ] as const) {
     test(`${panel}: Escape closes it and focus returns to ${chip}`, async ({ page }) => {
       await open(page);
@@ -221,6 +222,7 @@ test.describe('one level-1 heading, always (2.4.10)', () => {
       ['marks-open', 'Marks'],
       ['library-open', 'Translations'],
       ['settings-open', 'Settings'],
+      ['help-open', 'Help'],
     ] as const) {
       await page.getByTestId(chip).click();
       await expect(h1).toHaveCount(1);
@@ -232,5 +234,29 @@ test.describe('one level-1 heading, always (2.4.10)', () => {
     await expect(page.getByTestId('canvas')).toBeVisible();
     await expect(h1).toHaveCount(1);
     await expect(h1).toContainText(/Board/);
+  });
+});
+
+test.describe('help is where you left it (3.2.6, 3.3.5)', () => {
+  test('the same chip in the bar, from Settings, and from the board', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('help-open').click();
+    const help = page.getByTestId('help-panel');
+    await expect(help).toBeVisible();
+    await expect(help.getByTestId('help-accessibility')).toContainText(/Level AAA/);
+    // Every translation in the catalogue is in the abbreviations table.
+    await expect(help.locator('table abbr', { hasText: 'KJV' })).toHaveCount(1);
+    await expect(help.locator('table abbr', { hasText: 'BUNGO' })).toHaveCount(1);
+    await page.getByTestId('help-close').click();
+    await expect(help).toHaveCount(0);
+
+    await page.getByTestId('settings-open').click();
+    await page.getByTestId('settings-help').click();
+    await expect(page.getByTestId('help-panel')).toBeVisible();
+    await page.keyboard.press('Escape');
+
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('canvas-help').click();
+    await expect(page.getByTestId('help-panel')).toBeVisible();
   });
 });

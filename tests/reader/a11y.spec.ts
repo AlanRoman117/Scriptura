@@ -103,6 +103,10 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('settings-open').click();
     await expect(page.getByTestId('settings-panel')).toBeVisible();
   },
+  help: async (page) => {
+    await page.getByTestId('help-open').click();
+    await expect(page.getByTestId('help-panel')).toBeVisible();
+  },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');

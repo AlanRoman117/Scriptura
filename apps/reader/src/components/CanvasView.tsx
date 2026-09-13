@@ -20,6 +20,8 @@ interface CanvasViewProps {
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
   /** Embed this board in the open note, where it renders as a diagram. */
   onAddToNote?: (boardId: string) => void;
+  /** Open the help panel (it lives in the reading layout, so this leaves the board). */
+  onHelp?: () => void;
 }
 
 /**
@@ -45,6 +47,7 @@ export function CanvasView({
   onClose,
   onGo,
   onAddToNote,
+  onHelp,
 }: CanvasViewProps) {
   const board = boards.find((b) => b.id === activeId) ?? null;
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -356,6 +359,17 @@ export function CanvasView({
         <button type="button" className="canvas__action" data-testid="canvas-close" onClick={onClose}>
           Back to reading
         </button>
+        {onHelp && (
+          <button
+            type="button"
+            className="canvas__action canvas__action--icon"
+            data-testid="canvas-help"
+            aria-label="Help — boards, keyboard, and what the abbreviations mean"
+            onClick={onHelp}
+          >
+            ?
+          </button>
+        )}
       </header>
 
       {board ? (

@@ -21,6 +21,7 @@ import { ComparePane } from './components/ComparePane';
 import { SearchResults } from './components/SearchResults';
 import { CanvasView } from './components/CanvasView';
 import { SettingsPanel } from './components/SettingsPanel';
+import { HelpPanel } from './components/HelpPanel';
 import { ProposalPreview } from './components/ProposalPreview';
 import {
   configureAgent,
@@ -125,6 +126,7 @@ export function App() {
   const [canvasOpen, setCanvasOpen] = useState(false);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   // Device-scoped display preferences; applied to <html> on every change.
   const [prefs, updatePrefs] = usePrefs();
   // `--vvh` / `--vv-top`: the viewport the reader sees, keyboard excluded.
@@ -243,6 +245,7 @@ export function App() {
   useAnnounceOpen(marksOpen, 'Marks');
   useAnnounceOpen(libraryOpen, 'Translations');
   useAnnounceOpen(settingsOpen, 'Settings');
+  useAnnounceOpen(helpOpen, 'Help');
   useAnnounceOpen(resultsOpen, 'Search results');
 
   // The count under the search box changes silently; say it once the typing
@@ -378,13 +381,15 @@ export function App() {
           ? 'Translations'
           : settingsOpen
             ? 'Settings'
+            : helpOpen
+              ? 'Help'
             : resultsOpen
               ? 'Search results'
               : bible
                 ? `${(bible.book(position.bookSlug) ?? bible.books[0]).name} ${position.chapter} · ${bible.meta.id.toUpperCase()}`
                 : null;
     document.title = where ? `${where} · Scriptura` : 'Scriptura Reader';
-  }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, resultsOpen, bible, position]);
+  }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
 
   const changeNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => {
@@ -877,6 +882,10 @@ export function App() {
           onDelete={deleteBoard}
           onChange={changeBoard}
           onClose={() => setCanvasOpen(false)}
+          onHelp={() => {
+            setCanvasOpen(false);
+            setHelpOpen(true);
+          }}
           onGo={(bookSlug, chapter, verse) => {
             goTo(bookSlug, chapter, verse);
             setCanvasOpen(false);
@@ -935,6 +944,7 @@ export function App() {
               setLibraryOpen(false);
               setResultsOpen(false);
               setSettingsOpen(false);
+              setHelpOpen(false);
               setMarksOpen((o) => !o);
             }}
             libraryOpen={libraryOpen}
@@ -942,6 +952,7 @@ export function App() {
               setMarksOpen(false);
               setResultsOpen(false);
               setSettingsOpen(false);
+              setHelpOpen(false);
               setLibraryOpen((o) => !o);
             }}
             settingsOpen={settingsOpen}
@@ -949,10 +960,21 @@ export function App() {
               setMarksOpen(false);
               setResultsOpen(false);
               setLibraryOpen(false);
+              setHelpOpen(false);
               setSettingsOpen((o) => !o);
             }}
+            helpOpen={helpOpen}
+            onToggleHelp={() => {
+              setMarksOpen(false);
+              setResultsOpen(false);
+              setLibraryOpen(false);
+              setSettingsOpen(false);
+              setHelpOpen((o) => !o);
+            }}
             overlay={
-              marksOpen ? (
+              helpOpen ? (
+                <HelpPanel catalog={catalog} onClose={() => setHelpOpen(false)} />
+              ) : marksOpen ? (
                 <MarksPanel
                   bible={bible}
                   highlights={highlights}
@@ -994,6 +1016,10 @@ export function App() {
                   onChooseFolder={doChooseFolder}
                   onExport={doExport}
                   onClose={() => setSettingsOpen(false)}
+                  onHelp={() => {
+                    setSettingsOpen(false);
+                    setHelpOpen(true);
+                  }}
                   prefs={prefs}
                   onPrefs={updatePrefs}
                 />
@@ -1041,6 +1067,8 @@ export function App() {
                 onSeeAll={() => {
                   setMarksOpen(false);
                   setLibraryOpen(false);
+                  setSettingsOpen(false);
+                  setHelpOpen(false);
                   setResultsOpen(true);
                 }}
               />

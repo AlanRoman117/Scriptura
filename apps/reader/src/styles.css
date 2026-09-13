@@ -412,6 +412,13 @@ summary:focus-visible,
    visible target.
    The selects then need floors, or flexbox happily squeezes the book name to
    18px — present, inside the pane, and completely unusable. */
+/* Four 44px chips and two selects do not fit one row below about 26rem; the bar
+   wraps rather than shrinking a control past use, and its height is measured
+   (see BiblePane), so the sticky title still parks right under it. */
+@container (max-width: 26rem) {
+  .reader__bar { flex-wrap: wrap; row-gap: .35rem; }
+  .reader__nav { display: flex; gap: .5rem; flex: 1 1 100%; }
+}
 @container (max-width: 22rem) {
   .reader__bar { gap: .35rem; padding-right: 2.4rem; }
   .reader__chip-label { display: none; }
@@ -708,6 +715,36 @@ summary:focus-visible,
 }
 .settings__tag--write { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
 .settings__tool-desc { display: block; margin-top: .2rem; line-height: 1.5; }
+
+/* ── Help ─────────────────────────────────────────────────────────────────── */
+
+.help { padding: 1rem 1.25rem 2rem; max-width: 44rem; }
+.help__bar { display: flex; align-items: center; gap: .5rem; }
+.help__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.help__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  min-height: var(--control-h); min-width: var(--control-h);
+}
+.help__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.help__section { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .88rem; line-height: 1.65; }
+.help__section h2 { font-size: 1rem; margin: 0 0 .5rem; }
+.help__section p, .help__section ul { margin: 0 0 .6rem; }
+.help__section li { margin: .2rem 0; }
+.help__section code, .help__section kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px; padding: .05em .3em;
+}
+.help__section kbd { border: 1px solid var(--edge); }
+.help__table { border-collapse: collapse; width: 100%; }
+.help__table th, .help__table td { text-align: left; vertical-align: top; padding: .35rem .5rem .35rem 0; border-bottom: 1px solid var(--rule); }
+.help__table th[scope='row'] { font-weight: 600; white-space: nowrap; }
+.help__table abbr { text-decoration: none; }
+.help__glossary { margin: 0; }
+.help__term { margin: 0 0 .6rem; }
+.help__term dt { font-weight: 600; }
+.help__term dd { margin: .1rem 0 0; }
+.canvas__action--icon { font-size: 1rem; }
 
 /* ── A staged proposal: contents, not counts ──────────────────────────────── */
 
