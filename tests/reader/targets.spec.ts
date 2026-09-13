@@ -1,67 +1,16 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { describeSmall, tooSmall } from '../helpers/targets';
 
 /**
  * Target size, enhanced (2.5.5): every pointer target is at least 44 × 44 CSS
- * px, in every state of the app.
- *
- * Measured from the boxes the browser lays out, not from the stylesheet — a
- * `min-height` that a later rule overrides, a flex item squeezed by its
- * neighbours, a button whose padding was set in em on a small font: all pass
- * a code review and fail here. The exceptions the criterion allows are the
- * allowlist below, one comment each; nothing is added to it to make a run
- * green.
+ * px, in every state of the app on a desktop. The measurer and its allowlist
+ * live in tests/helpers/targets.ts, shared with the touch project.
  */
 
 async function open(page: Page) {
   await page.goto('/');
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-}
-
-/** The criterion's own exceptions: inline in text, or the equivalent is elsewhere. */
-const ALLOWLIST: Record<string, string> = {
-  '.verse__num': 'inline in the text; the whole verse is the equivalent target',
-  '.preview__link': 'a link inside prose',
-  '.attribution a': 'a link inside a sentence',
-  '.search__see-all': 'a link inside the count sentence; the results view is the equivalent',
-  '.results__more': 'a link inside the footer sentence',
-  '.embed__open': 'a link inside the caption sentence',
-  '.skip': 'off-screen until focused; its box is measured when it is',
-};
-
-interface Small {
-  html: string;
-  width: number;
-  height: number;
-}
-
-const TARGETS =
-  'a[href], button, input, select, textarea, summary, [role="button"], [role="link"], [role="checkbox"], [role="separator"][tabindex], [tabindex]:not([tabindex="-1"])';
-
-/** Every visible pointer target smaller than 44 × 44, minus the allowlist. */
-function tooSmall(page: Page, allow: string[]): Promise<Small[]> {
-  return page.evaluate(
-    ({ selector, allow, min }) => {
-      const out: { html: string; width: number; height: number }[] = [];
-      for (const el of Array.from(document.querySelectorAll<HTMLElement>(selector))) {
-        if (!el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
-        if (el.closest('[inert], [aria-hidden="true"]')) continue;
-        if (allow.some((s) => el.matches(s))) continue;
-        // A checkbox's label is its target.
-        const box = (
-          el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')
-            ? el.closest('label') ?? el
-            : el
-        ).getBoundingClientRect();
-        if (box.width === 0 && box.height === 0) continue;
-        if (box.width + 0.5 < min || box.height + 0.5 < min) {
-          out.push({ html: el.outerHTML.slice(0, 120), width: Math.round(box.width), height: Math.round(box.height) });
-        }
-      }
-      return out;
-    },
-    { selector: TARGETS, allow, min: 44 }
-  );
 }
 
 const STATES: Record<string, (page: Page) => Promise<void>> = {
@@ -123,8 +72,8 @@ test.describe('every pointer target is 44 × 44 or larger', () => {
     test(name, async ({ page }) => {
       await open(page);
       await arrange(page);
-      const small = await tooSmall(page, Object.keys(ALLOWLIST));
-      expect(small, small.map((s) => `${s.width}×${s.height} ${s.html}`).join('\n')).toEqual([]);
+      const small = await tooSmall(page);
+      expect(small, describeSmall(small)).toEqual([]);
     });
   }
 });
