@@ -81,7 +81,10 @@ test.describe('reading it back', () => {
     await page.getByTestId('note-preview').click();
 
     const preview = page.getByTestId('notes-preview');
-    await expect(preview.locator('h1')).toHaveText('Opening');
+    // A note's `#` is its own top level, not the page's: the chapter title is
+    // the h1 and the notes pane is an h2, so note headings start at h3.
+    await expect(preview.locator('h3')).toHaveText('Opening');
+    await expect(preview.locator('h1')).toHaveCount(0);
     await expect(preview.locator('strong')).toHaveText('Word');
     await expect(preview.locator('ul li')).toHaveCount(2);
     await expect(preview.locator('blockquote')).toContainText('a quotation');
@@ -212,5 +215,76 @@ test.describe('a board inside a note', () => {
 
     await page.getByTestId('note-preview').click();
     await expect(page.getByTestId('board-embed-missing')).toBeVisible();
+  });
+});
+
+test.describe('the preview from the keyboard', () => {
+  test('each block has an Edit control that puts the caret there', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('# Opening\n\nThe **Word** was with God.\n\n> a quotation');
+    await page.getByTestId('note-preview').click();
+
+    // Third block is the quotation; the control is reachable and visible once focused.
+    const edit = page.getByTestId('preview-edit-2');
+    await edit.focus();
+    await expect(edit).toBeVisible();
+    await page.keyboard.press('Enter');
+
+    const surface = page.getByTestId('notes-surface');
+    await expect(surface).toBeVisible();
+    const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
+    expect((await surface.inputValue()).slice(at)).toBe('> a quotation');
+  });
+
+  test('an empty preview is a button back to writing', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-preview').click();
+    const empty = page.getByTestId('notes-preview');
+    await expect(empty).toHaveRole('button');
+    await empty.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('notes-surface')).toBeVisible();
+  });
+});
+
+test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
+  test('Shift+Tab from the note reaches the toolbar; arrows move; a tool formats and returns', async ({ page }) => {
+    await open(page);
+    const surface = page.getByTestId('notes-surface');
+    await surface.fill('the Word');
+    await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 8));
+
+    await page.keyboard.press('Shift+Tab');
+    const tools = page.getByTestId('editor-tools');
+    await expect(tools).toBeVisible();
+    await expect(page.getByTestId('tool-h1')).toBeFocused();
+
+    // One Tab stop: the other tools are out of the Tab order.
+    await expect(page.getByTestId('tool-bold')).toHaveAttribute('tabindex', '-1');
+
+    // H1 → H2 → H3 → Bold (the separators are not stops).
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('tool-bold')).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toBeFocused();
+    const picked = await surface.evaluate((el: HTMLTextAreaElement) =>
+      el.value.slice(el.selectionStart, el.selectionEnd)
+    );
+    expect(picked).toBe('Word');
+  });
+
+  test('the tools stay while focus moves between them and the note, and go when it leaves', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').click();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('notes-surface')).toBeFocused();
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+
+    await page.getByTestId('note-title').focus();
+    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
   });
 });

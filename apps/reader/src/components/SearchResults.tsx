@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useId, useRef, useMemo, useState } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { Bible, SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions } from '../lib/search';
 
@@ -43,6 +44,8 @@ export function SearchResults({
 }: SearchResultsProps) {
   const [book, setBook] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
+  const wordHint = useId();
+  const caseHint = useId();
 
   const books = useMemo(() => {
     const counts = new Map<string, number>();
@@ -68,13 +71,19 @@ export function SearchResults({
     setShown(PAGE);
   };
 
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="search-input"]');
+
   return (
-    <section className="results" data-testid="search-results" aria-label="Search results">
+    <section ref={root} className="results" id="search-results" data-testid="search-results" aria-label="Search results">
       <header className="results__bar">
-        <h2 className="results__title">
+        <h1 className="results__title">
           <span data-testid="results-total">{results.length}</span>{' '}
           {results.length === 1 ? 'match' : 'matches'} for “{query}”
-        </h2>
+        </h1>
         <button
           type="button"
           className="results__close"
@@ -86,28 +95,37 @@ export function SearchResults({
         </button>
       </header>
 
-      <div className="results__options">
+      <fieldset className="results__options">
+        <legend className="visually-hidden">Matching</legend>
         <label className="search__option">
           <input
             type="checkbox"
             data-testid="results-whole-word"
+            aria-describedby={wordHint}
             checked={options.mode === 'word'}
             onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
           />
           Whole words only
+          <span id={wordHint} className="visually-hidden">
+            Finds love but not loveth. Off, the search also looks inside longer words.
+          </span>
         </label>
         <label className="search__option">
           <input
             type="checkbox"
             data-testid="results-match-case"
+            aria-describedby={caseHint}
             checked={!!options.caseSensitive}
             onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
           />
           Match case
+          <span id={caseHint} className="visually-hidden">
+            Capital letters matter: God and god are different.
+          </span>
         </label>
-      </div>
+      </fieldset>
 
-      <div className="results__books" data-testid="results-books">
+      <div className="results__books" data-testid="results-books" role="group" aria-label="Filter by book">
         <button
           type="button"
           className="results__book"
@@ -130,7 +148,7 @@ export function SearchResults({
         ))}
       </div>
 
-      <ul className="results__list" data-testid="results-list">
+      <ul className="results__list" data-testid="results-list" role="list">
         {visible.map((r, i) => (
           <li className="results__item" key={`${r.book_slug}-${r.chapter}-${r.verse}`}>
             {/* Ranked order looks arbitrary unless it says why. The rule is
@@ -148,7 +166,9 @@ export function SearchResults({
               onClick={() => onGo(r.book_slug, r.chapter, r.verse)}
             >
               <span className="results__ref-label">{r.ref}</span>
-              <span className="results__ref-text">{r.text}</span>
+              <span className="results__ref-text" lang={bible.meta.language}>
+                {r.text}
+              </span>
             </button>
             <button
               type="button"

@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useRef, useMemo } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
+import { ConfirmButton } from './ConfirmButton';
 import type { CatalogEntry } from '../lib/library';
 import { downloadPercent, formatBytes } from '../lib/library';
 import { DEFAULT_TRANSLATION } from '../lib/api';
@@ -72,10 +74,16 @@ export function LibraryPanel({
     .filter((t) => installed.includes(t.id))
     .reduce((n, t) => n + (t.approxBytes ?? 0), 0);
 
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="library-open"]');
+
   return (
-    <section className="library" data-testid="library-panel" aria-label="Translations">
+    <section ref={root} className="library" id="library-panel" data-testid="library-panel" aria-label="Translations">
       <header className="library__bar">
-        <h2 className="library__title">Translations</h2>
+        <h1 className="library__title">Translations</h1>
         <button
           type="button"
           className="library__close"
@@ -100,8 +108,8 @@ export function LibraryPanel({
 
       {byLanguage.map(([language, entries]) => (
         <section className="library__group" key={language}>
-          <h3 className="library__language">{language}</h3>
-          <ul className="library__list">
+          <h2 className="library__language">{language}</h2>
+          <ul className="library__list" role="list">
             {entries.map((t) => {
               const here = installed.includes(t.id);
               const busy = downloads[t.id];
@@ -122,7 +130,7 @@ export function LibraryPanel({
                       {t.approxBytes ? ` · ~${formatBytes(t.approxBytes)}` : ''}
                     </span>
                     {busy?.error && (
-                      <span className="library__error" data-testid={`library-error-${t.id}`}>
+                      <span className="library__error" role="alert" data-testid={`library-error-${t.id}`}>
                         {busy.error}
                       </span>
                     )}
@@ -131,9 +139,11 @@ export function LibraryPanel({
                         className="library__progress"
                         data-testid={`library-progress-${t.id}`}
                         role="progressbar"
+                        aria-label={`Downloading ${t.name}`}
                         aria-valuenow={Math.round(percent(busy))}
                         aria-valuemin={0}
                         aria-valuemax={100}
+                        aria-valuetext={`${Math.round(percent(busy))}%`}
                       >
                         <span
                           className="library__progress-fill"
@@ -170,16 +180,19 @@ export function LibraryPanel({
                             leaves nothing to read the moment the network goes,
                             which is the state this app exists to survive. */}
                         {t.id !== DEFAULT_TRANSLATION && (
-                          <button
-                            type="button"
+                          // A multi-megabyte download goes in two presses (3.3.6).
+                          <ConfirmButton
+                            label="Remove"
                             className="library__action library__action--danger"
                             data-testid={`library-remove-${t.id}`}
+                            aria-label={
+                              isActive
+                                ? `Remove ${t.name} — switch to another translation first`
+                                : `Remove ${t.name} from this device`
+                            }
                             disabled={isActive}
-                            title={isActive ? 'Switch to another translation first' : 'Delete the text from this device'}
-                            onClick={() => onRemove(t.id)}
-                          >
-                            Remove
-                          </button>
+                            onConfirm={() => onRemove(t.id)}
+                          />
                         )}
                       </>
                     ) : (
@@ -202,9 +215,8 @@ export function LibraryPanel({
       ))}
 
       <p className="library__note">
-        Downloaded text stays on this device and is readable offline. Removing a
-        translation never touches your notes or marks — both are anchored to the
-        passage, not to a translation.
+        A downloaded translation stays on this device and can be read offline. Removing one
+        never touches your notes or marks: both belong to the passage, not to a translation.
       </p>
     </section>
   );

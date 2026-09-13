@@ -14,7 +14,16 @@ interface MarkdownPreviewProps {
   onEditAt: (offset: number) => void;
   onFollowLink: (target: string) => void;
   onOpenBoard: (id: string) => void;
+  /** How a `[[…]]` link reads to a person, for the link's accessible name (2.4.9). */
+  describeLink?: (inner: string) => string | null;
 }
+
+/**
+ * Note headings sit two levels down: the chapter title is the page's h1 and
+ * the notes pane is an h2, so a note's `#` is an h3 (2.4.10). The original
+ * level is kept in `data-level` for the styling, which is the author's.
+ */
+const HEADING_OFFSET = 2;
 
 /**
  * The note, rendered.
@@ -35,14 +44,15 @@ export function MarkdownPreview({
   onEditAt,
   onFollowLink,
   onOpenBoard,
+  describeLink,
 }: MarkdownPreviewProps) {
   const blocks = parseMarkdown(source);
 
   if (blocks.length === 0) {
     return (
-      <div className="preview preview--empty" data-testid="notes-preview" onClick={() => onEditAt(0)}>
+      <button type="button" className="preview preview--empty" data-testid="notes-preview" onClick={() => onEditAt(0)}>
         Nothing written yet.
-      </div>
+      </button>
     );
   }
 
@@ -58,7 +68,21 @@ export function MarkdownPreview({
             onEditAt(block.offset);
           }}
         >
-          {renderBlock(block, { bible, notes, boards, onFollowLink, onOpenBoard })}
+          {/* The click on the block is a pointer convenience; this is the
+              control — reachable by Tab, visible on hover, focus and touch. */}
+          <button
+            type="button"
+            className="preview__edit"
+            data-testid={`preview-edit-${i}`}
+            aria-label={`Edit here (block ${i + 1})`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditAt(block.offset);
+            }}
+          >
+            ✎
+          </button>
+          {renderBlock(block, { bible, notes, boards, onFollowLink, onOpenBoard, describeLink })}
         </div>
       ))}
     </div>
@@ -71,13 +95,18 @@ interface Ctx {
   boards: Board[];
   onFollowLink: (target: string) => void;
   onOpenBoard: (id: string) => void;
+  describeLink?: (inner: string) => string | null;
 }
 
 function renderBlock(block: Block, ctx: Ctx) {
   switch (block.type) {
     case 'heading': {
-      const Tag = `h${Math.min(6, block.level)}` as 'h1';
-      return <Tag className="preview__heading">{renderInline(block.children, ctx)}</Tag>;
+      const Tag = `h${Math.min(6, block.level + HEADING_OFFSET)}` as 'h1';
+      return (
+        <Tag className="preview__heading" data-level={block.level}>
+          {renderInline(block.children, ctx)}
+        </Tag>
+      );
     }
     case 'paragraph':
       return <p className="preview__p">{renderInline(block.children, ctx)}</p>;
@@ -98,7 +127,11 @@ function renderBlock(block: Block, ctx: Ctx) {
         </ul>
       );
     case 'code':
-      return <pre className="preview__code">{block.value}</pre>;
+      return (
+        <pre className="preview__code">
+          <code>{block.value}</code>
+        </pre>
+      );
     case 'rule':
       return <hr className="preview__rule" />;
     case 'board':
@@ -135,6 +168,8 @@ function renderInline(nodes: Inline[], ctx: Ctx) {
             type="button"
             className="preview__link"
             data-testid={`preview-link-${node.target.replace(/[^a-z0-9]+/gi, '-')}`}
+            // "Go to Psalms 23:1 (KJV)" rather than the raw target (2.4.9).
+            aria-label={ctx.describeLink?.(node.target) ? `Go to ${ctx.describeLink(node.target)}` : undefined}
             onClick={() => ctx.onFollowLink(node.target)}
           >
             {node.target}

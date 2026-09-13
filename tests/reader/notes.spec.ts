@@ -58,6 +58,37 @@ test.describe('notes', () => {
     await expect(page.getByTestId('notes-surface')).toHaveValue('The Word was with God.');
   });
 
+  test('an edit is saved even when another note is edited inside the autosave delay', async ({ page }) => {
+    // The debounce used to be one timer for every note: typing in a second
+    // note within 600ms cancelled the first note's pending save, and its last
+    // words were never written.
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('First');
+    await persisted(page, 'First');
+    await page.getByTestId('notes-surface').fill('Words in the first note.');
+    // Straight into another note, well inside the delay.
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('Second');
+
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              new Promise<string[]>((resolve) => {
+                const req = indexedDB.open('scriptura');
+                req.onsuccess = () => {
+                  const all = req.result.transaction('notes').objectStore('notes').getAll();
+                  all.onsuccess = () => resolve((all.result as { body: string }[]).map((n) => n.body));
+                };
+              })
+          ),
+        { timeout: 10_000 }
+      )
+      .toContain('Words in the first note.');
+  });
+
   test('notes can be created, switched between, and deleted', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-new').click();
@@ -75,6 +106,25 @@ test.describe('notes', () => {
     await expect(page.getByTestId('note-delete')).toContainText('Sure?');
     await page.getByTestId('note-delete').click();
     await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+  });
+
+  test('an armed Delete can be backed out of, by Escape or by Cancel (3.3.6)', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('Keep me');
+    await persisted(page, 'Keep me');
+
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
+    // Announced, not just re-labelled: the change of name is a riddle otherwise.
+    await expect(page.getByTestId('announcer')).toContainText(/press again/i);
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+
+    await page.getByTestId('note-delete').click();
+    await page.getByTestId('note-delete-cancel').click();
+    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+    await expect(page.getByTestId('note-title')).toHaveValue('Keep me');
   });
 });
 
@@ -124,6 +174,49 @@ test.describe('marking a verse', () => {
 
     await page.keyboard.press('Escape');
     await expect(page.locator('.verse[data-verse="1"]')).not.toHaveAttribute('data-open', /./);
+  });
+});
+
+test.describe('a collection is never told by colour alone (1.4.1)', () => {
+  test('a swatch is named for the collection it adds to', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-amber')).toHaveAccessibleName('Mark as Amber (amber)');
+    await page.getByTestId('swatch-amber').click();
+
+    await page.getByTestId('marks-open').click();
+    await page.getByTestId('marks-label-amber').fill('Covenant promises');
+    await page.getByTestId('marks-close').click();
+
+    // The verse number says which collection the verse is in, in words.
+    await expect(page.getByTestId('verse-1')).toHaveAccessibleName(/in Covenant promises \(amber\)/);
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-amber')).toHaveAccessibleName('Mark as Covenant promises (amber)');
+    await expect(page.getByTestId('swatch-amber')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a marked verse has a rule, and a shape when the reader asks for one', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('swatch-sky').click();
+    const verse = page.locator('.verse[data-verse="1"]');
+    await expect(verse).toHaveAttribute('data-highlight', 'sky');
+
+    // The rule is the collection's strong hue, not transparent.
+    const rule = await verse.evaluate((el) => getComputedStyle(el).borderLeftColor);
+    expect(rule).not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
+
+    const marker = verse.locator('.verse__marker');
+    await expect(marker).toBeHidden();
+    await page.getByTestId('settings-open').click();
+    await page.getByTestId('pref-markers').check();
+    await page.getByTestId('settings-close').click();
+    await expect(marker).toBeVisible();
+    await expect(marker).toHaveText('■');
+
+    // And the swatches carry the same shapes.
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-sky').locator('.swatch__glyph')).toBeVisible();
   });
 });
 
@@ -235,6 +328,17 @@ test.describe('colours as collections', () => {
     await expect(page.locator('.verse[data-verse="2"]')).toHaveAttribute('data-highlight', 'mint');
 
     await page.getByTestId('marks-open').click();
+    // Removal takes two presses and can be undone until the next change.
+    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByTestId('marks-remove-john-1-2')).toContainText('Sure?');
+    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
+
+    await page.getByTestId('marks-undo').click();
+    await expect(page.getByTestId('marks-count-mint')).toHaveText('1');
+    await expect(page.getByTestId('marks-undo')).toHaveCount(0);
+
+    await page.getByTestId('marks-remove-john-1-2').click();
     await page.getByTestId('marks-remove-john-1-2').click();
     await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
     await page.getByTestId('marks-close').click();

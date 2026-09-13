@@ -41,6 +41,10 @@ scriptura/
 │   ├── validate/                # Data integrity checks
 │   └── api/                     # REST handlers (GraphQL planned — see §5)
 │
+├── apps/
+│   └── reader/                  # Local-first reading and notes PWA (Vite + React);
+│                                #   touch and WCAG 2.2 AAA — see §4, "The reader PWA"
+│
 ├── scripts/
 │   ├── ingest.py                # Download & normalize source data
 │   ├── validate.py              # Run integrity checks on all translations
@@ -55,8 +59,13 @@ scriptura/
 │   └── cli-demo/                # Node CLI using @scriptura/search
 │
 ├── tests/
-│   ├── unit/
-│   ├── integration/
+│   ├── unit/                    # jest: packages, contrast tokens, preferences, gestures
+│   ├── integration/             # jest: router, static/dynamic parity
+│   ├── contract/                # Playwright, API mode: HTTP contract
+│   ├── reader/                  # Playwright: the reader in Desktop Chrome
+│   ├── reader-touch/            # Playwright: the reader on an emulated phone
+│   ├── reader-dev/              # Playwright: the reader's dev server boots
+│   ├── helpers/                 # Shared axe, contrast and target-size helpers
 │   └── fixtures/                # Sample verse data for test assertions
 │
 ├── docs/
@@ -64,7 +73,9 @@ scriptura/
 │   ├── API.md
 │   ├── usage-examples.md
 │   ├── contributing.md
-│   └── translations-status.md   # Tracks license verification for each version
+│   ├── translations-status.md   # Tracks license verification for each version
+│   └── plans/
+│       └── reader-touch-and-aaa/  # Plan, WCAG 2.2 matrix, delegation protocol, briefs
 │
 ├── .github/
 │   ├── dependabot.yml           # Weekly npm + github-actions version updates
@@ -75,7 +86,9 @@ scriptura/
 │
 ├── dist/                        # Generated static API tree (gitignored)
 ├── .cache/                      # Ingest download cache (gitignored)
-├── CLAUDE.md                    # Guidance for Claude Code
+├── CLAUDE.md                    # Guidance for Claude Code (the authority)
+├── AGENTS.md                    # Short rules for any automated contributor
+├── .claude/agents/              # reader-a11y-lead: the Opus lead for the reader plan
 ├── .nvmrc                       # Node 24 (Active LTS)
 ├── tsconfig.json                # Solution file: references only, no options
 ├── tsconfig.dev.json            # tsx only: maps @scriptura/* at package sources
@@ -340,6 +353,32 @@ await validate('data/rv1909');
 await validateAll('data/');
 ```
 
+### The reader PWA (`apps/reader`): touch and accessibility
+
+The reader is the local-first reading and note-taking app built on these packages. It imports only their pure subpaths (`@scriptura/core/bible`, `@scriptura/core/types`, `@scriptura/search/matcher`, `@scriptura/compare/chapters`), so it rebuilds a `Bible` in the browser with the server's own resolution and search rules, reading from IndexedDB. What follows is how it is made usable with a finger on a phone and conformant with **WCAG 2.2 Level AAA** for its own interface. The programme that did this — plan, criterion-by-criterion matrix, and the work packages handed to other agents — is in [`docs/plans/reader-touch-and-aaa/`](plans/reader-touch-and-aaa/README.md).
+
+**Scope of the claim.** AAA applies to the application: its controls, its own text, its colours, its behaviour. Scripture and the reader's own notes are content the app presents rather than authors, so 3.1.5 Reading Level and 3.1.6 Pronunciation are exempt for them; language of parts, contrast, spacing and reflow are enforced on them regardless. Real-device checks (iOS Safari's keyboard, VoiceOver, TalkBack, Windows High Contrast) cannot run in CI and are tracked as open manual checks.
+
+| Concern | Where | What it does |
+|---|---|---|
+| Display preferences | `src/lib/prefs.ts`, inline script in `index.html` | Theme (light, dark, two high-contrast, sepia, or the device's), text size 100–200 %, spacing presets that meet 1.4.8, column width ≤ 70 ch, reduced motion, non-colour markers. Device-scoped in `localStorage`; applied before first paint; `system` is an *absent* attribute so `prefers-*` stay the defaults. |
+| Colour tokens | `src/styles.css` `@tokens` blocks | `light-dark()` pairs for every token, five themes, `--edge` for control boundaries and `--rule` for decoration only. `tests/unit/contrast.test.ts` parses the blocks and checks 135 pairs: 7:1 for text, 3:1 for edges, focus rings and highlight rules. |
+| Focus | `src/lib/focus.ts` | `useReturnFocus` gives focus back when a surface closes; `useDismissable` is one stack — Escape closes only the newest surface, an outside press closes it; `useRovingTabIndex` makes the verse actions and the formatting toolbar one Tab stop with arrows. The proposal preview is a native `<dialog>`. |
+| Viewport and gestures | `src/lib/viewport.ts`, `src/lib/geometry.ts` | `--vvh`/`--vv-top` publish the visual viewport, so the notes sheet and search suggestions stay above a software keyboard. One pointer-drag helper captures the pointer and treats `pointercancel` as release. Sheet snapping, zoom anchoring and pinch are pure functions with unit tests. |
+| Status | `src/lib/announce.tsx` | One polite and one assertive live region, mounted beside the app, for search totals, download progress and errors, panel changes, removals and undo. |
+| Targets | `--control-h: 44px` | Every pointer target is at least 44 × 44 CSS px (2.5.5), with the verse number (inline in text) and links inside prose as the criterion's exceptions. |
+| Updates | `src/components/UpdateNotice.tsx`, `src/lib/pending.ts` | A new service worker waits for the reader's Reload, which first writes note edits still inside the autosave delay. |
+
+**What the reader can do without a mouse, and without dragging.** Every function is keyboard-operable (2.1.3) and every drag has a single-pointer alternative (2.5.7): the pane divider has Narrower/Wider buttons, the notes sheet's grip is a button, a board card has Move/Size and Colour panels of plain buttons, and the board view has pan buttons. On a phone the notes sheet drags and snaps, focusing the note makes it full, the text it covers is `inert`, the verse actions dock above it, and a comparison reads as a list of verses instead of a sideways-scrolling table.
+
+**How it is proved.** Jest owns the arithmetic (contrast pairs, preference parsing, sheet snapping, zoom and pinch). Playwright owns behaviour in a real browser, in three projects against the production build and the dev server:
+
+| Project | Device | Gates |
+|---|---|---|
+| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in thirteen states and both colour schemes, with a self-check that the two AAA rules really ran; 44 px targets in the same states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
+| `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in ten phone states; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
+| `reader-dev` | Desktop Chrome, dev server | The app boots clean when modules are served unbundled |
+
 ---
 
 ## 5. API layer (`packages/api`)
@@ -578,11 +617,12 @@ Per-verse files produce a very large object count (~31k per full translation); `
 |---|---|
 | v1 | Core loader + search + REST API + translation data ✅ (all 11 ingested) |
 | v1.1 | GraphQL layer + additional translations |
-| v2 | `compare` package — side-by-side diff for study Bible UI |
+| v2 | `compare` package — side-by-side diff for study Bible UI ✅ |
 | v2.1 | Cross-reference data (Open Scriptures) |
-| v3 | Annotation layer — personal notes, highlights per verse |
+| v3 | Annotation layer — personal notes, highlights per verse ✅ (local, in the reader) |
 | v3.1 | Commentary integration (public domain commentaries via CCEL) |
-| v4 | Study Bible UI (React) consuming all packages |
+| v4 | Study Bible UI (React) consuming all packages ✅ (`apps/reader`, five stages) |
+| v4.1 | Reader usable by touch and conformant with WCAG 2.2 AAA ✅ — real-device and screen-reader checks ⏳ planned ([plan](plans/reader-touch-and-aaa/README.md)) |
 
 ---
 

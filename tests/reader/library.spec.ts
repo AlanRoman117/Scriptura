@@ -64,6 +64,9 @@ test.describe('the library', () => {
     // rv1909 sets the opening word as a drop cap ("EN el principio"), so match
     // from the second word rather than pinning that typographic quirk.
     await expect(page.getByTestId('chapter')).toContainText('el principio era el Verbo');
+    // And a screen reader is told it is Spanish (3.1.2) — six of the eleven
+    // translations are not English, and none of their text carried a lang.
+    await expect(page.locator('.chapter__text')).toHaveAttribute('lang', 'es');
   });
 
   test('the choice survives a reload', async ({ page }) => {
@@ -83,6 +86,9 @@ test.describe('the library', () => {
     await page.getByTestId('note-title').fill('Kept');
 
     await install(page, 'kjv');
+    // Two presses: a multi-megabyte download is not thrown away by one slip.
+    await page.getByTestId('library-remove-kjv').click();
+    await expect(page.getByTestId('library-remove-kjv')).toContainText('Sure?');
     await page.getByTestId('library-remove-kjv').click();
     await expect(page.getByTestId('library-get-kjv')).toBeVisible();
 
@@ -123,6 +129,9 @@ test.describe('reading two translations at once', () => {
     const first = compare.locator('tbody tr').first();
     await expect(first).toHaveAttribute('data-verse', '1');
     await expect(first.locator('td')).toHaveCount(2);
+    // Each column is read in its own language.
+    await expect(first.locator('td').nth(0)).toHaveAttribute('lang', 'en');
+    await expect(first.locator('td').nth(1)).toHaveAttribute('lang', 'es');
   });
 
   test('a column can be dropped, and the first one cannot', async ({ page }) => {

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { contrastRatio } from '../helpers/contrast';
 
 /**
  * The reading bar — contrast, and what happens when the pane gets small.
@@ -10,21 +11,6 @@ import { expect, test } from '@playwright/test';
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/');
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-}
-
-/** Relative luminance per WCAG, from an `rgb(...)` string. */
-function luminance(rgb: string): number {
-  const [r, g, b] = (rgb.match(/\d+(\.\d+)?/g) ?? ['0', '0', '0']).slice(0, 3).map(Number);
-  const channel = (c: number) => {
-    const v = c / 255;
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-}
-
-function contrastRatio(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
 }
 
 test.describe('contrast', () => {
@@ -45,10 +31,12 @@ test.describe('contrast', () => {
           .soft(colors.background, `${id} (${scheme}) must not be transparent`)
           .not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
 
-        // WCAG AA for normal text.
+        // WCAG AAA for normal text (1.4.6). The tokens are measured in
+        // tests/unit/contrast.test.ts; this proves the browser resolved them
+        // onto the control the reader actually sees.
         expect
           .soft(contrastRatio(colors.color, colors.background), `${id} (${scheme}) contrast`)
-          .toBeGreaterThanOrEqual(4.5);
+          .toBeGreaterThanOrEqual(7);
       }
     });
   }
@@ -67,11 +55,16 @@ test.describe('keeping your place', () => {
     await pane.evaluate((el) => el.scrollTo(0, 4000));
     await expect.poll(() => title.getAttribute('data-stuck')).toBe('true');
 
-    // Still on screen, inside the pane, below the bar — not scrolled away.
+    // Still on screen, inside the pane, parked directly beneath the bar and the
+    // search box — whose heights are measured, not assumed, so the expected
+    // offset is read from the same variables the stylesheet uses.
     const box = (await title.boundingBox())!;
     const paneBox = (await pane.boundingBox())!;
-    expect(box.y).toBeGreaterThanOrEqual(paneBox.y - 1);
-    expect(box.y).toBeLessThan(paneBox.y + 120);
+    const offset = await pane.evaluate(
+      (el) => parseFloat(el.style.getPropertyValue('--bar-h')) + parseFloat(el.style.getPropertyValue('--search-h'))
+    );
+    expect(offset).toBeGreaterThan(60);
+    expect(Math.abs(box.y - (paneBox.y + offset))).toBeLessThan(2);
     await expect(title).toContainText('Psalms 119');
   });
 
@@ -95,7 +88,7 @@ test.describe('the notes dropdown', () => {
       return { color: s.color, background: s.backgroundColor };
     });
     expect(colors.background).not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
-    expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(7);
   });
 });
 
@@ -131,7 +124,7 @@ test.describe('a narrow Bible pane', () => {
     // Nothing is dropped any more: the translation chip opens the library and
     // Marks opens the collections, so both must stay reachable however narrow
     // the pane gets. Only the Marks *word* goes, with its count standing in.
-    for (const id of ['library-open', 'marks-open']) {
+    for (const id of ['library-open', 'marks-open', 'settings-open', 'help-open']) {
       const chip = page.getByTestId('pane-bible').getByTestId(id);
       await expect(chip).toBeVisible();
       const box = (await chip.boundingBox())!;

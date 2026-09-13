@@ -34,13 +34,17 @@ export function DurabilityBanner({
 
   const message =
     persistence === 'denied'
-      ? 'This browser has not granted persistent storage, so your notes could be cleared automatically.'
+      ? 'This browser may delete your notes to free up space. Save a copy.'
       : exportStale
-        ? 'Your notes have not been exported recently.'
+        ? 'You have not exported your notes for a while.'
         : 'Your notes live in this browser only.';
 
   return (
-    <aside className="durability" data-testid="durability" role="status">
+    // A named complementary landmark, not a live region: it is on the page
+    // when the page loads, and a region that is already there is not
+    // announced anyway — while `role="status"` on an <aside> is a role the
+    // element may not take (axe: aria-allowed-role).
+    <aside className="durability" data-testid="durability" aria-label="Where your notes are kept">
       <p className="durability__text">{message}</p>
       <div className="durability__actions">
         {fileSystemAccessSupported() && !mirroring && (
@@ -66,7 +70,7 @@ export function DurabilityBanner({
           type="button"
           className="durability__dismiss"
           onClick={onDismiss}
-          aria-label="Dismiss"
+          aria-label="Dismiss this notice"
         >
           ×
         </button>

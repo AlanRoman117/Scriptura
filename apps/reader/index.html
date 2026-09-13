@@ -2,10 +2,40 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a1a1a" />
+    <!-- interactive-widget=resizes-content: on Android Chrome the layout viewport shrinks for the
+         keyboard, so dvh and innerHeight tell the truth. iOS ignores it; there the visual
+         viewport is published by src/lib/viewport.ts and the stylesheet sizes from that. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf9f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171614" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon-512.svg" />
     <title>Scriptura Reader</title>
+    <!--
+      Display preferences, applied before the first paint.
+
+      The stylesheet loads before the app's module script runs, so without this
+      a reader who pinned a light theme on a dark-mode phone sees dark paper for
+      as long as the bundle takes to start. This is the same logic as
+      src/lib/prefs.ts, kept deliberately small; tests/unit/prefs.test.ts asserts
+      the two agree on the storage key, the attributes and the properties.
+    -->
+    <script>
+      try {
+        var p = JSON.parse(localStorage.getItem('scriptura-display') || '{}') || {};
+        var r = document.documentElement;
+        var themes = { light: '#faf9f7', dark: '#171614', 'hc-light': '#ffffff', 'hc-dark': '#000000', sepia: '#f4ecd8' };
+        var spacing = { normal: ['1.75', '.85rem'], relaxed: ['1.9', '2.85em'], loose: ['2.1', '3.15em'] }[p.spacing] || ['1.75', '.85rem'];
+        var measure = { narrow: '56ch', normal: '64ch', wide: '70ch' }[p.measure] || '64ch';
+        if (themes[p.theme]) r.setAttribute('data-theme', p.theme);
+        if (p.motion === 'reduce') r.setAttribute('data-motion', 'reduce');
+        if (p.markers === true) r.setAttribute('data-markers', 'true');
+        if ([112, 125, 150, 175, 200].indexOf(p.textSize) !== -1) r.style.setProperty('--text-scale', String(p.textSize / 100));
+        r.style.setProperty('--reading-leading', spacing[0]);
+        r.style.setProperty('--verse-gap', spacing[1]);
+        r.style.setProperty('--measure', measure);
+        if (themes[p.theme]) document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = themes[p.theme]; });
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

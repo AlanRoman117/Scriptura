@@ -267,3 +267,56 @@ test.describe('following a link back', () => {
     await expect(page.getByTestId('notes-follow-link')).toContainText('KJV — not downloaded');
   });
 });
+
+test.describe('the suggestions from the keyboard and under a keyboard', () => {
+  test('Enter on a text query opens every match (the way out on a phone)', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('living water');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'living water');
+    await page.getByTestId('search-input').press('Enter');
+    await expect(page.getByTestId('search-results')).toBeVisible();
+    expect(Number(await page.getByTestId('results-total').textContent())).toBeGreaterThan(0);
+  });
+
+  test('Tab reaches the suggestions without closing them; Down arrow jumps in', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('Psalms 23');
+    await expect(page.getByTestId('search-jump')).toContainText('Psalms 23');
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('search-panel')).toBeVisible();
+    await expect(page.getByTestId('search-jump')).toBeFocused();
+
+    await page.getByTestId('search-input').focus();
+    await page.keyboard.press('ArrowDown');
+    await expect(page.getByTestId('search-jump')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('chapter-title')).toContainText('Psalms 23');
+  });
+
+  test('the close button hides them, typing brings them back, and focus stays in the box', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('love');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');
+    await page.getByTestId('search-close').click();
+    await expect(page.getByTestId('search-panel')).toBeHidden();
+    await expect(page.getByTestId('search-input')).toBeFocused();
+    await page.keyboard.type('d');
+    await expect(page.getByTestId('search-panel')).toBeVisible();
+  });
+
+  test('a press outside closes them; the whole-words option does not submit', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('love');
+    await expect(page.getByTestId('search-panel')).toBeVisible();
+    await page.getByTestId('search-whole-word').focus();
+    await page.keyboard.press('Enter');
+    // Still here, still reading John 1: Enter on a checkbox is not a submit.
+    await expect(page.getByTestId('search-panel')).toBeVisible();
+    await expect(page.getByTestId('search-results')).toHaveCount(0);
+    // Somewhere the panel does not cover and no control sits: the empty top
+    // margin of the notes pane, clear of the divider's buttons on its left edge.
+    await page.getByTestId('pane-notes').click({ position: { x: 120, y: 12 } });
+    await expect(page.getByTestId('search-panel')).toBeHidden();
+  });
+});

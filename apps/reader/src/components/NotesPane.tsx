@@ -6,6 +6,7 @@ import { headingAt, linkAt } from '../lib/references';
 import { insertAt, toggleHeading, toggleLineStyle, toggleWrap, type Edit, type LineStyle } from '../lib/mdedit';
 import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
+import { ConfirmButton } from './ConfirmButton';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -64,7 +65,6 @@ export function NotesPane({
 }: NotesPaneProps) {
   const active = notes.find((n) => n.id === activeId) ?? null;
   const surface = useRef<HTMLTextAreaElement>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [heading, setHeading] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
@@ -72,7 +72,6 @@ export function NotesPane({
   /** Where to leave the caret after a toolbar edit, once React has repainted. */
   const caret = useRef<{ start: number; end: number } | null>(null);
 
-  useEffect(() => setConfirmingDelete(false), [activeId]);
   useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
 
   // The heading the cursor sits under, kept in view the way a code editor keeps
@@ -115,7 +114,10 @@ export function NotesPane({
   };
 
   return (
-    <div className="notes" data-testid="notes">
+    <div className="notes" id="notes" tabIndex={-1} data-testid="notes">
+      {/* The pane's own heading, so a note's headings have a parent and the
+          outline reads chapter → notes → the note (2.4.10). */}
+      <h2 className="visually-hidden">Notes</h2>
       <header className="notes__bar">
         <select
           className="notes__select"
@@ -166,14 +168,14 @@ export function NotesPane({
           Export
         </button>
         {active && (
-          <button
-            type="button"
+          // Two presses, announced, with a way back (3.3.6).
+          <ConfirmButton
+            label="Delete"
             className="notes__action notes__action--danger"
             data-testid="note-delete"
-            onClick={() => (confirmingDelete ? onDelete(active.id) : setConfirmingDelete(true))}
-          >
-            {confirmingDelete ? 'Sure?' : 'Delete'}
-          </button>
+            resetKey={active.id}
+            onConfirm={() => onDelete(active.id)}
+          />
         )}
       </header>
 
@@ -187,6 +189,18 @@ export function NotesPane({
             placeholder="Untitled"
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
+          {/* The editing group: the tools, what the caret is under, and the
+              note itself. The tools show while focus is anywhere in it and
+              withdraw when it leaves — for the title, or anything else. That
+              is decided by where focus went, not by a timer: the old 150ms
+              delay made the tools vanish before Tab could reach them. */}
+          <div
+            className="notes__editor"
+            onFocus={() => setFocused(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+            }}
+          >
           {/* Reserved whether or not the tools are showing, so they do not
               shove the text you just clicked on down the pane. */}
           {mode === 'write' && (
@@ -215,7 +229,6 @@ export function NotesPane({
               type="button"
               className="notes__link"
               data-testid="notes-follow-link"
-              title="Open this passage in the Bible pane"
               onClick={() => onFollowLink?.(link)}
             >
               Go to {linkLabel}
@@ -227,6 +240,7 @@ export function NotesPane({
               bible={bible}
               notes={notes}
               boards={boards}
+              describeLink={describeLink}
               onEditAt={editAt}
               onFollowLink={(target) => onFollowLink?.(target)}
               onOpenBoard={(id) => onOpenBoard?.(id)}
@@ -235,6 +249,7 @@ export function NotesPane({
             <>
               <textarea
                 ref={surface}
+                id="notes-surface"
                 className="notes__surface"
                 data-testid="notes-surface"
                 aria-label="Note body"
@@ -245,12 +260,10 @@ export function NotesPane({
                 onKeyUp={trackHeading}
                 onClick={trackHeading}
                 onSelect={trackHeading}
-                onFocus={() => setFocused(true)}
-                // Delayed so a toolbar click lands before the tools withdraw.
-                onBlur={() => window.setTimeout(() => setFocused(false), 150)}
               />
             </>
           )}
+          </div>
         </>
       ) : (
         <div className="notes__empty">

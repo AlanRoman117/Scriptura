@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Bible } from '@scriptura/core/types';
-import { CARD_H, CARD_W, describeNode, type Board } from '../lib/canvas';
+import { cardSize, describeNode, type Board } from '../lib/canvas';
 import type { Note } from '../lib/notes';
 
 interface BoardThumbnailProps {
@@ -67,8 +67,8 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
 
     const left = Math.min(...board.nodes.map((n) => n.x));
     const top = Math.min(...board.nodes.map((n) => n.y));
-    const right = Math.max(...board.nodes.map((n) => n.x + (n.w ?? CARD_W)));
-    const bottom = Math.max(...board.nodes.map((n) => n.y + (n.h ?? CARD_H)));
+    const right = Math.max(...board.nodes.map((n) => n.x + cardSize(n).w));
+    const bottom = Math.max(...board.nodes.map((n) => n.y + cardSize(n).h));
 
     const w = Math.max(right - left, 1);
     const h = Math.max(bottom - top, 1);
@@ -111,15 +111,17 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
     const n = board.nodes.find((node) => node.id === id);
     if (!n || !layout) return null;
     return {
-      x: (n.x - layout.left + (n.w ?? CARD_W) / 2) * layout.scale,
-      y: (n.y - layout.top + (n.h ?? CARD_H) / 2) * layout.scale,
+      x: (n.x - layout.left + cardSize(n).w / 2) * layout.scale,
+      y: (n.y - layout.top + cardSize(n).h / 2) * layout.scale,
     };
   };
 
   return (
     <figure className="embed" data-testid={`board-embed-${board.id}`}>
       {layout ? (
-        <div className="embed__scroll">
+        // Focusable, because a wide board scrolls sideways here and a
+        // scrolling region the keyboard cannot reach cannot be read (2.1.1).
+        <div className="embed__scroll" tabIndex={0} role="group" aria-label={`Board: ${board.name || 'Untitled board'}, scrolls sideways`}>
         <svg
           className="embed__canvas"
           viewBox={`0 0 ${layout.w * layout.scale} ${layout.h * layout.scale}`}
@@ -141,8 +143,8 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
           })}
           {board.nodes.map((n) => {
             const { title } = describeNode(n, { bible, notes });
-            const w = (n.w ?? CARD_W) * layout.scale;
-            const h = (n.h ?? CARD_H) * layout.scale;
+            const w = cardSize(n).w * layout.scale;
+            const h = cardSize(n).h * layout.scale;
             const clip = `embed-clip-${board.id}-${n.id}`;
             return (
               <g key={n.id} transform={`translate(${(n.x - layout.left) * layout.scale}, ${(n.y - layout.top) * layout.scale})`}>

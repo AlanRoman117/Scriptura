@@ -21,6 +21,7 @@ import { ComparePane } from './components/ComparePane';
 import { SearchResults } from './components/SearchResults';
 import { CanvasView } from './components/CanvasView';
 import { SettingsPanel } from './components/SettingsPanel';
+import { HelpPanel } from './components/HelpPanel';
 import { ProposalPreview } from './components/ProposalPreview';
 import {
   configureAgent,
@@ -67,6 +68,10 @@ import {
 } from './lib/search';
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
+import { usePrefs } from './lib/prefs';
+import { useVisualViewport } from './lib/viewport';
+import { announce } from './lib/announce';
+import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -76,6 +81,24 @@ interface Position {
 
 /** Long enough not to write on every keystroke, short enough to lose nothing. */
 const AUTOSAVE_MS = 600;
+/** A search is announced once the typing has paused, not per keystroke. */
+const ANNOUNCE_SEARCH_MS = 400;
+
+/**
+ * Say when a panel opens or closes (4.1.3). The chapter is replaced without
+ * focus moving, so a screen reader would otherwise hear nothing happen.
+ * Skips the first render: nothing has opened yet.
+ */
+function useAnnounceOpen(open: boolean, name: string) {
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    announce(open ? `${name} opened` : `${name} closed`);
+  }, [open, name]);
+}
 
 export function App() {
   const [bible, setBible] = useState<Bible | null>(null);
@@ -87,6 +110,8 @@ export function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  /** The last mark removed from the Marks list, until the next change to any mark. */
+  const [undoMark, setUndoMark] = useState<Highlight | null>(null);
   const [colorLabels, setColorLabels] = useState<ColorLabels>({});
   const [marksOpen, setMarksOpen] = useState(false);
 
@@ -102,6 +127,11 @@ export function App() {
   const [canvasOpen, setCanvasOpen] = useState(false);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  // Device-scoped display preferences; applied to <html> on every change.
+  const [prefs, updatePrefs] = usePrefs();
+  // `--vvh` / `--vv-top`: the viewport the reader sees, keyboard excluded.
+  useVisualViewport();
   const [agentEnabled, setAgentOn] = useState(() => agentIsEnabled());
   /** One at a time: a second would swap the contents under an open preview. */
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -136,6 +166,14 @@ export function App() {
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
 
   const saveTimer = useRef<number | null>(null);
+  /**
+   * Edits waiting out the autosave delay, by note. Keyed per note: a single
+   * pending edit meant that typing in a second note within the delay
+   * cancelled the first note's save, and its last words were never written.
+   */
+  const pendingSaves = useRef(new Map<string, Note>());
+  const notesNow = useRef<Note[]>([]);
+  const mirroringNow = useRef(false);
   const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
   /** Where to leave the cursor after an insertion, applied once React repaints. */
   const caret = useRef<{ at: number; focus: boolean } | null>(null);
@@ -212,6 +250,26 @@ export function App() {
       cancelled = true;
     };
   }, []);
+
+  useAnnounceOpen(marksOpen, 'Marks');
+  useAnnounceOpen(libraryOpen, 'Translations');
+  useAnnounceOpen(settingsOpen, 'Settings');
+  useAnnounceOpen(helpOpen, 'Help');
+  useAnnounceOpen(resultsOpen, 'Search results');
+
+  // The count under the search box changes silently; say it once the typing
+  // pauses. The true total, not the dropdown's slice.
+  useEffect(() => {
+    if (!hitsQuery) return;
+    const t = window.setTimeout(() => {
+      announce(
+        hits.length === 0
+          ? `No matches for “${hitsQuery}”`
+          : `${hits.length} ${hits.length === 1 ? 'match' : 'matches'} for “${hitsQuery}”`
+      );
+    }, ANNOUNCE_SEARCH_MS);
+    return () => window.clearTimeout(t);
+  }, [hits, hitsQuery]);
 
   useEffect(() => {
     if (!bible || !query.trim()) {
@@ -321,6 +379,68 @@ export function App() {
     console.warn(`Could not read "${store}" — continuing without it:`, err);
   };
 
+  // The title says where you are (2.4.2, 2.4.8): passage and translation while
+  // reading, the panel's name while one covers the text, the board in canvas.
+  useEffect(() => {
+    const where = canvasOpen
+      ? `${boards.find((b) => b.id === boardId)?.name || 'Untitled board'} · Boards`
+      : marksOpen
+        ? 'Marks'
+        : libraryOpen
+          ? 'Translations'
+          : settingsOpen
+            ? 'Settings'
+            : helpOpen
+              ? 'Help'
+            : resultsOpen
+              ? 'Search results'
+              : bible
+                ? `${(bible.book(position.bookSlug) ?? bible.books[0]).name} ${position.chapter} · ${bible.meta.id.toUpperCase()}`
+                : null;
+    document.title = where ? `${where} · Scriptura` : 'Scriptura Reader';
+  }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
+
+  notesNow.current = notes;
+  mirroringNow.current = isMirroring;
+
+  /** Write every pending edit now. The autosave timer calls it; so does anything about to end the page. */
+  const flushSaves = useCallback(async () => {
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const batch = [...pendingSaves.current.values()];
+    pendingSaves.current.clear();
+    if (batch.length === 0) return;
+    const results = await Promise.all(
+      batch.map((note) =>
+        saveNote(note, (_store, err) => {
+          // Warned once per store by writeSafely — a quota failure repeats on
+          // every keystroke, and a toast per keystroke trains people to
+          // dismiss the one message that matters.
+          console.error('Saving notes failed:', err);
+        })
+      )
+    );
+    const ok = results.every(Boolean);
+    setSaving(ok ? 'saved' : 'failed');
+    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current);
+  }, []);
+
+  // The update notice flushes before it reloads; a phone putting the tab in
+  // the background, where the system may discard it, flushes too.
+  useEffect(() => {
+    setPendingFlush(flushSaves);
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') void flushSaves();
+    };
+    document.addEventListener('visibilitychange', onHidden);
+    return () => {
+      setPendingFlush(null);
+      document.removeEventListener('visibilitychange', onHidden);
+    };
+  }, [flushSaves]);
+
   const changeNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => {
       setSaving('saving');
@@ -329,25 +449,15 @@ export function App() {
           n.id === id ? { ...n, ...patch, updated: Date.now() } : n
         );
         const edited = next.find((n) => n.id === id);
+        if (edited) pendingSaves.current.set(id, edited);
 
         if (saveTimer.current) window.clearTimeout(saveTimer.current);
-        saveTimer.current = window.setTimeout(() => {
-          if (!edited) return;
-          void saveNote(edited, (_store, err) => {
-            // Warned once per store by writeSafely — a quota failure repeats on
-            // every keystroke, and a toast per keystroke trains people to
-            // dismiss the one message that matters.
-            console.error('Saving notes failed:', err);
-          }).then((ok) => {
-            setSaving(ok ? 'saved' : 'failed');
-            if (ok && isMirroring) void mirrorNotes(next);
-          });
-        }, AUTOSAVE_MS);
+        saveTimer.current = window.setTimeout(() => void flushSaves(), AUTOSAVE_MS);
 
         return next;
       });
     },
-    [isMirroring]
+    [flushSaves]
   );
 
   const createNote = useCallback(() => {
@@ -456,7 +566,11 @@ export function App() {
 
   const changeBoard = useCallback((board: Board) => {
     setBoards((current) => current.map((b) => (b.id === board.id ? board : b)));
-    void saveBoard(board, (_store, err) => console.error('Saving the board failed:', err));
+    void saveBoard(board, (_store, err) => {
+      console.error('Saving the board failed:', err);
+      // The notes footer says this for notes; boards had no voice at all.
+      announce('Could not save the board — export your notes', { assertive: true });
+    });
   }, []);
 
   const createBoard = useCallback(() => {
@@ -550,6 +664,7 @@ export function App() {
   const highlight = useCallback(
     (verse: number, color: HighlightColor) => {
       if (!bible) return;
+      setUndoMark(null);
       void toggleHighlight(
         {
           // Kept as provenance. The mark itself is keyed on the passage, so a
@@ -580,6 +695,7 @@ export function App() {
           setBible(loaded);
           setTranslationId(id);
           setLibraryOpen(false);
+          announce(`Reading ${loaded.meta.name}`);
           // Reading it and comparing against it are the same column, so drop
           // the duplicate rather than showing the text twice.
           setCompareWith((current) => {
@@ -593,36 +709,45 @@ export function App() {
     []
   );
 
+  /** The last quarter announced per download, so progress is said four times, not four hundred. */
+  const announcedQuarter = useRef<Record<string, number>>({});
+
   const download = useCallback(
     (id: string) => {
-      const approx = catalog.find((t) => t.id === id)?.approxBytes;
+      const entry = catalog.find((t) => t.id === id);
+      const approx = entry?.approxBytes;
+      const name = entry?.name ?? id.toUpperCase();
+      announcedQuarter.current[id] = 0;
       setDownloads((d) => ({ ...d, [id]: { received: 0, total: approx ?? 0 } }));
 
       void downloadTranslation(
         id,
-        (received, total) => setDownloads((d) => ({ ...d, [id]: { received, total } })),
+        (received, total) => {
+          setDownloads((d) => ({ ...d, [id]: { received, total } }));
+          const quarter = total > 0 ? Math.floor(Math.min(received / total, 0.99) * 4) : 0;
+          if (quarter > (announcedQuarter.current[id] ?? 0)) {
+            announcedQuarter.current[id] = quarter;
+            announce(`${name}: ${quarter * 25}% downloaded`);
+          }
+        },
         approx
       )
         .then(() => {
           setDownloads(({ [id]: _done, ...rest }) => rest);
+          announce(`${name} downloaded`);
           refreshLocal();
         })
         .catch((e: unknown) => {
           // Kept on the row rather than thrown: one failed download must not
           // take down a library the rest of which is perfectly usable, and
           // "you are offline" is the likeliest cause.
-          setDownloads((d) => ({
-            ...d,
-            [id]: {
-              received: 0,
-              total: 0,
-              error: navigator.onLine
-                ? e instanceof Error
-                  ? e.message
-                  : String(e)
-                : 'No connection — try again when you are online.',
-            },
-          }));
+          const error = navigator.onLine
+            ? e instanceof Error
+              ? e.message
+              : String(e)
+            : 'No connection — try again when you are online.';
+          setDownloads((d) => ({ ...d, [id]: { received: 0, total: 0, error } }));
+          announce(`${name}: ${error}`, { assertive: true });
         });
     },
     [catalog, refreshLocal]
@@ -666,10 +791,27 @@ export function App() {
     });
   }, []);
 
-  const unmark = useCallback((id: string) => {
-    void deleteHighlight(id);
-    setHighlights((current) => current.filter((h) => h.id !== id));
-  }, []);
+  const unmark = useCallback(
+    (id: string) => {
+      const removed = highlights.find((h) => h.id === id) ?? null;
+      void deleteHighlight(id);
+      setHighlights((current) => current.filter((h) => h.id !== id));
+      // Reversible, not timed: the offer stands until the next change (2.2.3, 3.3.6).
+      setUndoMark(removed);
+      if (removed) announce('Mark removed. Undo is available in the Marks bar.');
+    },
+    [highlights]
+  );
+
+  const undoUnmark = useCallback(() => {
+    if (!undoMark) return;
+    const { id: _id, color, created: _created, ...anchor } = undoMark;
+    void toggleHighlight(anchor, color, highlights).then((next) => {
+      setHighlights(next);
+      setUndoMark(null);
+      announce('Mark restored');
+    });
+  }, [undoMark, highlights]);
 
   /** The active translation first, then each comparison that has loaded. */
   const comparing = bible
@@ -773,6 +915,7 @@ export function App() {
         <CanvasView
           bible={bible}
           notes={notes}
+          labels={colorLabels}
           boards={boards}
           activeId={boardId}
           onSelect={setBoardId}
@@ -780,6 +923,10 @@ export function App() {
           onDelete={deleteBoard}
           onChange={changeBoard}
           onClose={() => setCanvasOpen(false)}
+          onHelp={() => {
+            setCanvasOpen(false);
+            setHelpOpen(true);
+          }}
           onGo={(bookSlug, chapter, verse) => {
             goTo(bookSlug, chapter, verse);
             setCanvasOpen(false);
@@ -796,6 +943,15 @@ export function App() {
   return (
     <>
       {staged}
+      {/* First in the document (2.4.1): a keyboard user reaches the text or the
+          notes in one press instead of tabbing through the bar and the search
+          box — and, in Psalm 119, 176 verse numbers. */}
+      <a className="skip" href="#scripture" data-testid="skip-scripture">
+        Skip to scripture
+      </a>
+      <a className="skip" href="#notes" data-testid="skip-notes">
+        Skip to notes
+      </a>
       {!bannerDismissed && (
         <DurabilityBanner
           persistence={persistence}
@@ -812,6 +968,7 @@ export function App() {
             bible={bible}
             book={book}
             chapter={position.chapter}
+            labels={colorLabels}
             highlights={highlights}
             focusVerse={focusVerse}
             onNavigate={(bookSlug, chapter) => {
@@ -828,6 +985,7 @@ export function App() {
               setLibraryOpen(false);
               setResultsOpen(false);
               setSettingsOpen(false);
+              setHelpOpen(false);
               setMarksOpen((o) => !o);
             }}
             libraryOpen={libraryOpen}
@@ -835,6 +993,7 @@ export function App() {
               setMarksOpen(false);
               setResultsOpen(false);
               setSettingsOpen(false);
+              setHelpOpen(false);
               setLibraryOpen((o) => !o);
             }}
             settingsOpen={settingsOpen}
@@ -842,10 +1001,21 @@ export function App() {
               setMarksOpen(false);
               setResultsOpen(false);
               setLibraryOpen(false);
+              setHelpOpen(false);
               setSettingsOpen((o) => !o);
             }}
+            helpOpen={helpOpen}
+            onToggleHelp={() => {
+              setMarksOpen(false);
+              setResultsOpen(false);
+              setLibraryOpen(false);
+              setSettingsOpen(false);
+              setHelpOpen((o) => !o);
+            }}
             overlay={
-              marksOpen ? (
+              helpOpen ? (
+                <HelpPanel catalog={catalog} onClose={() => setHelpOpen(false)} />
+              ) : marksOpen ? (
                 <MarksPanel
                   bible={bible}
                   highlights={highlights}
@@ -856,6 +1026,7 @@ export function App() {
                     setMarksOpen(false);
                   }}
                   onRemove={unmark}
+                  onUndo={undoMark ? undoUnmark : null}
                   onClose={() => setMarksOpen(false)}
                 />
               ) : resultsOpen ? (
@@ -886,6 +1057,12 @@ export function App() {
                   onChooseFolder={doChooseFolder}
                   onExport={doExport}
                   onClose={() => setSettingsOpen(false)}
+                  onHelp={() => {
+                    setSettingsOpen(false);
+                    setHelpOpen(true);
+                  }}
+                  prefs={prefs}
+                  onPrefs={updatePrefs}
                 />
               ) : libraryOpen ? (
                 <LibraryPanel
@@ -917,6 +1094,7 @@ export function App() {
             search={
               <SearchBar
                 query={query}
+                lang={bible.meta.language}
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}
@@ -926,10 +1104,11 @@ export function App() {
                 onQuery={setQuery}
                 onGo={goTo}
                 onInsert={insertSearchResult}
-                onClose={() => setQuery('')}
                 onSeeAll={() => {
                   setMarksOpen(false);
                   setLibraryOpen(false);
+                  setSettingsOpen(false);
+                  setHelpOpen(false);
                   setResultsOpen(true);
                 }}
               />

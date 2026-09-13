@@ -276,6 +276,9 @@ scriptura/
 │   ├── validate/                # Schema & integrity checks
 │   └── api/                     # REST + GraphQL handlers
 │
+├── apps/
+│   └── reader/                  # Local-first reading and notes PWA — touch and WCAG 2.2 AAA
+│
 ├── scripts/
 │   ├── ingest.py                # Download & normalize source data
 │   ├── validate.py              # Run integrity checks on all translations
@@ -292,7 +295,10 @@ scriptura/
 │   ├── API.md
 │   ├── usage-examples.md
 │   ├── contributing.md
-│   └── translations-status.md   # License verification log
+│   ├── translations-status.md   # License verification log
+│   └── plans/                   # Work programmes: plan, conformance matrix, briefs
+│
+├── AGENTS.md                    # Rules for automated contributors (CLAUDE.md is the authority)
 │
 └── package.json                 # npm workspaces root
 ```
@@ -382,8 +388,8 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 49, incl. integration coverage of every route |
-| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages) |
+| Tests | 329 jest, and 300 Playwright: 47 HTTP contract, 192 reader in Desktop Chrome, 59 reader on an emulated phone, 2 dev server |
+| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
@@ -403,9 +409,10 @@ the dynamic `/search` and `/compare` paths) is specified in
 | **v1.1** | GraphQL layer + additional translations |
 | **v2.0** | `@scriptura/compare` — multi-translation diff (study Bible foundation) |
 | **v2.1** | Cross-reference data (via Open Scriptures) |
-| **v3.0** | Annotation layer — personal notes and highlights per verse |
+| **v3.0** | Annotation layer — personal notes and highlights per verse ✅ (in the reader) |
 | **v3.1** | Public domain commentary integration (via CCEL) |
-| **v4.0** | Study Bible UI — React app consuming all packages |
+| **v4.0** | Study Bible UI — React app consuming all packages ✅ (`apps/reader`) |
+| **v4.1** | Reader usable by touch, conformant with WCAG 2.2 AAA ✅ — device and screen-reader checks planned |
 
 ---
 

@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
-import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
+import { prefersReducedMotion } from '../lib/prefs';
+import { useDismissable, useReturnFocus } from '../lib/focus';
+import {
+  HIGHLIGHT_GLYPHS,
+  colorLabel,
+  highlightId,
+  type ColorLabels,
+  type Highlight,
+  type HighlightColor,
+} from '../lib/notes';
+import { VerseActions } from './VerseActions';
 
 interface BiblePaneProps {
   bible: Bible;
   book: LoadedBook;
   chapter: number;
   highlights: Highlight[];
+  /** What the reader calls each colour; a mark's name says its collection. */
+  labels?: ColorLabels;
   onNavigate: (bookSlug: string, chapter: number) => void;
   onHighlight: (verse: number, color: HighlightColor) => void;
   onQuote: (verse: number) => void;
@@ -26,6 +38,8 @@ interface BiblePaneProps {
   onToggleLibrary?: () => void;
   settingsOpen?: boolean;
   onToggleSettings?: () => void;
+  helpOpen?: boolean;
+  onToggleHelp?: () => void;
 }
 
 export function BiblePane({
@@ -33,6 +47,7 @@ export function BiblePane({
   book,
   chapter,
   highlights,
+  labels = {},
   onNavigate,
   onHighlight,
   onQuote,
@@ -49,25 +64,70 @@ export function BiblePane({
   onToggleLibrary,
   settingsOpen = false,
   onToggleSettings,
+  helpOpen = false,
+  onToggleHelp,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
+  /** Whether the actions were opened from the verse number, which moves focus into them. */
+  const [fromNumber, setFromNumber] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
+  const reader = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLElement>(null);
   const [stuck, setStuck] = useState(false);
+
+  // The sticky offsets used to be constants (3.1rem for the bar, 2.9rem for
+  // the search box). 44px controls and a text-size preference make both
+  // wrong, so the heights are measured and written onto the scrolling pane,
+  // where the stylesheet reads them for the sticky title, the search box and
+  // the scroll padding that keeps a focused verse clear of them (2.4.11).
+  //
+  // `--pane-top` is where the pane starts in the viewport. Anything above it —
+  // the durability notice, today — pushes the search suggestions down, and the
+  // room they have above the software keyboard is measured from the top of
+  // the screen, not from the top of the pane. The pane's own size changes when
+  // that notice comes or goes, so observing the pane catches it.
+  useEffect(() => {
+    const node = reader.current;
+    const barEl = bar.current;
+    if (!node || !barEl) return;
+    const target = node.closest<HTMLElement>('.pane') ?? node;
+    const searchEl = node.querySelector<HTMLElement>('.search');
+    const write = () => {
+      target.style.setProperty('--bar-h', `${barEl.offsetHeight}px`);
+      target.style.setProperty('--search-h', `${searchEl?.offsetHeight ?? 0}px`);
+      target.style.setProperty('--pane-top', `${Math.max(0, Math.round(target.getBoundingClientRect().top))}px`);
+    };
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(barEl);
+    observer.observe(target);
+    if (searchEl) observer.observe(searchEl);
+    window.addEventListener('resize', write);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', write);
+    };
+  }, [search]);
+  /** The verse whose actions are open — the whole <p>, so a press on it is not "outside". */
+  const openVerseEl = useRef<HTMLParagraphElement | null>(null);
 
   // Swatches left open on a verse you have navigated away from are stale.
   useEffect(() => setOpenVerse(null), [book.slug, chapter]);
 
-  // Escape closes them, like any other transient surface.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenVerse(null);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  // Escape closes them — only them, if something opened later is on top — and
+  // so does a press anywhere outside the verse. Focus goes back to where it
+  // was, or, when that was a control inside the row that has just gone, to the
+  // verse number the row belonged to (2.4.3).
+  useDismissable(openVerse !== null, () => setOpenVerse(null), openVerseEl, { ignore: '.verse' });
+  useReturnFocus(openVerse !== null, openVerse !== null ? `[data-testid="verse-${openVerse}"]` : undefined);
 
   useEffect(() => {
     if (focusVerse == null) return;
     const el = document.querySelector(`.verse[data-verse="${focusVerse}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // The stylesheet cannot reach a scroll the script starts, so the motion
+    // preference is asked here (2.3.3). The flash class stays: under reduced
+    // motion the CSS draws it as a still outline rather than an animation.
+    el?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     el?.classList.add('verse--flash');
     const t = window.setTimeout(() => el?.classList.remove('verse--flash'), 1600);
     return () => window.clearTimeout(t);
@@ -99,44 +159,52 @@ export function BiblePane({
   const meta = bible.meta;
 
   return (
-    <div className="reader">
-      <header className="reader__bar">
-        <select
-          className="reader__select"
-          aria-label="Book"
-          data-testid="book-select"
-          value={book.slug}
-          onChange={(e) => onNavigate(e.target.value, 1)}
-        >
-          {bible.books.map((b) => (
-            <option key={b.slug} value={b.slug}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className="reader__select reader__select--chapter"
-          aria-label="Chapter"
-          data-testid="chapter-select"
-          value={chapter}
-          onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
-        >
-          {book.chapters.map((c) => (
-            <option key={c.number} value={c.number}>
-              {c.number}
-            </option>
-          ))}
-        </select>
+    <div className="reader" ref={reader}>
+      <header className="reader__bar" ref={bar}>
+        {/* A landmark of its own: "where am I, and how do I move" is the first
+            thing a screen reader user looks for (2.4.8). */}
+        <nav className="reader__nav" aria-label="Passage">
+          <select
+            className="reader__select"
+            aria-label="Book"
+            data-testid="book-select"
+            value={book.slug}
+            onChange={(e) => onNavigate(e.target.value, 1)}
+          >
+            {bible.books.map((b) => (
+              <option key={b.slug} value={b.slug}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="reader__select reader__select--chapter"
+            aria-label="Chapter"
+            data-testid="chapter-select"
+            value={chapter}
+            onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
+          >
+            {book.chapters.map((c) => (
+              <option key={c.number} value={c.number}>
+                {c.number}
+              </option>
+            ))}
+          </select>
+        </nav>
         {/* The translation badge used to be decoration, and was the first thing
             dropped when the bar ran out of room. It is a control now — the way
             in to the library — so nothing here is dropped; only the Marks label
             is, and its count stands in for it. */}
+        {/* Disclosures, not toggles: each opens a panel, so aria-expanded and
+            aria-controls say so (4.1.2). The name starts with the visible text
+            (2.5.3) and then says what the abbreviation stands for (3.1.4). */}
         <button
           type="button"
           className="reader__chip reader__chip--translation"
           data-testid="library-open"
-          aria-pressed={libraryOpen}
-          title={`${meta.name} — choose or add a translation`}
+          aria-expanded={libraryOpen}
+          aria-controls="library-panel"
+          aria-label={`${meta.id.toUpperCase()} — ${meta.name}. Choose or add a translation`}
           onClick={onToggleLibrary}
         >
           {meta.id.toUpperCase()}
@@ -145,9 +213,9 @@ export function BiblePane({
           type="button"
           className="reader__chip"
           data-testid="marks-open"
-          aria-pressed={marksOpen}
-          aria-label={`Marks (${markCount})`}
-          title="Verses you have marked, by colour"
+          aria-expanded={marksOpen}
+          aria-controls="marks-panel"
+          aria-label={`Marks (${markCount}) — verses you have marked, by colour`}
           onClick={onToggleMarks}
         >
           <span className="reader__chip-label">Marks</span>
@@ -159,12 +227,24 @@ export function BiblePane({
           type="button"
           className="reader__chip reader__chip--icon"
           data-testid="settings-open"
-          aria-pressed={settingsOpen}
-          aria-label="Settings"
-          title="Storage, export, and assistant access"
+          aria-expanded={settingsOpen}
+          aria-controls="settings-panel"
+          aria-label="Settings — display, storage, export, and assistant access"
           onClick={onToggleSettings}
         >
           ⚙
+        </button>
+        {/* Help lives here in every state (3.2.6), last in the bar. */}
+        <button
+          type="button"
+          className="reader__chip reader__chip--icon"
+          data-testid="help-open"
+          aria-expanded={helpOpen}
+          aria-controls="help-panel"
+          aria-label="Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean"
+          onClick={onToggleHelp}
+        >
+          ?
         </button>
       </header>
 
@@ -174,6 +254,8 @@ export function BiblePane({
 
       <article
         className={compare ? 'chapter chapter--compare' : 'chapter'}
+        id="scripture"
+        tabIndex={-1}
         data-testid="chapter"
         hidden={!!overlay}
       >
@@ -183,7 +265,10 @@ export function BiblePane({
         {compare ? (
           compare
         ) : current ? (
-          <div className="chapter__text">
+          // The translation's language, so a screen reader switches voice for
+          // Spanish, French or Japanese scripture instead of reading it with
+          // English phonemes (3.1.2).
+          <div className="chapter__text" lang={meta.language}>
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
@@ -192,6 +277,7 @@ export function BiblePane({
                 <p
                   className="verse"
                   key={v.number}
+                  ref={open ? openVerseEl : undefined}
                   data-verse={v.number}
                   data-highlight={mark?.color ?? undefined}
                   data-open={open || undefined}
@@ -202,9 +288,18 @@ export function BiblePane({
                     // …but a drag that selected text is not a click on the
                     // verse. Reading and copying must not trip the swatches.
                     if (!window.getSelection()?.isCollapsed) return;
+                    setFromNumber(false);
                     setOpenVerse(open ? null : v.number);
                   }}
                 >
+                  {/* A shape as well as a colour, when the reader asks for it
+                      (1.4.1). Hidden from assistive technology: the number's
+                      name already says the collection in words. */}
+                  {mark && (
+                    <span className="verse__marker" data-color={mark.color} aria-hidden="true">
+                      {HIGHLIGHT_GLYPHS[mark.color]}
+                    </span>
+                  )}
                   {/* The verse number is the keyboard path to the same action.
                       Tabbing 176 verses of Psalm 119 is no worse than before —
                       but it is now a control that was already on the page,
@@ -213,10 +308,17 @@ export function BiblePane({
                     type="button"
                     className="verse__num"
                     data-testid={`verse-${v.number}`}
-                    aria-label={`Mark ${book.name} ${chapter}:${v.number}`}
+                    // The collection is in the name, so which colour a verse
+                    // is in does not depend on seeing the colour (1.4.1).
+                    aria-label={
+                      mark
+                        ? `Mark ${book.name} ${chapter}:${v.number} — in ${colorLabel(mark.color, labels)} (${mark.color})`
+                        : `Mark ${book.name} ${chapter}:${v.number}`
+                    }
                     aria-expanded={open}
                     onClick={(e) => {
                       e.stopPropagation();
+                      setFromNumber(true);
                       setOpenVerse(open ? null : v.number);
                     }}
                   >
@@ -225,67 +327,34 @@ export function BiblePane({
                   <span className="verse__text">{v.text}</span>
 
                   {open && (
-                    <span
-                      className="swatches"
-                      role="group"
-                      aria-label={`Actions for verse ${v.number}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {HIGHLIGHT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className="swatch"
-                          data-color={color}
-                          data-testid={`swatch-${color}`}
-                          aria-label={`Highlight ${color}`}
-                          aria-pressed={mark?.color === color}
-                          onClick={() => {
-                            onHighlight(v.number, color);
-                            setOpenVerse(null);
-                          }}
-                        />
-                      ))}
-                      <span className="swatches__rule" aria-hidden="true" />
-                      <button
-                        type="button"
-                        className="swatches__action"
-                        data-testid={`quote-${v.number}`}
-                        title="Add to note"
-                        onClick={() => {
-                          onQuote(v.number);
-                          setOpenVerse(null);
-                        }}
-                      >
-                        Quote
-                      </button>
-                      <button
-                        type="button"
-                        className="swatches__action"
-                        data-testid={`link-${v.number}`}
-                        title="Insert a link into the note"
-                        onClick={() => {
-                          onLink(v.number);
-                          setOpenVerse(null);
-                        }}
-                      >
-                        Link
-                      </button>
-                      {onSendToCanvas && (
-                        <button
-                          type="button"
-                          className="swatches__action"
-                          data-testid={`canvas-${v.number}`}
-                          title="Put this verse on the board"
-                          onClick={() => {
-                            onSendToCanvas(v.number);
-                            setOpenVerse(null);
-                          }}
-                        >
-                          Canvas
-                        </button>
-                      )}
-                    </span>
+                    <VerseActions
+                      reference={`${book.name} ${chapter}:${v.number}`}
+                      verse={v.number}
+                      current={mark?.color}
+                      labels={labels}
+                      focusOnOpen={fromNumber}
+                      onHighlight={(color) => {
+                        onHighlight(v.number, color);
+                        setOpenVerse(null);
+                      }}
+                      onQuote={() => {
+                        onQuote(v.number);
+                        setOpenVerse(null);
+                      }}
+                      onLink={() => {
+                        onLink(v.number);
+                        setOpenVerse(null);
+                      }}
+                      onSendToCanvas={
+                        onSendToCanvas
+                          ? () => {
+                              onSendToCanvas(v.number);
+                              setOpenVerse(null);
+                            }
+                          : undefined
+                      }
+                      onClose={() => setOpenVerse(null)}
+                    />
                   )}
                 </p>
               );
@@ -301,8 +370,9 @@ export function BiblePane({
       {requiresAttribution(meta) && (
         <footer className="attribution" data-testid="attribution">
           {meta.attribution} ·{' '}
+          {/* The link's own text says whose source (2.4.9). */}
           <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            source
+            {meta.name} source
           </a>
         </footer>
       )}

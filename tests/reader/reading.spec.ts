@@ -67,3 +67,41 @@ test('a public-domain translation shows no attribution notice', async ({ page })
   // so it must not appear where it is not owed.
   await expect(page.getByTestId('attribution')).toHaveCount(0);
 });
+
+test('the page title says where you are (2.4.2, 2.4.8)', async ({ page }) => {
+  await expect(page).toHaveTitle('John 1 · BSB · Scriptura');
+  await page.getByTestId('book-select').selectOption('genesis');
+  await page.getByTestId('chapter-select').selectOption('3');
+  await expect(page).toHaveTitle('Genesis 3 · BSB · Scriptura');
+  await page.getByTestId('marks-open').click();
+  await expect(page).toHaveTitle('Marks · Scriptura');
+});
+
+test('the first Tab offers to skip to the scripture (2.4.1)', async ({ page }) => {
+  await page.keyboard.press('Tab');
+  const skip = page.getByTestId('skip-scripture');
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeVisible();
+  await page.keyboard.press('Enter');
+  // Focus lands in the main landmark, past the bar and the search box.
+  const landed = await page.evaluate(() => !!document.activeElement?.closest('main'));
+  expect(landed).toBe(true);
+});
+
+test('the divider answers Home, End and words, and resizes without a drag (2.5.7)', async ({ page }) => {
+  const divider = page.getByTestId('divider');
+  await divider.focus();
+  await page.keyboard.press('Home');
+  await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemin') ?? '');
+  await page.keyboard.press('End');
+  await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemax') ?? '');
+  await expect(divider).toHaveAttribute('aria-valuetext', /\d+% Bible, \d+% notes/);
+
+  // Two presses of a button move it as far as five arrow presses would.
+  const before = (await page.getByTestId('pane-bible').boundingBox())!.width;
+  await page.getByTestId('divider-narrower').click();
+  const after = (await page.getByTestId('pane-bible').boundingBox())!.width;
+  expect(after).toBeLessThan(before);
+  await page.getByTestId('divider-wider').click();
+  expect((await page.getByTestId('pane-bible').boundingBox())!.width).toBeGreaterThan(after);
+});
