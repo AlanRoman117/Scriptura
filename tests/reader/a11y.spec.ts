@@ -123,6 +123,14 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('library-compare-rv1909').click();
     await expect(page.getByTestId('compare')).toBeVisible();
   },
+  board: async (page) => {
+    for (const verse of [1, 3]) {
+      await page.getByTestId(`verse-${verse}`).click();
+      await page.getByTestId(`canvas-${verse}`).click();
+    }
+    await page.getByTestId('canvas-open').click();
+    await expect(page.locator('.card')).toHaveCount(2);
+  },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');

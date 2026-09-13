@@ -255,3 +255,119 @@ test.describe('getting around the board', () => {
     await expect(page.getByTestId(`card-title-${verseId}`)).toHaveCount(0);
   });
 });
+
+test.describe('the board without a mouse, and without dragging (2.1.1, 2.5.7)', () => {
+  const firstCardId = (page: import('@playwright/test').Page) =>
+    page.locator('.card').first().evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
+
+  test('a card takes focus; the arrow keys move it and Alt with an arrow resizes it', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const card = page.locator('.card').first();
+    await expect(card).toHaveAccessibleName(/Verse card: John 1:1/);
+
+    await card.focus();
+    const before = (await card.boundingBox())!;
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Shift+ArrowDown');
+    const moved = (await card.boundingBox())!;
+    expect(Math.round(moved.x - before.x)).toBe(30);
+    expect(Math.round(moved.y - before.y)).toBe(50);
+
+    // Alt+Right is the browser's "forward" outside a page that claims it; the
+    // board claims it, so the reader stays on the board.
+    await page.keyboard.press('Alt+ArrowRight');
+    await page.keyboard.press('Alt+ArrowDown');
+    const resized = (await card.boundingBox())!;
+    expect(Math.round(resized.width - moved.width)).toBe(10);
+    expect(Math.round(resized.height - moved.height)).toBe(10);
+    await expect(page.getByTestId('canvas')).toBeVisible();
+    await expect(page.getByTestId('announcer')).toContainText(/John 1:1.*wide/);
+  });
+
+  test('a single pointer moves and resizes a card with buttons', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const id = await firstCardId(page);
+    const card = page.getByTestId(`card-${id}`);
+    const before = (await card.boundingBox())!;
+
+    await page.getByTestId(`card-adjust-${id}`).click();
+    const panel = page.getByTestId('card-panel');
+    await expect(panel).toBeVisible();
+    await expect(page.getByTestId('adjust-left')).toBeFocused();
+    await page.getByTestId('adjust-right').click();
+    await page.getByTestId('adjust-right').click();
+    await page.getByTestId('adjust-down').click();
+    await page.getByTestId('adjust-wider').click();
+    const after = (await card.boundingBox())!;
+    expect(Math.round(after.x - before.x)).toBe(40);
+    expect(Math.round(after.y - before.y)).toBe(20);
+    expect(Math.round(after.width - before.width)).toBe(20);
+
+    // Done closes it and gives focus back to the button that opened it.
+    await page.getByTestId('card-panel-close').click();
+    await expect(panel).toHaveCount(0);
+    await expect(page.getByTestId(`card-adjust-${id}`)).toBeFocused();
+
+    // The size never goes below what the card's own controls need.
+    await page.getByTestId(`card-adjust-${id}`).click();
+    for (let i = 0; i < 12; i++) await page.getByTestId('adjust-narrower').click();
+    expect((await card.boundingBox())!.width).toBeGreaterThanOrEqual(272);
+    await page.keyboard.press('Escape');
+    await expect(panel).toHaveCount(0);
+  });
+
+  test('the view moves with buttons, and with the arrow keys on the board itself', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const card = page.locator('.card').first();
+    const start = (await card.boundingBox())!;
+
+    // "Move the view right" shows what is to the right, so the card moves left.
+    await page.getByTestId('pan-right').click();
+    expect(Math.round((await card.boundingBox())!.x - start.x)).toBe(-80);
+    await page.getByTestId('pan-down').click();
+    expect(Math.round((await card.boundingBox())!.y - start.y)).toBe(-80);
+
+    const frame = page.locator('.canvas__frame');
+    await frame.focus();
+    await page.keyboard.press('ArrowLeft');
+    expect(Math.round((await card.boundingBox())!.x - start.x)).toBe(-40);
+    await page.keyboard.press('+');
+    await expect(page.getByTestId('zoom-reset')).toHaveText('120%');
+    await page.keyboard.press('-');
+    await expect(page.getByTestId('zoom-reset')).toHaveText('100%');
+  });
+
+  test('a card is coloured from a panel, and its colour is named in words', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const id = await firstCardId(page);
+    await page.getByTestId(`card-colour-${id}`).click();
+    await expect(page.getByTestId('card-swatch-none')).toHaveAttribute('aria-pressed', 'true');
+    await page.getByTestId('card-swatch-rose').click();
+
+    const card = page.getByTestId(`card-${id}`);
+    await expect(card).toHaveAttribute('data-color', 'rose');
+    await expect(card).toHaveAccessibleName(/Rose \(rose\)/);
+    await expect(page.getByTestId(`card-colour-${id}`)).toHaveAccessibleName(/Colour: Rose \(rose\)/);
+
+    await page.getByTestId('card-swatch-none').click();
+    await expect(card).not.toHaveAttribute('data-color', /./);
+  });
+
+  test('a connection is made from the keyboard', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const ids = await page.locator('.card').evaluateAll((cards) =>
+      cards.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''))
+    );
+    await page.getByTestId(`card-connect-${ids[0]}`).focus();
+    await page.keyboard.press('Enter');
+    await page.getByTestId(`card-${ids[1]}`).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.canvas__edges line')).toHaveCount(1);
+    await expect(page.getByTestId('announcer')).toContainText(/Connected John 1:1 .* to John 1:3/);
+  });
+});

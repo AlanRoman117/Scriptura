@@ -82,10 +82,25 @@ export function newBoard(name = 'Untitled board'): Board {
  * Fixed rather than measured: an edge is then drawn centre-to-centre without
  * reading the DOM on every drag frame, and `freeSlot` can reason about overlap
  * without knowing anything about rendering.
+ *
+ * 280 × 180 since every card control became a 44px target (2.5.5): a verse
+ * card's footer holds connect, open, colour, move and remove beside a 44px
+ * resize corner, which is 264px before any gap. The floors are what that
+ * footer and a 44px header need, so resizing can never push the remove button
+ * out of the card. Boards laid out on the old 244px grid overlap by a margin
+ * until a card is moved; positions are the reader's, and are not rewritten.
  */
-export const CARD_W = 220;
-export const CARD_H = 132;
+export const CARD_W = 280;
+export const CARD_H = 180;
+export const CARD_MIN_W = 272;
+export const CARD_MIN_H = 136;
 const GAP = 24;
+
+/** A card's drawn size: its own if resized, the default otherwise, never below the floors. */
+export const cardSize = (node: Pick<BoardNode, 'w' | 'h'>): { w: number; h: number } => ({
+  w: Math.max(CARD_MIN_W, node.w ?? CARD_W),
+  h: Math.max(CARD_MIN_H, node.h ?? CARD_H),
+});
 
 /**
  * Where to drop a new card so it does not land on an existing one.

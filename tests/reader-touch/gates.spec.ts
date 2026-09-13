@@ -54,6 +54,15 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('help-open').tap();
     await expect(page.getByTestId('help-panel')).toBeVisible();
   },
+  board: async (page) => {
+    for (const verse of [1, 3]) {
+      await page.locator(`.verse[data-verse="${verse}"] .verse__text`).tap();
+      await page.getByTestId(`canvas-${verse}`).tap();
+    }
+    await expandSheet(page);
+    await page.getByTestId('canvas-open').tap();
+    await expect(page.locator('.card')).toHaveCount(2);
+  },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');

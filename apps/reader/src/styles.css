@@ -271,7 +271,8 @@ summary:focus-visible,
 .canvas__action, .canvas__zoom button, .tools__button, .results__close, .results__book,
 .results__ref, .results__insert, .library__close, .library__action, .notes__select,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
-.compare__drop, .compare__quote, .preview__edit, .divider__nudge {
+.compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
+.card__title-input, .canvas__panel .swatch {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -280,7 +281,7 @@ summary:focus-visible,
 .settings__close, .settings__action, .canvas__zoom button, .canvas__action, .tools__button,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
-.compare__quote, .preview__edit, .divider__nudge {
+.compare__quote, .preview__edit, .divider__nudge, .card__action {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
@@ -896,6 +897,9 @@ summary:focus-visible,
    an empty white field gives no sense of having moved at all. */
 .canvas__frame {
   position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab;
+  /* Its focus ring is drawn inside: the frame fills the view, so an outside
+     ring would be clipped by the edges of the window. */
+  outline-offset: -3px !important;
   background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 14%, transparent) 1px, transparent 1px);
   background-size: 24px 24px;
 }
@@ -915,28 +919,34 @@ summary:focus-visible,
    centre without measuring the DOM on every drag frame. */
 .card {
   position: absolute; display: flex; flex-direction: column;
-  background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 10px;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 10px;
   box-shadow: 0 2px 10px rgb(0 0 0 / .12); overflow: hidden;
 }
+/* A coloured card carries a 6px top rule in the collection's strong hue, so
+   its colour is more than a thin outline — and its name is in its label. */
+.card[data-color] { border-top-width: 6px; }
 .card[data-color='amber']  { border-color: var(--hl-amber-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-amber-strong) 35%, transparent); }
 .card[data-color='rose']   { border-color: var(--hl-rose-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-rose-strong) 35%, transparent); }
 .card[data-color='sky']    { border-color: var(--hl-sky-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-sky-strong) 35%, transparent); }
 .card[data-color='mint']   { border-color: var(--hl-mint-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-mint-strong) 35%, transparent); }
 .card[data-color='violet'] { border-color: var(--hl-violet-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-violet-strong) 35%, transparent); }
 
+/* The header is the drag handle, a full 44px tall so a finger finds it. */
 .card__grip {
-  cursor: grab; padding: .35rem .5rem; border-bottom: 1px solid var(--rule);
+  display: flex; align-items: center; gap: .35rem; min-height: var(--control-h);
+  cursor: grab; padding: 0 .5rem; border-bottom: 1px solid var(--rule);
   background: color-mix(in srgb, var(--rule) 35%, transparent);
   flex: 0 0 auto;
 }
+.card__glyph { font-size: .75rem; color: var(--ink); }
 .card__title-input {
-  width: 100%; font: inherit; font-size: .72rem; font-weight: 600; color: var(--ink);
-  background: transparent; border: none; border-radius: 4px; padding: 0;
+  flex: 1; min-width: 0; width: 100%; font: inherit; font-size: .8rem; font-weight: 600; color: var(--ink);
+  background: transparent; border: none; border-radius: 4px; padding: 0 .2rem;
 }
 .card__title-input:focus { background: var(--paper-raised); }
 .card__title-input::placeholder { color: var(--ink-soft); font-weight: 500; }
 .card__title {
-  display: block; font-size: .72rem; font-weight: 600; color: var(--ink);
+  display: block; flex: 1; min-width: 0; font-size: .8rem; font-weight: 600; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* Scrollable, not clipped: a card can hold a whole note or a long verse, and
@@ -951,33 +961,53 @@ summary:focus-visible,
   line-height: 1.45; color: var(--ink); background: transparent;
   border: none; resize: none;
 }
-/* The right padding clears the resize grip in the corner, which otherwise sits
-   on top of the last action and swallows every click aimed at it. */
+/* The right padding clears the 44px resize corner, which otherwise sits on
+   top of the last action and swallows every press aimed at it. */
 .card__actions {
-  display: flex; align-items: center; gap: .15rem;
-  padding: .2rem 1.05rem .2rem .3rem;
+  display: flex; align-items: center; gap: .1rem;
+  padding: 0 var(--control-h) 0 .15rem;
   border-top: 1px solid var(--rule); flex: 0 0 auto;
 }
+/* A 44px corner to press (2.5.5), with an 18px triangle drawn in the boundary
+   colour so it can be seen (1.4.11). Dragging it has a button alternative:
+   the card's Move/Size panel (2.5.7). */
 .card__resize {
-  position: absolute; right: 0; bottom: 0; width: 14px; height: 14px;
+  position: absolute; right: 0; bottom: 0; width: var(--control-h); height: var(--control-h);
   cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, color-mix(in srgb, var(--ink) 28%, transparent) 50%);
+}
+.card__resize::after {
+  content: ''; position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px;
+  background: linear-gradient(135deg, transparent 50%, var(--edge) 50%);
+  border-bottom-right-radius: 7px;
 }
 .card__action {
-  font: inherit; font-size: .75rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid transparent; border-radius: 5px; padding: .05rem .3rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; font-size: .95rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 0;
 }
+/* The colour button shows the card's colour, or an empty dashed ring. */
+.card__colour { width: 1.1rem; height: 1.1rem; }
+.card__colour:not([data-color]) { background: transparent; border-style: dashed; }
 .card__action:hover { color: var(--ink); border-color: var(--rule); }
 .card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
 .card__action--danger:hover { color: var(--danger); border-color: var(--danger); }
-.card__swatches { display: inline-flex; gap: .15rem; margin-left: auto; }
-.card__dot { width: .6rem; height: .6rem; border-radius: 50%; border: 1px solid var(--edge); padding: 0; cursor: pointer; }
-.card__dot[data-color='amber']  { background: var(--sw-amber); }
-.card__dot[data-color='rose']   { background: var(--sw-rose); }
-.card__dot[data-color='sky']    { background: var(--sw-sky); }
-.card__dot[data-color='mint']   { background: var(--sw-mint); }
-.card__dot[data-color='violet'] { background: var(--sw-violet); }
-.card__dot[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
+.card__action--danger { margin-left: auto; }
+
+/* Moving the view and changing a card without dragging (2.5.7): a panel of
+   plain buttons, at the bottom of the board where a thumb reaches it and
+   where panning and zooming never carry it off screen. */
+.canvas__pan button { font-size: .95rem; }
+.canvas__panel {
+  position: absolute; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 5;
+  transform: translateX(-50%); width: max-content; max-width: calc(100% - 1rem);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem .6rem;
+  padding: .5rem .7rem; cursor: default;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 14px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+}
+.canvas__panel-title { flex: 1 1 100%; margin: 0; font-size: .8rem; font-weight: 600; text-align: center; }
+.canvas__panel-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
+.canvas__panel-row .canvas__action { min-width: var(--control-h); font-size: .85rem; }
 
 /* ── Writing: the tools, and reading it back ──────────────────────────────── */
 
@@ -1448,6 +1478,6 @@ summary:focus-visible,
 @media (forced-colors: active) {
   button:not(.swatch), select, input, textarea, .reader__chip, .card, .sheet { border: 1px solid CanvasText; }
   .verse[data-highlight] { border-left-color: Highlight; }
-  .swatch__disc, .card__dot { forced-color-adjust: none; }
+  .swatch__disc { forced-color-adjust: none; }
   :focus-visible { outline-color: Highlight; }
 }

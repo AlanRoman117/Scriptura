@@ -875,6 +875,7 @@ export function App() {
         <CanvasView
           bible={bible}
           notes={notes}
+          labels={colorLabels}
           boards={boards}
           activeId={boardId}
           onSelect={setBoardId}

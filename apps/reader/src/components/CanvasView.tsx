@@ -1,15 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Bible } from '@scriptura/core/types';
-import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
-import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
+import {
+  HIGHLIGHT_COLORS,
+  HIGHLIGHT_GLYPHS,
+  colorLabel,
+  type ColorLabels,
+  type HighlightColor,
+  type Note,
+} from '../lib/notes';
+import {
+  CARD_MIN_H,
+  CARD_MIN_W,
+  cardSize,
+  describeNode,
+  freeSlot,
+  nodeLabel,
+  type Board,
+  type BoardNode,
+} from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
 import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type View } from '../lib/geometry';
-import { useDismissable } from '../lib/focus';
+import { useDismissable, useReturnFocus } from '../lib/focus';
+import { announce } from '../lib/announce';
 import { ConfirmButton } from './ConfirmButton';
 
 interface CanvasViewProps {
   bible: Bible;
   notes: Note[];
+  /** What the reader calls each colour, so a card's colour is named for its collection. */
+  labels?: ColorLabels;
   boards: Board[];
   activeId: string | null;
   onSelect: (id: string) => void;
@@ -25,6 +45,17 @@ interface CanvasViewProps {
   onHelp?: () => void;
 }
 
+/** One arrow press moves or resizes a card this far; with Shift, `BIG_STEP`. */
+const STEP = 10;
+const BIG_STEP = 50;
+/** One press of a move or size button. */
+const BUTTON_STEP = 20;
+/** One arrow press on the board, or one pan button, moves the view this far. */
+const PAN_STEP = 40;
+const PAN_BUTTON_STEP = 80;
+
+type Panel = { id: string; mode: 'adjust' | 'colour' };
+
 /**
  * The board: verses and notes on a plane, with the connections drawn.
  *
@@ -35,10 +66,18 @@ interface CanvasViewProps {
  * Cards hold anchors, not text: a verse card is read out of whichever
  * translation is open and a note card follows the note, so a board does not
  * quietly become a stale snapshot of either.
+ *
+ * Nothing here needs a mouse, and nothing needs a drag (2.1.1, 2.5.7). A card
+ * takes focus: the arrow keys move it and Alt with an arrow resizes it. The
+ * board takes focus: the arrow keys move the view and + and − zoom. For a
+ * pointer that cannot drag — a switch, a head pointer, a shaking hand — each
+ * card has Move/Size and Colour buttons that open a panel of plain buttons,
+ * and the view has pan buttons beside the zoom.
  */
 export function CanvasView({
   bible,
   notes,
+  labels = {},
   boards,
   activeId,
   onSelect,
@@ -58,7 +97,9 @@ export function CanvasView({
   const { zoom, pan } = view;
   const setPan = (next: Point) => setView((v) => ({ ...v, pan: next }));
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [panel, setPanel] = useState<Panel | null>(null);
   const frame = useRef<HTMLDivElement>(null);
+  const panelEl = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
   const resize = useRef<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
   const panning = useRef<{ x: number; y: number } | null>(null);
@@ -67,6 +108,15 @@ export function CanvasView({
   // the background already cancels through the pan, and pressing a card is
   // how the connection is completed.
   useDismissable(connecting !== null, () => setConnecting(null), frame, { outside: false });
+
+  // The move/size and colour panel closes on Escape or a press outside it, and
+  // gives focus back to the card button that opened it.
+  useEffect(() => setPanel(null), [activeId]);
+  useDismissable(panel !== null, () => setPanel(null), panelEl);
+  useReturnFocus(panel !== null, panel ? `[data-testid="card-${panel.mode}-${panel.id}"]` : undefined);
+  useEffect(() => {
+    if (panel) panelEl.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+  }, [panel]);
 
   /**
    * Wheel to move, ctrl/⌘-wheel to zoom — the convention every other canvas
@@ -105,19 +155,103 @@ export function CanvasView({
     [board, onChange]
   );
 
-  const sizeOf = (node: BoardNode) => ({ w: node.w ?? CARD_W, h: node.h ?? CARD_H });
+  /** What a card says. Verse text comes from the open translation, live. */
+  const describe = (node: BoardNode) => describeNode(node, { bible, notes });
+  const label = (node: BoardNode) => nodeLabel(node, { bible, notes });
+  const colourName = (color: HighlightColor) => `${colorLabel(color, labels)} (${color})`;
 
-  /* ── dragging a card, resizing it, and panning the plane ──────────────── */
-  //
-  // Three gestures, one helper (lib/viewport.ts). The pointer is captured, so
-  // the moves keep arriving when the finger leaves the element, and a touch
-  // the browser takes over — a pinch, an edge swipe — ends the gesture the
-  // way an up does instead of leaving a card stuck to nothing. Every card's
-  // grip and resize corner get the same props; which card is held is read
-  // from the element's data attribute, because a hook cannot be called per
-  // card inside the map.
+  /* ── moving and sizing, by key and by button ─────────────────────────── */
 
+  const moveCard = (id: string, dx: number, dy: number) => {
+    const node = board?.nodes.find((n) => n.id === id);
+    if (!board || !node) return;
+    // Clamped at the origin: a card moved past the top-left is off the plane
+    // in the one direction panning back from is least obvious.
+    const x = Math.max(0, node.x + dx);
+    const y = Math.max(0, node.y + dy);
+    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) });
+    announce(`${label(node)}: moved to ${Math.round(x)}, ${Math.round(y)}`);
+  };
+
+  const resizeCard = (id: string, dw: number, dh: number) => {
+    const node = board?.nodes.find((n) => n.id === id);
+    if (!board || !node) return;
+    const size = cardSize(node);
+    const w = Math.max(CARD_MIN_W, size.w + dw);
+    const h = Math.max(CARD_MIN_H, size.h + dh);
+    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, w, h } : n)) });
+    announce(`${label(node)}: ${Math.round(w)} wide, ${Math.round(h)} tall`);
+  };
+
+  const colourCard = (id: string, color: HighlightColor | undefined) => {
+    const node = board?.nodes.find((n) => n.id === id);
+    if (!board || !node) return;
+    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, color } : n)) });
+    announce(color ? `${label(node)}: ${colourName(color)}` : `${label(node)}: no colour`);
+  };
+
+  /** Zoom by a step about the middle of the frame — what the buttons and keys do. */
   const frameBox = () => frame.current?.getBoundingClientRect();
+  const zoomBy = (step: number) => {
+    const box = frameBox();
+    const centre = box ? { x: box.width / 2, y: box.height / 2 } : { x: 0, y: 0 };
+    setView((v) => zoomAround(v, clampZoom(Math.round((v.zoom + step) * 100) / 100), centre));
+  };
+
+  const panBy = (dx: number, dy: number) =>
+    setView((v) => ({ ...v, pan: { x: v.pan.x + dx, y: v.pan.y + dy } }));
+
+  const onCardKey = (node: BoardNode) => (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    // Keys typed into the card's own fields and buttons are theirs.
+    if (e.target !== e.currentTarget) return;
+    if (connecting && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      connect(node.id);
+      return;
+    }
+    const step = e.shiftKey ? BIG_STEP : STEP;
+    const delta: Record<string, [number, number]> = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+    const d = delta[e.key];
+    if (!d) return;
+    // preventDefault matters twice: the frame must not scroll, and Alt with an
+    // arrow is the browser's back and forward in a page that does not claim it.
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.altKey) resizeCard(node.id, d[0], d[1]);
+    else moveCard(node.id, d[0], d[1]);
+  };
+
+  const onFrameKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.target !== e.currentTarget) return;
+    const step = e.shiftKey ? PAN_STEP * 4 : PAN_STEP;
+    // The arrow says which way to look, so the plane moves the other way.
+    const delta: Record<string, [number, number]> = {
+      ArrowLeft: [step, 0],
+      ArrowRight: [-step, 0],
+      ArrowUp: [0, step],
+      ArrowDown: [0, -step],
+    };
+    const d = delta[e.key];
+    if (d) {
+      e.preventDefault();
+      panBy(d[0], d[1]);
+      return;
+    }
+    // Single keys are safe here: they act only while the board itself has
+    // focus, never while typing in a card (2.1.4).
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      zoomBy(0.2);
+    } else if (e.key === '-') {
+      e.preventDefault();
+      zoomBy(-0.2);
+    }
+  };
 
   /* ── pinch ───────────────────────────────────────────────────────────────
    *
@@ -172,16 +306,20 @@ export function CanvasView({
     },
   };
 
-  /** Zoom by a step about the middle of the frame — what the buttons and keys do. */
-  const zoomBy = (step: number) => {
-    const box = frameBox();
-    const centre = box ? { x: box.width / 2, y: box.height / 2 } : { x: 0, y: 0 };
-    setView((v) => zoomAround(v, clampZoom(Math.round((v.zoom + step) * 100) / 100), centre));
-  };
+  /* ── dragging a card, resizing it, and panning the plane ──────────────── */
+  //
+  // Three gestures, one helper (lib/viewport.ts). The pointer is captured, so
+  // the moves keep arriving when the finger leaves the element, and a touch
+  // the browser takes over — a pinch, an edge swipe — ends the gesture the
+  // way an up does instead of leaving a card stuck to nothing. Every card's
+  // grip and resize corner get the same props; which card is held is read
+  // from the element's data attribute, because a hook cannot be called per
+  // card inside the map.
 
   const panDrag = usePointerDrag<HTMLDivElement>({
     onStart: (e) => {
-      // Anywhere that is not a card or a control pans.
+      if (pinch.current) return false;
+      // Anywhere that is not a card, a control or the panel pans.
       //
       // This used to compare `e.target` with `e.currentTarget`, which was
       // never equal: `.canvas__plane` is absolutely positioned over the whole
@@ -192,8 +330,11 @@ export function CanvasView({
       // pointerdown makes Chromium deliver the following `click` to the
       // capturing element — so a press on the edge-cut circle that also began
       // a pan never clicked the circle, and the connection could not be cut.
-      if (pinch.current) return false;
-      if ((e.target as HTMLElement).closest('.card, .canvas__edge-cut, button, a, input, select, textarea')) {
+      if (
+        (e.target as HTMLElement).closest(
+          '.card, .canvas__edge-cut, .canvas__panel, button, a, input, select, textarea'
+        )
+      ) {
         return false;
       }
       panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
@@ -246,16 +387,16 @@ export function CanvasView({
       if (pinch.current) return false;
       const node = board?.nodes.find((n) => n.id === e.currentTarget.dataset.nodeId);
       if (!node) return false;
-      const { w, h } = sizeOf(node);
+      const { w, h } = cardSize(node);
       resize.current = { id: node.id, x: e.clientX, y: e.clientY, w, h };
     },
     onMove: (e) => {
       const sizing = resize.current;
       if (!sizing || !board) return;
       // Cards hold whole verses and whole notes, so a fixed size cannot be
-      // right for both. Floors keep the grip and the title reachable.
-      const w = Math.max(160, sizing.w + (e.clientX - sizing.x) / zoom);
-      const h = Math.max(96, sizing.h + (e.clientY - sizing.y) / zoom);
+      // right for both. The floors keep the header and every action inside.
+      const w = Math.max(CARD_MIN_W, sizing.w + (e.clientX - sizing.x) / zoom);
+      const h = Math.max(CARD_MIN_H, sizing.h + (e.clientY - sizing.y) / zoom);
       patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) });
     },
     onEnd: () => {
@@ -280,24 +421,24 @@ export function CanvasView({
     });
   };
 
-  const connect = (to: string) => {
+  function connect(to: string) {
     if (!board || !connecting || connecting === to) return setConnecting(null);
     const exists = board.edges.some(
       (e) => (e.from === connecting && e.to === to) || (e.from === to && e.to === connecting)
     );
     if (!exists) {
       patch({ edges: [...board.edges, { id: crypto.randomUUID(), from: connecting, to }] });
+      const from = board.nodes.find((n) => n.id === connecting);
+      const target = board.nodes.find((n) => n.id === to);
+      if (from && target) announce(`Connected ${label(from)} to ${label(target)}`);
     }
     setConnecting(null);
-  };
-
-  /** What a card says. Verse text comes from the open translation, live. */
-  const describe = (node: BoardNode) => describeNode(node, { bible, notes });
+  }
 
   const centre = (id: string) => {
     const node = board?.nodes.find((n) => n.id === id);
     if (!node) return null;
-    const { w, h } = sizeOf(node);
+    const { w, h } = cardSize(node);
     return { x: node.x + w / 2, y: node.y + h / 2, w, h };
   };
 
@@ -322,6 +463,8 @@ export function CanvasView({
     );
     return { x: from.x + dx * scale, y: from.y + dy * scale };
   };
+
+  const panelNode = panel ? board?.nodes.find((n) => n.id === panel.id) ?? null : null;
 
   return (
     <main className="canvas" data-testid="canvas" aria-label="Boards">
@@ -363,7 +506,7 @@ export function CanvasView({
               className="canvas__action"
               data-testid="board-add-note"
               disabled={notes.length === 0}
-              title={notes.length === 0 ? 'Write a note first' : 'Put a note on the board'}
+              aria-label={notes.length === 0 ? 'Add note — write a note first' : 'Add note — put the newest note on the board'}
               onClick={() => addCard({ kind: 'note', noteId: notes[0].id })}
             >
               Add note
@@ -373,7 +516,7 @@ export function CanvasView({
                 type="button"
                 className="canvas__action"
                 data-testid="board-to-note"
-                title="Put this board into the note you have open"
+                aria-label="Add to note — put this board into the note you have open"
                 onClick={() => onAddToNote(board.id)}
               >
                 Add to note
@@ -414,6 +557,22 @@ export function CanvasView({
             +
           </button>
         </div>
+        {/* Moving the view without dragging it (2.5.7). Each says which way
+            the view goes, so the plane moves the other way. */}
+        <div className="canvas__zoom canvas__pan" role="group" aria-label="Move the view">
+          <button type="button" data-testid="pan-left" aria-label="Move the view left" onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
+            ←
+          </button>
+          <button type="button" data-testid="pan-up" aria-label="Move the view up" onClick={() => panBy(0, PAN_BUTTON_STEP)}>
+            ↑
+          </button>
+          <button type="button" data-testid="pan-down" aria-label="Move the view down" onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
+            ↓
+          </button>
+          <button type="button" data-testid="pan-right" aria-label="Move the view right" onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
+            →
+          </button>
+        </div>
         <button type="button" className="canvas__action" data-testid="canvas-close" onClick={onClose}>
           Back to reading
         </button>
@@ -434,10 +593,19 @@ export function CanvasView({
         <div
           className="canvas__frame"
           ref={frame}
+          tabIndex={0}
+          role="region"
+          aria-label={`Board canvas, ${board.nodes.length} ${board.nodes.length === 1 ? 'card' : 'cards'}`}
+          aria-describedby="canvas-hint"
           data-connecting={connecting ? 'true' : undefined}
+          onKeyDown={onFrameKey}
           {...panDrag}
           {...pinchHandlers}
         >
+          <span id="canvas-hint" className="visually-hidden">
+            Arrow keys move the view; plus and minus zoom. Each card takes focus: arrow keys move it, and Alt with
+            an arrow resizes it.
+          </span>
           <div
             className="canvas__plane"
             style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})` }}
@@ -487,17 +655,31 @@ export function CanvasView({
 
             {board.nodes.map((node) => {
               const { title, body } = describe(node);
+              const size = cardSize(node);
+              const kind = node.kind === 'verse' ? 'Verse card' : node.kind === 'note' ? 'Note card' : 'Card';
               return (
-                <article
+                <div
                   className="card"
                   key={node.id}
+                  role="group"
+                  tabIndex={0}
+                  // What the card is, what it holds, and its colour in words —
+                  // so the colour is never the only way to know it (1.4.1).
+                  aria-label={`${kind}: ${label(node)}${node.color ? `, ${colourName(node.color)}` : ''}`}
+                  aria-describedby="canvas-hint"
                   data-testid={`card-${node.id}`}
                   data-kind={node.kind}
                   data-color={node.color}
-                  style={{ left: node.x, top: node.y, width: node.w ?? CARD_W, height: node.h ?? CARD_H }}
+                  style={{ left: node.x, top: node.y, width: size.w, height: size.h }}
                   onClick={() => connecting && connect(node.id)}
+                  onKeyDown={onCardKey(node)}
                 >
                   <header className="card__grip" data-node-id={node.id} {...cardDrag}>
+                    {node.color && (
+                      <span className="swatch__glyph card__glyph" aria-hidden="true">
+                        {HIGHLIGHT_GLYPHS[node.color]}
+                      </span>
+                    )}
                     {node.kind === 'text' ? (
                       // A card the reader wrote is a card the reader names. The
                       // other kinds derive their title from what they point at,
@@ -539,8 +721,18 @@ export function CanvasView({
                     />
                   ) : (
                     // Scrollable, not clipped: a card can hold a whole note or
-                    // a long verse, and neither fits in any fixed height.
-                    <p className="card__body">{body}</p>
+                    // a long verse, and neither fits in any fixed height. A
+                    // region that scrolls must take focus, or the keyboard
+                    // cannot scroll it.
+                    <div
+                      className="card__body"
+                      tabIndex={0}
+                      role="group"
+                      aria-label={`${title} — text`}
+                      lang={node.kind === 'verse' ? bible.meta.language : undefined}
+                    >
+                      {body}
+                    </div>
                   )}
 
                   <footer className="card__actions">
@@ -549,10 +741,12 @@ export function CanvasView({
                       className="card__action"
                       data-testid={`card-connect-${node.id}`}
                       aria-pressed={connecting === node.id}
-                      aria-label="Connect this card to another"
+                      aria-label={`Connect ${label(node)} to another card`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setConnecting(connecting === node.id ? null : node.id);
+                        const next = connecting === node.id ? null : node.id;
+                        setConnecting(next);
+                        if (next) announce('Choose the card to connect to: press it, or Enter on it. Escape cancels.');
                       }}
                     >
                       ⇢
@@ -562,7 +756,7 @@ export function CanvasView({
                         type="button"
                         className="card__action"
                         data-testid={`card-open-${node.id}`}
-                        aria-label="Open this passage in the reader"
+                        aria-label={`Open ${label(node)} in the reader`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
@@ -571,33 +765,37 @@ export function CanvasView({
                         ↗
                       </button>
                     )}
-                    <span className="card__swatches">
-                      {HIGHLIGHT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className="card__dot"
-                          data-color={color}
-                          aria-label={`Colour ${color}`}
-                          aria-pressed={node.color === color}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            patch({
-                              nodes: board.nodes.map((n) =>
-                                n.id === node.id
-                                  ? { ...n, color: n.color === color ? undefined : (color as HighlightColor) }
-                                  : n
-                              ),
-                            });
-                          }}
-                        />
-                      ))}
-                    </span>
+                    <button
+                      type="button"
+                      className="card__action"
+                      data-testid={`card-colour-${node.id}`}
+                      aria-label={`Colour: ${node.color ? colourName(node.color) : 'none'}. Change the colour of ${label(node)}`}
+                      aria-expanded={panel?.id === node.id && panel.mode === 'colour'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPanel({ id: node.id, mode: 'colour' });
+                      }}
+                    >
+                      <span className="swatch__disc card__colour" data-color={node.color} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      className="card__action"
+                      data-testid={`card-adjust-${node.id}`}
+                      aria-label={`Move or resize ${label(node)} without dragging`}
+                      aria-expanded={panel?.id === node.id && panel.mode === 'adjust'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPanel({ id: node.id, mode: 'adjust' });
+                      }}
+                    >
+                      ✥
+                    </button>
                     <button
                       type="button"
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
-                      aria-label="Take this card off the board"
+                      aria-label={`Take ${label(node)} off the board`}
                       onClick={(e) => {
                         e.stopPropagation();
                         removeCard(node.id);
@@ -614,7 +812,7 @@ export function CanvasView({
                     aria-hidden="true"
                     {...resizeDrag}
                   />
-                </article>
+                </div>
               );
             })}
           </div>
@@ -624,6 +822,82 @@ export function CanvasView({
               Nothing on this board yet. Add a card here, or use <strong>Canvas</strong> beside a
               verse while reading.
             </p>
+          )}
+
+          {panel && panelNode && (
+            <div
+              className="canvas__panel"
+              ref={panelEl}
+              role="group"
+              aria-label={panel.mode === 'adjust' ? `Move and resize ${label(panelNode)}` : `Colour of ${label(panelNode)}`}
+              data-testid="card-panel"
+            >
+              <p className="canvas__panel-title" aria-hidden="true">
+                {panel.mode === 'adjust' ? 'Move and resize' : 'Colour'}: {label(panelNode)}
+              </p>
+              {panel.mode === 'adjust' ? (
+                <>
+                  <div className="canvas__panel-row" role="group" aria-label="Move">
+                    <button type="button" className="canvas__action" data-testid="adjust-left" aria-label="Move left" onClick={() => moveCard(panelNode.id, -BUTTON_STEP, 0)}>
+                      ←
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-up" aria-label="Move up" onClick={() => moveCard(panelNode.id, 0, -BUTTON_STEP)}>
+                      ↑
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-down" aria-label="Move down" onClick={() => moveCard(panelNode.id, 0, BUTTON_STEP)}>
+                      ↓
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-right" aria-label="Move right" onClick={() => moveCard(panelNode.id, BUTTON_STEP, 0)}>
+                      →
+                    </button>
+                  </div>
+                  <div className="canvas__panel-row" role="group" aria-label="Size">
+                    <button type="button" className="canvas__action" data-testid="adjust-narrower" onClick={() => resizeCard(panelNode.id, -BUTTON_STEP, 0)}>
+                      Narrower
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-wider" onClick={() => resizeCard(panelNode.id, BUTTON_STEP, 0)}>
+                      Wider
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-shorter" onClick={() => resizeCard(panelNode.id, 0, -BUTTON_STEP)}>
+                      Shorter
+                    </button>
+                    <button type="button" className="canvas__action" data-testid="adjust-taller" onClick={() => resizeCard(panelNode.id, 0, BUTTON_STEP)}>
+                      Taller
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="canvas__panel-row" role="group" aria-label="Colours">
+                  {HIGHLIGHT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      className="swatch"
+                      data-testid={`card-swatch-${color}`}
+                      aria-label={colourName(color)}
+                      aria-pressed={panelNode.color === color}
+                      onClick={() => colourCard(panelNode.id, color)}
+                    >
+                      <span className="swatch__disc" data-color={color} aria-hidden="true">
+                        <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
+                      </span>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="canvas__action"
+                    data-testid="card-swatch-none"
+                    aria-pressed={!panelNode.color}
+                    onClick={() => colourCard(panelNode.id, undefined)}
+                  >
+                    No colour
+                  </button>
+                </div>
+              )}
+              <button type="button" className="canvas__action canvas__panel-done" data-testid="card-panel-close" onClick={() => setPanel(null)}>
+                Done
+              </button>
+            </div>
           )}
         </div>
       ) : (
