@@ -178,7 +178,10 @@
 
 * { box-sizing: border-box; }
 
-html, body { height: 100%; }
+/* The document itself never scrolls — the panes do. Holding it still is what
+   stops a phone from scrolling the page out from under the notes sheet when
+   the keyboard opens, and from bouncing it when the sheet is dragged. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
 #root { height: 100%; display: flex; flex-direction: column; }
 #root > .layout { flex: 1; min-height: 0; }
 
@@ -650,7 +653,7 @@ summary:focus-visible,
   border-radius: 14px; padding: .3rem;
 }
 .layout--narrow .pane--bible { scroll-padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
-.layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(3.5rem + var(--actions-h, 0px) + 1rem); }
+.layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
 
 /* A jumped-to verse announces itself, then settles. Under reduced motion the
    same class draws a still outline for the same 1.6s instead — the verse is
@@ -1331,24 +1334,38 @@ summary:focus-visible,
 /* ── Narrow: Bible full-screen, notes as a sheet ──────────────────────────── */
 
 .layout--narrow { display: block; position: relative; }
-.layout--narrow .pane--bible { height: 100%; padding-bottom: 3.5rem; }
+/* The chapter can always be scrolled clear of the sheet, whatever its height. */
+.layout--narrow .pane--bible { height: 100%; padding-bottom: calc(var(--sheet-h, 3.25rem) + .5rem); }
 /* Nothing under the notch or the status bar in standalone mode. `env()` is 0
-   everywhere else, so this costs the desktop nothing. */
-.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+   everywhere else, so this costs the desktop nothing. The right padding that
+   the split layout keeps for its maximize button is not needed here. */
+.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); padding-right: 1rem; }
+.layout--narrow .notes { padding-top: .75rem; }
 .canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 
+/* Anchored to the bottom of the *visible* viewport, not the layout viewport:
+   iOS does not move fixed elements when the keyboard opens, so a sheet with
+   `bottom: 0` sat behind the keys with the note being typed into. `--vvh` and
+   `--vv-top` are the visible area; the sheet's top is placed so its bottom
+   meets the visible bottom. `--sheet-peek` is the grip's measured height;
+   `--sheet-drag` is the height while a finger is moving it. */
 .sheet {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
+  --sheet-size: var(--sheet-peek, 3.25rem);
+  position: fixed; left: 0; right: 0; z-index: 3;
+  top: calc(var(--vv-top, 0px) + var(--vvh, 100dvh) - var(--sheet-size));
+  height: var(--sheet-size);
   display: flex; flex-direction: column;
   background: var(--paper-raised);
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--edge);
   border-radius: 14px 14px 0 0;
   box-shadow: 0 -8px 28px rgb(0 0 0 / .12);
-  transition: height .22s ease;
-  height: 3.25rem;
+  transition: height .22s ease, top .22s ease;
 }
-.sheet[data-sheet='half'] { height: 50dvh; }
-.sheet[data-sheet='full'] { height: 92dvh; }
+.sheet[data-sheet='half'] { --sheet-size: max(var(--sheet-peek, 3.25rem), calc(var(--vvh, 100dvh) * .5)); }
+/* 0.92 is FULL_SHARE in Layout.tsx: a sliver of the page stays visible above,
+   so the sheet still reads as a sheet. */
+.sheet[data-sheet='full'] { --sheet-size: calc(var(--vvh, 100dvh) * .92 - env(safe-area-inset-top)); }
+.sheet[data-dragging] { --sheet-size: var(--sheet-drag); transition: none; }
 
 .sheet__grip {
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
@@ -1358,8 +1375,22 @@ summary:focus-visible,
      not sit on it. */
   padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
 }
-.sheet__handle { width: 2.25rem; height: 4px; border-radius: 2px; background: var(--edge); }
-.sheet__body { flex: 1; min-height: 0; overflow-y: auto; }
+.sheet__grip { flex: 0 0 auto; width: 100%; cursor: grab; }
+.sheet[data-dragging] .sheet__grip { cursor: grabbing; }
+.sheet__handle { width: 2.75rem; height: 5px; border-radius: 3px; background: var(--edge); }
+.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; }
+/* With a keyboard up, the sheet is what is left above it — about 330px on a
+   phone — and the note bar, the title and two rows of tools took all but
+   40px of that, leaving the one thing being typed into a line and a half
+   tall. While the note is being edited in a sheet that short, the note bar
+   steps aside and the tools scroll in one row. Nothing is removed from the
+   keyboard path: Shift+Tab to the title leaves the editing group, and the bar
+   comes back. */
+@container sheet-body (max-height: 28rem) {
+  .notes:has(.notes__editor:focus-within) .notes__bar { display: none; }
+  .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+  .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
+}
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 
 /* ── Boot ─────────────────────────────────────────────────────────────────── */

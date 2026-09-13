@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePointerDrag } from '../lib/viewport';
+import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
 const NARROW = 850;
@@ -28,8 +29,10 @@ function splitLimits(width: number): [number, number] {
 }
 
 export type Maximized = 'none' | 'bible' | 'notes';
-/** How far the mobile notes sheet is pulled up. */
-export type SheetPosition = 'peek' | 'half' | 'full';
+export type { SheetPosition };
+
+/** The full sheet's share of the visible viewport; mirrored in styles.css. */
+const FULL_SHARE = 0.92;
 
 function useIsNarrow(): boolean {
   const [narrow, setNarrow] = useState(
@@ -68,6 +71,98 @@ export function Layout({ bible, notes }: LayoutProps) {
   const [sheet, setSheet] = useState<SheetPosition>('peek');
   const frame = useRef<HTMLDivElement>(null);
 
+  /* ── The notes sheet (narrow only) ──────────────────────────────────────
+   *
+   * The sheet is sized and anchored from the *visual* viewport (--vvh and
+   * --vv-top, published by lib/viewport.ts), so when a phone's keyboard opens
+   * the sheet rises with the visible area instead of staying behind the keys.
+   * Its grip is dragged with the finger and snaps to peek, half or full; a
+   * short press still cycles, and Up and Down step through the positions.
+   * Its real height is published as --sheet-h so the chapter can always be
+   * scrolled clear of it, and so the docked verse actions sit above it. */
+  const sheetEl = useRef<HTMLElement>(null);
+  const gripEl = useRef<HTMLButtonElement>(null);
+  const [peek, setPeek] = useState(52);
+  const [dragSize, setDragSize] = useState<number | null>(null);
+  const gesture = useRef<{
+    startY: number;
+    startH: number;
+    moved: number;
+    samples: { y: number; t: number }[];
+  } | null>(null);
+  /** A drag ends in a click on the grip in some browsers; that click must not also cycle. */
+  const suppressClick = useRef(false);
+
+  /** The resting sizes, in px, for snapping. Read from the same --vvh the stylesheet uses. */
+  const sheetSizes = useCallback(() => {
+    const vvh =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vvh')) || window.innerHeight;
+    return { peek, half: Math.max(peek, vvh * 0.5), full: Math.max(peek, vvh * FULL_SHARE) };
+  }, [peek]);
+
+  const gripDrag = usePointerDrag<HTMLButtonElement>({
+    onStart: (e) => {
+      suppressClick.current = false;
+      const startH = sheetEl.current?.getBoundingClientRect().height ?? peek;
+      gesture.current = { startY: e.clientY, startH, moved: 0, samples: [{ y: e.clientY, t: e.timeStamp }] };
+    },
+    onMove: (e) => {
+      const g = gesture.current;
+      if (!g) return;
+      g.moved = Math.max(g.moved, Math.abs(e.clientY - g.startY));
+      g.samples.push({ y: e.clientY, t: e.timeStamp });
+      if (g.moved < TAP_SLOP) return;
+      const { full } = sheetSizes();
+      setDragSize(Math.min(full, Math.max(peek, g.startH + (g.startY - e.clientY))));
+    },
+    onEnd: (e) => {
+      const g = gesture.current;
+      gesture.current = null;
+      if (!g || g.moved < TAP_SLOP) {
+        setDragSize(null);
+        return;
+      }
+      // A cancelled pointer reports no position; the last move is where it was.
+      if (e.type === 'pointerup') g.samples.push({ y: e.clientY, t: e.timeStamp });
+      const last = g.samples[g.samples.length - 1];
+      const sizes = sheetSizes();
+      const height = Math.min(sizes.full, Math.max(sizes.peek, g.startH + (g.startY - last.y)));
+      // Speed over the last 80ms only: how the finger left, not how it began.
+      const recent = g.samples.filter((s) => last.t - s.t <= 80);
+      const from = recent[0] ?? last;
+      const velocity = (from.y - last.y) / Math.max(1, last.t - from.t);
+      suppressClick.current = true;
+      setSheet(snapSheet(height, velocity, sizes));
+      setDragSize(null);
+    },
+  });
+
+  // The grip's own height is the peek size, so a larger text size never
+  // clips the word "Notes".
+  useLayoutEffect(() => {
+    const grip = gripEl.current;
+    if (!narrow || !grip) return;
+    const measure = () => setPeek(grip.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(grip);
+    return () => observer.disconnect();
+  }, [narrow]);
+
+  useLayoutEffect(() => {
+    const el = sheetEl.current;
+    const root = document.documentElement;
+    if (!narrow || !el) return;
+    const write = () => root.style.setProperty('--sheet-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--sheet-h');
+    };
+  }, [narrow]);
+
   const onDrag = useCallback((clientX: number) => {
     const box = frame.current?.getBoundingClientRect();
     if (!box) return;
@@ -90,26 +185,64 @@ export function Layout({ bible, notes }: LayoutProps) {
   if (narrow) {
     return (
       <div className="layout layout--narrow" data-testid="layout" data-mode="narrow">
-        <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture">
+        {/* Covered by a full sheet, the text is out of reach: inert, so Tab and
+            a screen reader do not land on a verse that cannot be seen (2.4.12). */}
+        <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture" inert={sheet === 'full'}>
           {bible}
         </main>
         <section
+          ref={sheetEl}
           className="sheet"
           data-testid="pane-notes"
           data-sheet={sheet}
+          data-dragging={dragSize !== null || undefined}
           aria-label="Notes"
+          style={{
+            ['--sheet-peek' as string]: `${peek}px`,
+            ...(dragSize !== null ? { ['--sheet-drag' as string]: `${dragSize}px` } : {}),
+          }}
         >
           <button
+            ref={gripEl}
             type="button"
             className="sheet__grip"
             aria-label={sheet === 'full' ? 'Collapse notes' : 'Expand notes'}
             aria-expanded={sheet !== 'peek'}
-            onClick={() => setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek')}
+            aria-describedby="sheet-hint"
+            {...gripDrag}
+            onClick={() => {
+              if (suppressClick.current) {
+                suppressClick.current = false;
+                return;
+              }
+              setSheet(sheet === 'peek' ? 'half' : sheet === 'half' ? 'full' : 'peek');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp') setSheet(stepSheet(sheet, 1));
+              else if (e.key === 'ArrowDown') setSheet(stepSheet(sheet, -1));
+              else return;
+              e.preventDefault();
+            }}
           >
             <span className="sheet__handle" aria-hidden="true" />
             <span className="sheet__label">Notes</span>
           </button>
-          <div className="sheet__body">{notes}</div>
+          <span id="sheet-hint" className="visually-hidden">
+            Drag, or use the up and down arrow keys, to make the notes taller or shorter.
+          </span>
+          <div
+            className="sheet__body"
+            // Writing needs the room: at half, with a keyboard up, the note
+            // would have no height left at all once the bar and tools are
+            // drawn. The reader can pull it down again from the grip.
+            onFocus={(e) => {
+              if (sheet !== 'full' && (e.target as HTMLElement).matches('textarea, input:not([type]), input[type="text"]')) {
+                setSheet('full');
+              }
+            }}
+          >
+            {notes}
+          </div>
         </section>
       </div>
     );

@@ -39,3 +39,21 @@ test('there is no divider to drag on a phone', async ({ page }) => {
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
   await expect(page.getByTestId('divider')).toHaveCount(0);
 });
+
+test('the sheet grip answers the arrow keys, and says how to use it', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+  const sheet = page.getByTestId('pane-notes');
+  const grip = page.getByRole('button', { name: /expand notes/i });
+
+  await expect(grip).toHaveAccessibleDescription(/arrow keys/);
+  await grip.focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(sheet).toHaveAttribute('data-sheet', 'half');
+  await page.keyboard.press('ArrowUp');
+  await expect(sheet).toHaveAttribute('data-sheet', 'full');
+  await page.keyboard.press('ArrowUp');
+  await expect(sheet).toHaveAttribute('data-sheet', 'full');
+  await page.keyboard.press('ArrowDown');
+  await expect(sheet).toHaveAttribute('data-sheet', 'half');
+});
