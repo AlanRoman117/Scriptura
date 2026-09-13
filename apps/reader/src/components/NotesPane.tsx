@@ -38,11 +38,13 @@ interface NotesPaneProps {
 /**
  * The writing surface: write, or read it back rendered.
  *
- * "Collapsed by default" is still the point — the toolbar rides in with focus
- * and leaves with it, so a reader writing a reflection is not looking past
- * chrome to do it. But collapsed cannot mean absent: someone who does not know
- * that `##` makes a heading has no way to discover it, and Markdown left
- * entirely unrendered is just punctuation on the page.
+ * The formatting tools are always there while a note is being written. They
+ * used to ride in with focus and leave with it, which meant a reader looking
+ * at the pane saw no tools at all, and saw them appear and vanish as focus came
+ * and went — controls that are only sometimes there are hard to find and hard
+ * to trust. Someone who does not know that `##` makes a heading has no way to
+ * discover it from an empty textarea, and Markdown left entirely unrendered is
+ * just punctuation on the page.
  *
  * Preview shares the pane rather than taking a second column — this pane is
  * already the narrow one — and a click in it returns to the editor with the
@@ -72,7 +74,6 @@ export function NotesPane({
   const [heading, setHeading] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
-  const [focused, setFocused] = useState(false);
   /** Where to leave the caret after a toolbar edit, once React has repainted. */
   const caret = useRef<{ start: number; end: number } | null>(null);
 
@@ -199,29 +200,18 @@ export function NotesPane({
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
           {/* The editing group: the tools, what the caret is under, and the
-              note itself. The tools show while focus is anywhere in it and
-              withdraw when it leaves — for the title, or anything else. That
-              is decided by where focus went, not by a timer: the old 150ms
-              delay made the tools vanish before Tab could reach them. */}
-          <div
-            className="notes__editor"
-            onFocus={() => setFocused(true)}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
-            }}
-          >
-          {/* Reserved whether or not the tools are showing, so they do not
-              shove the text you just clicked on down the pane. */}
+              note itself. The tools are shown whenever the note is open for
+              writing, wherever focus is — not only while it is inside this
+              group. Preview has nothing to format, so it has no tools. */}
+          <div className="notes__editor">
           {mode === 'write' && (
             <div className="tools__slot">
-              {focused && (
-                <EditorToolbar
-                  onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
-                  onWrap={(marker) => apply((t, a, b) => toggleWrap(t, a, b, marker))}
-                  onLineStyle={(style: LineStyle) => apply((t, a, b) => toggleLineStyle(t, a, b, style))}
-                  onLink={() => apply((t, a, b) => insertAt(t, a, b, '[[]]'))}
-                />
-              )}
+              <EditorToolbar
+                onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
+                onWrap={(marker) => apply((t, a, b) => toggleWrap(t, a, b, marker))}
+                onLineStyle={(style: LineStyle) => apply((t, a, b) => toggleLineStyle(t, a, b, style))}
+                onLink={() => apply((t, a, b) => insertAt(t, a, b, '[[]]'))}
+              />
             </div>
           )}
 

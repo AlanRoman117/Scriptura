@@ -18,16 +18,24 @@ async function selectAll(page: import('@playwright/test').Page) {
 }
 
 test.describe('formatting tools', () => {
-  test('appear with focus and withdraw when it leaves', async ({ page }) => {
+  test('are always there while a note is being written, wherever focus is', async ({ page }) => {
     await open(page);
-    // Collapsed by default is the point — but absent is not the same thing.
-    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
-
+    const tools = page.getByTestId('editor-tools');
+    // Before the note has been touched: they used to be hidden until it had
+    // focus, which is exactly when nobody was looking for them yet.
+    await expect(tools).toBeVisible();
     await page.getByTestId('notes-surface').click();
-    await expect(page.getByTestId('editor-tools')).toBeVisible();
-
+    await expect(tools).toBeVisible();
+    // And they stay when focus leaves the note, for the title or anything else.
     await page.getByTestId('note-title').click();
-    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
+    await expect(tools).toBeVisible();
+    await page.getByTestId('book-select').focus();
+    await expect(tools).toBeVisible();
+    // Preview has nothing to format; writing brings them straight back.
+    await page.getByTestId('note-preview').click();
+    await expect(tools).toHaveCount(0);
+    await page.getByTestId('note-preview').click();
+    await expect(tools).toBeVisible();
   });
 
   test('a heading applies and toggles back off', async ({ page }) => {
@@ -278,16 +286,20 @@ test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
     expect(picked).toBe('Word');
   });
 
-  test('the tools stay while focus moves between them and the note, and go when it leaves', async ({ page }) => {
+  test('the tools stay while focus moves between them, the note and beyond', async ({ page }) => {
     await open(page);
     await page.getByTestId('notes-surface').click();
     await page.keyboard.press('Shift+Tab');
-    await expect(page.getByTestId('editor-tools')).toBeVisible();
+    await expect(page.getByTestId('tool-h1')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByTestId('notes-surface')).toBeFocused();
     await expect(page.getByTestId('editor-tools')).toBeVisible();
 
     await page.getByTestId('note-title').focus();
-    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+    // Reachable from the title by Tab too, now that they no longer wait for
+    // focus to arrive in the note first.
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('tool-h1')).toBeFocused();
   });
 });
