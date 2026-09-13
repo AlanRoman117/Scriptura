@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- interactive-widget=resizes-content: on Android Chrome the layout viewport shrinks for the
+         keyboard, so dvh and innerHeight tell the truth. iOS ignores it; there the visual
+         viewport is published by src/lib/viewport.ts and the stylesheet sizes from that. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf9f7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171614" />
     <link rel="icon" type="image/svg+xml" href="/icons/icon-512.svg" />

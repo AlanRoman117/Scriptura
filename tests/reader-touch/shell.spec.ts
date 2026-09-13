@@ -41,3 +41,24 @@ test('a tap, not a click, opens the notes sheet', async ({ page }) => {
   // sheet and not a tab.
   await expect(page.getByTestId('chapter')).toBeVisible();
 });
+
+test('publishes the visual viewport and never scrolls sideways', async ({ page }) => {
+  await open(page);
+  const shell = await page.evaluate(() => ({
+    vvh: document.documentElement.style.getPropertyValue('--vvh'),
+    inner: window.innerHeight,
+    meta: document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? '',
+    docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    paneOverflow: (() => {
+      const pane = document.querySelector('.pane--bible') as HTMLElement;
+      return pane.scrollWidth - pane.clientWidth;
+    })(),
+  }));
+  // At rest, with no keyboard, the visual viewport is the whole window.
+  expect(shell.vvh).toBe(`${shell.inner}px`);
+  // Android Chrome shrinks the layout viewport for the keyboard when asked.
+  expect(shell.meta).toContain('interactive-widget=resizes-content');
+  // Reflow (1.4.10): the page and the reading pane fit the phone's width.
+  expect(shell.docOverflow).toBeLessThanOrEqual(0);
+  expect(shell.paneOverflow).toBeLessThanOrEqual(0);
+});

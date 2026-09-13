@@ -68,6 +68,7 @@ import {
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
+import { useVisualViewport } from './lib/viewport';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -105,6 +106,8 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   // Device-scoped display preferences; applied to <html> on every change.
   const [prefs, updatePrefs] = usePrefs();
+  // `--vvh` / `--vv-top`: the viewport the reader sees, keyboard excluded.
+  useVisualViewport();
   const [agentEnabled, setAgentOn] = useState(() => agentIsEnabled());
   /** One at a time: a second would swap the contents under an open preview. */
   const [proposal, setProposal] = useState<Proposal | null>(null);

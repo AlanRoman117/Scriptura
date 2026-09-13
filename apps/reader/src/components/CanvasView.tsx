@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
 import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
+import { usePointerDrag } from '../lib/viewport';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -106,29 +107,64 @@ export function CanvasView({
     [board, onChange]
   );
 
-  /* ── dragging a card, and panning the plane ───────────────────────────── */
+  const sizeOf = (node: BoardNode) => ({ w: node.w ?? CARD_W, h: node.h ?? CARD_H });
 
-  useEffect(() => {
-    const move = (e: PointerEvent) => {
+  /* ── dragging a card, resizing it, and panning the plane ──────────────── */
+  //
+  // Three gestures, one helper (lib/viewport.ts). The pointer is captured, so
+  // the moves keep arriving when the finger leaves the element, and a touch
+  // the browser takes over — a pinch, an edge swipe — ends the gesture the
+  // way an up does instead of leaving a card stuck to nothing. Every card's
+  // grip and resize corner get the same props; which card is held is read
+  // from the element's data attribute, because a hook cannot be called per
+  // card inside the map.
+
+  const frameBox = () => frame.current?.getBoundingClientRect();
+
+  const panDrag = usePointerDrag<HTMLDivElement>({
+    onStart: (e) => {
+      // Anywhere that is not a card or a control pans.
+      //
+      // This used to compare `e.target` with `e.currentTarget`, which was
+      // never equal: `.canvas__plane` is absolutely positioned over the whole
+      // frame, so the press always landed on the plane and dragging the
+      // background did nothing at all.
+      //
+      // ⚠️ Controls must be excluded, not only cards. Capturing the pointer on
+      // pointerdown makes Chromium deliver the following `click` to the
+      // capturing element — so a press on the edge-cut circle that also began
+      // a pan never clicked the circle, and the connection could not be cut.
+      if ((e.target as HTMLElement).closest('.card, .canvas__edge-cut, button, a, input, select, textarea')) {
+        return false;
+      }
+      panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+      setConnecting(null);
+    },
+    onMove: (e) => {
       if (panning.current) {
         setPan({ x: e.clientX - panning.current.x, y: e.clientY - panning.current.y });
-        return;
       }
-      const box = frame.current?.getBoundingClientRect();
-      if (!board || !box) return;
+    },
+    onEnd: () => {
+      panning.current = null;
+    },
+  });
 
-      const sizing = resize.current;
-      if (sizing) {
-        // Cards hold whole verses and whole notes, so a fixed size cannot be
-        // right for both. Floors keep the grip and the title reachable.
-        const w = Math.max(160, sizing.w + (e.clientX - sizing.x) / zoom);
-        const h = Math.max(96, sizing.h + (e.clientY - sizing.y) / zoom);
-        patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) });
-        return;
-      }
-
+  const cardDrag = usePointerDrag<HTMLElement>({
+    onStart: (e) => {
+      const box = frameBox();
+      const node = board?.nodes.find((n) => n.id === e.currentTarget.dataset.nodeId);
+      if (!box || !node) return false;
+      drag.current = {
+        id: node.id,
+        dx: (e.clientX - box.left - pan.x) / zoom - node.x,
+        dy: (e.clientY - box.top - pan.y) / zoom - node.y,
+      };
+    },
+    onMove: (e) => {
       const held = drag.current;
-      if (!held) return;
+      const box = frameBox();
+      if (!held || !board || !box) return;
       // Divided by zoom: the pointer moves in screen pixels, the card lives in
       // board coordinates, and at 0.5x every drag would otherwise travel twice
       // as far as the cursor.
@@ -136,23 +172,35 @@ export function CanvasView({
       // plane in the one direction panning back from is least obvious.
       const x = Math.max(0, (e.clientX - box.left - pan.x) / zoom - held.dx);
       const y = Math.max(0, (e.clientY - box.top - pan.y) / zoom - held.dy);
-      patch({
-        nodes: board.nodes.map((n) => (n.id === held.id ? { ...n, x, y } : n)),
-      });
-    };
-    const up = () => {
+      patch({ nodes: board.nodes.map((n) => (n.id === held.id ? { ...n, x, y } : n)) });
+    },
+    onEnd: () => {
       drag.current = null;
+    },
+  });
+
+  const resizeDrag = usePointerDrag<HTMLSpanElement>({
+    onStart: (e) => {
+      // The corner sits inside the card; the press must not also start a drag.
+      e.stopPropagation();
+      const node = board?.nodes.find((n) => n.id === e.currentTarget.dataset.nodeId);
+      if (!node) return false;
+      const { w, h } = sizeOf(node);
+      resize.current = { id: node.id, x: e.clientX, y: e.clientY, w, h };
+    },
+    onMove: (e) => {
+      const sizing = resize.current;
+      if (!sizing || !board) return;
+      // Cards hold whole verses and whole notes, so a fixed size cannot be
+      // right for both. Floors keep the grip and the title reachable.
+      const w = Math.max(160, sizing.w + (e.clientX - sizing.x) / zoom);
+      const h = Math.max(96, sizing.h + (e.clientY - sizing.y) / zoom);
+      patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) });
+    },
+    onEnd: () => {
       resize.current = null;
-      panning.current = null;
-      document.body.classList.remove('dragging');
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-  }, [board, pan, zoom, patch]);
+    },
+  });
 
   /* ── cards ────────────────────────────────────────────────────────────── */
 
@@ -184,8 +232,6 @@ export function CanvasView({
 
   /** What a card says. Verse text comes from the open translation, live. */
   const describe = (node: BoardNode) => describeNode(node, { bible, notes });
-
-  const sizeOf = (node: BoardNode) => ({ w: node.w ?? CARD_W, h: node.h ?? CARD_H });
 
   const centre = (id: string) => {
     const node = board?.nodes.find((n) => n.id === id);
@@ -314,18 +360,7 @@ export function CanvasView({
           className="canvas__frame"
           ref={frame}
           data-connecting={connecting ? 'true' : undefined}
-          onPointerDown={(e) => {
-            // Anywhere that is not a card pans.
-            //
-            // This used to compare `e.target` with `e.currentTarget`, which was
-            // never equal: `.canvas__plane` is absolutely positioned over the
-            // whole frame, so the press always landed on the plane and dragging
-            // the background did nothing at all.
-            if ((e.target as HTMLElement).closest('.card')) return;
-            panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-            document.body.classList.add('dragging');
-            setConnecting(null);
-          }}
+          {...panDrag}
         >
           <div
             className="canvas__plane"
@@ -386,19 +421,7 @@ export function CanvasView({
                   style={{ left: node.x, top: node.y, width: node.w ?? CARD_W, height: node.h ?? CARD_H }}
                   onClick={() => connecting && connect(node.id)}
                 >
-                  <header
-                    className="card__grip"
-                    onPointerDown={(e) => {
-                      const box = frame.current?.getBoundingClientRect();
-                      if (!box) return;
-                      drag.current = {
-                        id: node.id,
-                        dx: (e.clientX - box.left - pan.x) / zoom - node.x,
-                        dy: (e.clientY - box.top - pan.y) / zoom - node.y,
-                      };
-                      document.body.classList.add('dragging');
-                    }}
-                  >
+                  <header className="card__grip" data-node-id={node.id} {...cardDrag}>
                     {node.kind === 'text' ? (
                       // A card the reader wrote is a card the reader names. The
                       // other kinds derive their title from what they point at,
@@ -511,13 +534,9 @@ export function CanvasView({
                   <span
                     className="card__resize"
                     data-testid={`card-resize-${node.id}`}
+                    data-node-id={node.id}
                     aria-hidden="true"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                      const { w, h } = sizeOf(node);
-                      resize.current = { id: node.id, x: e.clientX, y: e.clientY, w, h };
-                      document.body.classList.add('dragging');
-                    }}
+                    {...resizeDrag}
                   />
                 </article>
               );

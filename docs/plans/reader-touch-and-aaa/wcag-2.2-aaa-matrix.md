@@ -48,12 +48,12 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 |---|---|---|---|---|
 | 1.2.4 | Captions (Live) | ➖ | — | |
 | 1.2.5 | Audio Description (Prerecorded) | ➖ | — | |
-| 1.3.4 | Orientation | ✅ F4 | manifest | No orientation lock; F4 states `orientation: 'any'` explicitly. |
+| 1.3.4 | Orientation | ✅ | `apps/reader/vite.config.ts` manifest `orientation: 'any'` | No orientation lock, stated rather than assumed. |
 | 1.3.5 | Identify Input Purpose | ➖ | — | No field collects information about the user. |
 | 1.4.3 | Contrast (Minimum) | ✅ | `tests/unit/contrast.test.ts` (139 pairs, five themes); `chrome.spec.ts` dropdowns at 7:1 | Was: verse numbers over highlight tints 3.56–4.0:1; `#b3261e` on dark 2.77:1. Fixed by the token rework: highlighted verse numbers read in `--ink`; `--danger` is a token per theme. |
 | 1.4.4 | Resize Text | ✅ | manual 200 % zoom | Browser zoom to 200 % reflows into narrow mode; no horizontal scroll. Board-thumbnail labels are SVG text and scale with zoom. |
 | 1.4.5 | Images of Text | ✅ | — | No raster text; SVG labels are real text. |
-| 1.4.10 | Reflow | 🔧 F6 | `tests/reader-touch/shell.spec.ts` 320 px | Comparison table scrolls inside its own box (permitted); canvas is two-dimensional (exempt). Verify at 320 px. |
+| 1.4.10 | Reflow | 🔧 T6, T7 | `tests/reader-touch/shell.spec.ts` (no horizontal overflow of the page or the reading pane at 412 px); 320 px added with T6 | Comparison table scrolls inside its own box (permitted) and becomes a stacked list on narrow panes (T7); canvas is two-dimensional (exempt). |
 | 1.4.11 | Non-text Contrast | 🔧 W2, T5 | `contrast.test.ts` (`--edge` ≥ 3:1, focus ≥ 3:1, `--hl-*-strong` ≥ 3:1 in every theme) | Done: every control border, the sheet handle, the swatch ring and the card colour borders use `--edge` or a strong hue. Remaining: the divider grip (T5) and the highlight left rule (W2). |
 | 1.4.12 | Text Spacing | 🔧 F6 | `tests/reader-touch/shell.spec.ts` injected spacing | `-webkit-line-clamp` and `nowrap` surfaces must not lose content at 1.5× line height and 2× paragraph spacing. |
 | 1.4.13 | Content on Hover or Focus | ❌ T6 | `a11y.spec.ts` | `.compare__quote` is revealed on hover only. The editor toolbar appears on focus into a *reserved* slot, so it neither obscures nor replaces content (exempt). Native `title` tooltips are user-agent controlled (exempt) but are being replaced with visible or accessible names anyway. |

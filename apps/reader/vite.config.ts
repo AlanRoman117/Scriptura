@@ -52,6 +52,8 @@ export default defineConfig({
         theme_color: '#1a1a1a',
         background_color: '#faf9f7',
         display: 'standalone',
+        // Stated rather than assumed (1.3.4): nothing here needs a fixed orientation.
+        orientation: 'any',
         start_url: '/',
         icons: [
           { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },

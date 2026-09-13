@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { usePointerDrag } from '../lib/viewport';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
 const NARROW = 850;
@@ -66,7 +67,6 @@ export function Layout({ bible, notes }: LayoutProps) {
   const [maximized, setMaximized] = useState<Maximized>('none');
   const [sheet, setSheet] = useState<SheetPosition>('peek');
   const frame = useRef<HTMLDivElement>(null);
-  const dragging = useRef(false);
 
   const onDrag = useCallback((clientX: number) => {
     const box = frame.current?.getBoundingClientRect();
@@ -82,20 +82,10 @@ export function Layout({ bible, notes }: LayoutProps) {
     setSplit((s) => Math.min(max, Math.max(min, s + delta)));
   }, []);
 
-  useEffect(() => {
-    if (narrow) return;
-    const move = (e: PointerEvent) => dragging.current && onDrag(e.clientX);
-    const up = () => {
-      dragging.current = false;
-      document.body.classList.remove('dragging');
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-    return () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-  }, [narrow, onDrag]);
+  // The app's one drag implementation (lib/viewport.ts): the pointer is
+  // captured, and a cancelled touch ends the drag like an up, so the divider
+  // is never left half-dragged with `user-select: none` on the document.
+  const divider = usePointerDrag<HTMLDivElement>({ onMove: (e) => onDrag(e.clientX) });
 
   if (narrow) {
     return (
@@ -161,10 +151,7 @@ export function Layout({ bible, notes }: LayoutProps) {
           aria-valuemin={Math.round(limits[0] * 100)}
           aria-valuemax={Math.round(limits[1] * 100)}
           tabIndex={0}
-          onPointerDown={() => {
-            dragging.current = true;
-            document.body.classList.add('dragging');
-          }}
+          {...divider}
           // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft') nudge(-0.02);

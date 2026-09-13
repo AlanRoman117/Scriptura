@@ -192,6 +192,20 @@ body {
 
 body.dragging { cursor: col-resize; user-select: none; }
 
+/* Touch. The verse is a tap target, so without this every tap in the reading
+   column flashes the browser's grey box across a whole paragraph; controls
+   draw their own pressed state instead. `manipulation` keeps pinch-zoom of the
+   page but removes the double-tap delay on controls; `none` on the surfaces
+   that are dragged tells the browser the gesture is ours, which is what stops
+   it firing pointercancel and scrolling instead. */
+html { -webkit-tap-highlight-color: transparent; }
+button, select, [role='button'], .sheet__grip { touch-action: manipulation; }
+.divider, .sheet__grip, .canvas__frame, .card__grip, .card__resize { touch-action: none; }
+.verse:active { background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.reader__chip:active, .notes__action:active, .canvas__action:active, .library__action:active,
+.settings__action:active, .results__book:active, .tools__button:active, .search__ref:active,
+.results__ref:active, .marks__ref:active { background-color: color-mix(in srgb, var(--rule) 60%, var(--paper-raised)); }
+
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
   padding: 0; margin: -1px; overflow: hidden;
@@ -1111,6 +1125,10 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 
 .layout--narrow { display: block; position: relative; }
 .layout--narrow .pane--bible { height: 100%; padding-bottom: 3.5rem; }
+/* Nothing under the notch or the status bar in standalone mode. `env()` is 0
+   everywhere else, so this costs the desktop nothing. */
+.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+.canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 3;
@@ -1129,6 +1147,9 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
   padding: .5rem; border: none; background: transparent;
   color: var(--ink-soft); font: inherit; font-size: .78rem; cursor: pointer;
+  /* The grip is the one control in the thumb zone; the home indicator must
+     not sit on it. */
+  padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
 }
 .sheet__handle { width: 2.25rem; height: 4px; border-radius: 2px; background: var(--edge); }
 .sheet__body { flex: 1; min-height: 0; overflow-y: auto; }
