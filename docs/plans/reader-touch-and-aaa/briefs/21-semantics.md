@@ -5,7 +5,7 @@
 | **ID** | `21-semantics` |
 | **Size** | L (mechanical once the heading policy is understood; a good delegate brief in two halves: structure, then names) |
 | **Depends on** | `03-focus` (panels already own Escape/return), `05-announcer` |
-| **Status** | open |
+| **Status** | done (a50eb26) |
 | **Criteria** | 1.3.1, 2.4.1 Bypass Blocks, 2.4.2 Page Titled, 2.4.4/2.4.9 Link Purpose, 2.4.6, 2.4.8 Location, 2.4.10 Section Headings, 3.1.2 Language of Parts, 3.1.4 Abbreviations, 3.2.4, 4.1.2, 1.3.6 |
 
 ## Outcome

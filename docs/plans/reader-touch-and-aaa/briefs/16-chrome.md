@@ -5,7 +5,7 @@
 | **ID** | `16-chrome` |
 | **Size** | M (mechanical; a good first brief for a delegate) |
 | **Depends on** | `02-tokens` (`--control-h`, `--edge`) |
-| **Status** | open |
+| **Status** | done (dbc11e0) |
 | **Criteria** | 2.5.5 Target Size (Enhanced), 2.5.8, 1.4.13 Content on Hover or Focus, 2.1.1 (preview edit), 1.4.11 |
 
 ## Outcome

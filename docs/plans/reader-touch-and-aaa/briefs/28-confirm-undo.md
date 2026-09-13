@@ -5,7 +5,7 @@
 | **ID** | `28-confirm-undo` |
 | **Size** | M |
 | **Depends on** | `05-announcer`, `03-focus` |
-| **Status** | open |
+| **Status** | done (48f8df4) |
 | **Criteria** | 3.3.4 Error Prevention (Legal, Financial, Data), 3.3.6 Error Prevention (All), 2.2.3 No Timing, 4.1.2 |
 
 ## Outcome

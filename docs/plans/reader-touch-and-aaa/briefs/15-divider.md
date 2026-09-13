@@ -5,7 +5,7 @@
 | **ID** | `15-divider` |
 | **Size** | S |
 | **Depends on** | `04-viewport` (`usePointerDrag`), `02-tokens` (`--edge`) |
-| **Status** | open |
+| **Status** | done (dbc11e0) |
 | **Criteria** | 2.5.5 / 2.5.8 Target Size, 2.5.7 Dragging Movements, 1.4.11 Non-text Contrast, 4.1.2 (`aria-valuetext`) |
 
 ## Outcome

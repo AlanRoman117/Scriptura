@@ -5,7 +5,7 @@
 | **ID** | `27-help` |
 | **Size** | M (content-heavy; a good delegate brief once the panel shell exists) |
 | **Depends on** | `03-focus`, `21-semantics` (heading policy, disclosure chips) |
-| **Status** | open |
+| **Status** | done (6687812) |
 | **Criteria** | 3.3.5 Help (AAA), 3.2.6 Consistent Help, 3.1.3 Unusual Words, 3.1.4 Abbreviations, 3.1.5 Reading Level (UI text), 2.4.10 |
 
 ## Outcome
