@@ -63,6 +63,7 @@ The reader is held to WCAG 2.2 Level AAA for its interface. The record is [`docs
 - [ ] Scripture in another language carries `lang`.
 - [ ] Animation and smooth scrolling stop under reduced motion.
 - [ ] Changes that happen without moving focus are announced with `announce()`.
+- [ ] An action whose result lands out of sight says so in words where the result went, and leaves it there until the next action — never on a timer.
 - [ ] `npm run test:reader` passes, including the axe states in `tests/reader/a11y.spec.ts` and `tests/reader-touch/gates.spec.ts`.
 
 ## Submitting a PR

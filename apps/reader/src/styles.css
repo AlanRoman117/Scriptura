@@ -272,7 +272,7 @@ summary:focus-visible,
 .results__ref, .results__insert, .library__close, .library__action, .notes__select,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
-.card__title-input, .canvas__panel .swatch {
+.card__title-input, .canvas__panel .swatch, .layout__done-show {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -281,7 +281,7 @@ summary:focus-visible,
 .settings__close, .settings__action, .canvas__zoom button, .canvas__action, .tools__button,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
-.compare__quote, .preview__edit, .divider__nudge, .card__action {
+.compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
@@ -303,6 +303,30 @@ summary:focus-visible,
 }
 .layout[data-maximized='bible'],
 .layout[data-maximized='notes'] { grid-template-columns: 1fr; }
+
+/* ── Something went into a note ───────────────────────────────────────────
+   A checkmark and the words, at the destination: the notes' status line, the
+   sheet's grip at peek, or this bar while the Bible is maximized. The words
+   carry the meaning; the mark is decoration and hidden from screen readers,
+   which hear the same words through the announcer. Nothing here fades or
+   times out (2.2.3) — the reader's next action clears it. */
+.done { color: var(--ink); }
+.done__check { font-weight: 700; font-size: 1.15em; line-height: 1; }
+.layout__done {
+  position: fixed; right: 1.25rem; bottom: 1rem; z-index: 4;
+  max-width: calc(100% - 2.5rem);
+  display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem;
+  padding: .3rem .3rem .3rem .85rem;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / .14);
+  font-size: .9rem;
+}
+.layout__done-show {
+  padding: 0 .9rem; font: inherit; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+/* A verse number focused near the bottom scrolls clear of the bar (2.4.12). */
+.pane--bible:has(> .layout__done) { scroll-padding-bottom: calc(var(--control-h) + 3rem); }
 
 .pane {
   position: relative;
@@ -1389,7 +1413,11 @@ summary:focus-visible,
 }
 
 .notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
-.notes__status { min-height: 1.2rem; font-size: .72rem; color: var(--ink-soft); }
+.notes__status {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .75rem;
+  min-height: 1.2rem; font-size: .72rem; color: var(--ink-soft);
+}
+.notes__done { font-size: .8rem; }
 .notes__status--bad { color: var(--danger); }
 
 /* ── Durability ───────────────────────────────────────────────────────────── */
@@ -1460,6 +1488,11 @@ summary:focus-visible,
 .sheet__grip { flex: 0 0 auto; width: 100%; cursor: grab; }
 .sheet[data-dragging] .sheet__grip { cursor: grabbing; }
 .sheet__handle { width: 2.75rem; height: 5px; border-radius: 3px; background: var(--edge); }
+/* "Notes", and beside it what was just put into them. Wraps rather than
+   truncating; the peek height is the grip's measured height, so a second
+   line raises the sheet instead of being cut off. */
+.sheet__label { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .6rem; text-align: center; }
+.sheet__done { font-size: .82rem; }
 .sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; }
 /* With a keyboard up, the sheet is what is left above it — about 330px on a
    phone — and the note bar, the title and two rows of tools took all but

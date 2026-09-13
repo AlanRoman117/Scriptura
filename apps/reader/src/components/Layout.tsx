@@ -51,6 +51,16 @@ function useIsNarrow(): boolean {
 interface LayoutProps {
   bible: ReactNode;
   notes: ReactNode;
+  /**
+   * The last thing put into a note, in words ("Quoted John 1:2"), or null.
+   *
+   * The notes pane shows it in its status line. While the notes are out of
+   * sight it is shown where they are reached from instead: on the sheet's grip
+   * at peek, or in a bar when the Bible is maximized.
+   */
+  inserted?: string | null;
+  /** The reader brought the notes into view: the confirmation has done its job. */
+  onNotesShown?: () => void;
 }
 
 /**
@@ -64,12 +74,33 @@ interface LayoutProps {
  * were rejected: switching away from the text to write about it loses exactly
  * the context the layout exists to preserve.
  */
-export function Layout({ bible, notes }: LayoutProps) {
+export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutProps) {
   const narrow = useIsNarrow();
   const [split, setSplit] = useState(0.58);
   const [maximized, setMaximized] = useState<Maximized>('none');
   const [sheet, setSheet] = useState<SheetPosition>('peek');
   const frame = useRef<HTMLDivElement>(null);
+
+  // Opening the sheet, or restoring the notes beside the Bible, is looking at
+  // the note — which is what the confirmation was standing in for.
+  const notesInView = narrow ? sheet !== 'peek' : maximized !== 'bible';
+  const notesWereInView = useRef(notesInView);
+  useEffect(() => {
+    if (notesInView && !notesWereInView.current) onNotesShown?.();
+    notesWereInView.current = notesInView;
+  }, [notesInView, onNotesShown]);
+
+  /**
+   * Set by "Show notes". The button goes away as the notes come back, so
+   * focus is handed to the note — where the passage just went, and where the
+   * caret is waiting after it — rather than dropping to <body> (2.4.3).
+   */
+  const focusNotesNext = useRef(false);
+  useEffect(() => {
+    if (!focusNotesNext.current || maximized === 'bible') return;
+    focusNotesNext.current = false;
+    (document.getElementById('notes-surface') ?? document.getElementById('notes'))?.focus();
+  }, [maximized]);
 
   /* ── The notes sheet (narrow only) ──────────────────────────────────────
    *
@@ -183,6 +214,8 @@ export function Layout({ bible, notes }: LayoutProps) {
   const divider = usePointerDrag<HTMLDivElement>({ onMove: (e) => onDrag(e.clientX) });
 
   if (narrow) {
+    // Only at peek: once the sheet is open the note's own status line says it.
+    const onGrip = sheet === 'peek' ? inserted : null;
     return (
       <div className="layout layout--narrow" data-testid="layout" data-mode="narrow">
         {/* Covered by a full sheet, the text is out of reach: inert, so Tab and
@@ -206,7 +239,10 @@ export function Layout({ bible, notes }: LayoutProps) {
             ref={gripEl}
             type="button"
             className="sheet__grip"
-            aria-label={sheet === 'full' ? 'Collapse notes' : 'Expand notes'}
+            // The confirmation is visible text on the button, so it is part of
+            // the button's name (2.5.3): "Quoted John 1:2" is what someone
+            // using speech input will say to reach it.
+            aria-label={`${sheet === 'full' ? 'Collapse notes' : 'Expand notes'}${onGrip ? `, ${onGrip}` : ''}`}
             aria-expanded={sheet !== 'peek'}
             aria-describedby="sheet-hint"
             {...gripDrag}
@@ -225,7 +261,17 @@ export function Layout({ bible, notes }: LayoutProps) {
             }}
           >
             <span className="sheet__handle" aria-hidden="true" />
-            <span className="sheet__label">Notes</span>
+            <span className="sheet__label">
+              Notes
+              {onGrip && (
+                <span className="done sheet__done" data-testid="sheet-done">
+                  <span className="done__check" aria-hidden="true">
+                    ✓
+                  </span>{' '}
+                  {onGrip}
+                </span>
+              )}
+            </span>
           </button>
           <span id="sheet-hint" className="visually-hidden">
             Drag, or use the up and down arrow keys, to make the notes taller or shorter.
@@ -271,6 +317,33 @@ export function Layout({ bible, notes }: LayoutProps) {
           onToggle={() => setMaximized(maximized === 'bible' ? 'none' : 'bible')}
         />
         {bible}
+        {/* The notes are maximized away, so the confirmation waits where they
+            come back from, with the way back beside it. It takes no focus and
+            blocks nothing. Inside the Scripture landmark, like the verse
+            actions that led here, and a direct child of the pane: `.reader`
+            is a size container, and a fixed box inside one is positioned
+            against it rather than against the window. */}
+        {maximized === 'bible' && inserted && (
+          <div className="done layout__done" data-testid="layout-done">
+            <span>
+              <span className="done__check" aria-hidden="true">
+                ✓
+              </span>{' '}
+              {inserted}
+            </span>
+            <button
+              type="button"
+              className="layout__done-show"
+              data-testid="layout-done-show"
+              onClick={() => {
+                focusNotesNext.current = true;
+                setMaximized('none');
+              }}
+            >
+              Show notes
+            </button>
+          </div>
+        )}
       </main>
 
       {maximized === 'none' && (

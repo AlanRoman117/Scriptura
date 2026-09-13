@@ -109,6 +109,12 @@ export function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  /**
+   * The last thing put into a note — or onto a board — from somewhere else,
+   * in words ("Quoted John 1:2"), until the reader's next action. See
+   * `confirmInsert`.
+   */
+  const [inserted, setInserted] = useState<string | null>(null);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   /** The last mark removed from the Marks list, until the next change to any mark. */
   const [undoMark, setUndoMark] = useState<Highlight | null>(null);
@@ -288,6 +294,36 @@ export function App() {
   }, [bible, query, matching]);
 
   /**
+   * Confirm an insertion in words, where it went, until the next action.
+   *
+   * By the time anyone looks, the control that did it has usually gone — the
+   * verse actions close behind a Quote, the board closes behind "Add to note"
+   * — and on a phone the note it went into is folded away under the grip. So
+   * the confirmation is shown at the destination, or where the destination is
+   * reached from while it is out of sight (the grip; a bar when the Bible is
+   * maximized), and it is announced (4.1.3): a checkmark's alt text is only
+   * read if someone happens to move onto it, which nobody does to something
+   * that appeared on its own.
+   *
+   * Nothing clears it on a timer (2.2.3). The next insertion replaces it; an
+   * edit, another note, a new chapter or bringing the notes into view clears
+   * it. Those are cleared where they happen — never from an effect on the
+   * active note, which would also fire for the quote that creates one and
+   * wipe its confirmation in the same breath.
+   */
+  const confirmInsert = useCallback((shown: string, said: string = shown) => {
+    setInserted(shown);
+    // `force`: quoting the same verse twice is two actions, and both are news.
+    announce(said, { force: true });
+  }, []);
+  const clearInserted = useCallback(() => setInserted(null), []);
+
+  // A new chapter is a new action; the last confirmation has done its job.
+  useEffect(() => {
+    setInserted(null);
+  }, [position.bookSlug, position.chapter]);
+
+  /**
    * Insert at the cursor, or append when the surface is not focused.
    *
    * Always leaves a blank line after the passage and parks the cursor on it:
@@ -295,16 +331,20 @@ export function App() {
    * spacing it out by hand afterwards is a chore the app can just not create.
    */
   const insertIntoNote = useCallback(
-    (text: string, { focus = false }: { focus?: boolean } = {}) => {
+    (text: string, done: string, { focus = false }: { focus?: boolean } = {}) => {
       // One blank line after, however the caller punctuated its own text.
       const block = `${text.replace(/\n+$/, '')}\n\n`;
 
       if (!activeId) {
-        const note = newNote();
-        setNotes((c) => [{ ...note, body: block }, ...c]);
+        const note = { ...newNote(), body: block };
+        setNotes((c) => [note, ...c]);
         setActiveId(note.id);
         caret.current = { at: block.length, focus };
-        void saveNote({ ...note, body: block });
+        // Reported like every other write. It used to save silently, so the
+        // one quote that started a note left its status line blank.
+        setSaving('saving');
+        void saveNote(note).then((ok) => setSaving(ok ? 'saved' : 'failed'));
+        confirmInsert(done, `${done} in a new note`);
         return;
       }
       const current = notes.find((n) => n.id === activeId);
@@ -316,9 +356,11 @@ export function App() {
       const spacer = before && !before.endsWith('\n') ? '\n\n' : '';
       caret.current = { at: at + spacer.length + block.length, focus };
       changeNote(activeId, { body: `${before}${spacer}${block}${after}` });
+      const title = current.title.trim();
+      confirmInsert(done, `${done} in ${title ? `“${title}”` : 'an untitled note'}`);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeId, notes]
+    [activeId, notes, confirmInsert]
   );
 
   const quoteVerse = useCallback(
@@ -328,13 +370,16 @@ export function App() {
       const ch = b?.chapters.find((c) => c.number === position.chapter);
       const v = ch?.verses.find((x) => x.number === verse);
       if (!b || !ch || !v) return;
-      insertIntoNote(quotePassage(bible, b, position.chapter, [v]), { focus: true });
+      insertIntoNote(quotePassage(bible, b, position.chapter, [v]), `Quoted ${b.name} ${position.chapter}:${verse}`, {
+        focus: true,
+      });
     },
     [bible, position, insertIntoNote]
   );
 
   const linkVerse = useCallback(
     (verse: number) => {
+      const name = bible?.book(position.bookSlug)?.name ?? position.bookSlug;
       insertIntoNote(
         toWikiLink({
           book_slug: position.bookSlug,
@@ -344,10 +389,11 @@ export function App() {
           // two translations is otherwise the same string twice.
           translation: translationId,
         }),
+        `Linked ${name} ${position.chapter}:${verse}`,
         { focus: true }
       );
     },
-    [position, translationId, insertIntoNote]
+    [bible, position, translationId, insertIntoNote]
   );
 
   // Compared translations are read from IndexedDB — they are only offerable
@@ -461,6 +507,7 @@ export function App() {
   );
 
   const createNote = useCallback(() => {
+    setInserted(null);
     const note = newNote();
     setNotes((c) => [note, ...c]);
     setActiveId(note.id);
@@ -473,6 +520,7 @@ export function App() {
 
   const deleteNote = useCallback(
     (id: string) => {
+      setInserted(null);
       void removeNote(id);
       setNotes((current) => {
         const next = current.filter((n) => n.id !== id);
@@ -538,6 +586,7 @@ export function App() {
     (accepted: Proposal) => {
       clearProposal();
       if (accepted.kind === 'note') {
+        setInserted(null);
         const note = { ...newNote(accepted.title), body: accepted.body };
         setNotes((c) => [note, ...c]);
         setActiveId(note.id);
@@ -623,8 +672,13 @@ export function App() {
       );
       setBoardId(next.id);
       void saveBoard(next);
+
+      // The board is out of sight, so this is the only sign anything happened.
+      const what = `${bible?.book(position.bookSlug)?.name ?? position.bookSlug} ${position.chapter}:${verse}`;
+      const where = `“${next.name || 'Untitled board'}”`;
+      confirmInsert(already ? `${what} is already on ${where}` : `Added ${what} to ${where}`);
     },
-    [boards, boardId, position, translationId]
+    [bible, boards, boardId, position, translationId, confirmInsert]
   );
 
   /** A card in one line, for the export. */
@@ -866,7 +920,7 @@ export function App() {
     if (!bible) return;
     const b = bible.book(r.book_slug);
     const v = b?.chapters.find((c) => c.number === r.chapter)?.verses.find((x) => x.number === r.verse);
-    if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]));
+    if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]), `Quoted ${r.ref}`);
   };
 
   /** Quote one column of a comparison, in that column's own words. */
@@ -877,7 +931,12 @@ export function App() {
       .find((c) => c.number === position.chapter)
       ?.verses.find((x) => x.number === verse);
     if (!from || !book || !v) return;
-    insertIntoNote(quotePassage(from, book, position.chapter, [v]), { focus: true });
+    // Which column, in the words: the point of quoting from a comparison.
+    insertIntoNote(
+      quotePassage(from, book, position.chapter, [v]),
+      `Quoted ${book.name} ${position.chapter}:${verse} (${id.toUpperCase()})`,
+      { focus: true }
+    );
   };
 
   if (error) {
@@ -932,7 +991,8 @@ export function App() {
             setCanvasOpen(false);
           }}
           onAddToNote={(id) => {
-            insertIntoNote(boardEmbed(id));
+            const name = boards.find((b) => b.id === id)?.name || 'Untitled board';
+            insertIntoNote(boardEmbed(id), `Added the board “${name}”`);
             setCanvasOpen(false);
           }}
         />
@@ -963,6 +1023,8 @@ export function App() {
         />
       )}
       <Layout
+        inserted={inserted}
+        onNotesShown={clearInserted}
         bible={
           <BiblePane
             bible={bible}
@@ -1120,10 +1182,19 @@ export function App() {
             notes={notes}
             activeId={activeId}
             saving={saving}
-            onSelect={setActiveId}
+            inserted={inserted}
+            onSelect={(id) => {
+              setInserted(null);
+              setActiveId(id);
+            }}
             onCreate={createNote}
             onDelete={deleteNote}
-            onChange={changeNote}
+            // The reader's own edits clear the confirmation; an insertion goes
+            // through changeNote directly and sets a new one.
+            onChange={(id, patch) => {
+              setInserted(null);
+              changeNote(id, patch);
+            }}
             onExport={doExport}
             onOpenCanvas={() => setCanvasOpen(true)}
             boardCount={boards.length}

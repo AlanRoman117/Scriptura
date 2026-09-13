@@ -24,6 +24,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  'a quote confirmed, Bible maximized': async (page) => {
+    await page.getByTestId('maximize-bible').click();
+    await page.getByTestId('verse-2').click();
+    await page.getByTestId('quote-2').click();
+    await expect(page.getByTestId('layout-done')).toBeVisible();
+  },
   'reading with a note open': async (page) => {
     await page.getByTestId('note-new').click();
     await expect(page.getByTestId('notes-surface')).toBeVisible();

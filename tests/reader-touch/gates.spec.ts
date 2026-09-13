@@ -29,6 +29,11 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.locator('.verse[data-verse="2"] .verse__text').tap();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  'a quote confirmed on the grip': async (page) => {
+    await page.locator('.verse[data-verse="2"] .verse__text').tap();
+    await page.getByTestId('quote-2').tap();
+    await expect(page.getByTestId('sheet-done')).toBeVisible();
+  },
   'notes half open': async (page) => {
     await expandSheet(page);
   },

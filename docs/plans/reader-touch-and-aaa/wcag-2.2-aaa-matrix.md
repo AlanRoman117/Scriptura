@@ -33,7 +33,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.4.4 | Link Purpose (In Context) | ✅ | axe `link-name`; `editor.spec.ts` preview link | The attribution link reads "{Translation} source"; a preview wikilink is named "Go to {Book c:v (ID)}" through `describeLink`. |
 | 2.5.1 | Pointer Gestures | ✅ | — | No path-based or multipoint gesture is required; pinch (T4) is an addition with button equivalents. |
 | 2.5.2 | Pointer Cancellation | ✅ | — | Activation is on up-event; down-event starts only drags, which are essential. |
-| 2.5.3 | Label in Name | ✅ | axe `label-content-name-mismatch` in every state | The translation chip's name starts with its visible ID, then the full name; the Marks chip's name starts with "Marks". |
+| 2.5.3 | Label in Name | ✅ | axe `label-content-name-mismatch` in every state; `reader-touch/verse-actions.spec.ts` (the notes grip's name carries the confirmation shown on it) | The translation chip's name starts with its visible ID, then the full name; the Marks chip's name starts with "Marks"; the notes grip reads "Expand notes, Quoted John 1:2" while it shows that confirmation. |
 | 2.5.4 | Motion Actuation | ➖ | — | No device-motion input. |
 | 3.1.1 | Language of Page | ✅ | `index.html` `lang="en"` | |
 | 3.2.1 | On Focus | ✅ | — | Focus changes nothing. |
@@ -71,7 +71,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.3.3 | Error Suggestion | ✅ | `library.spec.ts` offline test | "No connection — try again when you are online"; "Could not save — export your notes". |
 | 3.3.4 | Error Prevention (Legal, Financial, Data) | ✅ | `notes.spec.ts`, `library.spec.ts`, `canvas.spec.ts` (card removal asks, cancels, and is undone with its connections; connection removal is undone) | Note, board, card, mark and translation removal are confirmed through `ConfirmButton`; mark, card and connection removal can also be undone until the next change. |
 | 3.3.8 | Accessible Authentication (Minimum) | ➖ | — | No authentication. |
-| 4.1.3 | Status Messages | ✅ | `a11y.spec.ts` (search total once typing pauses, panel opened/closed, download progress by quarters and completion, download error as an alert, named progressbar) | One polite and one assertive live region in `lib/announce.tsx`, mounted beside the app; duplicates are dropped so a query typed letter by letter is announced once. The note footer keeps its own region. |
+| 4.1.3 | Status Messages | ✅ | `a11y.spec.ts` (search total once typing pauses, panel opened/closed, download progress by quarters and completion, download error as an alert, named progressbar); `study.spec.ts` (every insertion into a note announced with the note's name, the same quote twice announced twice); `reader-touch/verse-actions.spec.ts` (a quote at peek announced) | One polite and one assertive live region in `lib/announce.tsx`, mounted beside the app; duplicates are dropped so a query typed letter by letter is announced once, except for a repeated insertion, which is a new action. The note footer keeps its own region for the save state; the insertion shown beside it is plain text so it is not read twice. |
 
 ## Level AAA
 
@@ -87,7 +87,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
 | 2.1.3 | Keyboard (No Exception) | ✅ | as 2.1.1 | No exception is claimed; nothing requires path-dependent input. |
-| 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
+| 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change); `study.spec.ts` (an insertion's confirmation survives two fast-forwarded minutes and goes with the next action) | No time limits anywhere; nothing is dismissed by a timer. |
 | 2.2.4 | Interruptions | ✅ | `tests/reader/offline.spec.ts` (a real service-worker update, served from a private origin: the page is not reloaded, a worker waits, Later puts the notice away); `a11y.spec.ts` | Every announcement is polite except a failed download or a failed board save; the storage notice is dismissible; a new version waits for the reader and is announced once, and the reader chooses Reload or Later. |
 | 2.2.5 | Re-authenticating | ➖ | — | |
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |

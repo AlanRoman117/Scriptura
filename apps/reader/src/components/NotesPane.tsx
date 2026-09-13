@@ -12,6 +12,8 @@ interface NotesPaneProps {
   notes: Note[];
   activeId: string | null;
   saving: 'idle' | 'saving' | 'saved' | 'failed';
+  /** The last thing put into the note from elsewhere, in words, until the next action. */
+  inserted?: string | null;
   onSelect: (id: string) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
@@ -49,6 +51,7 @@ export function NotesPane({
   notes,
   activeId,
   saving,
+  inserted = null,
   onSelect,
   onCreate,
   onDelete,
@@ -274,16 +277,29 @@ export function NotesPane({
         </div>
       )}
 
-      <footer className="notes__status" data-testid="note-status" aria-live="polite">
-        {saving === 'failed' ? (
-          <span className="notes__status--bad">Could not save — export your notes</span>
-        ) : saving === 'saving' ? (
-          'Saving…'
-        ) : saving === 'saved' ? (
-          'Saved'
-        ) : (
-          ''
+      <footer className="notes__status" data-testid="note-status">
+        {/* What just went into the note, and whether it is stored. Only the
+            second is a live region: the first has already been announced,
+            and inside the region it would be said twice. */}
+        {inserted && (
+          <span className="done notes__done" data-testid="note-done">
+            <span className="done__check" aria-hidden="true">
+              ✓
+            </span>{' '}
+            {inserted}
+          </span>
         )}
+        <span className="notes__saving" aria-live="polite">
+          {saving === 'failed' ? (
+            <span className="notes__status--bad">Could not save — export your notes</span>
+          ) : saving === 'saving' ? (
+            'Saving…'
+          ) : saving === 'saved' ? (
+            'Saved'
+          ) : (
+            ''
+          )}
+        </span>
       </footer>
     </div>
   );

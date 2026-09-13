@@ -34,6 +34,19 @@ test.describe('a board', () => {
     await expect(page.locator('.card').first()).toContainText('In the beginning was the Word');
   });
 
+  test('putting a verse on the board says so, since the board is out of sight', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Added John 1:1 to “Study board”');
+    await expect(page.getByTestId('announcer')).toHaveText('Added John 1:1 to “Study board”');
+
+    // Asking twice changes nothing, and says that instead of saying nothing.
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await expect(page.getByTestId('note-done')).toHaveText('✓ John 1:1 is already on “Study board”');
+  });
+
   test('cards can be moved, and stay where they are put', async ({ page }) => {
     await open(page);
     await boardWithTwoVerses(page);

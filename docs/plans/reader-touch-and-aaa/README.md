@@ -121,6 +121,7 @@ Each phase ended with the full suite on Node 24 (`mise exec node@24`); every one
 | 4 — sheet, comparison, phone gates | 80d1bce | 324 | 47 + 230 |
 | 5 — board | 929bb87 | 329 | 47 + 250 |
 | 6 — updates, docs | close-out | 329 | 47 + 253 |
+| after merge — insertions confirmed | `reader/insert-feedback` | 329 | 47 + 268 |
 
 A correction for the record: several commit messages between 8ad97e8 and b9f6573 give Playwright and jest totals that were added up rather than measured, and are too high. The figures in this table are the measured ones (`npm test`, `npx playwright test --list`).
 
@@ -128,7 +129,7 @@ A correction for the record: several commit messages between 8ad97e8 and b9f6573
 
 Recorded so they are not lost; none blocks the conformance claim.
 
-- **Quoting from a phone at "peek" gives no visible feedback.** The quote lands in the open note, but the sheet is collapsed and its save status is not shown. Raising the sheet to half on a quote, or announcing "Quoted into {note}", would close it.
+- **Quoting from a phone at "peek" gave no visible feedback** — nor did any insertion whose control closes behind it. Fixed after the merge, on `reader/insert-feedback`: every insertion is confirmed in words where it went (the notes' status line, the grip at peek, a bar when the Bible is maximized), announced with the note's name, and left until the next action. The sheet is not raised: the reader is still reading.
 - **Boards laid out before the card size grew** (220 × 132 → 280 × 180) overlap by up to 60px until a card is moved. Positions are the reader's, so nothing rewrites them.
 - **Safari and the docked verse actions.** They are `position: fixed` inside a size container; Chromium keeps that viewport-relative, and brief 91 asks for the same check on Safari.
 - **Two pre-existing bugs were fixed because the work exposed them**, not merely noted: the autosave debounce dropped an edit when a second note was edited within 600ms, and a first-visit Reload onto a new version did nothing.

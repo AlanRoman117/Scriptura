@@ -100,6 +100,18 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  'a quote confirmed': async (page) => {
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-2').click();
+    await page.getByTestId('quote-2').click();
+    await expect(page.getByTestId('note-done')).toBeVisible();
+  },
+  'a quote confirmed, Bible maximized': async (page) => {
+    await page.getByTestId('maximize-bible').click();
+    await page.getByTestId('verse-2').click();
+    await page.getByTestId('quote-2').click();
+    await expect(page.getByTestId('layout-done')).toBeVisible();
+  },
   marks: async (page) => {
     await page.getByTestId('marks-open').click();
     await expect(page.getByTestId('marks-panel')).toBeVisible();
