@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
+import { ConfirmButton } from './ConfirmButton';
 import type { Bible } from '@scriptura/core/types';
 import {
   HIGHLIGHT_COLORS,
@@ -16,6 +17,8 @@ interface MarksPanelProps {
   onLabel: (color: HighlightColor, label: string) => void;
   onGo: (bookSlug: string, chapter: number, verse: number) => void;
   onRemove: (id: string) => void;
+  /** The mark most recently removed, until the next change: removal is reversible (3.3.6). */
+  onUndo?: (() => void) | null;
   onClose: () => void;
 }
 
@@ -45,6 +48,7 @@ export function MarksPanel({
   onLabel,
   onGo,
   onRemove,
+  onUndo,
   onClose,
 }: MarksPanelProps) {
   const byColor = useMemo(() => {
@@ -85,6 +89,11 @@ export function MarksPanel({
         {/* The chapter's h1 is hidden while this panel covers it, so this is
             the page's level-1 heading for as long as it is open (2.4.10). */}
         <h1 className="marks__title">Marks</h1>
+        {onUndo && (
+          <button type="button" className="marks__close" data-testid="marks-undo" onClick={onUndo}>
+            Undo remove
+          </button>
+        )}
         <button
           type="button"
           className="marks__close"
@@ -143,16 +152,13 @@ export function MarksPanel({
                         </span>
                       )}
                     </button>
-                    <button
-                      type="button"
+                    <ConfirmButton
+                      label="✕"
                       className="marks__remove"
                       data-testid={`marks-remove-${m.book_slug}-${m.chapter}-${m.verse}`}
-                      title="Remove this mark"
                       aria-label={`Remove the mark on ${m.name} ${m.chapter}:${m.verse}`}
-                      onClick={() => onRemove(m.id)}
-                    >
-                      ✕
-                    </button>
+                      onConfirm={() => onRemove(m.id)}
+                    />
                   </li>
                 ))}
               </ul>

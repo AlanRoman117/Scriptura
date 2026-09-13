@@ -76,6 +76,25 @@ test.describe('notes', () => {
     await page.getByTestId('note-delete').click();
     await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
   });
+
+  test('an armed Delete can be backed out of, by Escape or by Cancel (3.3.6)', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('Keep me');
+    await persisted(page, 'Keep me');
+
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
+    // Announced, not just re-labelled: the change of name is a riddle otherwise.
+    await expect(page.getByTestId('announcer')).toContainText(/press again/i);
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+
+    await page.getByTestId('note-delete').click();
+    await page.getByTestId('note-delete-cancel').click();
+    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+    await expect(page.getByTestId('note-title')).toHaveValue('Keep me');
+  });
 });
 
 test.describe('marking a verse', () => {
@@ -235,6 +254,17 @@ test.describe('colours as collections', () => {
     await expect(page.locator('.verse[data-verse="2"]')).toHaveAttribute('data-highlight', 'mint');
 
     await page.getByTestId('marks-open').click();
+    // Removal takes two presses and can be undone until the next change.
+    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByTestId('marks-remove-john-1-2')).toContainText('Sure?');
+    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
+
+    await page.getByTestId('marks-undo').click();
+    await expect(page.getByTestId('marks-count-mint')).toHaveText('1');
+    await expect(page.getByTestId('marks-undo')).toHaveCount(0);
+
+    await page.getByTestId('marks-remove-john-1-2').click();
     await page.getByTestId('marks-remove-john-1-2').click();
     await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
     await page.getByTestId('marks-close').click();

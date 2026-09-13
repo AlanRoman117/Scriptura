@@ -6,6 +6,7 @@ import { headingAt, linkAt } from '../lib/references';
 import { insertAt, toggleHeading, toggleLineStyle, toggleWrap, type Edit, type LineStyle } from '../lib/mdedit';
 import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
+import { ConfirmButton } from './ConfirmButton';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -64,7 +65,6 @@ export function NotesPane({
 }: NotesPaneProps) {
   const active = notes.find((n) => n.id === activeId) ?? null;
   const surface = useRef<HTMLTextAreaElement>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [heading, setHeading] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
@@ -72,7 +72,6 @@ export function NotesPane({
   /** Where to leave the caret after a toolbar edit, once React has repainted. */
   const caret = useRef<{ start: number; end: number } | null>(null);
 
-  useEffect(() => setConfirmingDelete(false), [activeId]);
   useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
 
   // The heading the cursor sits under, kept in view the way a code editor keeps
@@ -169,14 +168,14 @@ export function NotesPane({
           Export
         </button>
         {active && (
-          <button
-            type="button"
+          // Two presses, announced, with a way back (3.3.6).
+          <ConfirmButton
+            label="Delete"
             className="notes__action notes__action--danger"
             data-testid="note-delete"
-            onClick={() => (confirmingDelete ? onDelete(active.id) : setConfirmingDelete(true))}
-          >
-            {confirmingDelete ? 'Sure?' : 'Delete'}
-          </button>
+            resetKey={active.id}
+            onConfirm={() => onDelete(active.id)}
+          />
         )}
       </header>
 

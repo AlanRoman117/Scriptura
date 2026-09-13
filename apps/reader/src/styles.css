@@ -280,6 +280,12 @@ summary:focus-visible,
 .search__option, .settings__toggle, .proposal__item label { display: inline-flex; align-items: center; }
 .settings__tools summary { display: flex; align-items: center; }
 
+/* A destructive button and, once armed, its Cancel beside it. Cancel inherits
+   the button's class for size and shape, and is never styled as danger. */
+.confirm { display: inline-flex; align-items: stretch; gap: .25rem; }
+.confirm__cancel, .confirm__cancel:hover { color: var(--ink-soft); border-color: var(--edge); }
+.confirm__cancel:hover { color: var(--ink); }
+
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 
 .layout {

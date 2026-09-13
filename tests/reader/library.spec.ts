@@ -86,6 +86,9 @@ test.describe('the library', () => {
     await page.getByTestId('note-title').fill('Kept');
 
     await install(page, 'kjv');
+    // Two presses: a multi-megabyte download is not thrown away by one slip.
+    await page.getByTestId('library-remove-kjv').click();
+    await expect(page.getByTestId('library-remove-kjv')).toContainText('Sure?');
     await page.getByTestId('library-remove-kjv').click();
     await expect(page.getByTestId('library-get-kjv')).toBeVisible();
 

@@ -67,7 +67,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.2.3 | Consistent Navigation | ✅ | — | The reading bar is identical in every state. |
 | 3.2.4 | Consistent Identification | ✅ | review | Every panel closes with a ✕ named "Close {panel}"; the canvas leaves with a text button "Back to reading", consistent with itself. |
 | 3.3.3 | Error Suggestion | ✅ | `library.spec.ts` offline test | "No connection — try again when you are online"; "Could not save — export your notes". |
-| 3.3.4 | Error Prevention (Legal, Financial, Data) | ❌ W8 | `notes.spec.ts`, `canvas.spec.ts`, `library.spec.ts` | Removing a card, edge, mark or translation is neither confirmed nor reversible. |
+| 3.3.4 | Error Prevention (Legal, Financial, Data) | 🔧 T4 | `notes.spec.ts` (Delete arms, announces, cancels by Escape or Cancel; a removed mark is undone), `library.spec.ts` (removing a translation takes two presses) | Done: note delete, board delete, mark removal and translation removal go through `ConfirmButton`; mark removal is also reversible. Remaining: removing a card or a connection on the board (T4). |
 | 3.3.8 | Accessible Authentication (Minimum) | ➖ | — | No authentication. |
 | 4.1.3 | Status Messages | ✅ | `a11y.spec.ts` (search total once typing pauses, panel opened/closed, download progress by quarters and completion, download error as an alert, named progressbar) | One polite and one assertive live region in `lib/announce.tsx`, mounted beside the app; duplicates are dropped so a query typed letter by letter is announced once. The note footer keeps its own region. |
 
@@ -85,7 +85,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
 | 2.1.3 | Keyboard (No Exception) | ❌ T4, T6, T8 | `keyboard.spec.ts` | Same gaps as 2.1.1; no exception is claimed. |
-| 2.2.3 | No Timing | ✅ W8 | — | No time limits. Undo never expires — it persists until the next change. |
+| 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
 | 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
 | 2.2.5 | Re-authenticating | ➖ | — | |
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |
@@ -104,7 +104,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.1.6 | Pronunciation | 📄 content | — | Kanji readings in the Japanese translation are content. No UI text has meaning that depends on pronunciation. |
 | 3.2.5 | Change on Request | ✅ (W11 hardens) | `apps/reader/dist/registerSW.js` | No automatic context changes; the service worker registration does not reload the page. W11 replaces the silent worker take-over with a user-triggered reload. |
 | 3.3.5 | Help | ❌ W7 | `a11y.spec.ts` help state | Context-sensitive help: search grammar, reference formats, Markdown, links, shortcuts, glossary, accessibility statement. |
-| 3.3.6 | Error Prevention (All) | ❌ W8 | `notes.spec.ts`, `canvas.spec.ts`, `library.spec.ts` | Every destructive action is confirmed or reversible: note, board, card, edge, mark and translation removal; proposal discard. |
+| 3.3.6 | Error Prevention (All) | 🔧 T4 | as 3.3.4 | Every destructive action on the reader's own work is confirmed and announced, and mark removal is reversible. Discarding an assistant's proposal stays one press: the draft is the assistant's, not the reader's, and can be asked for again. Remaining: card and connection removal (T4). |
 | 3.3.9 | Accessible Authentication (Enhanced) | ➖ | — | |
 
 ## Manual checks (cannot be automated here)

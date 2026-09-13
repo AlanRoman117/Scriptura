@@ -4,6 +4,7 @@ import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
 import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
 import { useDismissable } from '../lib/focus';
+import { ConfirmButton } from './ConfirmButton';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -49,13 +50,11 @@ export function CanvasView({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [connecting, setConnecting] = useState<string | null>(null);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
   const resize = useRef<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
   const panning = useRef<{ x: number; y: number } | null>(null);
 
-  useEffect(() => setConfirmingDelete(false), [activeId]);
   // Escape cancels a connection in progress. Not on an outside press: pressing
   // the background already cancels through the pan, and pressing a card is
   // how the connection is completed.
@@ -318,14 +317,13 @@ export function CanvasView({
                 Add to note
               </button>
             )}
-            <button
-              type="button"
+            <ConfirmButton
+              label="Delete board"
               className="canvas__action canvas__action--danger"
               data-testid="board-delete"
-              onClick={() => (confirmingDelete ? onDelete(board.id) : setConfirmingDelete(true))}
-            >
-              {confirmingDelete ? 'Sure?' : 'Delete board'}
-            </button>
+              resetKey={board.id}
+              onConfirm={() => onDelete(board.id)}
+            />
           </>
         )}
 

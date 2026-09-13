@@ -31,11 +31,13 @@ const listeners = new Set<(m: Message) => void>();
 
 /**
  * Announce `text`. Polite by default; `assertive` interrupts, and is for
- * errors only. The same text twice in a row is said once.
+ * errors only. The same text twice in a row is said once — unless `force`,
+ * for a message that answers a fresh action (arming a delete button again
+ * after cancelling it) rather than a repeated state.
  */
-export function announce(text: string, options: { assertive?: boolean } = {}): void {
+export function announce(text: string, options: { assertive?: boolean; force?: boolean } = {}): void {
   const trimmed = text.trim();
-  if (!trimmed || trimmed === lastText) return;
+  if (!trimmed || (trimmed === lastText && !options.force)) return;
   lastText = trimmed;
   const message: Message = { text: trimmed, tone: options.assertive ? 'assertive' : 'polite', serial: ++serial };
   for (const listener of listeners) listener(message);

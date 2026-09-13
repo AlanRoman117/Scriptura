@@ -1,5 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
+import { ConfirmButton } from './ConfirmButton';
 import type { CatalogEntry } from '../lib/library';
 import { downloadPercent, formatBytes } from '../lib/library';
 import { DEFAULT_TRANSLATION } from '../lib/api';
@@ -179,16 +180,19 @@ export function LibraryPanel({
                             leaves nothing to read the moment the network goes,
                             which is the state this app exists to survive. */}
                         {t.id !== DEFAULT_TRANSLATION && (
-                          <button
-                            type="button"
+                          // A multi-megabyte download goes in two presses (3.3.6).
+                          <ConfirmButton
+                            label="Remove"
                             className="library__action library__action--danger"
                             data-testid={`library-remove-${t.id}`}
+                            aria-label={
+                              isActive
+                                ? `Remove ${t.name} — switch to another translation first`
+                                : `Remove ${t.name} from this device`
+                            }
                             disabled={isActive}
-                            title={isActive ? 'Switch to another translation first' : 'Delete the text from this device'}
-                            onClick={() => onRemove(t.id)}
-                          >
-                            Remove
-                          </button>
+                            onConfirm={() => onRemove(t.id)}
+                          />
                         )}
                       </>
                     ) : (

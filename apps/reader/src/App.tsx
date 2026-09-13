@@ -108,6 +108,8 @@ export function App() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [highlights, setHighlights] = useState<Highlight[]>([]);
+  /** The last mark removed from the Marks list, until the next change to any mark. */
+  const [undoMark, setUndoMark] = useState<Highlight | null>(null);
   const [colorLabels, setColorLabels] = useState<ColorLabels>({});
   const [marksOpen, setMarksOpen] = useState(false);
 
@@ -617,6 +619,7 @@ export function App() {
   const highlight = useCallback(
     (verse: number, color: HighlightColor) => {
       if (!bible) return;
+      setUndoMark(null);
       void toggleHighlight(
         {
           // Kept as provenance. The mark itself is keyed on the passage, so a
@@ -743,10 +746,27 @@ export function App() {
     });
   }, []);
 
-  const unmark = useCallback((id: string) => {
-    void deleteHighlight(id);
-    setHighlights((current) => current.filter((h) => h.id !== id));
-  }, []);
+  const unmark = useCallback(
+    (id: string) => {
+      const removed = highlights.find((h) => h.id === id) ?? null;
+      void deleteHighlight(id);
+      setHighlights((current) => current.filter((h) => h.id !== id));
+      // Reversible, not timed: the offer stands until the next change (2.2.3, 3.3.6).
+      setUndoMark(removed);
+      if (removed) announce('Mark removed. Undo is available in the Marks bar.');
+    },
+    [highlights]
+  );
+
+  const undoUnmark = useCallback(() => {
+    if (!undoMark) return;
+    const { id: _id, color, created: _created, ...anchor } = undoMark;
+    void toggleHighlight(anchor, color, highlights).then((next) => {
+      setHighlights(next);
+      setUndoMark(null);
+      announce('Mark restored');
+    });
+  }, [undoMark, highlights]);
 
   /** The active translation first, then each comparison that has loaded. */
   const comparing = bible
@@ -943,6 +963,7 @@ export function App() {
                     setMarksOpen(false);
                   }}
                   onRemove={unmark}
+                  onUndo={undoMark ? undoUnmark : null}
                   onClose={() => setMarksOpen(false)}
                 />
               ) : resultsOpen ? (
