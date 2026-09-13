@@ -7,6 +7,7 @@ import { insertAt, toggleHeading, toggleLineStyle, toggleWrap, type Edit, type L
 import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
 import { ConfirmButton } from './ConfirmButton';
+import { MaximizeButton } from './PaneControl';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -170,16 +171,21 @@ export function NotesPane({
         >
           Export
         </button>
-        {active && (
-          // Two presses, announced, with a way back (3.3.6).
-          <ConfirmButton
-            label="Delete"
-            className="notes__action notes__action--danger"
-            data-testid="note-delete"
-            resetKey={active.id}
-            onConfirm={() => onDelete(active.id)}
-          />
-        )}
+        {/* The last two wrap together: armed, Delete grows a Cancel, and on
+            its own the maximize button would be left alone on a second line. */}
+        <span className="notes__bar-end">
+          {active && (
+            // Two presses, announced, with a way back (3.3.6).
+            <ConfirmButton
+              label="Delete"
+              className="notes__action notes__action--danger"
+              data-testid="note-delete"
+              resetKey={active.id}
+              onConfirm={() => onDelete(active.id)}
+            />
+          )}
+          <MaximizeButton pane="notes" className="notes__action" />
+        </span>
       </header>
 
       {active ? (

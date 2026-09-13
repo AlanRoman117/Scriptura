@@ -122,6 +122,7 @@ Each phase ended with the full suite on Node 24 (`mise exec node@24`); every one
 | 5 — board | 929bb87 | 329 | 47 + 250 |
 | 6 — updates, docs | close-out | 329 | 47 + 253 |
 | after merge — insertions confirmed | `reader/insert-feedback` | 329 | 47 + 268 |
+| after review — divider bar, pane controls in their bars | `reader/chrome-tweaks` | 344 | 47 + 273 |
 
 A correction for the record: several commit messages between 8ad97e8 and b9f6573 give Playwright and jest totals that were added up rather than measured, and are too high. The figures in this table are the measured ones (`npm test`, `npx playwright test --list`).
 

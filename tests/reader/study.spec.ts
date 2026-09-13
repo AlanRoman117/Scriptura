@@ -423,9 +423,10 @@ test.describe('the suggestions from the keyboard and under a keyboard', () => {
     // Still here, still reading John 1: Enter on a checkbox is not a submit.
     await expect(page.getByTestId('search-panel')).toBeVisible();
     await expect(page.getByTestId('search-results')).toHaveCount(0);
-    // Somewhere the panel does not cover and no control sits: the empty top
-    // margin of the notes pane, clear of the divider's buttons on its left edge.
-    await page.getByTestId('pane-notes').click({ position: { x: 120, y: 12 } });
+    // Somewhere the panel does not cover and no control sits: the notes pane's
+    // "No note open." line. (Its top margin used to do, while it kept a row
+    // empty for the maximize button; that button is in the bar now.)
+    await page.getByTestId('pane-notes').getByText('No note open.').click();
     await expect(page.getByTestId('search-panel')).toBeHidden();
   });
 });

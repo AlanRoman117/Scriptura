@@ -12,6 +12,7 @@ import {
   type HighlightColor,
 } from '../lib/notes';
 import { VerseActions } from './VerseActions';
+import { MaximizeButton } from './PaneControl';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -234,7 +235,7 @@ export function BiblePane({
         >
           ⚙
         </button>
-        {/* Help lives here in every state (3.2.6), last in the bar. */}
+        {/* Help lives here in every state (3.2.6), after the other chips. */}
         <button
           type="button"
           className="reader__chip reader__chip--icon"
@@ -246,6 +247,9 @@ export function BiblePane({
         >
           ?
         </button>
+        {/* Last, where it is drawn: the pane's own maximize, beside the pane's
+            other controls. Renders nothing on a phone. */}
+        <MaximizeButton pane="bible" className="reader__chip reader__chip--icon" />
       </header>
 
       {search}
