@@ -5,7 +5,7 @@
 | **ID** | `02-tokens` |
 | **Size** | M |
 | **Depends on** | none |
-| **Status** | open |
+| **Status** | done (b860239) |
 | **Criteria** | 1.4.6 Contrast (Enhanced), 1.4.3, 1.4.11 Non-text Contrast, 2.4.7 Focus Visible, 2.4.13 Focus Appearance (AAA), 2.4.11/2.4.12 Focus Not Obscured |
 
 ## Outcome

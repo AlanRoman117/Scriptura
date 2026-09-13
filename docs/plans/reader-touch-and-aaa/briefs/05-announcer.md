@@ -5,7 +5,7 @@
 | **ID** | `05-announcer` |
 | **Size** | S |
 | **Depends on** | none |
-| **Status** | open |
+| **Status** | done (a0dde32) |
 | **Criteria** | 4.1.3 Status Messages (AA), 3.3.1 Error Identification, 2.2.4 Interruptions (AAA) |
 
 ## Outcome

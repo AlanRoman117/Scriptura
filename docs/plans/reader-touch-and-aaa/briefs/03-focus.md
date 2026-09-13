@@ -5,7 +5,7 @@
 | **ID** | `03-focus` |
 | **Size** | M |
 | **Depends on** | none |
-| **Status** | open |
+| **Status** | done (f6e5afb) |
 | **Criteria** | 2.4.3 Focus Order, 2.1.2 No Keyboard Trap, 4.1.2, 2.4.11/2.4.12 (with `inert`) |
 
 ## Outcome

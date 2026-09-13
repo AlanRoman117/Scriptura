@@ -5,7 +5,7 @@
 | **ID** | `01-prefs` |
 | **Size** | L |
 | **Depends on** | `02-tokens` (the theme token blocks this switches between) |
-| **Status** | open |
+| **Status** | done (7f61c47) |
 | **Criteria** | 1.4.8 Visual Presentation (AAA), 2.3.3 Animation from Interactions (AAA), 1.4.4, 1.4.12; supports 1.4.6 and 1.4.1 |
 
 ## Outcome

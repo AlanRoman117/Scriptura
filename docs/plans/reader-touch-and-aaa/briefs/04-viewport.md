@@ -5,7 +5,7 @@
 | **ID** | `04-viewport` |
 | **Size** | M |
 | **Depends on** | none |
-| **Status** | open |
+| **Status** | done (ea60bca) |
 | **Criteria** | supports 1.4.10 Reflow, 2.5.7, 2.5.8/2.5.5; touch usability |
 
 ## Outcome

@@ -65,11 +65,11 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 
 | ID | Package | Brief | Status |
 |---|---|---|---|
-| F1 | Display and accessibility preferences | `briefs/01-prefs.md` | open |
-| F2 | AAA colour tokens and focus ring | `briefs/02-tokens.md` | open |
-| F3 | Focus utilities and native dialog | `briefs/03-focus.md` | open |
-| F4 | Viewport, safe area and pointer helper | `briefs/04-viewport.md` | open |
-| F5 | Live-region announcer | `briefs/05-announcer.md` | open |
+| F1 | Display and accessibility preferences | `briefs/01-prefs.md` | done (7f61c47) |
+| F2 | AAA colour tokens and focus ring | `briefs/02-tokens.md` | done (b860239) |
+| F3 | Focus utilities and native dialog | `briefs/03-focus.md` | done (f6e5afb) |
+| F4 | Viewport, safe area and pointer helper | `briefs/04-viewport.md` | done (ea60bca) |
+| F5 | Live-region announcer | `briefs/05-announcer.md` | done (a0dde32) |
 | F6 | Test infrastructure (axe, touch project, helpers) | `briefs/06-test-infra.md` | done (f4ef575); `targets`/`keyboard` scaffolds land with briefs 16 and 02 |
 | T1 | Draggable, keyboard-aware notes sheet | `briefs/11-sheet.md` | open |
 | T2 | Verse actions at 44 px, docked on narrow | `briefs/12-verse-actions.md` | open |
@@ -81,12 +81,12 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | T8 | Editor toolbar reachable by keyboard and touch | `briefs/18-editor.md` | open |
 | W1 | Landmarks, headings, names, `lang`, page title | `briefs/21-semantics.md` | open |
 | W2 | Highlight markers and non-colour meaning | `briefs/22-colour-meaning.md` | open |
-| W3 | Visual presentation controls (1.4.8) | part of `briefs/01-prefs.md` | open |
-| W4 | Motion gated on preference (2.3.3) | part of `briefs/01-prefs.md` | open |
-| W5 | Focus visible and not obscured | part of `briefs/02-tokens.md` | open |
+| W3 | Visual presentation controls (1.4.8) | part of `briefs/01-prefs.md` | done (7f61c47) |
+| W4 | Motion gated on preference (2.3.3) | part of `briefs/01-prefs.md` | done (7f61c47) |
+| W5 | Focus visible and not obscured | part of `briefs/02-tokens.md` | done (b860239); scroll padding from measured bar heights lands with T6 |
 | W7 | Help panel, glossary, abbreviations, accessibility statement | `briefs/27-help.md` | open |
 | W8 | Confirm and undo for destructive actions | `briefs/28-confirm-undo.md` | open |
-| W9 | Status messages wired | part of `briefs/05-announcer.md` | open |
+| W9 | Status messages wired | part of `briefs/05-announcer.md` | done (a0dde32) |
 | W11 | Service-worker update prompt (recommended) | `briefs/31-sw-prompt.md` | open |
 | D | Docs: matrix, Architecture (both copies), README, CLAUDE.md, contributing | `briefs/40-docs.md` | open |
 | X1 | Real-device verification: iOS Safari keyboard and sheet | `briefs/91-device-ios.md` | open — needs a person with a device |
