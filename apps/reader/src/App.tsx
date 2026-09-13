@@ -1063,7 +1063,6 @@ export function App() {
                 onQuery={setQuery}
                 onGo={goTo}
                 onInsert={insertSearchResult}
-                onClose={() => setQuery('')}
                 onSeeAll={() => {
                   setMarksOpen(false);
                   setLibraryOpen(false);

@@ -19,7 +19,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.3.3 | Sensory Characteristics | ✅ | — | Instructions name controls ("use **Canvas** beside a verse"), never a shape, position or colour alone. |
 | 1.4.1 | Use of Color | ❌ W2 | `a11y.spec.ts`; `notes.spec.ts` marker test | Highlight collection membership is conveyed by hue alone; card colour likewise. Fix: left rule + optional glyph, collection name in the control's accessible name, visually-hidden colour name on cards. |
 | 1.4.2 | Audio Control | ➖ | — | |
-| 2.1.1 | Keyboard | 🔧 T3, T4, T8 | `keyboard.spec.ts`, `editor.spec.ts` (preview Edit by keyboard), `reading.spec.ts` (divider Home/End) | Done: preview click-to-edit and the divider. Remaining: the search suggestions and the editor toolbar behind blur timers (T3, T8); canvas pan, drag, resize and edge removal (T4). |
+| 2.1.1 | Keyboard | 🔧 T4, T8 | `keyboard.spec.ts`; `editor.spec.ts` (preview Edit by keyboard); `reading.spec.ts` (divider Home/End); `study.spec.ts` (Tab and Down arrow reach the search suggestions; Enter submits) | Done: preview click-to-edit, the divider, the search suggestions (a search form with no blur timer). Remaining: the editor toolbar (T8); canvas pan, drag, resize and edge removal (T4). |
 | 2.1.2 | No Keyboard Trap | ✅ | `keyboard.spec.ts` (Tab from the modal never reaches a page element behind it; Escape closes it) | The proposal is a native `<dialog>` opened with `showModal()`: the page behind it is inert and Escape discards. |
 | 2.1.4 | Character Key Shortcuts | ✅ | — | No single-character shortcuts exist. |
 | 2.2.1 | Timing Adjustable | ✅ | — | No time limits. The 150 ms blur timers that removed UI are deleted by T3/T8. |
@@ -84,7 +84,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
-| 2.1.3 | Keyboard (No Exception) | ❌ T4, T6, T8 | `keyboard.spec.ts` | Same gaps as 2.1.1; no exception is claimed. |
+| 2.1.3 | Keyboard (No Exception) | 🔧 T4, T8 | `keyboard.spec.ts`, `study.spec.ts` | Same state as 2.1.1; no exception is claimed. |
 | 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
 | 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
 | 2.2.5 | Re-authenticating | ➖ | — | |

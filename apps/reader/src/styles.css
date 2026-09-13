@@ -471,17 +471,33 @@ summary:focus-visible,
   background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 8px; padding: .4rem .6rem;
 }
+/* Never taller than the part of the screen the reader can see. `--vvh` and
+   `--vv-top` are the visual viewport, which shrinks for the software keyboard
+   where `vh` does not; the panel starts below whatever sits above the pane,
+   the bar and the search box, all measured. So the last suggestion is always
+   above the keyboard. */
 .search__panel {
   position: absolute; left: 1rem; right: 1rem; top: 100%; z-index: 3;
-  max-height: 60vh; overflow-y: auto;
+  max-height: min(
+    60vh,
+    calc(var(--vv-top, 0px) + var(--vvh, 100vh) - var(--pane-top, 0px) - var(--bar-h) - var(--search-h, 3rem) - .75rem)
+  );
+  overflow-y: auto;
   background: var(--paper-raised); border: 1px solid var(--rule);
   border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .16); padding: .35rem;
 }
+.search__panel-bar { display: flex; align-items: stretch; gap: .25rem; margin-bottom: .25rem; }
 .search__jump {
-  display: block; width: 100%; text-align: left; font: inherit; font-size: .88rem;
+  flex: 1; text-align: left; font: inherit; font-size: .88rem;
   color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
-  border: none; border-radius: 6px; padding: .5rem .6rem; cursor: pointer; margin-bottom: .25rem;
+  border: none; border-radius: 6px; padding: .5rem .6rem; cursor: pointer;
 }
+.search__close {
+  flex: 0 0 auto; margin-left: auto; min-width: var(--control-h); min-height: var(--control-h);
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+}
+.search__close:hover { color: var(--ink); }
 .search__options, .results__options {
   display: flex; flex-wrap: wrap; gap: .75rem;
   padding: .35rem .6rem; font-size: .74rem; color: var(--ink-soft);

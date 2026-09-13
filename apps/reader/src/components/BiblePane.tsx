@@ -77,6 +77,12 @@ export function BiblePane({
   // wrong, so the heights are measured and written onto the scrolling pane,
   // where the stylesheet reads them for the sticky title, the search box and
   // the scroll padding that keeps a focused verse clear of them (2.4.11).
+  //
+  // `--pane-top` is where the pane starts in the viewport. Anything above it —
+  // the durability notice, today — pushes the search suggestions down, and the
+  // room they have above the software keyboard is measured from the top of
+  // the screen, not from the top of the pane. The pane's own size changes when
+  // that notice comes or goes, so observing the pane catches it.
   useEffect(() => {
     const node = reader.current;
     const barEl = bar.current;
@@ -86,12 +92,18 @@ export function BiblePane({
     const write = () => {
       target.style.setProperty('--bar-h', `${barEl.offsetHeight}px`);
       target.style.setProperty('--search-h', `${searchEl?.offsetHeight ?? 0}px`);
+      target.style.setProperty('--pane-top', `${Math.max(0, Math.round(target.getBoundingClientRect().top))}px`);
     };
     write();
     const observer = new ResizeObserver(write);
     observer.observe(barEl);
+    observer.observe(target);
     if (searchEl) observer.observe(searchEl);
-    return () => observer.disconnect();
+    window.addEventListener('resize', write);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', write);
+    };
   }, [search]);
   /** The verse whose actions are open — the whole <p>, so a press on it is not "outside". */
   const openVerseEl = useRef<HTMLParagraphElement | null>(null);
