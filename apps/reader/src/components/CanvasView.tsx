@@ -3,7 +3,7 @@ import type { Bible } from '@scriptura/core/types';
 import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
 import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
-import { clampZoom, zoomAround, type Point, type View } from '../lib/geometry';
+import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type View } from '../lib/geometry';
 import { useDismissable } from '../lib/focus';
 import { ConfirmButton } from './ConfirmButton';
 
@@ -119,6 +119,59 @@ export function CanvasView({
 
   const frameBox = () => frame.current?.getBoundingClientRect();
 
+  /* ── pinch ───────────────────────────────────────────────────────────────
+   *
+   * Every touch and pen pointer on the frame is tracked in the capture phase,
+   * so it is seen wherever it lands — background, card, grip. A second finger
+   * turns whatever the first was doing (a pan, a card drag, a resize) into a
+   * pinch: the gesture helpers' own state is cleared, so their moves become
+   * no-ops, and their onStart refuses while a pinch is live. When either
+   * finger lifts the pinch ends, and the one left behind does not resume a
+   * pan it never meant. The arithmetic is pinchView in lib/geometry.ts. */
+  const pointers = useRef(new Map<number, Point>());
+  const pinch = useRef<PinchStart | null>(null);
+
+  const toFrame = (e: React.PointerEvent) => {
+    const box = frameBox();
+    return box ? { x: e.clientX - box.left, y: e.clientY - box.top } : { x: e.clientX, y: e.clientY };
+  };
+  const between = (a: Point, b: Point) => ({
+    mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+    distance: Math.hypot(a.x - b.x, a.y - b.y),
+  });
+
+  const pinchHandlers = {
+    onPointerDownCapture: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.pointerType === 'mouse') return;
+      pointers.current.set(e.pointerId, toFrame(e));
+      if (pointers.current.size !== 2) return;
+      const [a, b] = [...pointers.current.values()];
+      const { mid, distance } = between(a, b);
+      if (distance < 1) return;
+      drag.current = null;
+      resize.current = null;
+      panning.current = null;
+      pinch.current = { view, mid, distance };
+    },
+    onPointerMoveCapture: (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!pointers.current.has(e.pointerId)) return;
+      pointers.current.set(e.pointerId, toFrame(e));
+      const start = pinch.current;
+      if (!start || pointers.current.size < 2) return;
+      const [a, b] = [...pointers.current.values()];
+      const { mid, distance } = between(a, b);
+      setView(pinchView(start, mid, Math.max(1, distance)));
+    },
+    onPointerUpCapture: (e: React.PointerEvent<HTMLDivElement>) => {
+      pointers.current.delete(e.pointerId);
+      if (pointers.current.size < 2) pinch.current = null;
+    },
+    onPointerCancelCapture: (e: React.PointerEvent<HTMLDivElement>) => {
+      pointers.current.delete(e.pointerId);
+      if (pointers.current.size < 2) pinch.current = null;
+    },
+  };
+
   /** Zoom by a step about the middle of the frame — what the buttons and keys do. */
   const zoomBy = (step: number) => {
     const box = frameBox();
@@ -139,6 +192,7 @@ export function CanvasView({
       // pointerdown makes Chromium deliver the following `click` to the
       // capturing element — so a press on the edge-cut circle that also began
       // a pan never clicked the circle, and the connection could not be cut.
+      if (pinch.current) return false;
       if ((e.target as HTMLElement).closest('.card, .canvas__edge-cut, button, a, input, select, textarea')) {
         return false;
       }
@@ -157,6 +211,7 @@ export function CanvasView({
 
   const cardDrag = usePointerDrag<HTMLElement>({
     onStart: (e) => {
+      if (pinch.current) return false;
       const box = frameBox();
       const node = board?.nodes.find((n) => n.id === e.currentTarget.dataset.nodeId);
       if (!box || !node) return false;
@@ -188,6 +243,7 @@ export function CanvasView({
     onStart: (e) => {
       // The corner sits inside the card; the press must not also start a drag.
       e.stopPropagation();
+      if (pinch.current) return false;
       const node = board?.nodes.find((n) => n.id === e.currentTarget.dataset.nodeId);
       if (!node) return false;
       const { w, h } = sizeOf(node);
@@ -380,6 +436,7 @@ export function CanvasView({
           ref={frame}
           data-connecting={connecting ? 'true' : undefined}
           {...panDrag}
+          {...pinchHandlers}
         >
           <div
             className="canvas__plane"
