@@ -10,7 +10,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 
 | SC | Name | Status | Evidence / test | Notes |
 |---|---|---|---|---|
-| 1.1.1 | Non-text Content | 🔧 T4 | `tests/reader/a11y.spec.ts` (axe `button-name` in every state) | Done: every glyph-only button has a name (connect, open passage, remove card, zoom reset, dismiss notice, close panels). Remaining: the "Connections" list as the text alternative for the board's edge layer and thumbnail (T4). |
+| 1.1.1 | Non-text Content | ✅ | `tests/reader/a11y.spec.ts` (axe `button-name`, `svg-img-alt` in every state); `canvas.spec.ts` (the Connections list names each connection) | Every glyph-only button has a name. The board's arrows are drawn as a picture hidden from assistive technology, and their text alternative is the Connections list in the board's bar, which names every connection and removes one; a board embedded in a note is named and its full content is the board itself and its Markdown export. |
 | 1.2.1 | Audio-only and Video-only (Prerecorded) | ➖ | — | No audio or video. |
 | 1.2.2 | Captions (Prerecorded) | ➖ | — | |
 | 1.2.3 | Audio Description or Media Alternative | ➖ | — | |
@@ -19,7 +19,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.3.3 | Sensory Characteristics | ✅ | — | Instructions name controls ("use **Canvas** beside a verse"), never a shape, position or colour alone. |
 | 1.4.1 | Use of Color | ✅ | `notes.spec.ts` (swatch and verse-number names carry the collection; a marked verse has a strong-hue rule and, with markers on, a shape); `canvas.spec.ts` (a card's colour is named in its label and on its colour button) | A marked verse's name says its collection in words; every marked verse has a left rule in the collection's strong hue; Settings can draw ● ▲ ■ ◆ ★ beside marked verses, on swatches, in the Marks panel and on board cards; a coloured card has a 6px top rule and its colour in its accessible name. |
 | 1.4.2 | Audio Control | ➖ | — | |
-| 2.1.1 | Keyboard | 🔧 T4 | `keyboard.spec.ts`; `editor.spec.ts`; `reading.spec.ts`; `study.spec.ts`; `canvas.spec.ts` (a card takes focus and moves with arrows, resizes with Alt+arrows; the board pans with arrows and zooms with + and −; a connection is made with Enter) | Done: everything but removing a single connection, which is still a click on the SVG chip (T4, commit four). |
+| 2.1.1 | Keyboard | ✅ | `keyboard.spec.ts`; `editor.spec.ts`; `reading.spec.ts`; `study.spec.ts`; `canvas.spec.ts` (cards move, resize and connect from the keyboard; Delete arms removal; the board pans and zooms; connections are removed from the list) | Every function is operable from the keyboard: panels, verse actions, search suggestions, the formatting toolbar, preview editing, the divider, the notes sheet, and the board. |
 | 2.1.2 | No Keyboard Trap | ✅ | `keyboard.spec.ts` (Tab from the modal never reaches a page element behind it; Escape closes it) | The proposal is a native `<dialog>` opened with `showModal()`: the page behind it is inert and Escape discards. |
 | 2.1.4 | Character Key Shortcuts | ✅ | — | No single-character shortcuts exist. |
 | 2.2.1 | Timing Adjustable | ✅ | — | No time limits. The 150 ms blur timers that removed UI are deleted by T3/T8. |
@@ -67,7 +67,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.2.3 | Consistent Navigation | ✅ | — | The reading bar is identical in every state. |
 | 3.2.4 | Consistent Identification | ✅ | review | Every panel closes with a ✕ named "Close {panel}"; the canvas leaves with a text button "Back to reading", consistent with itself. |
 | 3.3.3 | Error Suggestion | ✅ | `library.spec.ts` offline test | "No connection — try again when you are online"; "Could not save — export your notes". |
-| 3.3.4 | Error Prevention (Legal, Financial, Data) | 🔧 T4 | `notes.spec.ts` (Delete arms, announces, cancels by Escape or Cancel; a removed mark is undone), `library.spec.ts` (removing a translation takes two presses) | Done: note delete, board delete, mark removal and translation removal go through `ConfirmButton`; mark removal is also reversible. Remaining: removing a card or a connection on the board (T4). |
+| 3.3.4 | Error Prevention (Legal, Financial, Data) | ✅ | `notes.spec.ts`, `library.spec.ts`, `canvas.spec.ts` (card removal asks, cancels, and is undone with its connections; connection removal is undone) | Note, board, card, mark and translation removal are confirmed through `ConfirmButton`; mark, card and connection removal can also be undone until the next change. |
 | 3.3.8 | Accessible Authentication (Minimum) | ➖ | — | No authentication. |
 | 4.1.3 | Status Messages | ✅ | `a11y.spec.ts` (search total once typing pauses, panel opened/closed, download progress by quarters and completion, download error as an alert, named progressbar) | One polite and one assertive live region in `lib/announce.tsx`, mounted beside the app; duplicates are dropped so a query typed letter by letter is announced once. The note footer keeps its own region. |
 
@@ -84,7 +84,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
-| 2.1.3 | Keyboard (No Exception) | 🔧 T4 | as 2.1.1 | Same state as 2.1.1; no exception is claimed. |
+| 2.1.3 | Keyboard (No Exception) | ✅ | as 2.1.1 | No exception is claimed; nothing requires path-dependent input. |
 | 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
 | 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
 | 2.2.5 | Re-authenticating | ➖ | — | |
@@ -104,7 +104,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.1.6 | Pronunciation | 📄 content | — | Kanji readings in the Japanese translation are content. No UI text has meaning that depends on pronunciation. |
 | 3.2.5 | Change on Request | ✅ (W11 hardens) | `apps/reader/dist/registerSW.js` | No automatic context changes; the service worker registration does not reload the page. W11 replaces the silent worker take-over with a user-triggered reload. |
 | 3.3.5 | Help | ✅ | `a11y.spec.ts` help state; `keyboard.spec.ts` (opens from the bar, from Settings, and from the board; Escape returns focus) | Context-sensitive help covers finding a passage, searching, notes, marks, boards, translations, the keyboard, abbreviations, a glossary and the accessibility statement. |
-| 3.3.6 | Error Prevention (All) | 🔧 T4 | as 3.3.4 | Every destructive action on the reader's own work is confirmed and announced, and mark removal is reversible. Discarding an assistant's proposal stays one press: the draft is the assistant's, not the reader's, and can be asked for again. Remaining: card and connection removal (T4). |
+| 3.3.6 | Error Prevention (All) | ✅ | as 3.3.4 | Every destructive action on the reader's own work is confirmed or reversible, and most are both. Discarding an assistant's proposal stays one press: the draft is the assistant's, not the reader's, and can be asked for again. |
 | 3.3.9 | Accessible Authentication (Enhanced) | ➖ | — | |
 
 ## Manual checks (cannot be automated here)

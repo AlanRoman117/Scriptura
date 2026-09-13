@@ -17,6 +17,7 @@ import {
   freeSlot,
   nodeLabel,
   type Board,
+  type BoardEdge,
   type BoardNode,
 } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
@@ -55,6 +56,9 @@ const PAN_STEP = 40;
 const PAN_BUTTON_STEP = 80;
 
 type Panel = { id: string; mode: 'adjust' | 'colour' };
+
+/** What the last removal took, so it can be put back until the next change. */
+type Undo = { boardId: string; what: string; nodes: BoardNode[]; edges: BoardEdge[] };
 
 /**
  * The board: verses and notes on a plane, with the connections drawn.
@@ -98,6 +102,8 @@ export function CanvasView({
   const setPan = (next: Point) => setView((v) => ({ ...v, pan: next }));
   const [connecting, setConnecting] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
+  const [showConnections, setShowConnections] = useState(false);
+  const [undo, setUndo] = useState<Undo | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const panelEl = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
@@ -151,9 +157,25 @@ export function CanvasView({
     (next: Partial<Pick<Board, 'name' | 'nodes' | 'edges'>>) => {
       if (!board) return;
       onChange({ ...board, ...next, updated: Date.now() });
+      // Any other change ends the chance to undo a removal: putting back an
+      // old set of cards over newer work would be a second loss (3.3.6).
+      setUndo(null);
     },
     [board, onChange]
   );
+
+  /**
+   * A removal, remembered. The snapshot is taken before the change, and the
+   * offer stands until the next change to the board — not until a timer runs
+   * out (2.2.3).
+   */
+  const removeWithUndo = (what: string, next: Pick<Board, 'nodes' | 'edges'>) => {
+    if (!board) return;
+    const snapshot: Undo = { boardId: board.id, what, nodes: board.nodes, edges: board.edges };
+    onChange({ ...board, ...next, updated: Date.now() });
+    setUndo(snapshot);
+    announce(`${what} removed. Undo is in the board's bar.`);
+  };
 
   /** What a card says. Verse text comes from the open translation, live. */
   const describe = (node: BoardNode) => describeNode(node, { bible, notes });
@@ -207,6 +229,15 @@ export function CanvasView({
     if (connecting && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       connect(node.id);
+      return;
+    }
+    // Delete asks, it does not act: it moves to the card's remove button and
+    // arms it, so Enter confirms and Escape backs out (3.3.6).
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      const remove = e.currentTarget.querySelector<HTMLButtonElement>(`[data-testid="card-remove-${node.id}"]`);
+      remove?.focus();
+      remove?.click();
       return;
     }
     const step = e.shiftKey ? BIG_STEP : STEP;
@@ -413,11 +444,27 @@ export function CanvasView({
   };
 
   const removeCard = (id: string) => {
-    if (!board) return;
+    const node = board?.nodes.find((n) => n.id === id);
+    if (!board || !node) return;
     // Edges to a card that no longer exists would draw to nowhere.
-    patch({
+    removeWithUndo(label(node), {
       nodes: board.nodes.filter((n) => n.id !== id),
       edges: board.edges.filter((e) => e.from !== id && e.to !== id),
+    });
+  };
+
+  const edgeLabel = (edge: BoardEdge) => {
+    const from = board?.nodes.find((n) => n.id === edge.from);
+    const to = board?.nodes.find((n) => n.id === edge.to);
+    return `${from ? label(from) : 'a missing card'} → ${to ? label(to) : 'a missing card'}`;
+  };
+
+  const removeEdge = (id: string) => {
+    const edge = board?.edges.find((e) => e.id === id);
+    if (!board || !edge) return;
+    removeWithUndo(`The connection ${edgeLabel(edge)}`, {
+      nodes: board.nodes,
+      edges: board.edges.filter((e) => e.id !== id),
     });
   };
 
@@ -491,6 +538,21 @@ export function CanvasView({
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
           New
         </button>
+        {board && undo && undo.boardId === board.id && (
+          <button
+            type="button"
+            className="canvas__action canvas__action--undo"
+            data-testid="board-undo"
+            aria-label={`Undo: put back ${undo.what}`}
+            onClick={() => {
+              onChange({ ...board, nodes: undo.nodes, edges: undo.edges, updated: Date.now() });
+              setUndo(null);
+              announce(`${undo.what} put back`);
+            }}
+          >
+            Undo remove
+          </button>
+        )}
         {board && (
           <>
             <button
@@ -522,6 +584,19 @@ export function CanvasView({
                 Add to note
               </button>
             )}
+            {/* The connections in words: the text alternative to the arrows,
+                which are drawn as a picture (1.1.1), and the keyboard's way to
+                remove one (2.1.1). */}
+            <button
+              type="button"
+              className="canvas__action"
+              data-testid="board-connections"
+              aria-expanded={showConnections}
+              aria-controls="board-connections-list"
+              onClick={() => setShowConnections((open) => !open)}
+            >
+              Connections ({board.edges.length})
+            </button>
             <ConfirmButton
               label="Delete board"
               className="canvas__action canvas__action--danger"
@@ -589,6 +664,33 @@ export function CanvasView({
         )}
       </header>
 
+      {board && showConnections && (
+        <section className="canvas__connections" id="board-connections-list" aria-label="Connections">
+          {board.edges.length === 0 ? (
+            <p className="canvas__connections-empty">
+              No connections yet. Press ⇢ on a card, then the card it leads to.
+            </p>
+          ) : (
+            <ul className="canvas__connections-list" role="list">
+              {board.edges.map((edge) => (
+                <li key={edge.id} className="canvas__connection">
+                  <span className="canvas__connection-text">{edgeLabel(edge)}</span>
+                  <button
+                    type="button"
+                    className="canvas__action"
+                    data-testid={`edge-remove-${edge.id}`}
+                    aria-label={`Remove the connection ${edgeLabel(edge)}`}
+                    onClick={() => removeEdge(edge.id)}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       {board ? (
         <div
           className="canvas__frame"
@@ -632,6 +734,8 @@ export function CanvasView({
                 if (!a || !b) return null;
                 const start = boundary(a, b);
                 const end = boundary(b, a);
+                const mx = (start.x + end.x) / 2;
+                const my = (start.y + end.y) / 2;
                 return (
                   <g key={edge.id}>
                     <line
@@ -641,13 +745,16 @@ export function CanvasView({
                       y2={end.y}
                       markerEnd="url(#canvas-arrow)"
                     />
-                    <circle
-                      className="canvas__edge-cut"
-                      cx={(start.x + end.x) / 2}
-                      cy={(start.y + end.y) / 2}
-                      r={9}
-                      onClick={() => patch({ edges: board.edges.filter((e) => e.id !== edge.id) })}
-                    />
+                    {/* Always drawn, not only on hover: an invisible control is
+                        undiscoverable by touch and a trap for a stray tap. A
+                        44px hit circle around a 22px chip; the Connections
+                        list is the equivalent control for the keyboard and for
+                        assistive technology, which does not see this picture. */}
+                    <g className="canvas__edge-cut" onClick={() => removeEdge(edge.id)}>
+                      <circle className="canvas__edge-hit" cx={mx} cy={my} r={22} />
+                      <circle className="canvas__edge-chip" cx={mx} cy={my} r={11} />
+                      <path className="canvas__edge-x" d={`M ${mx - 4} ${my - 4} L ${mx + 4} ${my + 4} M ${mx + 4} ${my - 4} L ${mx - 4} ${my + 4}`} />
+                    </g>
                   </g>
                 );
               })}
@@ -791,18 +898,14 @@ export function CanvasView({
                     >
                       ✥
                     </button>
-                    <button
-                      type="button"
+                    {/* Two presses, announced, with Cancel — and Undo after (3.3.6). */}
+                    <ConfirmButton
+                      label="✕"
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
                       aria-label={`Take ${label(node)} off the board`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeCard(node.id);
-                      }}
-                    >
-                      ✕
-                    </button>
+                      onConfirm={() => removeCard(node.id)}
+                    />
                   </footer>
 
                   <span

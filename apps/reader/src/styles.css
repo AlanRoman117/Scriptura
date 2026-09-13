@@ -908,8 +908,12 @@ summary:focus-visible,
 .canvas__edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .canvas__edges line { stroke: var(--ink-soft); stroke-width: 2; }
 .canvas__edges marker path { fill: var(--ink-soft); }
-.canvas__edge-cut { fill: transparent; pointer-events: auto; cursor: pointer; }
-.canvas__edge-cut:hover { fill: color-mix(in srgb, var(--danger) 30%, transparent); }
+.canvas__edge-cut { pointer-events: auto; cursor: pointer; }
+.canvas__edge-hit { fill: transparent; }
+.canvas__edge-chip { fill: var(--paper-raised); stroke: var(--edge); stroke-width: 1.5; }
+.canvas__edge-x { stroke: var(--ink-soft); stroke-width: 2; stroke-linecap: round; }
+.canvas__edge-cut:hover .canvas__edge-chip { stroke: var(--danger); }
+.canvas__edge-cut:hover .canvas__edge-x { stroke: var(--danger); }
 .canvas__empty {
   position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
   color: var(--ink-soft); font-size: .85rem; pointer-events: none;
@@ -991,7 +995,25 @@ summary:focus-visible,
 .card__action:hover { color: var(--ink); border-color: var(--rule); }
 .card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
 .card__action--danger:hover { color: var(--danger); border-color: var(--danger); }
-.card__action--danger { margin-left: auto; }
+/* Remove sits at the end of the row; armed, it and Cancel may take a second
+   row, which the card's body gives up its height for. */
+.card__actions .confirm { margin-left: auto; }
+.card__actions { flex-wrap: wrap; }
+.canvas__action--undo { border-color: var(--ink-soft); color: var(--ink); }
+
+/* The connections, in words. */
+.canvas__connections {
+  padding: .5rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper-raised);
+  max-height: 40vh; overflow-y: auto; font-size: .85rem;
+}
+.canvas__connections-empty { margin: .4rem 0; color: var(--ink-soft); }
+.canvas__connections-list { list-style: none; margin: 0; padding: 0; }
+.canvas__connection {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  padding: .15rem 0; border-bottom: 1px solid var(--rule);
+}
+.canvas__connection:last-child { border-bottom: none; }
+.canvas__connection-text { min-width: 0; }
 
 /* Moving the view and changing a card without dragging (2.5.7): a panel of
    plain buttons, at the bottom of the board where a thumb reaches it and

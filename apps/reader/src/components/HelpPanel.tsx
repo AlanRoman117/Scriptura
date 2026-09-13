@@ -93,7 +93,7 @@ export function HelpPanel({ catalog, onClose }: HelpPanelProps) {
       <section className="help__section">
         <h2>Boards</h2>
         <p>A board lays verses and notes out as cards you can move and join with arrows. <strong>Canvas</strong> beside a verse puts it on the current board. Cards hold a reference, not a copy of the text, so they show the translation you are reading.</p>
-        <p>To move a card without dragging, use its <strong>Move/Size</strong> control. To zoom, use the + and − buttons.</p>
+        <p>To move or resize a card without dragging, use its <strong>✥</strong> button; to colour it, its colour button. The arrow buttons beside the zoom move the view. <strong>Connections</strong>, in the board's bar, lists every arrow in words and removes one. Removing a card asks first, and removing a card or a connection can be undone until you change something else.</p>
       </section>
 
       <section className="help__section">
@@ -109,7 +109,7 @@ export function HelpPanel({ catalog, onClose }: HelpPanelProps) {
           <li><kbd>Enter</kbd> on a verse number opens its actions; the arrow keys move along them.</li>
           <li>On the divider between the panes, the arrow keys, <kbd>Home</kbd> and <kbd>End</kbd> resize; the two small buttons do the same.</li>
           <li>In a note, <kbd>Shift</kbd>+<kbd>Tab</kbd> reaches the formatting tools; the arrow keys move between them.</li>
-          <li>On a board, cards take focus; the arrow keys move a card, <kbd>Alt</kbd> with an arrow resizes it.</li>
+          <li>On a board, cards take focus: the arrow keys move a card, <kbd>Alt</kbd> with an arrow resizes it, and <kbd>Delete</kbd> asks to remove it. With the board itself focused, the arrow keys move the view and <kbd>+</kbd> and <kbd>−</kbd> zoom.</li>
         </ul>
       </section>
 

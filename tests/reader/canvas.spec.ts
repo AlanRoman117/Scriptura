@@ -102,7 +102,9 @@ test.describe('a board', () => {
     await expect(page.getByTestId(`card-text-${id}`)).toHaveValue('The Word made flesh');
 
     // The resize grip lives in this corner; the remove button must still be
-    // reachable rather than sitting underneath it.
+    // reachable rather than sitting underneath it. Removing asks first.
+    await page.getByTestId(`card-remove-${id}`).click();
+    await expect(page.getByTestId(`card-remove-${id}`)).toHaveText('Sure?');
     await page.getByTestId(`card-remove-${id}`).click();
     await expect(page.locator('.card')).toHaveCount(0);
   });
@@ -118,6 +120,7 @@ test.describe('a board', () => {
     await expect(page.locator('.canvas__edges line')).toHaveCount(1);
 
     // An edge to a card that no longer exists would draw to nowhere.
+    await page.getByTestId(`card-remove-${ids[0]}`).click();
     await page.getByTestId(`card-remove-${ids[0]}`).click();
     await expect(page.locator('.canvas__edges line')).toHaveCount(0);
   });
@@ -369,5 +372,87 @@ test.describe('the board without a mouse, and without dragging (2.1.1, 2.5.7)', 
     await page.keyboard.press('Enter');
     await expect(page.locator('.canvas__edges line')).toHaveCount(1);
     await expect(page.getByTestId('announcer')).toContainText(/Connected John 1:1 .* to John 1:3/);
+  });
+});
+
+test.describe('connections in words, and removals that can be taken back (1.1.1, 3.3.6)', () => {
+  const cardIds = (page: import('@playwright/test').Page) =>
+    page.locator('.card').evaluateAll((cards) => cards.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', '')));
+
+  async function connected(page: import('@playwright/test').Page) {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const ids = await cardIds(page);
+    await page.getByTestId(`card-connect-${ids[0]}`).click();
+    await page.getByTestId(`card-${ids[1]}`).click();
+    await expect(page.locator('.canvas__edges line')).toHaveCount(1);
+    return ids;
+  }
+
+  test('the connection chip is always drawn, not only on hover', async ({ page }) => {
+    await connected(page);
+    const chip = page.locator('.canvas__edge-chip');
+    await expect(chip).toHaveCount(1);
+    const stroke = await chip.evaluate((el) => getComputedStyle(el).stroke);
+    expect(stroke).not.toMatch(/none|transparent|rgba\(0, 0, 0, 0\)/);
+  });
+
+  test('the Connections list names each connection, removes one, and the removal can be undone', async ({ page }) => {
+    await connected(page);
+    await page.getByTestId('board-connections').click();
+    const list = page.locator('#board-connections-list');
+    await expect(list).toContainText('John 1:1 (BSB) → John 1:3 (BSB)');
+
+    await list.getByRole('button', { name: /Remove the connection John 1:1/ }).click();
+    await expect(page.locator('.canvas__edges line')).toHaveCount(0);
+    await expect(page.getByTestId('announcer')).toContainText(/removed\. Undo/);
+
+    await page.getByTestId('board-undo').click();
+    await expect(page.locator('.canvas__edges line')).toHaveCount(1);
+    await expect(page.getByTestId('board-undo')).toHaveCount(0);
+  });
+
+  test('removing a card asks first, and puts back the card and its connections on undo', async ({ page }) => {
+    const ids = await connected(page);
+    await page.getByTestId(`card-remove-${ids[0]}`).click();
+    await expect(page.getByTestId(`card-remove-${ids[0]}`)).toHaveText('Sure?');
+    await page.getByTestId(`card-remove-${ids[0]}-cancel`).click();
+    await expect(page.locator('.card')).toHaveCount(2);
+
+    await page.getByTestId(`card-remove-${ids[0]}`).click();
+    await page.getByTestId(`card-remove-${ids[0]}`).click();
+    await expect(page.locator('.card')).toHaveCount(1);
+    await expect(page.locator('.canvas__edges line')).toHaveCount(0);
+
+    await page.getByTestId('board-undo').click();
+    await expect(page.locator('.card')).toHaveCount(2);
+    await expect(page.locator('.canvas__edges line')).toHaveCount(1);
+  });
+
+  test('any other change ends the chance to undo', async ({ page }) => {
+    const ids = await connected(page);
+    await page.locator('.canvas__edge-cut').click();
+    await expect(page.getByTestId('board-undo')).toBeVisible();
+    await page.getByTestId(`card-adjust-${ids[1]}`).click();
+    await page.getByTestId('adjust-right').click();
+    await expect(page.getByTestId('board-undo')).toHaveCount(0);
+  });
+
+  test('Delete on a focused card arms its remove button; Escape backs out, Enter confirms', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const ids = await cardIds(page);
+    await page.getByTestId(`card-${ids[0]}`).focus();
+    await page.keyboard.press('Delete');
+    const remove = page.getByTestId(`card-remove-${ids[0]}`);
+    await expect(remove).toBeFocused();
+    await expect(remove).toHaveText('Sure?');
+    await page.keyboard.press('Escape');
+    await expect(remove).toHaveText('✕');
+
+    await page.getByTestId(`card-${ids[0]}`).focus();
+    await page.keyboard.press('Delete');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.card')).toHaveCount(1);
   });
 });
