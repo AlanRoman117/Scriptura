@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePointerDrag } from '../lib/viewport';
 import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
+import { PaneControlsContext, type Maximized, type Pane } from './PaneControl';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
 const NARROW = 850;
@@ -14,22 +15,31 @@ const NARROW = 850;
  * to the line. The floor is a width, so it means the same thing at every window
  * size. The share limits remain as an upper bound on a very wide screen.
  */
-const MIN_PANE = 320;
+const MIN_PANE = 320; // mirrored in styles.css (.layout's columns)
 const MIN_SPLIT = 0.25;
 const MAX_SPLIT = 0.75;
 
-/** The usable split range for a given frame width. */
-function splitLimits(width: number): [number, number] {
+/**
+ * The usable split range for a frame `width` px wide, whose divider takes
+ * `divider` px of it.
+ *
+ * The split is the Bible's share of the frame; the notes get what is left
+ * after the Bible *and the divider*. The divider was 11px and left out of the
+ * sum, which cost the notes 11px of their floor. At 52px, left out, it would
+ * cost them 52.
+ */
+function splitLimits(width: number, divider: number): [number, number] {
   if (width <= 0) return [MIN_SPLIT, MAX_SPLIT];
   const floor = Math.max(MIN_SPLIT, MIN_PANE / width);
-  const ceiling = Math.min(MAX_SPLIT, 1 - MIN_PANE / width);
+  const ceiling = Math.min(MAX_SPLIT, 1 - (MIN_PANE + divider) / width);
   // On a frame too small to give both panes the floor, fall back to halves
   // rather than inverting the bounds.
   return floor > ceiling ? [0.5, 0.5] : [floor, ceiling];
 }
 
-export type Maximized = 'none' | 'bible' | 'notes';
-export type { SheetPosition };
+const clampTo = ([min, max]: [number, number], value: number) => Math.min(max, Math.max(min, value));
+
+export type { Maximized, SheetPosition };
 
 /** The full sheet's share of the visible viewport; mirrored in styles.css. */
 const FULL_SHARE = 0.92;
@@ -76,7 +86,10 @@ interface LayoutProps {
  */
 export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutProps) {
   const narrow = useIsNarrow();
-  const [split, setSplit] = useState(0.58);
+  // 56%, not the 58% it was while the divider was an 11px line: the 52px bar
+  // takes its width from both panes, rather than all of it from the notes,
+  // whose bar then no longer fits one row at 1280px.
+  const [split, setSplit] = useState(0.56);
   const [maximized, setMaximized] = useState<Maximized>('none');
   const [sheet, setSheet] = useState<SheetPosition>('peek');
   const frame = useRef<HTMLDivElement>(null);
@@ -194,24 +207,56 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
     };
   }, [narrow]);
 
-  const onDrag = useCallback((clientX: number) => {
-    const box = frame.current?.getBoundingClientRect();
-    if (!box) return;
-    const [min, max] = splitLimits(box.width);
-    setSplit(Math.min(max, Math.max(min, (clientX - box.left) / box.width)));
-  }, []);
+  const dividerCol = useRef<HTMLDivElement>(null);
+  /** The limits for the frame as it is now, divider included. */
+  const currentLimits = useCallback(
+    () => splitLimits(frame.current?.getBoundingClientRect().width ?? 0, dividerCol.current?.offsetWidth ?? 0),
+    []
+  );
+  /**
+   * How far into the divider the pointer took hold. The bar is 52px wide, so
+   * placing its left edge at the pointer made it jump half its width on the
+   * first move; keeping the offset keeps it under the finger.
+   */
+  const grab = useRef(0);
+
+  const onDrag = useCallback(
+    (clientX: number) => {
+      const box = frame.current?.getBoundingClientRect();
+      if (!box || box.width <= 0) return;
+      setSplit(clampTo(currentLimits(), (clientX - grab.current - box.left) / box.width));
+    },
+    [currentLimits]
+  );
 
   /** Nudge by keyboard, against the same floor a drag respects. */
-  const nudge = useCallback((delta: number) => {
-    const width = frame.current?.getBoundingClientRect().width ?? 0;
-    const [min, max] = splitLimits(width);
-    setSplit((s) => Math.min(max, Math.max(min, s + delta)));
-  }, []);
+  const nudge = useCallback(
+    (delta: number) => {
+      const limits = currentLimits();
+      // From where the divider is drawn, which a narrow window may have
+      // clamped, not from a stored split it cannot reach.
+      setSplit((s) => clampTo(limits, clampTo(limits, s) + delta));
+    },
+    [currentLimits]
+  );
 
   // The app's one drag implementation (lib/viewport.ts): the pointer is
   // captured, and a cancelled touch ends the drag like an up, so the divider
   // is never left half-dragged with `user-select: none` on the document.
-  const divider = usePointerDrag<HTMLDivElement>({ onMove: (e) => onDrag(e.clientX) });
+  const divider = usePointerDrag<HTMLDivElement>({
+    onStart: (e) => {
+      grab.current = e.clientX - (dividerCol.current?.getBoundingClientRect().left ?? e.clientX);
+    },
+    onMove: (e) => onDrag(e.clientX),
+  });
+
+  const paneControls = useMemo(
+    () => ({
+      maximized,
+      toggle: (pane: Pane) => setMaximized((current) => (current === pane ? 'none' : pane)),
+    }),
+    [maximized]
+  );
 
   if (narrow) {
     // Only at peek: once the sheet is open the note's own status line says it.
@@ -296,26 +341,27 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
 
   // The frame fills the window in this layout, so `innerWidth` is the right
   // stand-in on the first render, before the ref is attached — the alternative
-  // is announcing 25/75 once and correcting it a beat later.
+  // is announcing 25/75 once and correcting it a beat later. The divider's
+  // width is the stylesheet's `--divider-w` until the column exists to measure.
   const limits = splitLimits(
-    frame.current?.getBoundingClientRect().width ?? window.innerWidth
+    frame.current?.getBoundingClientRect().width ?? window.innerWidth,
+    dividerCol.current?.offsetWidth ?? 52
   );
+  // What is drawn, and so what is announced. The stylesheet holds the same
+  // floor, for a window narrowed after the split was set.
+  const shown = clampTo(limits, split);
 
   return (
+    <PaneControlsContext.Provider value={paneControls}>
     <div
       className="layout"
       data-testid="layout"
       data-mode="split"
       data-maximized={maximized}
       ref={frame}
-      style={{ ['--split' as string]: `${split * 100}%` }}
+      style={{ ['--split' as string]: `${shown * 100}%` }}
     >
       <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture" hidden={maximized === 'notes'}>
-        <PaneControl
-          label="Bible"
-          active={maximized === 'bible'}
-          onToggle={() => setMaximized(maximized === 'bible' ? 'none' : 'bible')}
-        />
         {bible}
         {/* The notes are maximized away, so the confirmation waits where they
             come back from, with the way back beside it. It takes no focus and
@@ -347,7 +393,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
       </main>
 
       {maximized === 'none' && (
-        <div className="divider-col">
+        <div className="divider-col" data-testid="divider-col" ref={dividerCol}>
           {/* Resizing without a drag (2.5.7): two buttons beside the grip. */}
           <button
             type="button"
@@ -364,15 +410,15 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize panes"
-            aria-valuenow={Math.round(split * 100)}
+            aria-valuenow={Math.round(shown * 100)}
             aria-valuemin={Math.round(limits[0] * 100)}
             aria-valuemax={Math.round(limits[1] * 100)}
-            aria-valuetext={`${Math.round(split * 100)}% Bible, ${Math.round((1 - split) * 100)}% notes`}
+            aria-valuetext={`${Math.round(shown * 100)}% Bible, ${Math.round((1 - shown) * 100)}% notes`}
             tabIndex={0}
             {...divider}
             // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
             onKeyDown={(e) => {
-              const [min, max] = splitLimits(frame.current?.getBoundingClientRect().width ?? 0);
+              const [min, max] = currentLimits();
               if (e.key === 'ArrowLeft') nudge(-0.02);
               else if (e.key === 'ArrowRight') nudge(0.02);
               else if (e.key === 'PageDown') nudge(-0.1);
@@ -396,29 +442,9 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
       )}
 
       <aside className="pane pane--notes" data-testid="pane-notes" aria-label="Notes" hidden={maximized === 'bible'}>
-        <PaneControl
-          label="Notes"
-          active={maximized === 'notes'}
-          onToggle={() => setMaximized(maximized === 'notes' ? 'none' : 'notes')}
-        />
         {notes}
       </aside>
     </div>
-  );
-}
-
-function PaneControl({ label, active, onToggle }: { label: string; active: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      className="pane__maximize"
-      data-testid={`maximize-${label.toLowerCase()}`}
-      aria-pressed={active}
-      title={active ? `Restore ${label}` : `Maximize ${label}`}
-      onClick={onToggle}
-    >
-      {active ? '⤡' : '⤢'}
-      <span className="visually-hidden">{active ? `Restore ${label}` : `Maximize ${label}`}</span>
-    </button>
+    </PaneControlsContext.Provider>
   );
 }

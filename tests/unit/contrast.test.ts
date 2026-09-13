@@ -126,6 +126,13 @@ describe('colour tokens', () => {
         nonText.push([`${token} ${t[token]} on ${surface} ${bg}`, t[token], bg, NON_TEXT_MIN]);
       }
     }
+    // The pane divider is a bar in the rule colour holding a grip, two buttons
+    // and, when focused, a ring. --edge is too faint on it in the light theme,
+    // so the grip and the buttons' borders there are --ink-soft; hovering or
+    // focusing turns the grip --accent.
+    for (const token of ['--ink-soft', '--focus', '--accent']) {
+      nonText.push([`${token} ${t[token]} on the divider bar --rule ${t['--rule']}`, t[token], t['--rule'], NON_TEXT_MIN]);
+    }
 
     describe(theme, () => {
       test.each(text)('text: %s reads at 7:1 or better', (_label, fg, bg, min) => {

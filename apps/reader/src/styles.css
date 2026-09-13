@@ -83,6 +83,9 @@
   /* Every pointer target is at least this on both axes (2.5.5). There is no
      compact mode: the criterion has no exception for a fine pointer. */
   --control-h: 44px;
+  /* The pane divider: a bar a little wider than the buttons it holds. Layout
+     measures the column rather than repeating the number. */
+  --divider-w: calc(var(--control-h) + 8px);
   --focus-ring: 2px solid var(--focus);
   color-scheme: light dark;
 }
@@ -298,7 +301,11 @@ summary:focus-visible,
 
 .layout {
   display: grid;
-  grid-template-columns: var(--split, 58%) auto 1fr;
+  /* The Bible column is the reader's split, held between both panes' floors:
+     320px for itself (MIN_PANE in Layout.tsx), and 320px plus the divider for
+     the notes. Layout clamps the split the same way; this keeps the floor for
+     a window made narrower after the split was set. */
+  grid-template-columns: clamp(320px, var(--split, 56%), calc(100% - 320px - var(--divider-w))) var(--divider-w) 1fr;
   height: 100%;
 }
 .layout[data-maximized='bible'],
@@ -342,43 +349,43 @@ summary:focus-visible,
 }
 .pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); }
 
-.pane__maximize {
-  position: absolute; top: .5rem; right: .75rem; z-index: 2;
-  border: 1px solid transparent; border-radius: 6px;
-  background: transparent; color: var(--ink-soft);
-  font-size: .95rem; line-height: 1; padding: .35rem .45rem; cursor: pointer;
+/* The divider is a bar a little wider than the two buttons it holds, so they
+   sit inside it instead of hanging over the edges of both panes — they were
+   44px boxes on an 11px line. The bar is the rule colour. The grip and the
+   buttons' borders on it are --ink-soft: --edge, the usual control boundary,
+   is only 2.6:1 against the rule colour in the light theme, and
+   tests/unit/contrast.test.ts measures both on the bar. The bar between the
+   buttons is the drag target; the buttons resize without a drag (2.5.7). */
+.divider-col {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  width: var(--divider-w);
+  background: var(--rule);
 }
-.pane__maximize:hover { border-color: var(--rule); color: var(--ink); }
-
-/* The divider's grid track is 11px; its box is 44px (2.5.5), overflowing the
-   track onto the panes' inner margins, which hold no controls. The grip glyph
-   and the nudge buttons are the visible affordance (1.4.11) — and the buttons
-   are the way to resize without dragging (2.5.7). */
-.divider-col { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 11px; z-index: 2; }
 .divider {
-  position: relative; flex: 1; width: var(--control-h); margin-inline: calc((11px - var(--control-h)) / 2);
+  --grip: var(--ink-soft);
+  position: relative; flex: 1; align-self: stretch;
   cursor: col-resize; background: transparent; border: none;
 }
-.divider::after {
-  content: ''; position: absolute; inset-block: 0; left: calc(50% - .5px);
-  width: 1px; background: var(--rule);
-}
-/* Three dots at the centre, in the boundary colour. */
+/* Three dots at the centre: three 8px tiles, each dot at a tile's centre. At
+   20px tall the box cut the third dot in half. */
 .divider::before {
-  content: ''; position: absolute; left: calc(50% - 2px); top: calc(50% - 10px);
-  width: 4px; height: 20px; border-radius: 2px;
-  background: radial-gradient(circle, var(--edge) 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y;
-  z-index: 1;
+  content: ''; position: absolute; left: calc(50% - 2px); top: calc(50% - 12px);
+  width: 4px; height: 24px; border-radius: 2px;
+  background: radial-gradient(circle, var(--grip) 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y;
 }
-.divider:hover::after, .divider:focus-visible::after { background: var(--accent); }
+.divider:hover, .divider:focus-visible { --grip: var(--accent); }
+/* Drawn inside the bar: outside it, the ring would lie over both panes. */
+.divider:focus-visible { outline-offset: -4px; }
 .divider__nudge {
-  flex: 0 0 auto; width: var(--control-h); margin-inline: calc((11px - var(--control-h)) / 2);
-  font: inherit; font-size: .8rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  flex: 0 0 auto; width: var(--control-h);
+  font: inherit; font-size: 1.35rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--ink-soft); border-radius: 6px;
 }
-.divider__nudge:hover { color: var(--ink); }
-.divider__nudge:first-child { margin-top: .5rem; }
-.divider__nudge:last-child { margin-bottom: .5rem; }
+.divider__nudge:hover { color: var(--ink); border-color: var(--ink); }
+/* Level with the first row of controls in both panes' bars. */
+.divider__nudge:first-child { margin-top: .6rem; }
+.divider__nudge:last-child { margin-bottom: .6rem; }
 
 /* ── Reader ───────────────────────────────────────────────────────────────── */
 
@@ -389,7 +396,7 @@ summary:focus-visible,
 .reader__bar {
   position: sticky; top: 0; z-index: 1;
   display: flex; gap: .5rem; align-items: center;
-  padding: .6rem 3rem .6rem 1rem;
+  padding: .6rem 1rem;
   min-height: var(--bar-h);
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(8px);
@@ -420,7 +427,10 @@ summary:focus-visible,
 /* Both chips are controls — the translation opens the library, Marks opens the
    collections — so neither is dropped when the bar runs short. */
 .reader__chip {
-  flex: 0 0 auto; display: inline-flex; align-items: center; gap: .35rem;
+  /* Centred on both axes: the chip is at least 44px wide, and a flex box
+     packs its content to the start, which drew the settings gear 5px and the
+     question mark 10px left of centre. */
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
   font: inherit; font-size: .78rem; color: var(--ink-soft);
   background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
@@ -438,6 +448,13 @@ summary:focus-visible,
 }
 /* A zero count is noise beside a word that already says what the button is. */
 .reader__chip-count[data-empty] { display: none; }
+/* The maximize button, last in each pane's bar, takes its neighbours' class;
+   this only sizes the arrow so it reads the same in both bars. */
+.reader__chip.pane__maximize, .notes__action.pane__maximize { font-size: .95rem; line-height: 1; }
+.pane__maximize[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
 
 /* Below this the bar cannot hold every label. Drop the word, not the control:
    the count stands in for it, and is shown even at zero so the button keeps a
@@ -452,7 +469,7 @@ summary:focus-visible,
   .reader__nav { display: flex; gap: .5rem; flex: 1 1 100%; }
 }
 @container (max-width: 22rem) {
-  .reader__bar { gap: .35rem; padding-right: 2.4rem; }
+  .reader__bar { gap: .35rem; }
   .reader__chip-label { display: none; }
   .reader__chip-count[data-empty] { display: inline; }
   .reader__select { max-width: none; min-width: 5.5rem; }
@@ -1363,15 +1380,22 @@ summary:focus-visible,
 
 /* ── Notes ────────────────────────────────────────────────────────────────── */
 
-.notes { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 2.6rem 1.25rem .5rem; container-type: inline-size; }
+.notes { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size; }
 
-.notes__bar { display: flex; gap: .4rem; align-items: center; margin-bottom: .75rem; }
+/* One row while every control fits at its own size, and never by squeezing
+   one: a button that shrinks below its label draws the label across its
+   border. Wrapping is always allowed, so a longer row — Delete armed, with
+   Cancel beside it — puts its last control on a second line instead. */
+.notes__bar { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .75rem; }
+.notes__bar > :not(.notes__select) { flex: none; }
+.notes__bar-end { display: inline-flex; align-items: center; gap: .35rem; }
+.notes__bar-end:empty { display: none; }
 .notes__select {
   font: inherit; font-size: .85rem; color: var(--ink);
   /* Explicit for the same reason as .reader__select: a transparent <select>
      leaves the browser to paint the open list from an unresolved colour. */
   background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .4rem; flex: 1; min-width: 7rem;
+  border-radius: 6px; padding: .25rem .4rem; flex: 1; min-width: 6.5rem;
   text-overflow: ellipsis;
 }
 .notes__select option { background-color: var(--paper-raised); color: var(--ink); }
@@ -1379,21 +1403,23 @@ summary:focus-visible,
 .notes__action {
   font: inherit; font-size: .78rem; color: var(--ink-soft);
   background: transparent; border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .5rem; cursor: pointer;
+  border-radius: 6px; padding: .25rem .4rem; cursor: pointer;
 }
 .notes__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .notes__action:disabled { opacity: .45; cursor: default; }
 .notes__action--danger:hover { color: var(--danger); border-color: var(--danger); }
 
-/* Six controls do not fit a narrow pane on one line, and squeezing them left
+/* Seven controls do not fit a narrow pane on one line, and squeezing them left
    Delete a sliver wide — present, and not usably so. The bar is not sticky, so
    it can simply wrap: the picker takes the first row and the actions the rest,
-   all of them full size.
+   all of them full size. The one row needs about 27.7rem at rest here; the
+   break is at 29rem so a wider system font still wraps the whole row rather
+   than dropping only its last button onto a line of its own. The default
+   split leaves the notes 29.4rem at 1280px, so that width keeps one row.
    This has to come *after* the rules above: an @container block adds no
    specificity, so declared earlier it loses to `.notes__select { flex: 1 }`
    and the picker collapses to a bare chevron. */
-@container (max-width: 26rem) {
-  .notes__bar { flex-wrap: wrap; }
+@container (max-width: 29rem) {
   .notes__select { flex: 1 1 100%; }
 }
 
@@ -1447,9 +1473,8 @@ summary:focus-visible,
 /* The chapter can always be scrolled clear of the sheet, whatever its height. */
 .layout--narrow .pane--bible { height: 100%; padding-bottom: calc(var(--sheet-h, 3.25rem) + .5rem); }
 /* Nothing under the notch or the status bar in standalone mode. `env()` is 0
-   everywhere else, so this costs the desktop nothing. The right padding that
-   the split layout keeps for its maximize button is not needed here. */
-.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); padding-right: 1rem; }
+   everywhere else, so this costs the desktop nothing. */
+.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 .layout--narrow .notes { padding-top: .75rem; }
 .canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 
@@ -1552,6 +1577,9 @@ summary:focus-visible,
    still a colour. */
 @media (forced-colors: active) {
   button:not(.swatch), select, input, textarea, .reader__chip, .card, .sheet { border: 1px solid CanvasText; }
+  /* The bar's colour is forced to the page's: its edges and grip carry it instead. */
+  .divider-col { border-inline: 1px solid CanvasText; }
+  .divider::before { forced-color-adjust: none; background: radial-gradient(circle, CanvasText 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y; }
   .verse[data-highlight] { border-left-color: Highlight; }
   .swatch__disc { forced-color-adjust: none; }
   :focus-visible { outline-color: Highlight; }
