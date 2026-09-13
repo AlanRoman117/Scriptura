@@ -5,7 +5,7 @@
 | **ID** | `91-device-ios` |
 | **Size** | S per device (an hour with the app deployed or served over the LAN) |
 | **Depends on** | `11-sheet`, `13-search`, `14-canvas`, `04-viewport` |
-| **Status** | open — needs a person with devices; cannot be automated |
+| **Status** | assigned (owner) |
 | **Criteria** | 1.4.10, 2.4.11/2.4.12, 2.5.5; the touch promises this programme makes |
 
 ## Outcome

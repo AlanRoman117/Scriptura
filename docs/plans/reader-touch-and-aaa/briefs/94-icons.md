@@ -5,7 +5,7 @@
 | **ID** | `94-icons` |
 | **Size** | S |
 | **Depends on** | none |
-| **Status** | open |
+| **Status** | assigned (owner) |
 | **Criteria** | none (install experience); noted by the audit |
 
 ## Outcome

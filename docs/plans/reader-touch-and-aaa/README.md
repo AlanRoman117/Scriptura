@@ -89,10 +89,10 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | W9 | Status messages wired | part of `briefs/05-announcer.md` | done (a0dde32) |
 | W11 | Service-worker update prompt (recommended) | `briefs/31-sw-prompt.md` | done (cb88aa0) |
 | D | Docs: matrix, Architecture (both copies), README, CLAUDE.md, contributing | `briefs/40-docs.md` | done (close-out commit) |
-| X1 | Real-device verification: iOS Safari keyboard and sheet | `briefs/91-device-ios.md` | open — needs a person with a device |
-| X2 | Screen-reader pass: VoiceOver, TalkBack, NVDA | `briefs/92-screen-readers.md` | open — needs a person |
-| X3 | Windows High Contrast and forced-colors check | `briefs/93-forced-colors.md` | open — needs a person |
-| X4 | PNG icons: `apple-touch-icon` and maskable | `briefs/94-icons.md` | open |
+| X1 | Real-device verification: iOS Safari keyboard and sheet | `briefs/91-device-ios.md` | assigned (owner) |
+| X2 | Screen-reader pass: VoiceOver, TalkBack, NVDA | `briefs/92-screen-readers.md` | assigned (owner) |
+| X3 | Windows High Contrast and forced-colors check | `briefs/93-forced-colors.md` | assigned (owner) |
+| X4 | PNG icons: `apple-touch-icon` and maskable | `briefs/94-icons.md` | assigned (owner) |
 
 ## Order of work
 

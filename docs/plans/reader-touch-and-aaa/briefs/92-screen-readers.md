@@ -5,7 +5,7 @@
 | **ID** | `92-screen-readers` |
 | **Size** | M (two to three hours across three readers) |
 | **Depends on** | `21-semantics`, `03-focus`, `05-announcer`, `12-verse-actions`, `14-canvas` |
-| **Status** | open — needs a person; cannot be automated |
+| **Status** | assigned (owner) |
 | **Criteria** | 1.3.1, 2.4.3, 4.1.2, 4.1.3 — as experienced, not as computed |
 
 ## Outcome

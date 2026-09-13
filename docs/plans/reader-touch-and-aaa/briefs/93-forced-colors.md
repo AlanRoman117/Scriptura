@@ -5,7 +5,7 @@
 | **ID** | `93-forced-colors` |
 | **Size** | S |
 | **Depends on** | `02-tokens`, `22-colour-meaning` |
-| **Status** | open — needs Windows; Chromium can emulate `forced-colors: active` for a first pass |
+| **Status** | assigned (owner) |
 | **Criteria** | 1.4.1, 1.4.3, 1.4.11, 2.4.7 under forced colours |
 
 ## Outcome
