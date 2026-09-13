@@ -141,23 +141,52 @@ export function Layout({ bible, notes }: LayoutProps) {
       </main>
 
       {maximized === 'none' && (
-        <div
-          className="divider"
-          data-testid="divider"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize panes"
-          aria-valuenow={Math.round(split * 100)}
-          aria-valuemin={Math.round(limits[0] * 100)}
-          aria-valuemax={Math.round(limits[1] * 100)}
-          tabIndex={0}
-          {...divider}
-          // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowLeft') nudge(-0.02);
-            if (e.key === 'ArrowRight') nudge(0.02);
-          }}
-        />
+        <div className="divider-col">
+          {/* Resizing without a drag (2.5.7): two buttons beside the grip. */}
+          <button
+            type="button"
+            className="divider__nudge"
+            data-testid="divider-narrower"
+            aria-label="Give the notes more room"
+            onClick={() => nudge(-0.1)}
+          >
+            ◂
+          </button>
+          <div
+            className="divider"
+            data-testid="divider"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize panes"
+            aria-valuenow={Math.round(split * 100)}
+            aria-valuemin={Math.round(limits[0] * 100)}
+            aria-valuemax={Math.round(limits[1] * 100)}
+            aria-valuetext={`${Math.round(split * 100)}% Bible, ${Math.round((1 - split) * 100)}% notes`}
+            tabIndex={0}
+            {...divider}
+            // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
+            onKeyDown={(e) => {
+              const [min, max] = splitLimits(frame.current?.getBoundingClientRect().width ?? 0);
+              if (e.key === 'ArrowLeft') nudge(-0.02);
+              else if (e.key === 'ArrowRight') nudge(0.02);
+              else if (e.key === 'PageDown') nudge(-0.1);
+              else if (e.key === 'PageUp') nudge(0.1);
+              else if (e.key === 'Home') setSplit(min);
+              else if (e.key === 'End') setSplit(max);
+              else return;
+              e.preventDefault();
+            }}
+          />
+          <button
+            type="button"
+            className="divider__nudge"
+            data-testid="divider-wider"
+            aria-label="Give the Bible more room"
+            onClick={() => nudge(0.1)}
+          >
+            ▸
+          </button>
+        </div>
       )}
 
       <aside className="pane pane--notes" data-testid="pane-notes" aria-label="Notes" hidden={maximized === 'bible'}>

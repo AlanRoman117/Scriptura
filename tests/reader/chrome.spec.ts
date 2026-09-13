@@ -55,11 +55,16 @@ test.describe('keeping your place', () => {
     await pane.evaluate((el) => el.scrollTo(0, 4000));
     await expect.poll(() => title.getAttribute('data-stuck')).toBe('true');
 
-    // Still on screen, inside the pane, below the bar — not scrolled away.
+    // Still on screen, inside the pane, parked directly beneath the bar and the
+    // search box — whose heights are measured, not assumed, so the expected
+    // offset is read from the same variables the stylesheet uses.
     const box = (await title.boundingBox())!;
     const paneBox = (await pane.boundingBox())!;
-    expect(box.y).toBeGreaterThanOrEqual(paneBox.y - 1);
-    expect(box.y).toBeLessThan(paneBox.y + 120);
+    const offset = await pane.evaluate(
+      (el) => parseFloat(el.style.getPropertyValue('--bar-h')) + parseFloat(el.style.getPropertyValue('--search-h'))
+    );
+    expect(offset).toBeGreaterThan(60);
+    expect(Math.abs(box.y - (paneBox.y + offset))).toBeLessThan(2);
     await expect(title).toContainText('Psalms 119');
   });
 

@@ -50,9 +50,9 @@ export function MarkdownPreview({
 
   if (blocks.length === 0) {
     return (
-      <div className="preview preview--empty" data-testid="notes-preview" onClick={() => onEditAt(0)}>
+      <button type="button" className="preview preview--empty" data-testid="notes-preview" onClick={() => onEditAt(0)}>
         Nothing written yet.
-      </div>
+      </button>
     );
   }
 
@@ -68,6 +68,20 @@ export function MarkdownPreview({
             onEditAt(block.offset);
           }}
         >
+          {/* The click on the block is a pointer convenience; this is the
+              control — reachable by Tab, visible on hover, focus and touch. */}
+          <button
+            type="button"
+            className="preview__edit"
+            data-testid={`preview-edit-${i}`}
+            aria-label={`Edit here (block ${i + 1})`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditAt(block.offset);
+            }}
+          >
+            ✎
+          </button>
           {renderBlock(block, { bible, notes, boards, onFollowLink, onOpenBoard, describeLink })}
         </div>
       ))}

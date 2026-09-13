@@ -217,3 +217,32 @@ test.describe('a board inside a note', () => {
     await expect(page.getByTestId('board-embed-missing')).toBeVisible();
   });
 });
+
+test.describe('the preview from the keyboard', () => {
+  test('each block has an Edit control that puts the caret there', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').fill('# Opening\n\nThe **Word** was with God.\n\n> a quotation');
+    await page.getByTestId('note-preview').click();
+
+    // Third block is the quotation; the control is reachable and visible once focused.
+    const edit = page.getByTestId('preview-edit-2');
+    await edit.focus();
+    await expect(edit).toBeVisible();
+    await page.keyboard.press('Enter');
+
+    const surface = page.getByTestId('notes-surface');
+    await expect(surface).toBeVisible();
+    const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
+    expect((await surface.inputValue()).slice(at)).toBe('> a quotation');
+  });
+
+  test('an empty preview is a button back to writing', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-preview').click();
+    const empty = page.getByTestId('notes-preview');
+    await expect(empty).toHaveRole('button');
+    await empty.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('notes-surface')).toBeVisible();
+  });
+});

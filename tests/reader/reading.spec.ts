@@ -87,3 +87,21 @@ test('the first Tab offers to skip to the scripture (2.4.1)', async ({ page }) =
   const landed = await page.evaluate(() => !!document.activeElement?.closest('main'));
   expect(landed).toBe(true);
 });
+
+test('the divider answers Home, End and words, and resizes without a drag (2.5.7)', async ({ page }) => {
+  const divider = page.getByTestId('divider');
+  await divider.focus();
+  await page.keyboard.press('Home');
+  await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemin') ?? '');
+  await page.keyboard.press('End');
+  await expect(divider).toHaveAttribute('aria-valuenow', await divider.getAttribute('aria-valuemax') ?? '');
+  await expect(divider).toHaveAttribute('aria-valuetext', /\d+% Bible, \d+% notes/);
+
+  // Two presses of a button move it as far as five arrow presses would.
+  const before = (await page.getByTestId('pane-bible').boundingBox())!.width;
+  await page.getByTestId('divider-narrower').click();
+  const after = (await page.getByTestId('pane-bible').boundingBox())!.width;
+  expect(after).toBeLessThan(before);
+  await page.getByTestId('divider-wider').click();
+  expect((await page.getByTestId('pane-bible').boundingBox())!.width).toBeGreaterThan(after);
+});

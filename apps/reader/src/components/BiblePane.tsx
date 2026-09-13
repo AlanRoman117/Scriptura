@@ -64,7 +64,31 @@ export function BiblePane({
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
+  const reader = useRef<HTMLDivElement>(null);
+  const bar = useRef<HTMLElement>(null);
   const [stuck, setStuck] = useState(false);
+
+  // The sticky offsets used to be constants (3.1rem for the bar, 2.9rem for
+  // the search box). 44px controls and a text-size preference make both
+  // wrong, so the heights are measured and written onto the scrolling pane,
+  // where the stylesheet reads them for the sticky title, the search box and
+  // the scroll padding that keeps a focused verse clear of them (2.4.11).
+  useEffect(() => {
+    const node = reader.current;
+    const barEl = bar.current;
+    if (!node || !barEl) return;
+    const target = node.closest<HTMLElement>('.pane') ?? node;
+    const searchEl = node.querySelector<HTMLElement>('.search');
+    const write = () => {
+      target.style.setProperty('--bar-h', `${barEl.offsetHeight}px`);
+      target.style.setProperty('--search-h', `${searchEl?.offsetHeight ?? 0}px`);
+    };
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(barEl);
+    if (searchEl) observer.observe(searchEl);
+    return () => observer.disconnect();
+  }, [search]);
   /** The verse whose actions are open — the whole <p>, so a press on it is not "outside". */
   const openVerseEl = useRef<HTMLParagraphElement | null>(null);
 
@@ -115,8 +139,8 @@ export function BiblePane({
   const meta = bible.meta;
 
   return (
-    <div className="reader">
-      <header className="reader__bar">
+    <div className="reader" ref={reader}>
+      <header className="reader__bar" ref={bar}>
         {/* A landmark of its own: "where am I, and how do I move" is the first
             thing a screen reader user looks for (2.4.8). */}
         <nav className="reader__nav" aria-label="Passage">

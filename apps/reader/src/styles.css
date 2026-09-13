@@ -250,6 +250,36 @@ summary:focus-visible,
   outline-offset: -2px;
 }
 
+/* ── Targets (2.5.5) ─────────────────────────────────────────────────────── */
+
+/* Every pointer target is at least 44 × 44 CSS px. One list, one token, so
+   the floor is the same everywhere and a new control class is added here or
+   is caught by tests/reader/targets.spec.ts. Inline exceptions — the verse
+   number in the text, text links inside prose — are allowlisted in that test,
+   not here. */
+.pane__maximize, .reader__select, .reader__chip, .search__input, .search__jump, .search__ref,
+.search__insert, .search__option, .marks__close, .marks__label, .marks__ref, .marks__remove,
+.notes__link, .settings__close, .settings__action, .settings__toggle, .settings__field select,
+.settings__tools summary, .proposal__action, .proposal__item label, .canvas__select,
+.canvas__action, .canvas__zoom button, .tools__button, .results__close, .results__book,
+.results__ref, .results__insert, .library__close, .library__action, .notes__select,
+.notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
+.compare__drop, .compare__quote, .preview__edit, .divider__nudge {
+  min-height: var(--control-h);
+}
+/* Icon-only controls, and text buttons whose label can be shorter than 44px
+   ("New"). */
+.pane__maximize, .reader__chip, .search__insert, .marks__close, .marks__remove,
+.settings__close, .settings__action, .canvas__zoom button, .canvas__action, .tools__button,
+.results__close, .results__insert, .results__book, .library__close, .library__action,
+.notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
+.compare__quote, .preview__edit, .divider__nudge {
+  min-width: var(--control-h);
+}
+/* Checkbox labels are the target; lay them out so the whole row is it. */
+.search__option, .settings__toggle, .proposal__item label { display: inline-flex; align-items: center; }
+.settings__tools summary { display: flex; align-items: center; }
+
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 
 .layout {
@@ -282,15 +312,35 @@ summary:focus-visible,
 }
 .pane__maximize:hover { border-color: var(--rule); color: var(--ink); }
 
+/* The divider's grid track is 11px; its box is 44px (2.5.5), overflowing the
+   track onto the panes' inner margins, which hold no controls. The grip glyph
+   and the nudge buttons are the visible affordance (1.4.11) — and the buttons
+   are the way to resize without dragging (2.5.7). */
+.divider-col { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 11px; z-index: 2; }
 .divider {
-  width: 11px; cursor: col-resize; background: transparent;
-  border: none; position: relative;
+  position: relative; flex: 1; width: var(--control-h); margin-inline: calc((11px - var(--control-h)) / 2);
+  cursor: col-resize; background: transparent; border: none;
 }
 .divider::after {
-  content: ''; position: absolute; inset-block: 0; left: 5px;
+  content: ''; position: absolute; inset-block: 0; left: calc(50% - .5px);
   width: 1px; background: var(--rule);
 }
+/* Three dots at the centre, in the boundary colour. */
+.divider::before {
+  content: ''; position: absolute; left: calc(50% - 2px); top: calc(50% - 10px);
+  width: 4px; height: 20px; border-radius: 2px;
+  background: radial-gradient(circle, var(--edge) 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y;
+  z-index: 1;
+}
 .divider:hover::after, .divider:focus-visible::after { background: var(--accent); }
+.divider__nudge {
+  flex: 0 0 auto; width: var(--control-h); margin-inline: calc((11px - var(--control-h)) / 2);
+  font: inherit; font-size: .8rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+}
+.divider__nudge:hover { color: var(--ink); }
+.divider__nudge:first-child { margin-top: .5rem; }
+.divider__nudge:last-child { margin-bottom: .5rem; }
 
 /* ── Reader ───────────────────────────────────────────────────────────────── */
 
@@ -452,8 +502,10 @@ summary:focus-visible,
 }
 .search__insert:hover { color: var(--ink); border-color: var(--rule); }
 
-/* Search sits under the bar, so the chapter title parks below both. */
-.reader:has(.search) .chapter__title { top: calc(var(--bar-h) + 2.9rem); }
+/* Search sits under the bar, so the chapter title parks below both. Both
+   heights are measured by BiblePane's ResizeObserver: at 44px controls, and
+   at any text size the reader picks, the old constants were wrong. */
+.reader:has(.search) .chapter__title { top: calc(var(--bar-h) + var(--search-h, 2.9rem)); }
 
 /* ── Highlights ───────────────────────────────────────────────────────────── */
 
@@ -551,12 +603,12 @@ summary:focus-visible,
 .marks__group-bar { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
 .marks__label {
   flex: 1; min-width: 0; font: inherit; font-size: .88rem; font-weight: 600; color: var(--ink);
-  background-color: transparent; border: 1px solid transparent; border-radius: 6px;
+  background-color: transparent; border: 1px solid var(--edge); border-radius: 6px;
   padding: .25rem .35rem;
 }
-/* Editable, but not shouting about it until you go near it — the label is read
-   far more often than it is changed. */
-.marks__label:hover { border-color: var(--rule); }
+/* The border shows that the label can be edited. It used to appear on hover
+   only, which told a mouse and nobody else. */
+.marks__label:hover { border-color: var(--ink-soft); }
 .marks__label:focus { border-color: var(--edge); background-color: var(--paper-raised); }
 .marks__label::placeholder { color: var(--ink-soft); font-weight: 500; }
 .marks__count { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
@@ -827,7 +879,10 @@ summary:focus-visible,
    a scroll away from the heading you wanted to make.
    The row's height is reserved whether or not they are showing, so appearing
    does not shove the text you just clicked on down the pane. */
-.tools__slot { min-height: 1.85rem; flex: 0 0 auto; }
+.tools__slot { min-height: calc(var(--control-h) + .35rem); flex: 0 0 auto; }
+/* Ten 44px tools wrap onto two rows in a narrow pane; reserve both so their
+   appearance does not shove the text. */
+@container (max-width: 34rem) { .tools__slot { min-height: calc(2 * var(--control-h) + .55rem); } }
 .tools {
   display: flex; flex-wrap: wrap; align-items: center; gap: .2rem;
   padding: 0 0 .35rem; border-bottom: 1px solid var(--rule); margin-bottom: .4rem;
@@ -850,8 +905,27 @@ summary:focus-visible,
 .preview--empty { color: var(--ink-soft); font-style: italic; cursor: text; }
 /* Every block is a way back into the editor, so reading and fixing are one
    gesture rather than a mode you have to leave first. */
-.preview__block { cursor: text; border-radius: 4px; }
+.preview__block { position: relative; cursor: text; border-radius: 4px; }
 .preview__block:hover { background: color-mix(in srgb, var(--rule) 28%, transparent); }
+/* A real control for what the click on a block does, so the keyboard and a
+   finger have it too (2.1.1). Quiet until the block is hovered or focused;
+   always shown where there is no hover. */
+.preview__edit {
+  position: absolute; top: 0; right: 0; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; font-size: 1rem; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  opacity: 0;
+}
+.preview__block:hover .preview__edit, .preview__block:focus-within .preview__edit, .preview__edit:focus-visible { opacity: 1; }
+.preview__edit:hover { color: var(--ink); }
+@media (hover: none) {
+  .preview__edit { opacity: .7; }
+  .preview__block { padding-right: 3rem; }
+}
+/* The empty state is a button now: the one way back into the editor cannot be
+   a div. */
+.preview--empty { font: inherit; font-family: var(--serif); font-size: inherit; line-height: inherit; text-align: left; width: 100%; background: transparent; border: none; }
 .preview__heading { font-family: var(--serif); line-height: 1.3; margin: 1.1rem 0 .4rem; }
 .preview__block:first-child .preview__heading { margin-top: .2rem; }
 /* Sized by the level the author wrote, not the level the outline gives it. */
@@ -1039,7 +1113,8 @@ summary:focus-visible,
 .compare__head, .compare__num-head {
   position: sticky; top: 0; z-index: 1;
   text-align: left; font-family: var(--sans); font-weight: 600; font-size: .78rem;
-  padding: .4rem .5rem; vertical-align: bottom;
+  /* Room on the right for the 44px drop button. */
+  padding: .4rem 3rem .4rem .5rem; vertical-align: bottom;
   background: var(--paper); border-bottom: 1px solid var(--rule);
 }
 .compare__head-name { display: block; }
@@ -1060,13 +1135,15 @@ summary:focus-visible,
   font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
 }
 .compare__absent { color: var(--ink-soft); }
+/* Always there, quieter until wanted: content that appears only on hover is
+   invisible to touch and to anyone who does not know to hover (1.4.13). */
 .compare__quote {
-  opacity: 0; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: .8rem;
-  color: var(--ink-soft); background: transparent; border: 1px solid var(--rule);
-  border-radius: 5px; padding: 0 .3rem; cursor: pointer; vertical-align: middle;
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: .75; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: .9rem;
+  color: var(--ink-soft); background: transparent; border: 1px solid var(--edge);
+  border-radius: 6px; padding: 0 .3rem; cursor: pointer; vertical-align: middle;
 }
-.compare__cell:hover .compare__quote, .compare__quote:focus-visible { opacity: 1; }
-@media (pointer: coarse) { .compare__quote { opacity: 1; } }
+.compare__cell:hover .compare__quote, .compare__quote:focus-visible, .compare__quote:hover { opacity: 1; color: var(--ink); }
 
 .attribution__line { display: block; }
 
