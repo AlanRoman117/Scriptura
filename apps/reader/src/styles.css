@@ -1074,15 +1074,14 @@ summary:focus-visible,
 
 /* ── Writing: the tools, and reading it back ──────────────────────────────── */
 
-/* Rides in with focus and leaves with it — collapsed by default, but not
-   absent: nobody discovers that ## makes a heading by staring at a textarea. */
+/* Always shown while a note is being written: nobody discovers that ## makes
+   a heading by staring at a textarea, and tools that come and go with focus
+   are tools nobody can rely on finding. */
 /* Above the writing, not below it: at the bottom of a long note the tools are
-   a scroll away from the heading you wanted to make.
-   The row's height is reserved whether or not they are showing, so appearing
-   does not shove the text you just clicked on down the pane. */
+   a scroll away from the heading you wanted to make. The slot holds the
+   tools' rows, so the note starts at the same place in every state. */
 .tools__slot { min-height: calc(var(--control-h) + .35rem); flex: 0 0 auto; }
-/* Ten 44px tools wrap onto two rows in a narrow pane; reserve both so their
-   appearance does not shove the text. */
+/* Ten 44px tools wrap onto two rows in a narrow pane. */
 @container (max-width: 34rem) { .tools__slot { min-height: calc(2 * var(--control-h) + .55rem); } }
 .tools {
   display: flex; flex-wrap: wrap; align-items: center; gap: .2rem;

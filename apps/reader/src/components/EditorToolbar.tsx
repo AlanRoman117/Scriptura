@@ -12,22 +12,22 @@ interface EditorToolbarProps {
 /**
  * Formatting for people who do not write Markdown.
  *
- * The spec asks for a surface that is collapsed by default with the tools
- * appearing when they are wanted, so this rides in and out with focus rather
- * than sitting permanently above the writing. Every button *toggles*: a
- * toolbar that can only add syntax strands the reader it exists for, who has
- * no idea how to take it back out.
+ * Always shown above a note being written. It used to ride in and out with
+ * focus, which hid it from anyone who had not yet clicked into the note and
+ * made it appear and vanish as focus moved; tools that are reliably there are
+ * tools people find and trust. Every button *toggles*: a toolbar that can only
+ * add syntax strands the reader it exists for, who has no idea how to take it
+ * back out.
  *
  * It is what `role="toolbar"` promises (4.1.2): one Tab stop — Shift+Tab from
  * the note lands on it — with the arrow keys, Home and End between tools. It
  * used to be eleven Tab stops that vanished before Tab could reach them.
  *
  * `mousedown` is prevented once, on the bar. For a pointer, pressing a tool
- * must not move focus out of the note: that would hide the selection being
- * formatted, and in Safari — which does not focus a button on click — it would
- * blur the note and withdraw the tools before the click arrived. The keyboard
- * path does not go through mousedown at all: a tool takes focus, the note keeps
- * its selection range while blurred, and the edit puts focus back in the note.
+ * must not move focus out of the note, which would hide the selection being
+ * formatted and leave the caret behind. The keyboard path does not go through
+ * mousedown at all: a tool takes focus, the note keeps its selection range
+ * while blurred, and the edit puts focus back in the note.
  */
 export function EditorToolbar({ onHeading, onWrap, onLineStyle, onLink }: EditorToolbarProps) {
   const bar = useRef<HTMLDivElement>(null);
