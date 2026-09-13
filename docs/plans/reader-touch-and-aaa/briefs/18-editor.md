@@ -5,7 +5,7 @@
 | **ID** | `18-editor` |
 | **Size** | S |
 | **Depends on** | `03-focus` (roving), `02-tokens` |
-| **Status** | open |
+| **Status** | done (1011386) |
 | **Criteria** | 2.1.1 Keyboard, 4.1.2 (`role=toolbar` behaves like one), 2.5.5, 2.4.7 (visible focus on the writing surface) |
 
 ## Outcome

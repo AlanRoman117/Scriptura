@@ -5,7 +5,7 @@
 | **ID** | `12-verse-actions` |
 | **Size** | M |
 | **Depends on** | `03-focus` (dismiss stack, roving, return focus), `02-tokens` (`--control-h`, swatch ring) |
-| **Status** | open |
+| **Status** | done (8ad97e8) |
 | **Criteria** | 2.5.5 Target Size (Enhanced), 2.4.3 Focus Order, 4.1.2, 1.4.1 (names carry the collection), 2.5.8 |
 
 ## Outcome

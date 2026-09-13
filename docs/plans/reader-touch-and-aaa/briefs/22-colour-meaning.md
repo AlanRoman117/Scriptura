@@ -5,7 +5,7 @@
 | **ID** | `22-colour-meaning` |
 | **Size** | S |
 | **Depends on** | `02-tokens`, `01-prefs` (`data-markers`), `12-verse-actions` (names) |
-| **Status** | open |
+| **Status** | done (8ad97e8) |
 | **Criteria** | 1.4.1 Use of Color, 1.4.11 Non-text Contrast, 1.4.6 |
 
 ## Outcome

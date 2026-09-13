@@ -5,7 +5,7 @@
 | **ID** | `13-search` |
 | **Size** | M |
 | **Depends on** | `03-focus` (dismiss stack), `04-viewport` (`--vvh`), `02-tokens` |
-| **Status** | open |
+| **Status** | done (284b7cd) |
 | **Criteria** | 2.1.1 Keyboard, 2.4.3 Focus Order, 4.1.2 (valid ARIA), 2.5.5; touch usability |
 
 ## Outcome
