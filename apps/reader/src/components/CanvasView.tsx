@@ -3,6 +3,7 @@ import type { Bible } from '@scriptura/core/types';
 import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
 import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
+import { clampZoom, zoomAround, type Point, type View } from '../lib/geometry';
 import { useDismissable } from '../lib/focus';
 import { ConfirmButton } from './ConfirmButton';
 
@@ -50,8 +51,12 @@ export function CanvasView({
   onHelp,
 }: CanvasViewProps) {
   const board = boards.find((b) => b.id === activeId) ?? null;
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  // Zoom and pan are one state: every zoom moves the pan too (to keep what is
+  // under the pointer, the fingers or the centre where it is), and two
+  // setStates nested inside each other were how that used to be done.
+  const [view, setView] = useState<View>({ zoom: 1, pan: { x: 0, y: 0 } });
+  const { zoom, pan } = view;
+  const setPan = (next: Point) => setView((v) => ({ ...v, pan: next }));
   const [connecting, setConnecting] = useState<string | null>(null);
   const frame = useRef<HTMLDivElement>(null);
   const drag = useRef<{ id: string; dx: number; dy: number } | null>(null);
@@ -79,22 +84,13 @@ export function CanvasView({
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
         const box = node.getBoundingClientRect();
-        const px = e.clientX - box.left;
-        const py = e.clientY - box.top;
-        setZoom((current) => {
-          const next = Math.min(2, Math.max(0.3, current * (e.deltaY < 0 ? 1.12 : 1 / 1.12)));
-          // Anchored on the pointer: zooming towards the middle of the screen
-          // loses whatever you were looking at, which is the whole reason to
-          // zoom in the first place.
-          setPan((p) => ({
-            x: px - ((px - p.x) / current) * next,
-            y: py - ((py - p.y) / current) * next,
-          }));
-          return next;
-        });
+        // Anchored on the pointer (lib/geometry.ts): zooming towards the
+        // middle of the screen loses whatever you were looking at.
+        const anchor = { x: e.clientX - box.left, y: e.clientY - box.top };
+        setView((v) => zoomAround(v, v.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), anchor));
         return;
       }
-      setPan((p) => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
+      setView((v) => ({ ...v, pan: { x: v.pan.x - e.deltaX, y: v.pan.y - e.deltaY } }));
     };
 
     node.addEventListener('wheel', onWheel, { passive: false });
@@ -122,6 +118,13 @@ export function CanvasView({
   // card inside the map.
 
   const frameBox = () => frame.current?.getBoundingClientRect();
+
+  /** Zoom by a step about the middle of the frame — what the buttons and keys do. */
+  const zoomBy = (step: number) => {
+    const box = frameBox();
+    const centre = box ? { x: box.width / 2, y: box.height / 2 } : { x: 0, y: 0 };
+    setView((v) => zoomAround(v, clampZoom(Math.round((v.zoom + step) * 100) / 100), centre));
+  };
 
   const panDrag = usePointerDrag<HTMLDivElement>({
     onStart: (e) => {
@@ -332,7 +335,7 @@ export function CanvasView({
 
         <span className="canvas__spacer" />
         <div className="canvas__zoom" role="group" aria-label="Zoom">
-          <button type="button" data-testid="zoom-out" aria-label="Zoom out" onClick={() => setZoom((z) => Math.max(0.4, z - 0.2))}>
+          <button type="button" data-testid="zoom-out" aria-label="Zoom out" onClick={() => zoomBy(-0.2)}>
             −
           </button>
           <button
@@ -340,19 +343,18 @@ export function CanvasView({
             data-testid="zoom-reset"
             aria-label={`Zoom ${Math.round(zoom * 100)}%. Reset to full size, showing your cards`}
             onClick={() => {
-              setZoom(1);
               // Panned to the content, not to the origin: a board whose cards
               // all sit at x=2000 would otherwise "reset" to empty space.
               const nodes = board?.nodes ?? [];
-              if (nodes.length === 0) return setPan({ x: 0, y: 0 });
+              if (nodes.length === 0) return setView({ zoom: 1, pan: { x: 0, y: 0 } });
               const left = Math.min(...nodes.map((n) => n.x));
               const top = Math.min(...nodes.map((n) => n.y));
-              setPan({ x: 40 - left, y: 40 - top });
+              setView({ zoom: 1, pan: { x: 40 - left, y: 40 - top } });
             }}
           >
             {Math.round(zoom * 100)}%
           </button>
-          <button type="button" data-testid="zoom-in" aria-label="Zoom in" onClick={() => setZoom((z) => Math.min(2, z + 0.2))}>
+          <button type="button" data-testid="zoom-in" aria-label="Zoom in" onClick={() => zoomBy(0.2)}>
             +
           </button>
         </div>
