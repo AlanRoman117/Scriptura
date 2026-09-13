@@ -5,7 +5,7 @@
 | **ID** | `11-sheet` |
 | **Size** | L |
 | **Depends on** | `04-viewport` (`--vvh`, `usePointerDrag`), `02-tokens` (`--edge` for the handle) |
-| **Status** | open |
+| **Status** | done (3234e70) |
 | **Criteria** | 2.4.11/2.4.12 Focus Not Obscured, 2.5.7 (button alternative exists), 2.5.5; touch usability |
 
 ## Outcome

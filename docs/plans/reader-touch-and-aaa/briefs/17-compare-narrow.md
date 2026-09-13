@@ -5,7 +5,7 @@
 | **ID** | `17-compare-narrow` |
 | **Size** | S |
 | **Depends on** | `02-tokens` |
-| **Status** | open |
+| **Status** | done (3ff4cb5) |
 | **Criteria** | 1.4.10 Reflow, 1.3.1 (structure preserved), 2.5.5 (quote buttons), 3.1.2 (`lang` per translation) |
 
 ## Outcome

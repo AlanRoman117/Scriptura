@@ -71,13 +71,13 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | F4 | Viewport, safe area and pointer helper | `briefs/04-viewport.md` | done (ea60bca) |
 | F5 | Live-region announcer | `briefs/05-announcer.md` | done (a0dde32) |
 | F6 | Test infrastructure (axe, touch project, helpers) | `briefs/06-test-infra.md` | done (f4ef575); `targets`/`keyboard` scaffolds land with briefs 16 and 02 |
-| T1 | Draggable, keyboard-aware notes sheet | `briefs/11-sheet.md` | open |
+| T1 | Draggable, keyboard-aware notes sheet | `briefs/11-sheet.md` | done (3234e70) |
 | T2 | Verse actions at 44 px, docked on narrow | `briefs/12-verse-actions.md` | done (8ad97e8) |
 | T3 | Search as a form; results reachable under a keyboard | `briefs/13-search.md` | done (284b7cd) |
 | T4 | Canvas: touch, pinch, keyboard, connections list, undo | `briefs/14-canvas.md` | open |
 | T5 | Divider hit area and single-pointer alternative | `briefs/15-divider.md` | done (dbc11e0) |
 | T6 | 44 px controls everywhere; hover reveals; preview edit buttons | `briefs/16-chrome.md` | done (dbc11e0); the canvas, verse-action and comparison states join the targets gate with T4, T2, T7 |
-| T7 | Stacked comparison on narrow panes | `briefs/17-compare-narrow.md` | open |
+| T7 | Stacked comparison on narrow panes | `briefs/17-compare-narrow.md` | done (3ff4cb5) |
 | T8 | Editor toolbar reachable by keyboard and touch | `briefs/18-editor.md` | done (1011386) |
 | W1 | Landmarks, headings, names, `lang`, page title | `briefs/21-semantics.md` | done (a50eb26) |
 | W2 | Highlight markers and non-colour meaning | `briefs/22-colour-meaning.md` | done (8ad97e8); a card's colour named in its text lands with T4 |
