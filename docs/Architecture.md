@@ -375,7 +375,7 @@ The reader is the local-first reading and note-taking app built on these package
 
 | Project | Device | Gates |
 |---|---|---|
-| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, with a self-check that the two AAA rules really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
+| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
 | `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in eleven phone states; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
 | `reader-dev` | Desktop Chrome, dev server | The app boots clean when modules are served unbundled |
 

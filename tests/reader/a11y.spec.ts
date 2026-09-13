@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { axeFor, describeViolations } from '../helpers/axe';
+import { PAGE_LEVEL_RULES, axeFor, describeViolations } from '../helpers/axe';
 import type { Page } from '@playwright/test';
 
 /**
@@ -35,6 +35,10 @@ test.describe('the AAA rules are actually in the run', () => {
     );
     expect(ran.has('color-contrast-enhanced'), 'color-contrast-enhanced must run').toBe(true);
     expect(ran.has('identical-links-same-purpose'), 'identical-links-same-purpose must run').toBe(true);
+    // Page-level rules are the other way a rule can quietly not run: a context
+    // narrower than the whole document files them under inapplicable.
+    const applied = new Set([...results.passes, ...results.violations, ...results.incomplete].map((r) => r.id));
+    for (const rule of PAGE_LEVEL_RULES) expect(applied.has(rule), `${rule} must be evaluated`).toBe(true);
     // And the plumbing produces a report we can read.
     expect(Array.isArray(results.violations)).toBe(true);
     if (results.violations.length > 0) {

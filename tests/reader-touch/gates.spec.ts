@@ -42,6 +42,14 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('note-new').tap();
     await page.getByTestId('notes-surface').tap();
     await expect(page.getByTestId('editor-tools')).toBeVisible();
+    // Writing takes the sheet to full, and the Bible under it goes inert — so
+    // its main landmark and its h1 are out of reach, as behind any modal. axe
+    // recognises a full-screen overlay as one, but only once it has finished
+    // growing: measured mid-transition, it is a half sheet over a page with
+    // no main and no h1.
+    const sheet = page.getByTestId('pane-notes');
+    await expect(sheet).toHaveAttribute('data-sheet', 'full');
+    await expect.poll(() => sheet.evaluate((el) => el.getAnimations().length)).toBe(0);
   },
   marks: async (page) => {
     await page.getByTestId('marks-open').tap();
