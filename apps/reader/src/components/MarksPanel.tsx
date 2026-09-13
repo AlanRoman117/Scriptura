@@ -4,6 +4,7 @@ import { ConfirmButton } from './ConfirmButton';
 import type { Bible } from '@scriptura/core/types';
 import {
   HIGHLIGHT_COLORS,
+  HIGHLIGHT_GLYPHS,
   colorLabel,
   type ColorLabels,
   type Highlight,
@@ -117,7 +118,9 @@ export function MarksPanel({
                 control, and this is the heading a screen reader navigates by. */}
             <h2 className="visually-hidden">{colorLabel(color, labels)}</h2>
             <header className="marks__group-bar">
-              <span className="swatch swatch--static" data-color={color} aria-hidden="true" />
+              <span className="swatch__disc swatch__disc--static" data-color={color} aria-hidden="true">
+                <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
+              </span>
               <input
                 className="marks__label"
                 data-testid={`marks-label-${color}`}

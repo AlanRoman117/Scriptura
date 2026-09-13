@@ -133,6 +133,32 @@ test.describe('closing gives focus back', () => {
     await expect.poll(() => activeTestId(page)).toBe('verse-2');
   });
 
+  test('the verse actions are one Tab stop, walked with the arrow keys', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').focus();
+    await page.keyboard.press('Enter');
+    // Opened from the number, so focus moves in.
+    await expect(page.getByTestId('swatch-amber')).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('swatch-rose')).toBeFocused();
+    await page.keyboard.press('End');
+    await expect(page.getByTestId('verse-actions-close')).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(page.getByTestId('swatch-amber')).toBeFocused();
+
+    // One stop: Shift+Tab leaves the row for the verse number before it.
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByTestId('verse-1')).toBeFocused();
+
+    // Close returns focus to the number too.
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('swatch-amber')).toBeFocused();
+    await page.keyboard.press('End');
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.verse[data-verse="1"]')).not.toHaveAttribute('data-open', /./);
+    await expect.poll(() => activeTestId(page)).toBe('verse-1');
+  });
+
   test('a press outside the verse closes its actions; a press on another verse moves them', async ({ page }) => {
     await open(page);
     await page.getByTestId('verse-2').click();

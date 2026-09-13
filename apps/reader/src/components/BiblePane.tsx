@@ -4,13 +4,14 @@ import { requiresAttribution } from '../lib/translation';
 import { prefersReducedMotion } from '../lib/prefs';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import {
-  HIGHLIGHT_COLORS,
+  HIGHLIGHT_GLYPHS,
   colorLabel,
   highlightId,
   type ColorLabels,
   type Highlight,
   type HighlightColor,
 } from '../lib/notes';
+import { VerseActions } from './VerseActions';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -67,6 +68,8 @@ export function BiblePane({
   onToggleHelp,
 }: BiblePaneProps) {
   const [openVerse, setOpenVerse] = useState<number | null>(null);
+  /** Whether the actions were opened from the verse number, which moves focus into them. */
+  const [fromNumber, setFromNumber] = useState(false);
   const title = useRef<HTMLHeadingElement>(null);
   const reader = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
@@ -112,10 +115,11 @@ export function BiblePane({
   useEffect(() => setOpenVerse(null), [book.slug, chapter]);
 
   // Escape closes them — only them, if something opened later is on top — and
-  // so does a press anywhere outside the verse. Focus goes back to the number
-  // that opened them (2.4.3).
+  // so does a press anywhere outside the verse. Focus goes back to where it
+  // was, or, when that was a control inside the row that has just gone, to the
+  // verse number the row belonged to (2.4.3).
   useDismissable(openVerse !== null, () => setOpenVerse(null), openVerseEl, { ignore: '.verse' });
-  useReturnFocus(openVerse !== null);
+  useReturnFocus(openVerse !== null, openVerse !== null ? `[data-testid="verse-${openVerse}"]` : undefined);
 
   useEffect(() => {
     if (focusVerse == null) return;
@@ -284,9 +288,18 @@ export function BiblePane({
                     // …but a drag that selected text is not a click on the
                     // verse. Reading and copying must not trip the swatches.
                     if (!window.getSelection()?.isCollapsed) return;
+                    setFromNumber(false);
                     setOpenVerse(open ? null : v.number);
                   }}
                 >
+                  {/* A shape as well as a colour, when the reader asks for it
+                      (1.4.1). Hidden from assistive technology: the number's
+                      name already says the collection in words. */}
+                  {mark && (
+                    <span className="verse__marker" data-color={mark.color} aria-hidden="true">
+                      {HIGHLIGHT_GLYPHS[mark.color]}
+                    </span>
+                  )}
                   {/* The verse number is the keyboard path to the same action.
                       Tabbing 176 verses of Psalm 119 is no worse than before —
                       but it is now a control that was already on the page,
@@ -305,6 +318,7 @@ export function BiblePane({
                     aria-expanded={open}
                     onClick={(e) => {
                       e.stopPropagation();
+                      setFromNumber(true);
                       setOpenVerse(open ? null : v.number);
                     }}
                   >
@@ -313,67 +327,34 @@ export function BiblePane({
                   <span className="verse__text">{v.text}</span>
 
                   {open && (
-                    <span
-                      className="swatches"
-                      role="group"
-                      aria-label={`Actions for verse ${v.number}`}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {HIGHLIGHT_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className="swatch"
-                          data-color={color}
-                          data-testid={`swatch-${color}`}
-                          aria-label={`Mark as ${colorLabel(color, labels)} (${color})`}
-                          aria-pressed={mark?.color === color}
-                          onClick={() => {
-                            onHighlight(v.number, color);
-                            setOpenVerse(null);
-                          }}
-                        />
-                      ))}
-                      <span className="swatches__rule" aria-hidden="true" />
-                      <button
-                        type="button"
-                        className="swatches__action"
-                        data-testid={`quote-${v.number}`}
-                        title="Add to note"
-                        onClick={() => {
-                          onQuote(v.number);
-                          setOpenVerse(null);
-                        }}
-                      >
-                        Quote
-                      </button>
-                      <button
-                        type="button"
-                        className="swatches__action"
-                        data-testid={`link-${v.number}`}
-                        title="Insert a link into the note"
-                        onClick={() => {
-                          onLink(v.number);
-                          setOpenVerse(null);
-                        }}
-                      >
-                        Link
-                      </button>
-                      {onSendToCanvas && (
-                        <button
-                          type="button"
-                          className="swatches__action"
-                          data-testid={`canvas-${v.number}`}
-                          title="Put this verse on the board"
-                          onClick={() => {
-                            onSendToCanvas(v.number);
-                            setOpenVerse(null);
-                          }}
-                        >
-                          Canvas
-                        </button>
-                      )}
-                    </span>
+                    <VerseActions
+                      reference={`${book.name} ${chapter}:${v.number}`}
+                      verse={v.number}
+                      current={mark?.color}
+                      labels={labels}
+                      focusOnOpen={fromNumber}
+                      onHighlight={(color) => {
+                        onHighlight(v.number, color);
+                        setOpenVerse(null);
+                      }}
+                      onQuote={() => {
+                        onQuote(v.number);
+                        setOpenVerse(null);
+                      }}
+                      onLink={() => {
+                        onLink(v.number);
+                        setOpenVerse(null);
+                      }}
+                      onSendToCanvas={
+                        onSendToCanvas
+                          ? () => {
+                              onSendToCanvas(v.number);
+                              setOpenVerse(null);
+                            }
+                          : undefined
+                      }
+                      onClose={() => setOpenVerse(null)}
+                    />
                   )}
                 </p>
               );

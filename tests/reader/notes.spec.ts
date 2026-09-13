@@ -146,6 +146,49 @@ test.describe('marking a verse', () => {
   });
 });
 
+test.describe('a collection is never told by colour alone (1.4.1)', () => {
+  test('a swatch is named for the collection it adds to', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-amber')).toHaveAccessibleName('Mark as Amber (amber)');
+    await page.getByTestId('swatch-amber').click();
+
+    await page.getByTestId('marks-open').click();
+    await page.getByTestId('marks-label-amber').fill('Covenant promises');
+    await page.getByTestId('marks-close').click();
+
+    // The verse number says which collection the verse is in, in words.
+    await expect(page.getByTestId('verse-1')).toHaveAccessibleName(/in Covenant promises \(amber\)/);
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-amber')).toHaveAccessibleName('Mark as Covenant promises (amber)');
+    await expect(page.getByTestId('swatch-amber')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a marked verse has a rule, and a shape when the reader asks for one', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('swatch-sky').click();
+    const verse = page.locator('.verse[data-verse="1"]');
+    await expect(verse).toHaveAttribute('data-highlight', 'sky');
+
+    // The rule is the collection's strong hue, not transparent.
+    const rule = await verse.evaluate((el) => getComputedStyle(el).borderLeftColor);
+    expect(rule).not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
+
+    const marker = verse.locator('.verse__marker');
+    await expect(marker).toBeHidden();
+    await page.getByTestId('settings-open').click();
+    await page.getByTestId('pref-markers').check();
+    await page.getByTestId('settings-close').click();
+    await expect(marker).toBeVisible();
+    await expect(marker).toHaveText('■');
+
+    // And the swatches carry the same shapes.
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('swatch-sky').locator('.swatch__glyph')).toBeVisible();
+  });
+});
+
 test.describe('highlights', () => {
   test('a highlight is coloured, recoloured, cleared, and survives a reload', async ({ page }) => {
     await open(page);

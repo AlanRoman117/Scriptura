@@ -538,12 +538,25 @@ summary:focus-visible,
 
 /* ── Highlights ───────────────────────────────────────────────────────────── */
 
-.verse { position: relative; border-radius: 4px; padding: .1rem .2rem; margin: 0 -.2rem var(--verse-gap); }
-.verse[data-highlight='amber']  { background: var(--hl-amber); }
-.verse[data-highlight='rose']   { background: var(--hl-rose); }
-.verse[data-highlight='sky']    { background: var(--hl-sky); }
-.verse[data-highlight='mint']   { background: var(--hl-mint); }
-.verse[data-highlight='violet'] { background: var(--hl-violet); }
+/* Every verse carries a 3px left border, transparent until it is marked, so
+   marking one never moves its text. A marked verse's rule is the collection's
+   strong hue — 3:1 against the paper, where the tint behind the text is too
+   pale to be a boundary on its own (1.4.11). */
+.verse {
+  position: relative; border-radius: 4px; margin: 0 -.2rem var(--verse-gap);
+  padding: .1rem .2rem .1rem calc(.2rem - 3px); border-left: 3px solid transparent;
+}
+.verse[data-highlight='amber']  { background: var(--hl-amber);  border-left-color: var(--hl-amber-strong); }
+.verse[data-highlight='rose']   { background: var(--hl-rose);   border-left-color: var(--hl-rose-strong); }
+.verse[data-highlight='sky']    { background: var(--hl-sky);    border-left-color: var(--hl-sky-strong); }
+.verse[data-highlight='mint']   { background: var(--hl-mint);   border-left-color: var(--hl-mint-strong); }
+.verse[data-highlight='violet'] { background: var(--hl-violet); border-left-color: var(--hl-violet-strong); }
+/* The collection's shape, when Settings asks for one (1.4.1). */
+.verse__marker {
+  display: none; font-family: var(--sans); font-size: .7em; line-height: 1; color: var(--ink);
+  margin-right: .3em; position: relative; top: -.3em;
+}
+:root[data-markers='true'] .verse__marker { display: inline; }
 /* The accent is 7:1 on paper but not over a tint, so a highlighted verse's
    number reads in ink. Measured: #5f4a0e over the amber tint is 6.9:1. */
 .verse[data-highlight] .verse__num { color: var(--ink); }
@@ -584,27 +597,56 @@ summary:focus-visible,
 
 /* Centred under the verse it belongs to: short travel from anywhere in it. */
 .swatches {
-  display: flex; justify-content: center; align-items: center; gap: .3rem;
-  width: fit-content; margin: .5rem auto 0; padding: .25rem .45rem;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .15rem .3rem;
+  width: fit-content; max-width: 100%; margin: .5rem auto 0; padding: .25rem .45rem;
   cursor: default;
-  background: var(--paper-raised); border: 1px solid var(--rule);
-  border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
+  background: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 24px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
 }
-.swatch { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 2px solid var(--edge); cursor: pointer; padding: 0; }
-.swatch--static { display: inline-block; flex: 0 0 auto; cursor: default; }
-.swatch[data-color='amber']  { background: var(--sw-amber); }
-.swatch[data-color='rose']   { background: var(--sw-rose); }
-.swatch[data-color='sky']    { background: var(--sw-sky); }
-.swatch[data-color='mint']   { background: var(--sw-mint); }
-.swatch[data-color='violet'] { background: var(--sw-violet); }
-.swatch[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
-.swatches__rule { width: 1px; align-self: stretch; background: var(--rule); margin: 0 .15rem; }
+.swatches__set { display: inline-flex; align-items: center; gap: .1rem; }
+/* The button is the 44px target; the coloured disc inside it is what shows. */
+.swatch {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--control-h); min-height: var(--control-h); padding: 0;
+  background: transparent; border: none; border-radius: 50%; cursor: pointer;
+}
+.swatch__disc {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--edge);
+  /* The glyph sits on the hue, which is the same in every theme. */
+  font-family: var(--sans); font-size: .8rem; line-height: 1; color: #1f1d1a;
+}
+.swatch__disc--static { width: 1.2rem; height: 1.2rem; font-size: .65rem; }
+.swatch__disc[data-color='amber']  { background: var(--sw-amber); }
+.swatch__disc[data-color='rose']   { background: var(--sw-rose); }
+.swatch__disc[data-color='sky']    { background: var(--sw-sky); }
+.swatch__disc[data-color='mint']   { background: var(--sw-mint); }
+.swatch__disc[data-color='violet'] { background: var(--sw-violet); }
+.swatch__glyph { display: none; }
+:root[data-markers='true'] .swatch__glyph { display: inline; }
+.swatch[aria-pressed='true'] .swatch__disc { outline: 2px solid var(--ink); outline-offset: 2px; }
+.swatches__rule { width: 1px; align-self: stretch; background: var(--rule); margin: .3rem .15rem; }
 .swatches__action {
-  font: inherit; font-size: .72rem; color: var(--ink-soft);
-  background: transparent; border: none; border-radius: 5px;
-  padding: .1rem .35rem; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--control-h); min-width: var(--control-h);
+  font: inherit; font-size: .85rem; color: var(--ink-soft);
+  background: transparent; border: none; border-radius: 8px;
+  padding: 0 .55rem; cursor: pointer;
 }
 .swatches__action:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 50%, transparent); }
+
+/* On a phone the row docks above the notes sheet: in reach of a thumb, and it
+   no longer pushes the rest of the chapter down the screen when it opens. It
+   stays inside the verse in the DOM, so focus order and outside presses work
+   the same as inline. The pane keeps the verse above it by the height the row
+   publishes as --actions-h. */
+.layout--narrow .swatches {
+  position: fixed; z-index: 4; left: .5rem; right: .5rem; width: auto; margin: 0;
+  bottom: calc(var(--sheet-h, 3.25rem) + .5rem + env(safe-area-inset-bottom));
+  border-radius: 14px; padding: .3rem;
+}
+.layout--narrow .pane--bible { scroll-padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
+.layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(3.5rem + var(--actions-h, 0px) + 1rem); }
 
 /* A jumped-to verse announces itself, then settles. Under reduced motion the
    same class draws a still outline for the same 1.6s instead — the verse is
@@ -1337,8 +1379,8 @@ summary:focus-visible,
    and every control keeps a border; swatches opt out so a colour choice is
    still a colour. */
 @media (forced-colors: active) {
-  button, select, input, textarea, .reader__chip, .swatch, .card, .sheet { border: 1px solid CanvasText; }
-  .verse[data-highlight] { border-left: 3px solid Highlight; padding-left: .45rem; }
-  .swatch, .card__dot { forced-color-adjust: none; }
+  button:not(.swatch), select, input, textarea, .reader__chip, .card, .sheet { border: 1px solid CanvasText; }
+  .verse[data-highlight] { border-left-color: Highlight; }
+  .swatch__disc, .card__dot { forced-color-adjust: none; }
   :focus-visible { outline-color: Highlight; }
 }

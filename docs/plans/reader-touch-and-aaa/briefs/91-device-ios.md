@@ -27,6 +27,7 @@ Open the LAN URL on the phone (same Wi-Fi). For standalone-mode checks, Add to H
 - [ ] In standalone mode the grip is fully above the home indicator; the reading bar is below the status area; in landscape nothing hides under the notch.
 - [ ] Search: type `living water`, press the keyboard's Go/Search. The full results view opens; results are tappable.
 - [ ] Tap a verse: the action bar appears above the sheet; every button is comfortably tappable; a tap outside closes it. Long-press a word to select text; the action bar does not open.
+- [ ] The docked action bar is `position: fixed` inside `.reader`, a size container (`container-type: inline-size`). Chromium 153 keeps it viewport-relative; confirm Safari does too (an engine that applies layout containment to size containers would pin the bar inside the reading column instead).
 - [ ] Canvas: one finger pans; two fingers zoom about the fingers; drag a card by its header; the resize corner works; a card's Move/Size popover moves it without dragging.
 - [ ] Rotate the phone with the sheet open; nothing is clipped.
 

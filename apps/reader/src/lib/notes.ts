@@ -37,6 +37,24 @@ export const HIGHLIGHT_COLORS = ['amber', 'rose', 'sky', 'mint', 'violet'] as co
 export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number];
 
 /**
+ * A shape per collection, for readers who cannot tell the colours apart.
+ *
+ * Amber, sky and mint are under 3:1 against white as hues, and a reader with
+ * a colour-vision deficiency may not separate rose from amber at all, so a
+ * collection is never told by colour alone (1.4.1): Settings → "Show a symbol
+ * on every highlight" draws these beside marked verses, on the swatches and in
+ * the Marks panel. Distinct shapes rather than letters, so they read the same
+ * in every language the text is in.
+ */
+export const HIGHLIGHT_GLYPHS: Record<HighlightColor, string> = {
+  amber: '●',
+  rose: '▲',
+  sky: '■',
+  mint: '◆',
+  violet: '★',
+};
+
+/**
  * A highlight, anchored to the passage — not to the translation it was made in.
  *
  * `book_slug` is language-independent, so John 3:16 marked while reading

@@ -91,6 +91,10 @@ test.describe('status messages are announced (4.1.3)', () => {
  */
 const STATES: Record<string, (page: Page) => Promise<void>> = {
   reading: async () => {},
+  'verse actions': async (page) => {
+    await page.getByTestId('verse-2').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+  },
   marks: async (page) => {
     await page.getByTestId('marks-open').click();
     await expect(page.getByTestId('marks-panel')).toBeVisible();

@@ -66,6 +66,10 @@ function tooSmall(page: Page, allow: string[]): Promise<Small[]> {
 
 const STATES: Record<string, (page: Page) => Promise<void>> = {
   reading: async () => {},
+  'verse actions': async (page) => {
+    await page.getByTestId('verse-2').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+  },
   'reading with a note open': async (page) => {
     await page.getByTestId('note-new').click();
     await expect(page.getByTestId('notes-surface')).toBeVisible();
