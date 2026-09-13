@@ -50,17 +50,17 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.2.5 | Audio Description (Prerecorded) | ➖ | — | |
 | 1.3.4 | Orientation | ✅ F4 | manifest | No orientation lock; F4 states `orientation: 'any'` explicitly. |
 | 1.3.5 | Identify Input Purpose | ➖ | — | No field collects information about the user. |
-| 1.4.3 | Contrast (Minimum) | ❌ F2 | `tests/unit/contrast.test.ts` | Verse numbers over highlight tints 3.56–4.0:1; `#b3261e` on dark 2.77:1. |
+| 1.4.3 | Contrast (Minimum) | ✅ | `tests/unit/contrast.test.ts` (139 pairs, five themes); `chrome.spec.ts` dropdowns at 7:1 | Was: verse numbers over highlight tints 3.56–4.0:1; `#b3261e` on dark 2.77:1. Fixed by the token rework: highlighted verse numbers read in `--ink`; `--danger` is a token per theme. |
 | 1.4.4 | Resize Text | ✅ | manual 200 % zoom | Browser zoom to 200 % reflows into narrow mode; no horizontal scroll. Board-thumbnail labels are SVG text and scale with zoom. |
 | 1.4.5 | Images of Text | ✅ | — | No raster text; SVG labels are real text. |
 | 1.4.10 | Reflow | 🔧 F6 | `tests/reader-touch/shell.spec.ts` 320 px | Comparison table scrolls inside its own box (permitted); canvas is two-dimensional (exempt). Verify at 320 px. |
-| 1.4.11 | Non-text Contrast | ❌ F2, W2 | `contrast.test.ts` (`--edge`, focus ring, swatch ring) | Control borders at 1.24:1; sheet handle 1.30:1; swatch hues below 3:1 against white. |
+| 1.4.11 | Non-text Contrast | 🔧 W2, T5 | `contrast.test.ts` (`--edge` ≥ 3:1, focus ≥ 3:1, `--hl-*-strong` ≥ 3:1 in every theme) | Done: every control border, the sheet handle, the swatch ring and the card colour borders use `--edge` or a strong hue. Remaining: the divider grip (T5) and the highlight left rule (W2). |
 | 1.4.12 | Text Spacing | 🔧 F6 | `tests/reader-touch/shell.spec.ts` injected spacing | `-webkit-line-clamp` and `nowrap` surfaces must not lose content at 1.5× line height and 2× paragraph spacing. |
 | 1.4.13 | Content on Hover or Focus | ❌ T6 | `a11y.spec.ts` | `.compare__quote` is revealed on hover only. The editor toolbar appears on focus into a *reserved* slot, so it neither obscures nor replaces content (exempt). Native `title` tooltips are user-agent controlled (exempt) but are being replaced with visible or accessible names anyway. |
 | 2.4.5 | Multiple Ways | ✅ | — | Single-page application: passage navigation, search and the marks list all reach any verse. |
 | 2.4.6 | Headings and Labels | 🔧 W1 | axe `empty-heading`, review | Marks groups and the canvas have no headings. |
-| 2.4.7 | Focus Visible | ❌ F2 | `keyboard.spec.ts` focus-visible sweep | `input` excluded from the ring rule; five `outline: none` declarations. |
-| 2.4.11 | Focus Not Obscured (Minimum) | ❌ W5, T1 | `keyboard.spec.ts` obscured test | Sticky bars and the sheet can cover a focused control. Fix: scroll padding from measured heights; Bible pane `inert` when the sheet is full. |
+| 2.4.7 | Focus Visible | ✅ | `tests/reader/keyboard.spec.ts` (every Tab stop in the reading state, the note title, the writing surface, the Marks labels); `contrast.test.ts` hygiene test forbids `outline: none` | Was: `input` excluded from the ring rule and five `outline: none` declarations. The ring is now declared with real specificity on every focusable element. |
+| 2.4.11 | Focus Not Obscured (Minimum) | 🔧 T1, T6 | `keyboard.spec.ts` obscured test (with T6) | Done: `.pane` has `scroll-padding` from `--bar-h`/`--search-h`/`--sheet-h` and verses carry `scroll-margin`. Remaining: measured bar heights (T6) and the Bible pane `inert` under a full sheet (T1). |
 | 2.5.7 | Dragging Movements | ❌ T4, T5 | `keyboard.spec.ts`, `canvas.spec.ts` | Card move and resize, canvas pan and the divider have no single-pointer alternative. Fix: Move/Size popover with arrow and ± buttons, pan buttons, divider Narrower/Wider. The sheet already has a button. |
 | 2.5.8 | Target Size (Minimum) | ❌ T6 | `tests/reader/targets.spec.ts` | Swatches, colour dots, resize grip, divider, dismiss and compare controls are under 24 px. Superseded by 2.5.5 below. |
 | 3.1.2 | Language of Parts | ❌ W1 | `library.spec.ts` (`lang="es"` after reading rv1909) | No `lang` on any scripture text. Fix: `lang={bible.meta.language}` on every scripture container, per column in comparison. |
@@ -80,7 +80,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.2.8 | Media Alternative (Prerecorded) | ➖ | — | |
 | 1.2.9 | Audio-only (Live) | ➖ | — | |
 | 1.3.6 | Identify Purpose | 🔧 W1 | axe `landmark-*`, `region` | Purpose of regions and controls is exposed through named landmarks and roles; no field collects personal data, so `autocomplete` tokens do not apply. |
-| 1.4.6 | Contrast (Enhanced) | ❌ F2 | `tests/unit/contrast.test.ts`; axe `color-contrast-enhanced` | `--accent` 4.65:1 as text; dark `--ink-soft` 6.59:1 on raised surfaces; `#b3261e` 6.21:1 light. |
+| 1.4.6 | Contrast (Enhanced) | ✅ | `tests/unit/contrast.test.ts` — `--ink`, `--ink-soft`, `--accent`, `--danger` ≥ 7:1 on both papers and `--ink` ≥ 7:1 over every highlight tint, in light, dark, hc-light, hc-dark and sepia; axe `color-contrast-enhanced` as backstop | Was: `--accent` 4.65:1, dark `--ink-soft` 6.59:1, `#b3261e` 6.21:1. New values: light accent `#5f4a0e` (8.07), dark `--ink-soft` `#b3ada5` (7.49), danger `#9a1f18`/`#f2b8b5`. |
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
 | 1.4.8 | Visual Presentation | ❌ F1 (W3) | `tests/reader/settings.spec.ts` | Selectable foreground/background themes, text size to 200 %, line and paragraph spacing presets, measure ≤ 70 ch, never justified. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
@@ -94,8 +94,8 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.4.8 | Location | ❌ W1 | `reading.spec.ts` title test | Page title reflects book, chapter, translation and open panel; the passage `<nav>` is always present. |
 | 2.4.9 | Link Purpose (Link Only) | ❌ W1 | axe `link-name`, `identical-links-same-purpose` | "source" → "KJV source"; wikilink buttons named by their resolved description. |
 | 2.4.10 | Section Headings | ❌ W1 | axe `page-has-heading-one`, `heading-order` | One `h1` per view state; Marks groups get headings; notes pane gets a heading; canvas gets one. |
-| 2.4.12 | Focus Not Obscured (Enhanced) | ❌ W5, T1 | `keyboard.spec.ts` | No part of a focused control may be hidden by sticky bars or the sheet. |
-| 2.4.13 | Focus Appearance | ❌ F2 | `contrast.test.ts` (ring 3:1 vs adjacent); `keyboard.spec.ts` | A 2 px solid ring on every focusable element, ≥ 3:1 against both the control and its surround. |
+| 2.4.12 | Focus Not Obscured (Enhanced) | 🔧 T1, T6 | `keyboard.spec.ts` | Scroll padding in place (see 2.4.11); the sheet's `inert` and the measured bar heights complete it. |
+| 2.4.13 | Focus Appearance | ✅ | `contrast.test.ts` (`--focus` ≥ 3:1 on both papers in every theme); `keyboard.spec.ts` (2 px solid ring on every stop) | The ring is `2px solid var(--focus)`, offset 2 px outside controls and 2 px inside flush text fields, so the whole perimeter is at least 2 px and the change of contrast clears 3:1. |
 | 2.5.5 | Target Size (Enhanced) | ❌ T6, T2, T4, T5 | `tests/reader/targets.spec.ts`, `tests/reader-touch/*` | 44 × 44 CSS px for every pointer target. Exceptions claimed: the verse number is **inline** in the text and the whole verse is an **equivalent** target; text links inside prose are inline. |
 | 2.5.6 | Concurrent Input Mechanisms | ✅ | — | Nothing restricts input modality; touch, mouse and keyboard coexist. |
 | 3.1.3 | Unusual Words | ❌ W7 | help panel glossary | "Whole words only", "Mirror to a folder", "collection", "board", "WebMCP" get definitions. |

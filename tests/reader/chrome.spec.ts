@@ -31,10 +31,12 @@ test.describe('contrast', () => {
           .soft(colors.background, `${id} (${scheme}) must not be transparent`)
           .not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
 
-        // WCAG AA for normal text.
+        // WCAG AAA for normal text (1.4.6). The tokens are measured in
+        // tests/unit/contrast.test.ts; this proves the browser resolved them
+        // onto the control the reader actually sees.
         expect
           .soft(contrastRatio(colors.color, colors.background), `${id} (${scheme}) contrast`)
-          .toBeGreaterThanOrEqual(4.5);
+          .toBeGreaterThanOrEqual(7);
       }
     });
   }
@@ -81,7 +83,7 @@ test.describe('the notes dropdown', () => {
       return { color: s.color, background: s.backgroundColor };
     });
     expect(colors.background).not.toMatch(/rgba\(0,\s*0,\s*0,\s*0\)|transparent/);
-    expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(colors.color, colors.background)).toBeGreaterThanOrEqual(7);
   });
 });
 

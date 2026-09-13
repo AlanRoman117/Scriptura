@@ -6,38 +6,171 @@
  * put binary assets in a repository whose product is text. A serif for the
  * reading column, a UI sans for chrome.
  */
+/*
+ * Colours are tokens, and the tokens are measured.
+ *
+ * `light-dark()` holds the light and dark value of each token in one place;
+ * `color-scheme` decides which is used — `light dark` follows the operating
+ * system, and `[data-theme]` (written by lib/prefs.ts) pins it. The
+ * high-contrast and sepia themes override the whole set. Every value below is
+ * checked by tests/unit/contrast.test.ts against WCAG 2.2 AAA: 7:1 for text,
+ * 3:1 for control boundaries, focus rings and highlight rules. Change a value
+ * and the test tells you what it now fails against; do not round to a nicer
+ * hex without running it.
+ *
+ * `--rule` is decorative (separators, dividers between list items) and is
+ * allowed to be faint. `--edge` is the boundary of a control — input, select,
+ * button, chip, swatch — and must clear 3:1 (1.4.11). They used to be one
+ * token, which is how every control border came to be 1.24:1.
+ *
+ * Highlights: `--hl-*` is the verse tint (opaque, so it can be measured; the
+ * ink reads at 7:1 over it), `--hl-*-strong` is the same hue dark or light
+ * enough for a 3:1 rule or border, and `--sw-*` is the hue itself, used only
+ * for swatch fills that carry their own ring. Amber, sky and mint are below
+ * 3:1 against white as hues, which is why a highlight also has a rule and,
+ * when the reader asks, a glyph — colour is never the only signal.
+ */
+/* @tokens light-dark */
 :root {
-  --ink: #1f1d1a;
-  --ink-soft: #57534e;
-  --paper: #faf9f7;
-  --paper-raised: #ffffff;
-  --rule: #e5e1da;
-  --accent: #8a6d1f;
-  --focus: #3b6ea5;
+  --ink: light-dark(#1f1d1a, #ece8e1);
+  --ink-soft: light-dark(#57534e, #b3ada5);
+  --paper: light-dark(#faf9f7, #171614);
+  --paper-raised: light-dark(#ffffff, #1f1e1b);
+  --rule: light-dark(#e5e1da, #33302b);
+  --edge: light-dark(#8f8a82, #8a857d);
+  --accent: light-dark(#5f4a0e, #d4b355);
+  --danger: light-dark(#9a1f18, #f2b8b5);
+  --focus: light-dark(#3b6ea5, #7aa7d9);
+  --hl-amber: light-dark(#f7e7c1, #58451a);
+  --hl-rose: light-dark(#f3d1d8, #532c34);
+  --hl-sky: light-dark(#cde1f3, #273e54);
+  --hl-mint: light-dark(#c9e8d9, #234736);
+  --hl-violet: light-dark(#e1d8ee, #3f344e);
+  --hl-amber-strong: light-dark(#b4871f, #f0b429);
+  --hl-rose-strong: light-dark(#e0607e, #e0607e);
+  --hl-sky-strong: light-dark(#4792da, #4c9be8);
+  --hl-mint-strong: light-dark(#369f72, #3fb984);
+  --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
+}
+/* @tokens end */
+
+:root {
+  --sw-amber: #f0b429;
+  --sw-rose: #e0607e;
+  --sw-sky: #4c9be8;
+  --sw-mint: #3fb984;
+  --sw-violet: #9b7bd4;
 
   --serif: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 
   --reading-size: 1.125rem;
   --reading-leading: 1.75;
-  --measure: 34rem;
+  /* Space between verses. 1.4.8 wants paragraph spacing of at least 1.5× the
+     line spacing; the relaxed and loose presets in Settings reach it, and the
+     default keeps the compact rhythm the column was designed around. */
+  --verse-gap: .85rem;
+  /* Never more than 70ch: 1.4.8's ceiling is 80 characters, and a serif at
+     this size runs about 1.15 characters per ch. */
+  --measure: 64ch;
   /* Height of the sticky reading bar. The chapter title parks directly beneath
      it, so both are pinned from one constant. */
   --bar-h: 3.1rem;
+  /* Every pointer target is at least this on both axes (2.5.5). There is no
+     compact mode: the criterion has no exception for a fine pointer. */
+  --control-h: 44px;
+  --focus-ring: 2px solid var(--focus);
   color-scheme: light dark;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #ece8e1;
-    --ink-soft: #a8a29a;
-    --paper: #171614;
-    --paper-raised: #1f1e1b;
-    --rule: #33302b;
-    --accent: #d4b355;
-    --focus: #7aa7d9;
-  }
+/* The reader's choice pins the scheme; `light-dark()` follows it. */
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* High contrast, in both polarities. One block, `light-dark()` again, with
+   the polarity chosen by the theme name. */
+/* @tokens hc */
+:root[data-theme='hc-light'],
+:root[data-theme='hc-dark'] {
+  --ink: light-dark(#000000, #ffffff);
+  --ink-soft: light-dark(#333333, #d9d9d9);
+  --paper: light-dark(#ffffff, #000000);
+  --paper-raised: light-dark(#ffffff, #000000);
+  --rule: light-dark(#cfcfcf, #444444);
+  --edge: light-dark(#000000, #ffffff);
+  --accent: light-dark(#4a3a08, #ffd76a);
+  --danger: light-dark(#a00000, #ffb4ab);
+  --focus: light-dark(#0000ee, #8ab4f8);
+  --hl-amber: light-dark(#fbecc7, #48360c);
+  --hl-rose: light-dark(#f7d6dd, #431d26);
+  --hl-sky: light-dark(#d0e5f9, #172f46);
+  --hl-mint: light-dark(#cdeddf, #133828);
+  --hl-violet: light-dark(#e5ddf4, #2f2540);
+  --hl-amber-strong: light-dark(#b6891f, #f0b429);
+  --hl-rose-strong: light-dark(#e0607e, #e0607e);
+  --hl-sky-strong: light-dark(#4a96e1, #4c9be8);
+  --hl-mint-strong: light-dark(#37a374, #3fb984);
+  --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
 }
+/* @tokens end */
+:root[data-theme='hc-light'] { color-scheme: light; }
+:root[data-theme='hc-dark'] { color-scheme: dark; }
+
+/* The same tokens when the operating system asks for more contrast and the
+   reader has not chosen a theme. CSS cannot reference the block above from
+   inside a media query, so it is repeated; contrast.test.ts asserts the two
+   copies are identical. */
+@media (prefers-contrast: more) {
+  /* @tokens hc-auto */
+  :root:not([data-theme]) {
+    --ink: light-dark(#000000, #ffffff);
+    --ink-soft: light-dark(#333333, #d9d9d9);
+    --paper: light-dark(#ffffff, #000000);
+    --paper-raised: light-dark(#ffffff, #000000);
+    --rule: light-dark(#cfcfcf, #444444);
+    --edge: light-dark(#000000, #ffffff);
+    --accent: light-dark(#4a3a08, #ffd76a);
+    --danger: light-dark(#a00000, #ffb4ab);
+    --focus: light-dark(#0000ee, #8ab4f8);
+    --hl-amber: light-dark(#fbecc7, #48360c);
+    --hl-rose: light-dark(#f7d6dd, #431d26);
+    --hl-sky: light-dark(#d0e5f9, #172f46);
+    --hl-mint: light-dark(#cdeddf, #133828);
+    --hl-violet: light-dark(#e5ddf4, #2f2540);
+    --hl-amber-strong: light-dark(#b6891f, #f0b429);
+    --hl-rose-strong: light-dark(#e0607e, #e0607e);
+    --hl-sky-strong: light-dark(#4a96e1, #4c9be8);
+    --hl-mint-strong: light-dark(#37a374, #3fb984);
+    --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
+  }
+  /* @tokens end */
+}
+
+/* Sepia: warm paper, dark ink — the reading mode e-readers settle on. */
+/* @tokens sepia */
+:root[data-theme='sepia'] {
+  color-scheme: light;
+  --ink: #2b2418;
+  --ink-soft: #54482f;
+  --paper: #f4ecd8;
+  --paper-raised: #fbf6ea;
+  --rule: #d8cdb2;
+  --edge: #8a857d;
+  --accent: #5a4410;
+  --danger: #8f1c15;
+  --focus: #2c5a88;
+  --hl-amber: #f3ddab;
+  --hl-rose: #efc8c1;
+  --hl-sky: #c8d7dc;
+  --hl-mint: #c5dfc2;
+  --hl-violet: #ddcfd7;
+  --hl-amber-strong: #a87e1d;
+  --hl-rose-strong: #d75c79;
+  --hl-sky-strong: #4388cc;
+  --hl-mint-strong: #33966b;
+  --hl-violet-strong: #9576cc;
+}
+/* @tokens end */
 
 * { box-sizing: border-box; }
 
@@ -61,10 +194,29 @@ body.dragging { cursor: col-resize; user-select: none; }
   clip-path: inset(50%); white-space: nowrap;
 }
 
-:where(a, button, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--focus);
+/* One ring, on everything that can take focus (2.4.7, 2.4.13). Written with
+   real specificity, not `:where()`: at zero specificity the rule lost to every
+   later declaration that switched the outline off, which is how the main
+   writing surface ended up with no focus indicator at all. Text fields that sit flush draw it inset so it is
+   not clipped by their container. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[contenteditable]:focus-visible {
+  outline: var(--focus-ring);
   outline-offset: 2px;
   border-radius: 3px;
+}
+.notes__title:focus-visible,
+.notes__surface:focus-visible,
+.card__title-input:focus-visible,
+.card__editor:focus-visible,
+.marks__label:focus-visible {
+  outline-offset: -2px;
 }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
@@ -83,6 +235,11 @@ body.dragging { cursor: col-resize; user-select: none; }
   height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Keyboard focus scrolls a control into view; without this it lands under
+     the sticky bar, focused and invisible (2.4.11, 2.4.12). `--search-h` and
+     `--sheet-h` are set by the components that own those surfaces. */
+  scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + .5rem);
+  scroll-padding-bottom: calc(var(--sheet-h, 0px) + .5rem);
 }
 .pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); }
 
@@ -128,7 +285,7 @@ body.dragging { cursor: col-resize; user-select: none; }
      list ended up unreadable — and the options need their own colours because
      they are rendered outside the page's stacking context. */
   background-color: var(--paper-raised);
-  border: 1px solid var(--rule);
+  border: 1px solid var(--edge);
   border-radius: 6px;
   padding: .3rem .5rem;
   max-width: 14rem;
@@ -146,7 +303,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .reader__chip {
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: .35rem;
   font: inherit; font-size: .78rem; color: var(--ink-soft);
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
 }
 .reader__chip:hover { color: var(--ink); border-color: var(--ink-soft); }
@@ -176,6 +333,8 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 
 .chapter { padding: 2rem 1.25rem 3rem; margin-inline: auto; max-width: var(--measure); }
+/* Focus scrolls a verse number clear of the sticky bar, not flush under it. */
+.verse { scroll-margin-block: .5rem; }
 /*
  * Sticky, like a code editor keeps the enclosing function visible.
  *
@@ -198,7 +357,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
 
-.verse { margin: 0 0 .85rem; }
+.verse { margin: 0 0 var(--verse-gap); }
 
 .attribution {
   margin-top: auto; padding: .75rem 1.25rem;
@@ -214,7 +373,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .search { position: sticky; top: var(--bar-h); z-index: 2; padding: .5rem 1rem; background: var(--paper); border-bottom: 1px solid var(--rule); }
 .search__input {
   width: 100%; font: inherit; font-size: .88rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 8px; padding: .4rem .6rem;
 }
 .search__panel {
@@ -266,12 +425,15 @@ body.dragging { cursor: col-resize; user-select: none; }
 
 /* ── Highlights ───────────────────────────────────────────────────────────── */
 
-.verse { position: relative; border-radius: 4px; padding: .1rem .2rem; margin: 0 -.2rem .85rem; }
-.verse[data-highlight='amber']  { background: color-mix(in srgb, #f0b429 26%, transparent); }
-.verse[data-highlight='rose']   { background: color-mix(in srgb, #e0607e 24%, transparent); }
-.verse[data-highlight='sky']    { background: color-mix(in srgb, #4c9be8 24%, transparent); }
-.verse[data-highlight='mint']   { background: color-mix(in srgb, #3fb984 24%, transparent); }
-.verse[data-highlight='violet'] { background: color-mix(in srgb, #9b7bd4 26%, transparent); }
+.verse { position: relative; border-radius: 4px; padding: .1rem .2rem; margin: 0 -.2rem var(--verse-gap); }
+.verse[data-highlight='amber']  { background: var(--hl-amber); }
+.verse[data-highlight='rose']   { background: var(--hl-rose); }
+.verse[data-highlight='sky']    { background: var(--hl-sky); }
+.verse[data-highlight='mint']   { background: var(--hl-mint); }
+.verse[data-highlight='violet'] { background: var(--hl-violet); }
+/* The accent is 7:1 on paper but not over a tint, so a highlighted verse's
+   number reads in ink. Measured: #5f4a0e over the amber tint is 6.9:1. */
+.verse[data-highlight] .verse__num { color: var(--ink); }
 
 /* The whole verse is the target.
  *
@@ -315,13 +477,13 @@ body.dragging { cursor: col-resize; user-select: none; }
   background: var(--paper-raised); border: 1px solid var(--rule);
   border-radius: 999px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
 }
-.swatch { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 1px solid rgb(0 0 0 / .18); cursor: pointer; padding: 0; }
+.swatch { width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 2px solid var(--edge); cursor: pointer; padding: 0; }
 .swatch--static { display: inline-block; flex: 0 0 auto; cursor: default; }
-.swatch[data-color='amber']  { background: #f0b429; }
-.swatch[data-color='rose']   { background: #e0607e; }
-.swatch[data-color='sky']    { background: #4c9be8; }
-.swatch[data-color='mint']   { background: #3fb984; }
-.swatch[data-color='violet'] { background: #9b7bd4; }
+.swatch[data-color='amber']  { background: var(--sw-amber); }
+.swatch[data-color='rose']   { background: var(--sw-rose); }
+.swatch[data-color='sky']    { background: var(--sw-sky); }
+.swatch[data-color='mint']   { background: var(--sw-mint); }
+.swatch[data-color='violet'] { background: var(--sw-violet); }
 .swatch[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
 .swatches__rule { width: 1px; align-self: stretch; background: var(--rule); margin: 0 .15rem; }
 .swatches__action {
@@ -342,7 +504,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .marks__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
 .marks__close {
   font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
 }
 .marks__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 .marks__hint { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
@@ -357,7 +519,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 /* Editable, but not shouting about it until you go near it — the label is read
    far more often than it is changed. */
 .marks__label:hover { border-color: var(--rule); }
-.marks__label:focus { border-color: var(--ink-soft); background-color: var(--paper-raised); outline: none; }
+.marks__label:focus { border-color: var(--edge); background-color: var(--paper-raised); }
 .marks__label::placeholder { color: var(--ink-soft); font-weight: 500; }
 .marks__count { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
@@ -386,7 +548,7 @@ body.dragging { cursor: col-resize; user-select: none; }
   align-self: flex-start; margin-bottom: .35rem;
   font: inherit; font-size: .74rem; color: var(--ink);
   background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
-  border: 1px solid var(--rule); border-radius: 6px;
+  border: 1px solid var(--edge); border-radius: 6px;
   padding: .2rem .45rem; cursor: pointer;
 }
 .notes__link:hover { border-color: var(--ink-soft); }
@@ -410,7 +572,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .settings__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
 .settings__close {
   font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
 }
 .settings__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 .settings__group { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
@@ -421,7 +583,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .settings__actions { display: flex; gap: .4rem; flex-wrap: wrap; }
 .settings__action {
   font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .55rem;
 }
 .settings__action:hover { color: var(--ink); border-color: var(--ink-soft); }
@@ -460,11 +622,11 @@ body.dragging { cursor: col-resize; user-select: none; }
 .proposal__meta { font-size: .82rem; margin: 0; }
 .proposal__field {
   font: inherit; font-size: .95rem; color: var(--ink); background-color: var(--paper-raised);
-  border: 1px solid var(--rule); border-radius: 6px; padding: .45rem .6rem;
+  border: 1px solid var(--edge); border-radius: 6px; padding: .45rem .6rem;
 }
 .proposal__text {
   font: inherit; font-size: .88rem; line-height: 1.6; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--rule); border-radius: 6px;
+  background-color: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
   padding: .6rem; min-height: 14rem; resize: vertical;
 }
 .proposal__list { list-style: none; margin: 0; padding: 0; }
@@ -479,7 +641,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 .proposal__action {
   font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: .4rem .8rem;
+  background-color: var(--paper); border: 1px solid var(--edge); border-radius: 6px; padding: .4rem .8rem;
 }
 .proposal__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .proposal__action:disabled { opacity: .5; cursor: default; }
@@ -495,26 +657,26 @@ body.dragging { cursor: col-resize; user-select: none; }
 .canvas__spacer { flex: 1; }
 .canvas__select {
   font: inherit; font-size: .85rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
 }
 .canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
 .canvas__action {
   font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .55rem;
 }
 .canvas__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .canvas__action:disabled { opacity: .55; cursor: default; }
-.canvas__action--danger:hover { color: #b3261e; border-color: #b3261e; }
+.canvas__action--danger:hover { color: var(--danger); border-color: var(--danger); }
 
-.canvas__zoom { display: inline-flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+.canvas__zoom { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
 .canvas__zoom button {
   font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
   background-color: var(--paper-raised); border: none; padding: .3rem .5rem; min-width: 2.2rem;
 }
 .canvas__zoom button:hover { color: var(--ink); }
-.canvas__zoom button + button { border-left: 1px solid var(--rule); }
+.canvas__zoom button + button { border-left: 1px solid var(--edge); }
 
 /* The plane is dotted so panning and zooming have something to read against —
    an empty white field gives no sense of having moved at all. */
@@ -529,7 +691,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .canvas__edges line { stroke: var(--ink-soft); stroke-width: 2; }
 .canvas__edges marker path { fill: var(--ink-soft); }
 .canvas__edge-cut { fill: transparent; pointer-events: auto; cursor: pointer; }
-.canvas__edge-cut:hover { fill: color-mix(in srgb, #b3261e 30%, transparent); }
+.canvas__edge-cut:hover { fill: color-mix(in srgb, var(--danger) 30%, transparent); }
 .canvas__empty {
   position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
   color: var(--ink-soft); font-size: .85rem; pointer-events: none;
@@ -542,11 +704,11 @@ body.dragging { cursor: col-resize; user-select: none; }
   background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 10px;
   box-shadow: 0 2px 10px rgb(0 0 0 / .12); overflow: hidden;
 }
-.card[data-color='amber']  { border-color: #f0b429; box-shadow: 0 2px 10px color-mix(in srgb, #f0b429 35%, transparent); }
-.card[data-color='rose']   { border-color: #e0607e; box-shadow: 0 2px 10px color-mix(in srgb, #e0607e 35%, transparent); }
-.card[data-color='sky']    { border-color: #4c9be8; box-shadow: 0 2px 10px color-mix(in srgb, #4c9be8 35%, transparent); }
-.card[data-color='mint']   { border-color: #3fb984; box-shadow: 0 2px 10px color-mix(in srgb, #3fb984 35%, transparent); }
-.card[data-color='violet'] { border-color: #9b7bd4; box-shadow: 0 2px 10px color-mix(in srgb, #9b7bd4 35%, transparent); }
+.card[data-color='amber']  { border-color: var(--hl-amber-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-amber-strong) 35%, transparent); }
+.card[data-color='rose']   { border-color: var(--hl-rose-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-rose-strong) 35%, transparent); }
+.card[data-color='sky']    { border-color: var(--hl-sky-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-sky-strong) 35%, transparent); }
+.card[data-color='mint']   { border-color: var(--hl-mint-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-mint-strong) 35%, transparent); }
+.card[data-color='violet'] { border-color: var(--hl-violet-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-violet-strong) 35%, transparent); }
 
 .card__grip {
   cursor: grab; padding: .35rem .5rem; border-bottom: 1px solid var(--rule);
@@ -555,7 +717,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 .card__title-input {
   width: 100%; font: inherit; font-size: .72rem; font-weight: 600; color: var(--ink);
-  background: transparent; border: none; border-radius: 4px; padding: 0; outline: none;
+  background: transparent; border: none; border-radius: 4px; padding: 0;
 }
 .card__title-input:focus { background: var(--paper-raised); }
 .card__title-input::placeholder { color: var(--ink-soft); font-weight: 500; }
@@ -573,7 +735,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 .card__editor {
   flex: 1; margin: 0; padding: .4rem .5rem; font: inherit; font-size: .8rem;
   line-height: 1.45; color: var(--ink); background: transparent;
-  border: none; resize: none; outline: none;
+  border: none; resize: none;
 }
 /* The right padding clears the resize grip in the corner, which otherwise sits
    on top of the last action and swallows every click aimed at it. */
@@ -593,14 +755,14 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 .card__action:hover { color: var(--ink); border-color: var(--rule); }
 .card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
-.card__action--danger:hover { color: #b3261e; border-color: #b3261e; }
+.card__action--danger:hover { color: var(--danger); border-color: var(--danger); }
 .card__swatches { display: inline-flex; gap: .15rem; margin-left: auto; }
-.card__dot { width: .6rem; height: .6rem; border-radius: 50%; border: 1px solid rgb(0 0 0 / .2); padding: 0; cursor: pointer; }
-.card__dot[data-color='amber']  { background: #f0b429; }
-.card__dot[data-color='rose']   { background: #e0607e; }
-.card__dot[data-color='sky']    { background: #4c9be8; }
-.card__dot[data-color='mint']   { background: #3fb984; }
-.card__dot[data-color='violet'] { background: #9b7bd4; }
+.card__dot { width: .6rem; height: .6rem; border-radius: 50%; border: 1px solid var(--edge); padding: 0; cursor: pointer; }
+.card__dot[data-color='amber']  { background: var(--sw-amber); }
+.card__dot[data-color='rose']   { background: var(--sw-rose); }
+.card__dot[data-color='sky']    { background: var(--sw-sky); }
+.card__dot[data-color='mint']   { background: var(--sw-mint); }
+.card__dot[data-color='violet'] { background: var(--sw-violet); }
 .card__dot[aria-pressed='true'] { outline: 2px solid var(--ink); outline-offset: 1px; }
 
 /* ── Writing: the tools, and reading it back ──────────────────────────────── */
@@ -618,7 +780,7 @@ body.dragging { cursor: col-resize; user-select: none; }
 }
 .tools__button {
   font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 5px; padding: .2rem .4rem; min-width: 1.9rem;
 }
 .tools__button:hover { color: var(--ink); border-color: var(--ink-soft); }
@@ -678,11 +840,11 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .embed__canvas line { stroke: var(--ink-soft); stroke-width: 1.5; }
 .embed__canvas marker path { fill: var(--ink-soft); }
 .embed__card { fill: var(--paper); stroke: var(--rule); }
-.embed__card[data-color='amber']  { stroke: #f0b429; fill: color-mix(in srgb, #f0b429 12%, var(--paper)); }
-.embed__card[data-color='rose']   { stroke: #e0607e; fill: color-mix(in srgb, #e0607e 12%, var(--paper)); }
-.embed__card[data-color='sky']    { stroke: #4c9be8; fill: color-mix(in srgb, #4c9be8 12%, var(--paper)); }
-.embed__card[data-color='mint']   { stroke: #3fb984; fill: color-mix(in srgb, #3fb984 12%, var(--paper)); }
-.embed__card[data-color='violet'] { stroke: #9b7bd4; fill: color-mix(in srgb, #9b7bd4 12%, var(--paper)); }
+.embed__card[data-color='amber']  { stroke: var(--hl-amber-strong); fill: var(--hl-amber); }
+.embed__card[data-color='rose']   { stroke: var(--hl-rose-strong); fill: var(--hl-rose); }
+.embed__card[data-color='sky']    { stroke: var(--hl-sky-strong); fill: var(--hl-sky); }
+.embed__card[data-color='mint']   { stroke: var(--hl-mint-strong); fill: var(--hl-mint); }
+.embed__card[data-color='violet'] { stroke: var(--hl-violet-strong); fill: var(--hl-violet); }
 .embed__label { font-family: var(--sans); font-size: 10px; fill: var(--ink); }
 .embed__empty, .embed--missing { font-size: .8rem; color: var(--ink-soft); font-style: italic; }
 .embed__caption { font-family: var(--sans); font-size: .72rem; color: var(--ink-soft); margin-top: .3rem; }
@@ -704,7 +866,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .results__title { font-family: var(--serif); font-size: 1.15rem; margin: 0; flex: 1; font-weight: 600; }
 .results__close {
   font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
 }
 .results__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 
@@ -713,7 +875,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .results__books { display: flex; flex-wrap: wrap; gap: .3rem; margin: .75rem 0 1rem; }
 .results__book {
   font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 999px; padding: .2rem .5rem;
 }
 .results__book:hover { color: var(--ink); border-color: var(--ink-soft); }
@@ -758,7 +920,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .library__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
 .library__close {
   font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--rule); border-radius: 6px; padding: .2rem .45rem;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
 }
 .library__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 .library__storage { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
@@ -781,8 +943,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--ink);
 }
 .library__detail { display: block; font-size: .74rem; color: var(--ink-soft); }
-.library__error { display: block; font-size: .74rem; color: #b3261e; margin-top: .15rem; }
-@media (prefers-color-scheme: dark) { .library__error { color: #f2b8b5; } }
+.library__error { display: block; font-size: .74rem; color: var(--danger); margin-top: .15rem; }
 
 .library__progress {
   display: block; height: 4px; margin-top: .35rem; border-radius: 999px;
@@ -793,7 +954,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .library__actions { display: flex; gap: .35rem; flex: 0 0 auto; }
 .library__action {
   font: inherit; font-size: .76rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .3rem .55rem;
 }
 .library__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
@@ -803,7 +964,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
 }
 .library__action--primary { color: var(--ink); border-color: var(--ink-soft); }
-.library__action--danger:hover:not(:disabled) { color: #b3261e; border-color: #b3261e; }
+.library__action--danger:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
 .library__note { font-size: .74rem; color: var(--ink-soft); margin-top: 1rem; line-height: 1.5; }
 
 /* ── Compare: one chapter, side by side ───────────────────────────────────── */
@@ -859,7 +1020,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   font: inherit; font-size: .85rem; color: var(--ink);
   /* Explicit for the same reason as .reader__select: a transparent <select>
      leaves the browser to paint the open list from an unresolved colour. */
-  background-color: var(--paper-raised); border: 1px solid var(--rule);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .25rem .4rem; flex: 1; min-width: 7rem;
   text-overflow: ellipsis;
 }
@@ -867,12 +1028,12 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .notes__select:hover { border-color: var(--ink-soft); }
 .notes__action {
   font: inherit; font-size: .78rem; color: var(--ink-soft);
-  background: transparent; border: 1px solid var(--rule);
+  background: transparent; border: 1px solid var(--edge);
   border-radius: 6px; padding: .25rem .5rem; cursor: pointer;
 }
 .notes__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .notes__action:disabled { opacity: .45; cursor: default; }
-.notes__action--danger:hover { color: #b3261e; border-color: #b3261e; }
+.notes__action--danger:hover { color: var(--danger); border-color: var(--danger); }
 
 /* Six controls do not fit a narrow pane on one line, and squeezing them left
    Delete a sliver wide — present, and not usably so. The bar is not sticky, so
@@ -891,18 +1052,17 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   color: var(--ink); background: transparent; border: none;
   border-bottom: 1px solid transparent; padding: .2rem 0; margin-bottom: .5rem;
 }
-.notes__title:focus { outline: none; border-bottom-color: var(--rule); }
+.notes__title:focus { border-bottom-color: var(--edge); }
 
 .notes__surface {
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
   font-family: var(--serif); font-size: 1rem; line-height: 1.7;
 }
-.notes__surface:focus { outline: none; }
 
 .notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
 .notes__status { min-height: 1.2rem; font-size: .72rem; color: var(--ink-soft); }
-.notes__status--bad { color: #b3261e; }
+.notes__status--bad { color: var(--danger); }
 
 /* ── Durability ───────────────────────────────────────────────────────────── */
 
@@ -917,7 +1077,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .durability__actions { display: flex; gap: .4rem; align-items: center; }
 .durability__action {
   font: inherit; font-size: .78rem; color: var(--ink);
-  background: var(--paper-raised); border: 1px solid var(--rule);
+  background: var(--paper-raised); border: 1px solid var(--edge);
   border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
 }
 .durability__dismiss {
@@ -948,7 +1108,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   padding: .5rem; border: none; background: transparent;
   color: var(--ink-soft); font: inherit; font-size: .78rem; cursor: pointer;
 }
-.sheet__handle { width: 2.25rem; height: 4px; border-radius: 2px; background: var(--rule); }
+.sheet__handle { width: 2.25rem; height: 4px; border-radius: 2px; background: var(--edge); }
 .sheet__body { flex: 1; min-height: 0; overflow-y: auto; }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 
@@ -958,8 +1118,19 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   display: grid; place-items: center; height: 100%;
   color: var(--ink-soft); font-size: .95rem; padding: 2rem; text-align: center;
 }
-.boot--error { color: #b3261e; }
+.boot--error { color: var(--danger); }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+}
+
+/* Windows High Contrast and other forced-colour modes replace every colour
+   with the system palette. Backgrounds vanish, so a highlight keeps a rule
+   and every control keeps a border; swatches opt out so a colour choice is
+   still a colour. */
+@media (forced-colors: active) {
+  button, select, input, textarea, .reader__chip, .swatch, .card, .sheet { border: 1px solid CanvasText; }
+  .verse[data-highlight] { border-left: 3px solid Highlight; padding-left: .45rem; }
+  .swatch, .card__dot { forced-color-adjust: none; }
+  :focus-visible { outline-color: Highlight; }
 }
