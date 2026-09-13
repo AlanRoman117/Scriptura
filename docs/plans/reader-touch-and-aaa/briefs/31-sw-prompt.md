@@ -5,7 +5,7 @@
 | **ID** | `31-sw-prompt` |
 | **Size** | S |
 | **Depends on** | `05-announcer`, `28-confirm-undo` (optional) |
-| **Status** | open — recommended, not required for conformance |
+| **Status** | done (cb88aa0) |
 | **Criteria** | 2.2.4 Interruptions, 3.2.5 Change on Request (already met; this hardens it), data durability |
 
 ## Outcome

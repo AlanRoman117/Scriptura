@@ -5,7 +5,7 @@
 | **ID** | `40-docs` |
 | **Size** | M |
 | **Depends on** | every code brief it documents (run last, or per phase) |
-| **Status** | open |
+| **Status** | done (close-out commit) |
 | **Criteria** | none directly; records conformance |
 
 ## Outcome

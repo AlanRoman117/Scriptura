@@ -1,6 +1,6 @@
 # Reader: touch, mobile, and WCAG 2.2 AAA
 
-**Status:** in progress on branch `reader/touch-aaa` (started 2026-09-12).
+**Status:** implemented on branch `reader/touch-aaa` (2026-09-12); manual device and screen-reader checks open (briefs 91–93).
 **Owner:** the `reader-a11y-lead` agent (`.claude/agents/reader-a11y-lead.md`), reviewed by the repository owner.
 **Rules for anyone working on this:** [`/AGENTS.md`](../../../AGENTS.md). **How work is handed out:** [`DELEGATION.md`](DELEGATION.md). **Conformance record:** [`wcag-2.2-aaa-matrix.md`](wcag-2.2-aaa-matrix.md). **Work packages:** [`briefs/`](briefs/).
 
@@ -87,8 +87,8 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | W7 | Help panel, glossary, abbreviations, accessibility statement | `briefs/27-help.md` | done (6687812) |
 | W8 | Confirm and undo for destructive actions | `briefs/28-confirm-undo.md` | done (48f8df4; cards and connections in b9f6573) |
 | W9 | Status messages wired | part of `briefs/05-announcer.md` | done (a0dde32) |
-| W11 | Service-worker update prompt (recommended) | `briefs/31-sw-prompt.md` | open |
-| D | Docs: matrix, Architecture (both copies), README, CLAUDE.md, contributing | `briefs/40-docs.md` | open |
+| W11 | Service-worker update prompt (recommended) | `briefs/31-sw-prompt.md` | done (cb88aa0) |
+| D | Docs: matrix, Architecture (both copies), README, CLAUDE.md, contributing | `briefs/40-docs.md` | done (close-out commit) |
 | X1 | Real-device verification: iOS Safari keyboard and sheet | `briefs/91-device-ios.md` | open — needs a person with a device |
 | X2 | Screen-reader pass: VoiceOver, TalkBack, NVDA | `briefs/92-screen-readers.md` | open — needs a person |
 | X3 | Windows High Contrast and forced-colors check | `briefs/93-forced-colors.md` | open — needs a person |
@@ -107,6 +107,31 @@ Branch `reader/touch-aaa`. "Green" for a commit means `npm run lint && npm test`
 - **Phase 6 — close-out.** W11, the matrix, both architecture documents, README, contributing, CLAUDE.md; full suite; merge to `develop` without squashing.
 
 **Fallback.** Phases 0–3 alone merge as a coherent release: every panel, search, the editor and the dialog fixed, AA met throughout, AAA on everything but the sheet and canvas. Phases 4–5 then exist as briefs the lead hands out. Canvas is never started first.
+
+## Checkpoints
+
+Each phase ended with the full suite on Node 24 (`mise exec node@24`); every one passed.
+
+| Phase | Commit | jest | Playwright (contract + reader, touch, dev) |
+|---|---|---|---|
+| 0 — scaffolding | df7fbff | 169 | 47 + 111 |
+| 1 — foundations | 71db861 | 319 | 47 + 133 |
+| 2 — semantics and chrome | aa997d3 | 319 | 47 + 162 |
+| 3 — search, verse actions, editor | dce4744 | 319 | 47 + 183 |
+| 4 — sheet, comparison, phone gates | 80d1bce | 324 | 47 + 230 |
+| 5 — board | 929bb87 | 329 | 47 + 250 |
+| 6 — updates, docs | close-out | 329 | 47 + 253 |
+
+A correction for the record: several commit messages between 8ad97e8 and b9f6573 give Playwright and jest totals that were added up rather than measured, and are too high. The figures in this table are the measured ones (`npm test`, `npx playwright test --list`).
+
+## Found along the way, not in scope
+
+Recorded so they are not lost; none blocks the conformance claim.
+
+- **Quoting from a phone at "peek" gives no visible feedback.** The quote lands in the open note, but the sheet is collapsed and its save status is not shown. Raising the sheet to half on a quote, or announcing "Quoted into {note}", would close it.
+- **Boards laid out before the card size grew** (220 × 132 → 280 × 180) overlap by up to 60px until a card is moved. Positions are the reader's, so nothing rewrites them.
+- **Safari and the docked verse actions.** They are `position: fixed` inside a size container; Chromium keeps that viewport-relative, and brief 91 asks for the same check on Safari.
+- **Two pre-existing bugs were fixed because the work exposed them**, not merely noted: the autosave debounce dropped an edit when a second note was edited within 600ms, and a first-visit Reload onto a new version did nothing.
 
 ## Verification
 
