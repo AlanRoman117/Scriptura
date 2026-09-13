@@ -3,13 +3,22 @@ import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { prefersReducedMotion } from '../lib/prefs';
 import { useDismissable, useReturnFocus } from '../lib/focus';
-import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
+import {
+  HIGHLIGHT_COLORS,
+  colorLabel,
+  highlightId,
+  type ColorLabels,
+  type Highlight,
+  type HighlightColor,
+} from '../lib/notes';
 
 interface BiblePaneProps {
   bible: Bible;
   book: LoadedBook;
   chapter: number;
   highlights: Highlight[];
+  /** What the reader calls each colour; a mark's name says its collection. */
+  labels?: ColorLabels;
   onNavigate: (bookSlug: string, chapter: number) => void;
   onHighlight: (verse: number, color: HighlightColor) => void;
   onQuote: (verse: number) => void;
@@ -35,6 +44,7 @@ export function BiblePane({
   book,
   chapter,
   highlights,
+  labels = {},
   onNavigate,
   onHighlight,
   onQuote,
@@ -107,42 +117,50 @@ export function BiblePane({
   return (
     <div className="reader">
       <header className="reader__bar">
-        <select
-          className="reader__select"
-          aria-label="Book"
-          data-testid="book-select"
-          value={book.slug}
-          onChange={(e) => onNavigate(e.target.value, 1)}
-        >
-          {bible.books.map((b) => (
-            <option key={b.slug} value={b.slug}>
-              {b.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className="reader__select reader__select--chapter"
-          aria-label="Chapter"
-          data-testid="chapter-select"
-          value={chapter}
-          onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
-        >
-          {book.chapters.map((c) => (
-            <option key={c.number} value={c.number}>
-              {c.number}
-            </option>
-          ))}
-        </select>
+        {/* A landmark of its own: "where am I, and how do I move" is the first
+            thing a screen reader user looks for (2.4.8). */}
+        <nav className="reader__nav" aria-label="Passage">
+          <select
+            className="reader__select"
+            aria-label="Book"
+            data-testid="book-select"
+            value={book.slug}
+            onChange={(e) => onNavigate(e.target.value, 1)}
+          >
+            {bible.books.map((b) => (
+              <option key={b.slug} value={b.slug}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+          <select
+            className="reader__select reader__select--chapter"
+            aria-label="Chapter"
+            data-testid="chapter-select"
+            value={chapter}
+            onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
+          >
+            {book.chapters.map((c) => (
+              <option key={c.number} value={c.number}>
+                {c.number}
+              </option>
+            ))}
+          </select>
+        </nav>
         {/* The translation badge used to be decoration, and was the first thing
             dropped when the bar ran out of room. It is a control now — the way
             in to the library — so nothing here is dropped; only the Marks label
             is, and its count stands in for it. */}
+        {/* Disclosures, not toggles: each opens a panel, so aria-expanded and
+            aria-controls say so (4.1.2). The name starts with the visible text
+            (2.5.3) and then says what the abbreviation stands for (3.1.4). */}
         <button
           type="button"
           className="reader__chip reader__chip--translation"
           data-testid="library-open"
-          aria-pressed={libraryOpen}
-          title={`${meta.name} — choose or add a translation`}
+          aria-expanded={libraryOpen}
+          aria-controls="library-panel"
+          aria-label={`${meta.id.toUpperCase()} — ${meta.name}. Choose or add a translation`}
           onClick={onToggleLibrary}
         >
           {meta.id.toUpperCase()}
@@ -151,9 +169,9 @@ export function BiblePane({
           type="button"
           className="reader__chip"
           data-testid="marks-open"
-          aria-pressed={marksOpen}
-          aria-label={`Marks (${markCount})`}
-          title="Verses you have marked, by colour"
+          aria-expanded={marksOpen}
+          aria-controls="marks-panel"
+          aria-label={`Marks (${markCount}) — verses you have marked, by colour`}
           onClick={onToggleMarks}
         >
           <span className="reader__chip-label">Marks</span>
@@ -165,9 +183,9 @@ export function BiblePane({
           type="button"
           className="reader__chip reader__chip--icon"
           data-testid="settings-open"
-          aria-pressed={settingsOpen}
-          aria-label="Settings"
-          title="Storage, export, and assistant access"
+          aria-expanded={settingsOpen}
+          aria-controls="settings-panel"
+          aria-label="Settings — display, storage, export, and assistant access"
           onClick={onToggleSettings}
         >
           ⚙
@@ -180,6 +198,8 @@ export function BiblePane({
 
       <article
         className={compare ? 'chapter chapter--compare' : 'chapter'}
+        id="scripture"
+        tabIndex={-1}
         data-testid="chapter"
         hidden={!!overlay}
       >
@@ -189,7 +209,10 @@ export function BiblePane({
         {compare ? (
           compare
         ) : current ? (
-          <div className="chapter__text">
+          // The translation's language, so a screen reader switches voice for
+          // Spanish, French or Japanese scripture instead of reading it with
+          // English phonemes (3.1.2).
+          <div className="chapter__text" lang={meta.language}>
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
@@ -220,7 +243,13 @@ export function BiblePane({
                     type="button"
                     className="verse__num"
                     data-testid={`verse-${v.number}`}
-                    aria-label={`Mark ${book.name} ${chapter}:${v.number}`}
+                    // The collection is in the name, so which colour a verse
+                    // is in does not depend on seeing the colour (1.4.1).
+                    aria-label={
+                      mark
+                        ? `Mark ${book.name} ${chapter}:${v.number} — in ${colorLabel(mark.color, labels)} (${mark.color})`
+                        : `Mark ${book.name} ${chapter}:${v.number}`
+                    }
                     aria-expanded={open}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -245,7 +274,7 @@ export function BiblePane({
                           className="swatch"
                           data-color={color}
                           data-testid={`swatch-${color}`}
-                          aria-label={`Highlight ${color}`}
+                          aria-label={`Mark as ${colorLabel(color, labels)} (${color})`}
                           aria-pressed={mark?.color === color}
                           onClick={() => {
                             onHighlight(v.number, color);
@@ -308,8 +337,9 @@ export function BiblePane({
       {requiresAttribution(meta) && (
         <footer className="attribution" data-testid="attribution">
           {meta.attribution} ·{' '}
+          {/* The link's own text says whose source (2.4.9). */}
           <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            source
+            {meta.name} source
           </a>
         </footer>
       )}

@@ -76,12 +76,12 @@ export function SearchResults({
   useReturnFocus(true, '[data-testid="search-input"]');
 
   return (
-    <section ref={root} className="results" data-testid="search-results" aria-label="Search results">
+    <section ref={root} className="results" id="search-results" data-testid="search-results" aria-label="Search results">
       <header className="results__bar">
-        <h2 className="results__title">
+        <h1 className="results__title">
           <span data-testid="results-total">{results.length}</span>{' '}
           {results.length === 1 ? 'match' : 'matches'} for “{query}”
-        </h2>
+        </h1>
         <button
           type="button"
           className="results__close"
@@ -93,7 +93,8 @@ export function SearchResults({
         </button>
       </header>
 
-      <div className="results__options">
+      <fieldset className="results__options">
+        <legend className="visually-hidden">Matching</legend>
         <label className="search__option">
           <input
             type="checkbox"
@@ -112,9 +113,9 @@ export function SearchResults({
           />
           Match case
         </label>
-      </div>
+      </fieldset>
 
-      <div className="results__books" data-testid="results-books">
+      <div className="results__books" data-testid="results-books" role="group" aria-label="Filter by book">
         <button
           type="button"
           className="results__book"
@@ -137,7 +138,7 @@ export function SearchResults({
         ))}
       </div>
 
-      <ul className="results__list" data-testid="results-list">
+      <ul className="results__list" data-testid="results-list" role="list">
         {visible.map((r, i) => (
           <li className="results__item" key={`${r.book_slug}-${r.chapter}-${r.verse}`}>
             {/* Ranked order looks arbitrary unless it says why. The rule is
@@ -155,7 +156,9 @@ export function SearchResults({
               onClick={() => onGo(r.book_slug, r.chapter, r.verse)}
             >
               <span className="results__ref-label">{r.ref}</span>
-              <span className="results__ref-text">{r.text}</span>
+              <span className="results__ref-text" lang={bible.meta.language}>
+                {r.text}
+              </span>
             </button>
             <button
               type="button"

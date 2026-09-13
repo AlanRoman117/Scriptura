@@ -365,6 +365,25 @@ export function App() {
     console.warn(`Could not read "${store}" — continuing without it:`, err);
   };
 
+  // The title says where you are (2.4.2, 2.4.8): passage and translation while
+  // reading, the panel's name while one covers the text, the board in canvas.
+  useEffect(() => {
+    const where = canvasOpen
+      ? `${boards.find((b) => b.id === boardId)?.name || 'Untitled board'} · Boards`
+      : marksOpen
+        ? 'Marks'
+        : libraryOpen
+          ? 'Translations'
+          : settingsOpen
+            ? 'Settings'
+            : resultsOpen
+              ? 'Search results'
+              : bible
+                ? `${(bible.book(position.bookSlug) ?? bible.books[0]).name} ${position.chapter} · ${bible.meta.id.toUpperCase()}`
+                : null;
+    document.title = where ? `${where} · Scriptura` : 'Scriptura Reader';
+  }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, resultsOpen, bible, position]);
+
   const changeNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => {
       setSaving('saving');
@@ -854,6 +873,15 @@ export function App() {
   return (
     <>
       {staged}
+      {/* First in the document (2.4.1): a keyboard user reaches the text or the
+          notes in one press instead of tabbing through the bar and the search
+          box — and, in Psalm 119, 176 verse numbers. */}
+      <a className="skip" href="#scripture" data-testid="skip-scripture">
+        Skip to scripture
+      </a>
+      <a className="skip" href="#notes" data-testid="skip-notes">
+        Skip to notes
+      </a>
       {!bannerDismissed && (
         <DurabilityBanner
           persistence={persistence}
@@ -870,6 +898,7 @@ export function App() {
             bible={bible}
             book={book}
             chapter={position.chapter}
+            labels={colorLabels}
             highlights={highlights}
             focusVerse={focusVerse}
             onNavigate={(bookSlug, chapter) => {
@@ -977,6 +1006,7 @@ export function App() {
             search={
               <SearchBar
                 query={query}
+                lang={bible.meta.language}
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}

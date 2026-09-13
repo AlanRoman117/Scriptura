@@ -67,3 +67,23 @@ test('a public-domain translation shows no attribution notice', async ({ page })
   // so it must not appear where it is not owed.
   await expect(page.getByTestId('attribution')).toHaveCount(0);
 });
+
+test('the page title says where you are (2.4.2, 2.4.8)', async ({ page }) => {
+  await expect(page).toHaveTitle('John 1 · BSB · Scriptura');
+  await page.getByTestId('book-select').selectOption('genesis');
+  await page.getByTestId('chapter-select').selectOption('3');
+  await expect(page).toHaveTitle('Genesis 3 · BSB · Scriptura');
+  await page.getByTestId('marks-open').click();
+  await expect(page).toHaveTitle('Marks · Scriptura');
+});
+
+test('the first Tab offers to skip to the scripture (2.4.1)', async ({ page }) => {
+  await page.keyboard.press('Tab');
+  const skip = page.getByTestId('skip-scripture');
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeVisible();
+  await page.keyboard.press('Enter');
+  // Focus lands in the main landmark, past the bar and the search box.
+  const landed = await page.evaluate(() => !!document.activeElement?.closest('main'));
+  expect(landed).toBe(true);
+});

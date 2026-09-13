@@ -5,6 +5,8 @@ import { useDismissable } from '../lib/focus';
 
 interface SearchBarProps {
   query: string;
+  /** The translation's language, for the verse text in the suggestions (3.1.2). */
+  lang?: string;
   results: SearchResult[];
   reference: ResolvedReference | null;
   total: number;
@@ -29,6 +31,7 @@ interface SearchBarProps {
  */
 export function SearchBar({
   query,
+  lang,
   results,
   reference,
   total,
@@ -106,7 +109,8 @@ export function SearchBar({
           {/* Kept out of the grammar on purpose: `-word` and `"phrase"` are
               things you type, but a reader who does not know what "whole word"
               means will never discover a syntax for it. */}
-          <div className="search__options" onMouseDown={(e) => e.preventDefault()}>
+          <fieldset className="search__options" onMouseDown={(e) => e.preventDefault()}>
+            <legend className="visually-hidden">Matching</legend>
             <label className="search__option">
               <input
                 type="checkbox"
@@ -125,7 +129,7 @@ export function SearchBar({
               />
               Match case
             </label>
-          </div>
+          </fieldset>
 
           <p className="search__count" data-testid="search-count" data-query={resultsFor}>
             {total === 0
@@ -154,7 +158,7 @@ export function SearchBar({
             )}
           </p>
 
-          <ul className="search__results">
+          <ul className="search__results" role="list">
             {results.map((r, i) => (
               <li key={`${r.book_slug}-${r.chapter}-${r.verse}`} className="search__result">
                 {/* A short query never reaches the full results view — all 17
@@ -176,7 +180,9 @@ export function SearchBar({
                   }}
                 >
                   <span className="search__result-ref">{r.ref}</span>
-                  <span className="search__result-text">{r.text}</span>
+                  <span className="search__result-text" lang={lang}>
+                    {r.text}
+                  </span>
                 </button>
                 <button
                   type="button"

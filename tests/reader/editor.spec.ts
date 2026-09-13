@@ -81,7 +81,10 @@ test.describe('reading it back', () => {
     await page.getByTestId('note-preview').click();
 
     const preview = page.getByTestId('notes-preview');
-    await expect(preview.locator('h1')).toHaveText('Opening');
+    // A note's `#` is its own top level, not the page's: the chapter title is
+    // the h1 and the notes pane is an h2, so note headings start at h3.
+    await expect(preview.locator('h3')).toHaveText('Opening');
+    await expect(preview.locator('h1')).toHaveCount(0);
     await expect(preview.locator('strong')).toHaveText('Word');
     await expect(preview.locator('ul li')).toHaveCount(2);
     await expect(preview.locator('blockquote')).toContainText('a quotation');

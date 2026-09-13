@@ -80,9 +80,9 @@ export function LibraryPanel({
   useReturnFocus(true, '[data-testid="library-open"]');
 
   return (
-    <section ref={root} className="library" data-testid="library-panel" aria-label="Translations">
+    <section ref={root} className="library" id="library-panel" data-testid="library-panel" aria-label="Translations">
       <header className="library__bar">
-        <h2 className="library__title">Translations</h2>
+        <h1 className="library__title">Translations</h1>
         <button
           type="button"
           className="library__close"
@@ -107,8 +107,8 @@ export function LibraryPanel({
 
       {byLanguage.map(([language, entries]) => (
         <section className="library__group" key={language}>
-          <h3 className="library__language">{language}</h3>
-          <ul className="library__list">
+          <h2 className="library__language">{language}</h2>
+          <ul className="library__list" role="list">
             {entries.map((t) => {
               const here = installed.includes(t.id);
               const busy = downloads[t.id];

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { axeFor, describeViolations } from '../helpers/axe';
+import type { Page } from '@playwright/test';
 
 /**
  * Automated accessibility checks, one UI state per test.
@@ -81,3 +82,45 @@ test.describe('status messages are announced (4.1.3)', () => {
     await expect(page.getByTestId('announcer')).toContainText(/downloaded/);
   });
 });
+
+
+/**
+ * Each UI state, checked in both colour schemes. A state is listed here in the
+ * commit that makes it pass; `describeViolations` prints the first offending
+ * node per rule so a failure reads without opening the report.
+ */
+const STATES: Record<string, (page: Page) => Promise<void>> = {
+  reading: async () => {},
+  marks: async (page) => {
+    await page.getByTestId('marks-open').click();
+    await expect(page.getByTestId('marks-panel')).toBeVisible();
+  },
+  library: async (page) => {
+    await page.getByTestId('library-open').click();
+    await expect(page.getByTestId('library-panel')).toBeVisible();
+  },
+  settings: async (page) => {
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByTestId('settings-panel')).toBeVisible();
+  },
+  results: async (page) => {
+    await page.getByTestId('search-input').fill('love');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');
+    await page.getByTestId('search-see-all').click();
+    await expect(page.getByTestId('search-results')).toBeVisible();
+  },
+};
+
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`no axe violations, ${scheme}`, () => {
+    for (const [name, arrange] of Object.entries(STATES)) {
+      test(name, async ({ page }) => {
+        await page.emulateMedia({ colorScheme: scheme });
+        await open(page);
+        await arrange(page);
+        const results = await axeFor(page).analyze();
+        expect(results.violations.length, describeViolations(results)).toBe(0);
+      });
+    }
+  });
+}

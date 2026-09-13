@@ -10,11 +10,11 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 
 | SC | Name | Status | Evidence / test | Notes |
 |---|---|---|---|---|
-| 1.1.1 | Non-text Content | ❌ T4, W1 | `tests/reader/a11y.spec.ts` (axe `button-name`, `svg-img-alt`) | Glyph-only buttons (⇢ ↗ ✕) are named by the glyph; the board thumbnail SVG has no text alternative for cards or edges; the canvas edge layer is `aria-hidden` with no alternative. Fix: names on every control, a "Connections" list as the diagram's alternative. |
+| 1.1.1 | Non-text Content | 🔧 T4 | `tests/reader/a11y.spec.ts` (axe `button-name` in every state) | Done: every glyph-only button has a name (connect, open passage, remove card, zoom reset, dismiss notice, close panels). Remaining: the "Connections" list as the text alternative for the board's edge layer and thumbnail (T4). |
 | 1.2.1 | Audio-only and Video-only (Prerecorded) | ➖ | — | No audio or video. |
 | 1.2.2 | Captions (Prerecorded) | ➖ | — | |
 | 1.2.3 | Audio Description or Media Alternative | ➖ | — | |
-| 1.3.1 | Info and Relationships | ❌ W1 | axe `heading-order`, `list`, `landmark-*`; `keyboard.spec.ts` | Headings vanish when a panel is open; note headings render raw; Marks groups unnamed; `list-style:none` lists without `role=list`; option checkboxes without a group; clickable `<p>`/`<div>`. |
+| 1.3.1 | Info and Relationships | 🔧 T6 | axe `heading-order`, `list`, `landmark-*` in five states × two schemes; `keyboard.spec.ts` (one `h1` per state); `editor.spec.ts` (note headings offset) | Done: one `h1` per view state, Marks groups and the notes pane have headings, note headings are offset under them, lists carry `role="list"`, the option checkboxes are a fieldset, the passage selects are a `<nav>`, both panes are named landmarks. Remaining: the preview's click-to-edit blocks are still `<div onClick>` until T6 adds a real button. |
 | 1.3.2 | Meaningful Sequence | ✅ | manual read of DOM order | DOM order matches visual order in every state; the sheet follows the Bible pane. |
 | 1.3.3 | Sensory Characteristics | ✅ | — | Instructions name controls ("use **Canvas** beside a verse"), never a shape, position or colour alone. |
 | 1.4.1 | Use of Color | ❌ W2 | `a11y.spec.ts`; `notes.spec.ts` marker test | Highlight collection membership is conveyed by hue alone; card colour likewise. Fix: left rule + optional glyph, collection name in the control's accessible name, visually-hidden colour name on cards. |
@@ -25,22 +25,22 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.2.1 | Timing Adjustable | ✅ | — | No time limits. The 150 ms blur timers that removed UI are deleted by T3/T8. |
 | 2.2.2 | Pause, Stop, Hide | ✅ | — | Nothing moves, blinks or auto-updates for more than 5 s (verse flash 1.6 s). |
 | 2.3.1 | Three Flashes or Below Threshold | ✅ | — | One 1.6 s flash on jump. |
-| 2.4.1 | Bypass Blocks | ❌ W1 | axe `bypass`, `keyboard.spec.ts` | No skip link; the notes `<aside>` is unnamed. |
-| 2.4.2 | Page Titled | ❌ W1 | `reading.spec.ts` title test | `<title>` is static. Fix: `Book Chapter · ID · Scriptura`, panel names when open. |
+| 2.4.1 | Bypass Blocks | ✅ | `reading.spec.ts` (first Tab focuses "Skip to scripture"; Enter lands in `main`); axe `bypass`, `landmark-*` | Two skip links first in the document; `main` "Scripture", `aside`/`section` "Notes", `nav` "Passage". |
+| 2.4.2 | Page Titled | ✅ | `reading.spec.ts` (`John 1 · BSB · Scriptura`, changes with the passage and with an open panel) | The title names the passage and translation, the open panel, or the board. |
 | 2.4.3 | Focus Order | 🔧 T2, W1 | `keyboard.spec.ts` (Escape returns focus to the opening chip for Marks, Library and Settings; to the verse number for the verse actions; to the previously focused element after the dialog; Escape closes only the newest surface) | Done: `useReturnFocus` and the dismiss stack in `lib/focus.ts`; the dialog takes initial focus itself so its title and lede are read first. Remaining: focus moves *into* the verse actions when opened by keyboard (T2); skip links (W1). |
-| 2.4.4 | Link Purpose (In Context) | ❌ W1 | axe `link-name` | Attribution link reads "source"; preview wikilinks are named by the raw target. |
+| 2.4.4 | Link Purpose (In Context) | ✅ | axe `link-name`; `editor.spec.ts` preview link | The attribution link reads "{Translation} source"; a preview wikilink is named "Go to {Book c:v (ID)}" through `describeLink`. |
 | 2.5.1 | Pointer Gestures | ✅ | — | No path-based or multipoint gesture is required; pinch (T4) is an addition with button equivalents. |
 | 2.5.2 | Pointer Cancellation | ✅ | — | Activation is on up-event; down-event starts only drags, which are essential. |
-| 2.5.3 | Label in Name | 🔧 W1 | axe `label-content-name-mismatch` | Every accessible name must contain the visible text: the translation chip's name must start with its visible ID ("KJV — King James Version…"). |
+| 2.5.3 | Label in Name | ✅ | axe `label-content-name-mismatch` in every state | The translation chip's name starts with its visible ID, then the full name; the Marks chip's name starts with "Marks". |
 | 2.5.4 | Motion Actuation | ➖ | — | No device-motion input. |
 | 3.1.1 | Language of Page | ✅ | `index.html` `lang="en"` | |
 | 3.2.1 | On Focus | ✅ | — | Focus changes nothing. |
 | 3.2.2 | On Input | ✅ | — | Changing book or chapter re-renders the passage in place; no new window, no focus move, no page change. Documented as not a change of context. |
 | 3.2.6 | Consistent Help | ❌ W7 | `a11y.spec.ts` help state | No help mechanism exists yet; once it does it is the "?" chip in the reader bar, same position in every state, and an entry in Settings. |
 | 3.3.1 | Error Identification | ✅ | `a11y.spec.ts` (offline download: the row is `role="alert"` and the assertive region names the error); `notes.spec.ts` (save failure in the note footer) | Download errors are shown on the row and announced assertively; a board that fails to save is announced too (it was only logged). |
-| 3.3.2 | Labels or Instructions | 🔧 W1 | axe `label` | Every field has an accessible name; the option checkboxes need a group label; placeholders remain the only *visible* label on text fields (acceptable, noted). |
+| 3.3.2 | Labels or Instructions | ✅ | axe `label` in every state | Every field has a name; the matching options are a fieldset with a legend; Settings controls have visible labels. Placeholders remain the only *visible* label on the note title and body (acceptable: both have names, and the placeholder is the instruction). |
 | 3.3.7 | Redundant Entry | ➖ | — | No multi-step process re-asks for information. |
-| 4.1.2 | Name, Role, Value | ❌ W1, T4 | axe `button-name`, `aria-allowed-attr`, `aria-progressbar-name` | Glyph buttons, unnamed progressbar, disclosures marked `aria-pressed`, `role=toolbar` without arrow-key behaviour. |
+| 4.1.2 | Name, Role, Value | 🔧 T4, T8 | axe `button-name`, `aria-allowed-attr`, `aria-allowed-role`, `aria-progressbar-name` in every state | Done: named glyph buttons, named progressbar, the three bar chips are disclosures with `aria-expanded`/`aria-controls`, the durability banner is a named landmark. Remaining: `role=toolbar` gains arrow keys (T8); cards become focusable groups (T4). |
 
 ## Level AA
 
@@ -63,9 +63,9 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.4.11 | Focus Not Obscured (Minimum) | 🔧 T1, T6 | `keyboard.spec.ts` obscured test (with T6) | Done: `.pane` has `scroll-padding` from `--bar-h`/`--search-h`/`--sheet-h` and verses carry `scroll-margin`. Remaining: measured bar heights (T6) and the Bible pane `inert` under a full sheet (T1). |
 | 2.5.7 | Dragging Movements | ❌ T4, T5 | `keyboard.spec.ts`, `canvas.spec.ts` | Card move and resize, canvas pan and the divider have no single-pointer alternative. Fix: Move/Size popover with arrow and ± buttons, pan buttons, divider Narrower/Wider. The sheet already has a button. |
 | 2.5.8 | Target Size (Minimum) | ❌ T6 | `tests/reader/targets.spec.ts` | Swatches, colour dots, resize grip, divider, dismiss and compare controls are under 24 px. Superseded by 2.5.5 below. |
-| 3.1.2 | Language of Parts | ❌ W1 | `library.spec.ts` (`lang="es"` after reading rv1909) | No `lang` on any scripture text. Fix: `lang={bible.meta.language}` on every scripture container, per column in comparison. |
+| 3.1.2 | Language of Parts | ✅ | `library.spec.ts` (`.chapter__text` is `lang="es"` after reading rv1909; comparison columns carry `en` and `es`) | `lang` from `TranslationMeta.language` on the chapter text, each comparison column, marks, search suggestions and results. |
 | 3.2.3 | Consistent Navigation | ✅ | — | The reading bar is identical in every state. |
-| 3.2.4 | Consistent Identification | 🔧 W1 | review | Close controls vary (✕, ×, "Back to reading"). Fix: one close-button component with a consistent name. |
+| 3.2.4 | Consistent Identification | ✅ | review | Every panel closes with a ✕ named "Close {panel}"; the canvas leaves with a text button "Back to reading", consistent with itself. |
 | 3.3.3 | Error Suggestion | ✅ | `library.spec.ts` offline test | "No connection — try again when you are online"; "Could not save — export your notes". |
 | 3.3.4 | Error Prevention (Legal, Financial, Data) | ❌ W8 | `notes.spec.ts`, `canvas.spec.ts`, `library.spec.ts` | Removing a card, edge, mark or translation is neither confirmed nor reversible. |
 | 3.3.8 | Accessible Authentication (Minimum) | ➖ | — | No authentication. |
@@ -79,7 +79,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.2.7 | Extended Audio Description | ➖ | — | |
 | 1.2.8 | Media Alternative (Prerecorded) | ➖ | — | |
 | 1.2.9 | Audio-only (Live) | ➖ | — | |
-| 1.3.6 | Identify Purpose | 🔧 W1 | axe `landmark-*`, `region` | Purpose of regions and controls is exposed through named landmarks and roles; no field collects personal data, so `autocomplete` tokens do not apply. |
+| 1.3.6 | Identify Purpose | ✅ | axe `landmark-*`, `region` in every state | Regions are named landmarks (Scripture, Notes, Passage, Marked verses, Translations, Settings, Search results, Where your notes are kept); controls carry roles and names. No field collects personal data, so `autocomplete` does not apply. |
 | 1.4.6 | Contrast (Enhanced) | ✅ | `tests/unit/contrast.test.ts` — `--ink`, `--ink-soft`, `--accent`, `--danger` ≥ 7:1 on both papers and `--ink` ≥ 7:1 over every highlight tint, in light, dark, hc-light, hc-dark and sepia; axe `color-contrast-enhanced` as backstop | Was: `--accent` 4.65:1, dark `--ink-soft` 6.59:1, `#b3261e` 6.21:1. New values: light accent `#5f4a0e` (8.07), dark `--ink-soft` `#b3ada5` (7.49), danger `#9a1f18`/`#f2b8b5`. |
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
@@ -91,15 +91,15 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |
 | 2.3.2 | Three Flashes | ✅ | — | |
 | 2.3.3 | Animation from Interactions | ✅ | `tests/reader/motion.spec.ts` (flash animation is `none` under the OS preference and under the Settings switch; a still outline marks the verse instead) | Both `prefers-reduced-motion` and `data-motion="reduce"` disable every transition and animation and force `scroll-behavior: auto`; scripted scrolls ask `prefersReducedMotion()`. |
-| 2.4.8 | Location | ❌ W1 | `reading.spec.ts` title test | Page title reflects book, chapter, translation and open panel; the passage `<nav>` is always present. |
-| 2.4.9 | Link Purpose (Link Only) | ❌ W1 | axe `link-name`, `identical-links-same-purpose` | "source" → "KJV source"; wikilink buttons named by their resolved description. |
-| 2.4.10 | Section Headings | ❌ W1 | axe `page-has-heading-one`, `heading-order` | One `h1` per view state; Marks groups get headings; notes pane gets a heading; canvas gets one. |
+| 2.4.8 | Location | ✅ | `reading.spec.ts` title test | The title says the passage and translation or the open panel; the passage `<nav>` is always in the bar; the sticky chapter heading stays in view. |
+| 2.4.9 | Link Purpose (Link Only) | ✅ | axe `link-name`, `identical-links-same-purpose` | "{Translation} source"; wikilinks named "Go to …" from their resolved passage. |
+| 2.4.10 | Section Headings | ✅ | `keyboard.spec.ts` (exactly one `h1` in reading, Marks, Translations, Settings, and the board); axe `page-has-heading-one`, `heading-order` | The chapter title, the open panel's title, or the board name is the `h1`; Marks collections and the notes pane are `h2`; note headings start at `h3`. |
 | 2.4.12 | Focus Not Obscured (Enhanced) | 🔧 T1, T6 | `keyboard.spec.ts` | Scroll padding in place (see 2.4.11); the sheet's `inert` and the measured bar heights complete it. |
 | 2.4.13 | Focus Appearance | ✅ | `contrast.test.ts` (`--focus` ≥ 3:1 on both papers in every theme); `keyboard.spec.ts` (2 px solid ring on every stop) | The ring is `2px solid var(--focus)`, offset 2 px outside controls and 2 px inside flush text fields, so the whole perimeter is at least 2 px and the change of contrast clears 3:1. |
 | 2.5.5 | Target Size (Enhanced) | ❌ T6, T2, T4, T5 | `tests/reader/targets.spec.ts`, `tests/reader-touch/*` | 44 × 44 CSS px for every pointer target. Exceptions claimed: the verse number is **inline** in the text and the whole verse is an **equivalent** target; text links inside prose are inline. |
 | 2.5.6 | Concurrent Input Mechanisms | ✅ | — | Nothing restricts input modality; touch, mouse and keyboard coexist. |
 | 3.1.3 | Unusual Words | ❌ W7 | help panel glossary | "Whole words only", "Mirror to a folder", "collection", "board", "WebMCP" get definitions. |
-| 3.1.4 | Abbreviations | ❌ W7, W1 | help panel; `a11y.spec.ts` | Translation IDs (KJV, BSB, VBL…) expand to names; CC BY-SA, OT/NT are expanded. |
+| 3.1.4 | Abbreviations | 🔧 W7 | `a11y.spec.ts` | Done: the translation chip's name expands its ID; the library shows full names beside IDs. Remaining: the help panel's abbreviations table (CC BY-SA, CC0, OT/NT) (W7). |
 | 3.1.5 | Reading Level | 📄 content; 🔧 W7 for UI text | plain-language pass on app copy | Scripture and notes are content. App-authored text is written to lower-secondary level or supplemented by the help panel. |
 | 3.1.6 | Pronunciation | 📄 content | — | Kanji readings in the Japanese translation are content. No UI text has meaning that depends on pronunciation. |
 | 3.2.5 | Change on Request | ✅ (W11 hardens) | `apps/reader/dist/registerSW.js` | No automatic context changes; the service worker registration does not reload the page. W11 replaces the silent worker take-over with a user-triggered reload. |

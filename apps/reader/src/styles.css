@@ -212,6 +212,19 @@ button, select, [role='button'], .sheet__grip { touch-action: manipulation; }
   clip-path: inset(50%); white-space: nowrap;
 }
 
+/* Skip links (2.4.1): first in the Tab order, off-screen until focused, then a
+   pill at the top-left that says where it goes. */
+.skip {
+  position: absolute; top: .5rem; left: .5rem; z-index: 30;
+  display: inline-flex; align-items: center; min-height: var(--control-h);
+  padding: .5rem 1rem; border-radius: 999px;
+  background: var(--paper-raised); color: var(--ink); border: 1px solid var(--edge);
+  font: inherit; font-size: .9rem; text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus-visible { transform: none; }
+.skip + .skip { left: calc(.5rem + 11rem); }
+
 /* One ring, on everything that can take focus (2.4.7, 2.4.13). Written with
    real specificity, not `:where()`: at zero specificity the rule lost to every
    later declaration that switched the outline off, which is how the main
@@ -325,7 +338,8 @@ summary:focus-visible,
   border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
 }
 .reader__chip:hover { color: var(--ink); border-color: var(--ink-soft); }
-.reader__chip[aria-pressed='true'] {
+.reader__nav { display: contents; }
+.reader__chip[aria-expanded='true'] {
   color: var(--ink); border-color: var(--ink-soft);
   background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
 }
@@ -840,10 +854,11 @@ summary:focus-visible,
 .preview__block:hover { background: color-mix(in srgb, var(--rule) 28%, transparent); }
 .preview__heading { font-family: var(--serif); line-height: 1.3; margin: 1.1rem 0 .4rem; }
 .preview__block:first-child .preview__heading { margin-top: .2rem; }
-h1.preview__heading { font-size: 1.5rem; }
-h2.preview__heading { font-size: 1.25rem; }
-h3.preview__heading { font-size: 1.08rem; }
-h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98rem; }
+/* Sized by the level the author wrote, not the level the outline gives it. */
+.preview__heading[data-level='1'] { font-size: 1.5rem; }
+.preview__heading[data-level='2'] { font-size: 1.25rem; }
+.preview__heading[data-level='3'] { font-size: 1.08rem; }
+.preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: .98rem; }
 .preview__p { margin: .5rem 0; white-space: pre-wrap; }
 .preview__quote {
   margin: .6rem 0; padding: .2rem 0 .2rem .8rem;
@@ -924,6 +939,10 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
   background-color: color-mix(in srgb, var(--accent) 18%, var(--paper-raised));
 }
 .results__book-count { color: var(--accent); font-variant-numeric: tabular-nums; }
+/* On the pressed chip the background is already accent-tinted; the accent as
+   text on it is 6.4:1 in light and less in dark. Ink clears 7:1 on both
+   (1.4.6) — axe caught this one, which is what the backstop is for. */
+.results__book[aria-pressed='true'] .results__book-count { color: var(--ink); }
 
 .results__list { list-style: none; margin: 0; padding: 0; }
 .results__item { display: flex; align-items: stretch; gap: .25rem; border-bottom: 1px solid var(--rule); }

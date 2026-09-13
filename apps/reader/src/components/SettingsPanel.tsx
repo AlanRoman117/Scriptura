@@ -88,9 +88,9 @@ export function SettingsPanel({
   useReturnFocus(true, '[data-testid="settings-open"]');
 
   return (
-    <section ref={root} className="settings" data-testid="settings-panel" aria-label="Settings">
+    <section ref={root} className="settings" id="settings-panel" data-testid="settings-panel" aria-label="Settings">
       <header className="settings__bar">
-        <h2 className="settings__title">Settings</h2>
+        <h1 className="settings__title">Settings</h1>
         <button
           type="button"
           className="settings__close"
@@ -106,7 +106,7 @@ export function SettingsPanel({
           here is a real <label> on a real <select>: a visible name, a native
           control, and nothing to relearn. */}
       <section className="settings__group">
-        <h3 className="settings__heading">Reading &amp; display</h3>
+        <h2 className="settings__heading">Reading &amp; display</h2>
         <div className="settings__field">
           <label htmlFor="pref-theme">Colours</label>
           <select
@@ -174,7 +174,7 @@ export function SettingsPanel({
       </section>
 
       <section className="settings__group">
-        <h3 className="settings__heading">Accessibility</h3>
+        <h2 className="settings__heading">Accessibility</h2>
         <div className="settings__field">
           <label htmlFor="pref-motion">Motion</label>
           <select
@@ -202,7 +202,7 @@ export function SettingsPanel({
       </section>
 
       <section className="settings__group">
-        <h3 className="settings__heading">Where your work lives</h3>
+        <h2 className="settings__heading">Where your work lives</h2>
         <p className="settings__body" data-testid="settings-persistence">
           {PERSISTENCE_COPY[persistence]}
         </p>
@@ -227,7 +227,7 @@ export function SettingsPanel({
       </section>
 
       <section className="settings__group">
-        <h3 className="settings__heading">Assistant access</h3>
+        <h2 className="settings__heading">Assistant access</h2>
         <p className="settings__body">
           Scriptura can offer itself to an AI assistant running in this browser, so it can read
           your library and draft things for you. It is <strong>off</strong> until you turn it on,
@@ -262,7 +262,7 @@ export function SettingsPanel({
 
         <details className="settings__tools">
           <summary>What an assistant would be able to do ({TOOLS.length} tools)</summary>
-          <ul>
+          <ul role="list">
             {TOOLS.map((tool) => (
               <li key={tool.name}>
                 <code>{tool.name}</code>{' '}

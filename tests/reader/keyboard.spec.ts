@@ -209,3 +209,28 @@ test.describe('the proposal is a real modal', () => {
     await expect.poll(() => activeTestId(page)).toBe('settings-open');
   });
 });
+
+test.describe('one level-1 heading, always (2.4.10)', () => {
+  test('reading, each panel, and the board', async ({ page }) => {
+    await open(page);
+    const h1 = page.getByRole('heading', { level: 1 });
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toContainText('John 1');
+
+    for (const [chip, text] of [
+      ['marks-open', 'Marks'],
+      ['library-open', 'Translations'],
+      ['settings-open', 'Settings'],
+    ] as const) {
+      await page.getByTestId(chip).click();
+      await expect(h1).toHaveCount(1);
+      await expect(h1).toContainText(text);
+      await page.getByTestId(chip).click();
+    }
+
+    await page.getByTestId('canvas-open').click();
+    await expect(page.getByTestId('canvas')).toBeVisible();
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toContainText(/Board/);
+  });
+});

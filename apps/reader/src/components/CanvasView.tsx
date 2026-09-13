@@ -263,7 +263,12 @@ export function CanvasView({
   };
 
   return (
-    <div className="canvas" data-testid="canvas">
+    <main className="canvas" data-testid="canvas" aria-label="Boards">
+      {/* This view replaces the whole layout, so it carries the page's level-1
+          heading; the board picker is what the reader sees (2.4.10). */}
+      <h1 className="visually-hidden" id="canvas-heading">
+        Board: {board?.name || 'none open'}
+      </h1>
       <header className="canvas__bar">
         <select
           className="canvas__select"
@@ -332,7 +337,7 @@ export function CanvasView({
           <button
             type="button"
             data-testid="zoom-reset"
-            title="Back to full size, showing your cards"
+            aria-label={`Zoom ${Math.round(zoom * 100)}%. Reset to full size, showing your cards`}
             onClick={() => {
               setZoom(1);
               // Panned to the content, not to the origin: a board whose cards
@@ -473,7 +478,7 @@ export function CanvasView({
                       className="card__action"
                       data-testid={`card-connect-${node.id}`}
                       aria-pressed={connecting === node.id}
-                      title="Connect this card to another"
+                      aria-label="Connect this card to another"
                       onClick={(e) => {
                         e.stopPropagation();
                         setConnecting(connecting === node.id ? null : node.id);
@@ -486,7 +491,7 @@ export function CanvasView({
                         type="button"
                         className="card__action"
                         data-testid={`card-open-${node.id}`}
-                        title="Open this passage"
+                        aria-label="Open this passage in the reader"
                         onClick={(e) => {
                           e.stopPropagation();
                           onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
@@ -521,7 +526,7 @@ export function CanvasView({
                       type="button"
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
-                      title="Take this card off the board"
+                      aria-label="Take this card off the board"
                       onClick={(e) => {
                         e.stopPropagation();
                         removeCard(node.id);
@@ -558,6 +563,6 @@ export function CanvasView({
           </button>
         </div>
       )}
-    </div>
+    </main>
   );
 }

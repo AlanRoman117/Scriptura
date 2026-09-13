@@ -32,6 +32,9 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
   }, [bibles, bookSlug, chapter]);
 
   const owed = bibles.filter((b) => requiresAttribution(b.meta));
+  /** Each column is read in its own language (3.1.2). */
+  const languageOf = (translation: string) =>
+    bibles.find((b) => b.meta.id === translation)?.meta.language;
 
   return (
     <section className="compare" data-testid="compare" aria-label="Translations side by side">
@@ -70,12 +73,14 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
                   {row.number}
                 </th>
                 {row.cells.map((text, i) => (
-                  <td key={columns[i].translation} className="compare__cell">
+                  <td key={columns[i].translation} className="compare__cell" lang={languageOf(columns[i].translation)}>
                     {text === null ? (
-                      // Absent, not empty: say so, because a blank cell reads
-                      // as a rendering bug rather than a versification fact.
-                      <span className="compare__absent" title="Not present in this translation">
-                        —
+                      // Absent, not empty: say so in words, because a blank
+                      // cell reads as a rendering bug rather than a
+                      // versification fact — and a dash with a tooltip said
+                      // it only to a mouse.
+                      <span className="compare__absent" lang="en">
+                        Not in {columns[i].translation.toUpperCase()}
                       </span>
                     ) : (
                       <>
@@ -108,7 +113,7 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
             <span key={b.meta.id} className="attribution__line">
               {b.meta.attribution} ·{' '}
               <a href={b.meta.source_url} target="_blank" rel="noreferrer noopener">
-                source
+                {b.meta.name} source
               </a>
             </span>
           ))}

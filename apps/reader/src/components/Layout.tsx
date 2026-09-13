@@ -90,7 +90,7 @@ export function Layout({ bible, notes }: LayoutProps) {
   if (narrow) {
     return (
       <div className="layout layout--narrow" data-testid="layout" data-mode="narrow">
-        <main className="pane pane--bible" data-testid="pane-bible">
+        <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture">
           {bible}
         </main>
         <section
@@ -131,7 +131,7 @@ export function Layout({ bible, notes }: LayoutProps) {
       ref={frame}
       style={{ ['--split' as string]: `${split * 100}%` }}
     >
-      <main className="pane pane--bible" data-testid="pane-bible" hidden={maximized === 'notes'}>
+      <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture" hidden={maximized === 'notes'}>
         <PaneControl
           label="Bible"
           active={maximized === 'bible'}
@@ -160,7 +160,7 @@ export function Layout({ bible, notes }: LayoutProps) {
         />
       )}
 
-      <aside className="pane pane--notes" data-testid="pane-notes" hidden={maximized === 'bible'}>
+      <aside className="pane pane--notes" data-testid="pane-notes" aria-label="Notes" hidden={maximized === 'bible'}>
         <PaneControl
           label="Notes"
           active={maximized === 'notes'}

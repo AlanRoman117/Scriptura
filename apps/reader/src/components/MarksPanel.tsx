@@ -80,9 +80,11 @@ export function MarksPanel({
   useReturnFocus(true, '[data-testid="marks-open"]');
 
   return (
-    <section ref={root} className="marks" data-testid="marks-panel" aria-label="Marked verses">
+    <section ref={root} className="marks" id="marks-panel" data-testid="marks-panel" aria-label="Marked verses">
       <header className="marks__bar">
-        <h2 className="marks__title">Marks</h2>
+        {/* The chapter's h1 is hidden while this panel covers it, so this is
+            the page's level-1 heading for as long as it is open (2.4.10). */}
+        <h1 className="marks__title">Marks</h1>
         <button
           type="button"
           className="marks__close"
@@ -102,6 +104,9 @@ export function MarksPanel({
         const marks = byColor.get(color) ?? [];
         return (
           <section className="marks__group" key={color} data-testid={`marks-group-${color}`}>
+            {/* Five collections are five sections; the editable label is the
+                control, and this is the heading a screen reader navigates by. */}
+            <h2 className="visually-hidden">{colorLabel(color, labels)}</h2>
             <header className="marks__group-bar">
               <span className="swatch swatch--static" data-color={color} aria-hidden="true" />
               <input
@@ -120,7 +125,7 @@ export function MarksPanel({
             {marks.length === 0 ? (
               <p className="marks__empty">Nothing marked in this colour yet.</p>
             ) : (
-              <ul className="marks__list">
+              <ul className="marks__list" role="list">
                 {marks.map((m) => (
                   <li className="marks__item" key={m.id}>
                     <button
@@ -132,7 +137,11 @@ export function MarksPanel({
                       <span className="marks__ref-label">
                         {m.name} {m.chapter}:{m.verse}
                       </span>
-                      {m.text && <span className="marks__ref-text">{m.text}</span>}
+                      {m.text && (
+                        <span className="marks__ref-text" lang={bible.meta.language}>
+                          {m.text}
+                        </span>
+                      )}
                     </button>
                     <button
                       type="button"

@@ -115,7 +115,10 @@ export function NotesPane({
   };
 
   return (
-    <div className="notes" data-testid="notes">
+    <div className="notes" id="notes" tabIndex={-1} data-testid="notes">
+      {/* The pane's own heading, so a note's headings have a parent and the
+          outline reads chapter → notes → the note (2.4.10). */}
+      <h2 className="visually-hidden">Notes</h2>
       <header className="notes__bar">
         <select
           className="notes__select"
@@ -227,6 +230,7 @@ export function NotesPane({
               bible={bible}
               notes={notes}
               boards={boards}
+              describeLink={describeLink}
               onEditAt={editAt}
               onFollowLink={(target) => onFollowLink?.(target)}
               onOpenBoard={(id) => onOpenBoard?.(id)}
