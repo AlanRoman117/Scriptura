@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useRef, useMemo } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { Bible } from '@scriptura/core/types';
 import {
   HIGHLIGHT_COLORS,
@@ -72,8 +73,14 @@ export function MarksPanel({
     return groups;
   }, [bible, highlights]);
 
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="marks-open"]');
+
   return (
-    <section className="marks" data-testid="marks-panel" aria-label="Marked verses">
+    <section ref={root} className="marks" data-testid="marks-panel" aria-label="Marked verses">
       <header className="marks__bar">
         <h2 className="marks__title">Marks</h2>
         <button

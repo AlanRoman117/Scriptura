@@ -3,6 +3,7 @@ import type { Bible } from '@scriptura/core/types';
 import { HIGHLIGHT_COLORS, type HighlightColor, type Note } from '../lib/notes';
 import { CARD_H, CARD_W, describeNode, freeSlot, type Board, type BoardNode } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
+import { useDismissable } from '../lib/focus';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -55,11 +56,10 @@ export function CanvasView({
   const panning = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => setConfirmingDelete(false), [activeId]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setConnecting(null);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  // Escape cancels a connection in progress. Not on an outside press: pressing
+  // the background already cancels through the pan, and pressing a card is
+  // how the connection is completed.
+  useDismissable(connecting !== null, () => setConnecting(null), frame, { outside: false });
 
   /**
    * Wheel to move, ctrl/⌘-wheel to zoom — the convention every other canvas

@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import type { Persistence } from './DurabilityBanner';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import { formatBytes } from '../lib/units';
 import { TOOLS } from '../lib/webmcp';
 import {
@@ -79,8 +81,14 @@ export function SettingsPanel({
   prefs,
   onPrefs,
 }: SettingsPanelProps) {
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the chip
+  // that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="settings-open"]');
+
   return (
-    <section className="settings" data-testid="settings-panel" aria-label="Settings">
+    <section ref={root} className="settings" data-testid="settings-panel" aria-label="Settings">
       <header className="settings__bar">
         <h2 className="settings__title">Settings</h2>
         <button

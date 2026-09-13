@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useRef, useMemo, useState } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { Bible, SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions } from '../lib/search';
 
@@ -68,8 +69,14 @@ export function SearchResults({
     setShown(PAGE);
   };
 
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="search-input"]');
+
   return (
-    <section className="results" data-testid="search-results" aria-label="Search results">
+    <section ref={root} className="results" data-testid="search-results" aria-label="Search results">
       <header className="results__bar">
         <h2 className="results__title">
           <span data-testid="results-total">{results.length}</span>{' '}

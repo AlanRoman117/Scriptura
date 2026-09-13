@@ -639,11 +639,15 @@ summary:focus-visible,
 
 /* ── A staged proposal: contents, not counts ──────────────────────────────── */
 
+/* A native <dialog> in the top layer. The UA hides a closed dialog with
+   `display: none`; the flex layout is scoped to `[open]` so the frame between
+   mount and showModal() never paints an un-modal box. */
 .proposal {
-  position: fixed; inset: 0; z-index: 20;
-  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
-  background: color-mix(in srgb, #000 45%, transparent);
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 1.5rem; border: 0; background: transparent; color: inherit;
 }
+.proposal[open] { display: flex; align-items: center; justify-content: center; }
+.proposal::backdrop { background: color-mix(in srgb, #000 45%, transparent); }
 .proposal__box {
   display: flex; flex-direction: column; width: min(42rem, 100%); max-height: 85vh;
   background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;

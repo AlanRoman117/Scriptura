@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { prefersReducedMotion } from '../lib/prefs';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
 
 interface BiblePaneProps {
@@ -54,16 +55,17 @@ export function BiblePane({
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const [stuck, setStuck] = useState(false);
+  /** The verse whose actions are open — the whole <p>, so a press on it is not "outside". */
+  const openVerseEl = useRef<HTMLParagraphElement | null>(null);
 
   // Swatches left open on a verse you have navigated away from are stale.
   useEffect(() => setOpenVerse(null), [book.slug, chapter]);
 
-  // Escape closes them, like any other transient surface.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpenVerse(null);
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  // Escape closes them — only them, if something opened later is on top — and
+  // so does a press anywhere outside the verse. Focus goes back to the number
+  // that opened them (2.4.3).
+  useDismissable(openVerse !== null, () => setOpenVerse(null), openVerseEl, { ignore: '.verse' });
+  useReturnFocus(openVerse !== null);
 
   useEffect(() => {
     if (focusVerse == null) return;
@@ -196,6 +198,7 @@ export function BiblePane({
                 <p
                   className="verse"
                   key={v.number}
+                  ref={open ? openVerseEl : undefined}
                   data-verse={v.number}
                   data-highlight={mark?.color ?? undefined}
                   data-open={open || undefined}

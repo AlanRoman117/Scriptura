@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions, type ResolvedReference } from '../lib/search';
+import { useDismissable } from '../lib/focus';
 
 interface SearchBarProps {
   query: string;
@@ -42,9 +43,22 @@ export function SearchBar({
 }: SearchBarProps) {
   const [focused, setFocused] = useState(false);
   const open = focused && query.trim().length > 0;
+  const root = useRef<HTMLDivElement>(null);
+
+  // Escape clears and closes — through the shared stack, so it closes only
+  // this if the verse actions or a connection opened later are on top.
+  useDismissable(
+    open,
+    () => {
+      onQuery('');
+      onClose();
+    },
+    root,
+    { outside: false }
+  );
 
   return (
-    <div className="search" data-testid="search">
+    <div className="search" data-testid="search" ref={root}>
       <input
         className="search__input"
         data-testid="search-input"
@@ -64,10 +78,6 @@ export function SearchBar({
         // Delayed so a click on a result lands before the panel closes.
         onBlur={() => window.setTimeout(() => setFocused(false), 150)}
         onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            onQuery('');
-            onClose();
-          }
           if (e.key === 'Enter' && reference) {
             onGo(reference.book_slug, reference.chapter, reference.verse);
             setFocused(false);

@@ -20,14 +20,14 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.1 | Use of Color | ❌ W2 | `a11y.spec.ts`; `notes.spec.ts` marker test | Highlight collection membership is conveyed by hue alone; card colour likewise. Fix: left rule + optional glyph, collection name in the control's accessible name, visually-hidden colour name on cards. |
 | 1.4.2 | Audio Control | ➖ | — | |
 | 2.1.1 | Keyboard | ❌ T3, T4, T6, T8 | `keyboard.spec.ts` | Preview blocks, canvas (pan, drag, resize, connect target, edge delete), search panel and editor toolbar are pointer-only. |
-| 2.1.2 | No Keyboard Trap | ✅ | `keyboard.spec.ts` | No traps today; the native `<dialog>` keeps Escape. |
+| 2.1.2 | No Keyboard Trap | ✅ | `keyboard.spec.ts` (Tab from the modal never reaches a page element behind it; Escape closes it) | The proposal is a native `<dialog>` opened with `showModal()`: the page behind it is inert and Escape discards. |
 | 2.1.4 | Character Key Shortcuts | ✅ | — | No single-character shortcuts exist. |
 | 2.2.1 | Timing Adjustable | ✅ | — | No time limits. The 150 ms blur timers that removed UI are deleted by T3/T8. |
 | 2.2.2 | Pause, Stop, Hide | ✅ | — | Nothing moves, blinks or auto-updates for more than 5 s (verse flash 1.6 s). |
 | 2.3.1 | Three Flashes or Below Threshold | ✅ | — | One 1.6 s flash on jump. |
 | 2.4.1 | Bypass Blocks | ❌ W1 | axe `bypass`, `keyboard.spec.ts` | No skip link; the notes `<aside>` is unnamed. |
 | 2.4.2 | Page Titled | ❌ W1 | `reading.spec.ts` title test | `<title>` is static. Fix: `Book Chapter · ID · Scriptura`, panel names when open. |
-| 2.4.3 | Focus Order | ❌ F3, T2, W1 | `keyboard.spec.ts` | Focus is lost when swatches, panels or the dialog close; the dialog has no initial focus. |
+| 2.4.3 | Focus Order | 🔧 T2, W1 | `keyboard.spec.ts` (Escape returns focus to the opening chip for Marks, Library and Settings; to the verse number for the verse actions; to the previously focused element after the dialog; Escape closes only the newest surface) | Done: `useReturnFocus` and the dismiss stack in `lib/focus.ts`; the dialog takes initial focus itself so its title and lede are read first. Remaining: focus moves *into* the verse actions when opened by keyboard (T2); skip links (W1). |
 | 2.4.4 | Link Purpose (In Context) | ❌ W1 | axe `link-name` | Attribution link reads "source"; preview wikilinks are named by the raw target. |
 | 2.5.1 | Pointer Gestures | ✅ | — | No path-based or multipoint gesture is required; pinch (T4) is an addition with button equivalents. |
 | 2.5.2 | Pointer Cancellation | ✅ | — | Activation is on up-event; down-event starts only drags, which are essential. |

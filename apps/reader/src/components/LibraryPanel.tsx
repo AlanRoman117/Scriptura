@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useRef, useMemo } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { CatalogEntry } from '../lib/library';
 import { downloadPercent, formatBytes } from '../lib/library';
 import { DEFAULT_TRANSLATION } from '../lib/api';
@@ -72,8 +73,14 @@ export function LibraryPanel({
     .filter((t) => installed.includes(t.id))
     .reduce((n, t) => n + (t.approxBytes ?? 0), 0);
 
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="library-open"]');
+
   return (
-    <section className="library" data-testid="library-panel" aria-label="Translations">
+    <section ref={root} className="library" data-testid="library-panel" aria-label="Translations">
       <header className="library__bar">
         <h2 className="library__title">Translations</h2>
         <button

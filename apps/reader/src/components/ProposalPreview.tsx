@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import type { Proposal } from '../lib/webmcp';
 import { colorLabel, type ColorLabels } from '../lib/notes';
+import { useReturnFocus } from '../lib/focus';
 
 interface ProposalPreviewProps {
   bible: Bible;
@@ -22,6 +23,12 @@ interface ProposalPreviewProps {
  *
  * Everything is editable before it is accepted, because the likeliest failure
  * is not a malicious proposal but a nearly-right one.
+ *
+ * A native <dialog> opened with showModal(): the browser puts it in the top
+ * layer, makes everything behind it inert, keeps Tab inside, and turns Escape
+ * into `cancel` → `close`. The earlier div with role="dialog" and aria-modal
+ * had none of that — assistive technology hid the page behind it while Tab
+ * still wandered off into it (2.4.3, 2.1.2).
  */
 export function ProposalPreview({
   bible,
@@ -33,12 +40,22 @@ export function ProposalPreview({
   const [title, setTitle] = useState(proposal.kind === 'note' ? proposal.title : '');
   const [body, setBody] = useState(proposal.kind === 'note' ? proposal.body : '');
   const [dropped, setDropped] = useState<Set<string>>(new Set());
+  const dialog = useRef<HTMLDialogElement>(null);
+
+  // Mounted means open, so focus returns on unmount to whatever had it — the
+  // chip, the note, wherever the reader was when the assistant spoke up.
+  useReturnFocus(true);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onDiscard();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onDiscard]);
+    const el = dialog.current;
+    if (!el) return;
+    // Guarded: StrictMode runs effects twice in development, and showModal()
+    // throws on a dialog that is already open.
+    if (!el.open) el.showModal();
+    // Focus the dialog itself rather than the first field, so the title and
+    // the "nothing has been saved" lede are read before anything is edited.
+    el.focus();
+  }, []);
 
   const key = (r: { book_slug: string; chapter: number; verse: number }) =>
     `${r.book_slug}:${r.chapter}:${r.verse}`;
@@ -47,7 +64,17 @@ export function ProposalPreview({
     proposal.kind === 'marks' ? proposal.refs.filter((r) => !dropped.has(key(r))) : [];
 
   return (
-    <div className="proposal" role="dialog" aria-modal="true" aria-labelledby="proposal-title" data-testid="proposal">
+    <dialog
+      ref={dialog}
+      className="proposal"
+      aria-labelledby="proposal-title"
+      aria-describedby="proposal-lede"
+      data-testid="proposal"
+      tabIndex={-1}
+      // Every way the dialog closes natively — Escape, a form submit — lands
+      // here, so discarding has one path.
+      onClose={onDiscard}
+    >
       <div className="proposal__box">
         <header className="proposal__bar">
           <h2 className="proposal__title" id="proposal-title">
@@ -56,7 +83,7 @@ export function ProposalPreview({
         </header>
 
         {/* Said plainly and first: nothing here has happened yet. */}
-        <p className="proposal__lede" data-testid="proposal-lede">
+        <p className="proposal__lede" id="proposal-lede" data-testid="proposal-lede">
           An assistant proposed this. Nothing has been saved — review it, change anything you like,
           and it only takes effect when you accept.
         </p>
@@ -149,6 +176,6 @@ export function ProposalPreview({
           </button>
         </footer>
       </div>
-    </div>
+    </dialog>
   );
 }
