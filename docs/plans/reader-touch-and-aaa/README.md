@@ -74,18 +74,18 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | T1 | Draggable, keyboard-aware notes sheet | `briefs/11-sheet.md` | done (3234e70) |
 | T2 | Verse actions at 44 px, docked on narrow | `briefs/12-verse-actions.md` | done (8ad97e8) |
 | T3 | Search as a form; results reachable under a keyboard | `briefs/13-search.md` | done (284b7cd) |
-| T4 | Canvas: touch, pinch, keyboard, connections list, undo | `briefs/14-canvas.md` | open |
+| T4 | Canvas: touch, pinch, keyboard, connections list, undo | `briefs/14-canvas.md` | done (7909910, 441fc0b, 363afda, b9f6573) |
 | T5 | Divider hit area and single-pointer alternative | `briefs/15-divider.md` | done (dbc11e0) |
 | T6 | 44 px controls everywhere; hover reveals; preview edit buttons | `briefs/16-chrome.md` | done (dbc11e0); the canvas, verse-action and comparison states join the targets gate with T4, T2, T7 |
 | T7 | Stacked comparison on narrow panes | `briefs/17-compare-narrow.md` | done (3ff4cb5) |
 | T8 | Editor toolbar reachable by keyboard and touch | `briefs/18-editor.md` | done (1011386) |
 | W1 | Landmarks, headings, names, `lang`, page title | `briefs/21-semantics.md` | done (a50eb26) |
-| W2 | Highlight markers and non-colour meaning | `briefs/22-colour-meaning.md` | done (8ad97e8); a card's colour named in its text lands with T4 |
+| W2 | Highlight markers and non-colour meaning | `briefs/22-colour-meaning.md` | done (8ad97e8; board cards in 363afda) |
 | W3 | Visual presentation controls (1.4.8) | part of `briefs/01-prefs.md` | done (7f61c47) |
 | W4 | Motion gated on preference (2.3.3) | part of `briefs/01-prefs.md` | done (7f61c47) |
 | W5 | Focus visible and not obscured | part of `briefs/02-tokens.md` | done (b860239); scroll padding from measured bar heights lands with T6 |
 | W7 | Help panel, glossary, abbreviations, accessibility statement | `briefs/27-help.md` | done (6687812) |
-| W8 | Confirm and undo for destructive actions | `briefs/28-confirm-undo.md` | done (48f8df4); card and connection removal join with T4 |
+| W8 | Confirm and undo for destructive actions | `briefs/28-confirm-undo.md` | done (48f8df4; cards and connections in b9f6573) |
 | W9 | Status messages wired | part of `briefs/05-announcer.md` | done (a0dde32) |
 | W11 | Service-worker update prompt (recommended) | `briefs/31-sw-prompt.md` | open |
 | D | Docs: matrix, Architecture (both copies), README, CLAUDE.md, contributing | `briefs/40-docs.md` | open |

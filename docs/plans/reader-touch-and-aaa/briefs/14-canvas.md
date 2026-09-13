@@ -5,7 +5,7 @@
 | **ID** | `14-canvas` |
 | **Size** | L (split into four commits in the plan: capture and cancel; pinch; keyboard and single-pointer controls; edges, undo and heading) |
 | **Depends on** | `04-viewport` (`usePointerDrag`), `03-focus`, `02-tokens`, `28-confirm-undo` (`ConfirmButton`), `01-prefs` (markers) |
-| **Status** | open |
+| **Status** | done (7909910, 441fc0b, 363afda, b9f6573) |
 | **Criteria** | 2.1.1/2.1.3 Keyboard, 2.5.7 Dragging Movements, 2.5.5 Target Size, 1.1.1 (text alternative), 4.1.2, 2.4.10 (heading), 3.3.6 (undo), 1.4.1 |
 
 ## Outcome
