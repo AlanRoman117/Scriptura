@@ -58,6 +58,37 @@ test.describe('notes', () => {
     await expect(page.getByTestId('notes-surface')).toHaveValue('The Word was with God.');
   });
 
+  test('an edit is saved even when another note is edited inside the autosave delay', async ({ page }) => {
+    // The debounce used to be one timer for every note: typing in a second
+    // note within 600ms cancelled the first note's pending save, and its last
+    // words were never written.
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('First');
+    await persisted(page, 'First');
+    await page.getByTestId('notes-surface').fill('Words in the first note.');
+    // Straight into another note, well inside the delay.
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-title').fill('Second');
+
+    await expect
+      .poll(
+        () =>
+          page.evaluate(
+            () =>
+              new Promise<string[]>((resolve) => {
+                const req = indexedDB.open('scriptura');
+                req.onsuccess = () => {
+                  const all = req.result.transaction('notes').objectStore('notes').getAll();
+                  all.onsuccess = () => resolve((all.result as { body: string }[]).map((n) => n.body));
+                };
+              })
+          ),
+        { timeout: 10_000 }
+      )
+      .toContain('Words in the first note.');
+  });
+
   test('notes can be created, switched between, and deleted', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-new').click();

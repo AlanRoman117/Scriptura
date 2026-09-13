@@ -35,7 +35,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // A new build waits until the reader says so (components/UpdateNotice).
+      // `autoUpdate` skipped waiting and took the open page the moment a build
+      // was fetched — mid-edit, with up to 600ms of typing not yet saved.
+      registerType: 'prompt',
       // The bundled translation is deliberately NOT precached. It is ~4.4MB, so
       // putting it in the precache manifest would block service-worker install
       // on a large download and re-download the whole thing whenever its hash
@@ -44,6 +47,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
         globIgnores: ['**/bible/**'],
         navigateFallback: 'index.html',
+        // On a first visit there is no page to interrupt, so the new worker
+        // takes control at once and the app works offline from then on. An
+        // update still waits: a worker only activates after the reader's
+        // Reload asks it to skip waiting, and claims the page then.
+        clientsClaim: true,
       },
       manifest: {
         name: 'Scriptura Reader',

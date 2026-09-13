@@ -71,6 +71,7 @@ import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
 import { useVisualViewport } from './lib/viewport';
 import { announce } from './lib/announce';
+import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -165,6 +166,14 @@ export function App() {
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
 
   const saveTimer = useRef<number | null>(null);
+  /**
+   * Edits waiting out the autosave delay, by note. Keyed per note: a single
+   * pending edit meant that typing in a second note within the delay
+   * cancelled the first note's save, and its last words were never written.
+   */
+  const pendingSaves = useRef(new Map<string, Note>());
+  const notesNow = useRef<Note[]>([]);
+  const mirroringNow = useRef(false);
   const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
   /** Where to leave the cursor after an insertion, applied once React repaints. */
   const caret = useRef<{ at: number; focus: boolean } | null>(null);
@@ -391,6 +400,47 @@ export function App() {
     document.title = where ? `${where} · Scriptura` : 'Scriptura Reader';
   }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
 
+  notesNow.current = notes;
+  mirroringNow.current = isMirroring;
+
+  /** Write every pending edit now. The autosave timer calls it; so does anything about to end the page. */
+  const flushSaves = useCallback(async () => {
+    if (saveTimer.current) {
+      window.clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    const batch = [...pendingSaves.current.values()];
+    pendingSaves.current.clear();
+    if (batch.length === 0) return;
+    const results = await Promise.all(
+      batch.map((note) =>
+        saveNote(note, (_store, err) => {
+          // Warned once per store by writeSafely — a quota failure repeats on
+          // every keystroke, and a toast per keystroke trains people to
+          // dismiss the one message that matters.
+          console.error('Saving notes failed:', err);
+        })
+      )
+    );
+    const ok = results.every(Boolean);
+    setSaving(ok ? 'saved' : 'failed');
+    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current);
+  }, []);
+
+  // The update notice flushes before it reloads; a phone putting the tab in
+  // the background, where the system may discard it, flushes too.
+  useEffect(() => {
+    setPendingFlush(flushSaves);
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') void flushSaves();
+    };
+    document.addEventListener('visibilitychange', onHidden);
+    return () => {
+      setPendingFlush(null);
+      document.removeEventListener('visibilitychange', onHidden);
+    };
+  }, [flushSaves]);
+
   const changeNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => {
       setSaving('saving');
@@ -399,25 +449,15 @@ export function App() {
           n.id === id ? { ...n, ...patch, updated: Date.now() } : n
         );
         const edited = next.find((n) => n.id === id);
+        if (edited) pendingSaves.current.set(id, edited);
 
         if (saveTimer.current) window.clearTimeout(saveTimer.current);
-        saveTimer.current = window.setTimeout(() => {
-          if (!edited) return;
-          void saveNote(edited, (_store, err) => {
-            // Warned once per store by writeSafely — a quota failure repeats on
-            // every keystroke, and a toast per keystroke trains people to
-            // dismiss the one message that matters.
-            console.error('Saving notes failed:', err);
-          }).then((ok) => {
-            setSaving(ok ? 'saved' : 'failed');
-            if (ok && isMirroring) void mirrorNotes(next);
-          });
-        }, AUTOSAVE_MS);
+        saveTimer.current = window.setTimeout(() => void flushSaves(), AUTOSAVE_MS);
 
         return next;
       });
     },
-    [isMirroring]
+    [flushSaves]
   );
 
   const createNote = useCallback(() => {

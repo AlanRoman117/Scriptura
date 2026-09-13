@@ -1475,6 +1475,26 @@ summary:focus-visible,
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 
+/* ── A new version is ready ───────────────────────────────────────────────── */
+
+/* Not a dialog: it takes no focus and blocks nothing, and it waits as long as
+   the reader likes. Above the notes sheet on a phone. */
+.update {
+  position: fixed; z-index: 25; left: 1rem; right: 1rem; margin-inline: auto; max-width: 30rem;
+  bottom: calc(var(--sheet-h, 0px) + 1rem + env(safe-area-inset-bottom));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
+  padding: .5rem .75rem; border: 1px solid var(--edge); border-radius: 12px;
+  background: var(--paper-raised); color: var(--ink); box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+}
+.update__text { margin: 0; font-size: .9rem; }
+.update__actions { display: flex; gap: .4rem; }
+.update__action {
+  min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
+  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+.update__action--primary { background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised)); border-color: var(--ink-soft); }
+
 /* ── Boot ─────────────────────────────────────────────────────────────────── */
 
 .boot {

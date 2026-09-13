@@ -86,7 +86,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
 | 2.1.3 | Keyboard (No Exception) | ✅ | as 2.1.1 | No exception is claimed; nothing requires path-dependent input. |
 | 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
-| 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
+| 2.2.4 | Interruptions | ✅ | `tests/reader/offline.spec.ts` (a real service-worker update, served from a private origin: the page is not reloaded, a worker waits, Later puts the notice away); `a11y.spec.ts` | Every announcement is polite except a failed download or a failed board save; the storage notice is dismissible; a new version waits for the reader and is announced once, and the reader chooses Reload or Later. |
 | 2.2.5 | Re-authenticating | ➖ | — | |
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |
 | 2.3.2 | Three Flashes | ✅ | — | |
@@ -102,7 +102,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.1.4 | Abbreviations | ✅ | `keyboard.spec.ts` (every catalogue ID appears in the abbreviations table) | The translation chip's name expands its ID; the help panel's table expands every translation ID plus CC BY-SA 4.0, CC0, OT, NT, PWA and WCAG. |
 | 3.1.5 | Reading Level | 📄 content; ✅ UI text | review of app copy | Scripture and notes are content, stated in the help panel's accessibility section. App-authored text was rewritten in short sentences with common words (Settings, the durability notice, the library note, help); the glossary supplements the terms that remain. |
 | 3.1.6 | Pronunciation | 📄 content | — | Kanji readings in the Japanese translation are content. No UI text has meaning that depends on pronunciation. |
-| 3.2.5 | Change on Request | ✅ (W11 hardens) | `apps/reader/dist/registerSW.js` | No automatic context changes; the service worker registration does not reload the page. W11 replaces the silent worker take-over with a user-triggered reload. |
+| 3.2.5 | Change on Request | ✅ | `tests/reader/offline.spec.ts` (Reload writes the words typed a moment ago, then switches versions) | No change of context happens without a request. The service worker no longer takes the page when a build is fetched (`registerType: 'prompt'`); the reader's Reload saves pending edits first. |
 | 3.3.5 | Help | ✅ | `a11y.spec.ts` help state; `keyboard.spec.ts` (opens from the bar, from Settings, and from the board; Escape returns focus) | Context-sensitive help covers finding a passage, searching, notes, marks, boards, translations, the keyboard, abbreviations, a glossary and the accessibility statement. |
 | 3.3.6 | Error Prevention (All) | ✅ | as 3.3.4 | Every destructive action on the reader's own work is confirmed or reversible, and most are both. Discarding an assistant's proposal stays one press: the draft is the assistant's, not the reader's, and can be asked for again. |
 | 3.3.9 | Accessible Authentication (Enhanced) | ➖ | — | |
