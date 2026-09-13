@@ -67,6 +67,7 @@ import {
 } from './lib/search';
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
+import { usePrefs } from './lib/prefs';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -102,6 +103,8 @@ export function App() {
   const [canvasOpen, setCanvasOpen] = useState(false);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Device-scoped display preferences; applied to <html> on every change.
+  const [prefs, updatePrefs] = usePrefs();
   const [agentEnabled, setAgentOn] = useState(() => agentIsEnabled());
   /** One at a time: a second would swap the contents under an open preview. */
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -886,6 +889,8 @@ export function App() {
                   onChooseFolder={doChooseFolder}
                   onExport={doExport}
                   onClose={() => setSettingsOpen(false)}
+                  prefs={prefs}
+                  onPrefs={updatePrefs}
                 />
               ) : libraryOpen ? (
                 <LibraryPanel

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
+import { prefersReducedMotion } from '../lib/prefs';
 import { HIGHLIGHT_COLORS, highlightId, type Highlight, type HighlightColor } from '../lib/notes';
 
 interface BiblePaneProps {
@@ -67,7 +68,10 @@ export function BiblePane({
   useEffect(() => {
     if (focusVerse == null) return;
     const el = document.querySelector(`.verse[data-verse="${focusVerse}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // The stylesheet cannot reach a scroll the script starts, so the motion
+    // preference is asked here (2.3.3). The flash class stays: under reduced
+    // motion the CSS draws it as a still outline rather than an animation.
+    el?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     el?.classList.add('verse--flash');
     const t = window.setTimeout(() => el?.classList.remove('verse--flash'), 1600);
     return () => window.clearTimeout(t);

@@ -1,6 +1,19 @@
 import type { Persistence } from './DurabilityBanner';
 import { formatBytes } from '../lib/units';
 import { TOOLS } from '../lib/webmcp';
+import {
+  MEASURES,
+  MOTIONS,
+  SPACINGS,
+  TEXT_SIZES,
+  THEMES,
+  type DisplayPrefs,
+  type Measure,
+  type Motion,
+  type Spacing,
+  type TextSize,
+  type Theme,
+} from '../lib/prefs';
 
 interface SettingsPanelProps {
   persistence: Persistence;
@@ -12,7 +25,32 @@ interface SettingsPanelProps {
   onChooseFolder: () => void;
   onExport: () => void;
   onClose: () => void;
+  prefs: DisplayPrefs;
+  onPrefs: (patch: Partial<DisplayPrefs>) => void;
 }
+
+const THEME_LABEL: Record<Theme, string> = {
+  system: 'Follow the device',
+  light: 'Light',
+  dark: 'Dark',
+  'hc-light': 'High contrast, light',
+  'hc-dark': 'High contrast, dark',
+  sepia: 'Sepia',
+};
+const SPACING_LABEL: Record<Spacing, string> = {
+  normal: 'Normal',
+  relaxed: 'Relaxed',
+  loose: 'Loose',
+};
+const MEASURE_LABEL: Record<Measure, string> = {
+  narrow: 'Narrow',
+  normal: 'Normal',
+  wide: 'Wide',
+};
+const MOTION_LABEL: Record<Motion, string> = {
+  system: 'Follow the device',
+  reduce: 'Reduce motion',
+};
 
 const PERSISTENCE_COPY: Record<Persistence, string> = {
   persisted: 'The browser has agreed to keep this data. Clearing site data still removes it.',
@@ -38,6 +76,8 @@ export function SettingsPanel({
   onChooseFolder,
   onExport,
   onClose,
+  prefs,
+  onPrefs,
 }: SettingsPanelProps) {
   return (
     <section className="settings" data-testid="settings-panel" aria-label="Settings">
@@ -53,6 +93,105 @@ export function SettingsPanel({
           ✕
         </button>
       </header>
+
+      {/* Reading is the whole point, so how it reads comes first. Every choice
+          here is a real <label> on a real <select>: a visible name, a native
+          control, and nothing to relearn. */}
+      <section className="settings__group">
+        <h3 className="settings__heading">Reading &amp; display</h3>
+        <div className="settings__field">
+          <label htmlFor="pref-theme">Colours</label>
+          <select
+            id="pref-theme"
+            data-testid="pref-theme"
+            value={prefs.theme}
+            onChange={(e) => onPrefs({ theme: e.target.value as Theme })}
+          >
+            {THEMES.map((t) => (
+              <option key={t} value={t}>
+                {THEME_LABEL[t]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="settings__field">
+          <label htmlFor="pref-text-size">Text size</label>
+          <select
+            id="pref-text-size"
+            data-testid="pref-text-size"
+            value={prefs.textSize}
+            onChange={(e) => onPrefs({ textSize: Number(e.target.value) as TextSize })}
+          >
+            {TEXT_SIZES.map((n) => (
+              <option key={n} value={n}>
+                {n}%
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="settings__field">
+          <label htmlFor="pref-spacing">Line spacing</label>
+          <select
+            id="pref-spacing"
+            data-testid="pref-spacing"
+            value={prefs.spacing}
+            onChange={(e) => onPrefs({ spacing: e.target.value as Spacing })}
+          >
+            {SPACINGS.map((sp) => (
+              <option key={sp} value={sp}>
+                {SPACING_LABEL[sp]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="settings__field">
+          <label htmlFor="pref-measure">Column width</label>
+          <select
+            id="pref-measure"
+            data-testid="pref-measure"
+            value={prefs.measure}
+            onChange={(e) => onPrefs({ measure: e.target.value as Measure })}
+          >
+            {MEASURES.map((m) => (
+              <option key={m} value={m}>
+                {MEASURE_LABEL[m]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="settings__note">
+          Relaxed and Loose spacing meet the WCAG guidance for line and paragraph spacing.
+          These settings apply to this device only.
+        </p>
+      </section>
+
+      <section className="settings__group">
+        <h3 className="settings__heading">Accessibility</h3>
+        <div className="settings__field">
+          <label htmlFor="pref-motion">Motion</label>
+          <select
+            id="pref-motion"
+            data-testid="pref-motion"
+            value={prefs.motion}
+            onChange={(e) => onPrefs({ motion: e.target.value as Motion })}
+          >
+            {MOTIONS.map((m) => (
+              <option key={m} value={m}>
+                {MOTION_LABEL[m]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <label className="settings__toggle">
+          <input
+            type="checkbox"
+            data-testid="pref-markers"
+            checked={prefs.markers}
+            onChange={(e) => onPrefs({ markers: e.target.checked })}
+          />
+          <span>Show a symbol on every highlight, not only a colour</span>
+        </label>
+      </section>
 
       <section className="settings__group">
         <h3 className="settings__heading">Where your work lives</h3>

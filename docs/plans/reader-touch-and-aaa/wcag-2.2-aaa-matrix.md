@@ -82,7 +82,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.3.6 | Identify Purpose | 🔧 W1 | axe `landmark-*`, `region` | Purpose of regions and controls is exposed through named landmarks and roles; no field collects personal data, so `autocomplete` tokens do not apply. |
 | 1.4.6 | Contrast (Enhanced) | ✅ | `tests/unit/contrast.test.ts` — `--ink`, `--ink-soft`, `--accent`, `--danger` ≥ 7:1 on both papers and `--ink` ≥ 7:1 over every highlight tint, in light, dark, hc-light, hc-dark and sepia; axe `color-contrast-enhanced` as backstop | Was: `--accent` 4.65:1, dark `--ink-soft` 6.59:1, `#b3261e` 6.21:1. New values: light accent `#5f4a0e` (8.07), dark `--ink-soft` `#b3ada5` (7.49), danger `#9a1f18`/`#f2b8b5`. |
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
-| 1.4.8 | Visual Presentation | ❌ F1 (W3) | `tests/reader/settings.spec.ts` | Selectable foreground/background themes, text size to 200 %, line and paragraph spacing presets, measure ≤ 70 ch, never justified. |
+| 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
 | 2.1.3 | Keyboard (No Exception) | ❌ T4, T6, T8 | `keyboard.spec.ts` | Same gaps as 2.1.1; no exception is claimed. |
 | 2.2.3 | No Timing | ✅ W8 | — | No time limits. Undo never expires — it persists until the next change. |
@@ -90,7 +90,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 2.2.5 | Re-authenticating | ➖ | — | |
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |
 | 2.3.2 | Three Flashes | ✅ | — | |
-| 2.3.3 | Animation from Interactions | ❌ F1 (W4) | `tests/reader/motion.spec.ts` | Verse-flash animation and smooth scrolling ignore reduced-motion; the in-app preference adds a second switch. |
+| 2.3.3 | Animation from Interactions | ✅ | `tests/reader/motion.spec.ts` (flash animation is `none` under the OS preference and under the Settings switch; a still outline marks the verse instead) | Both `prefers-reduced-motion` and `data-motion="reduce"` disable every transition and animation and force `scroll-behavior: auto`; scripted scrolls ask `prefersReducedMotion()`. |
 | 2.4.8 | Location | ❌ W1 | `reading.spec.ts` title test | Page title reflects book, chapter, translation and open panel; the passage `<nav>` is always present. |
 | 2.4.9 | Link Purpose (Link Only) | ❌ W1 | axe `link-name`, `identical-links-same-purpose` | "source" → "KJV source"; wikilink buttons named by their resolved description. |
 | 2.4.10 | Section Headings | ❌ W1 | axe `page-has-heading-one`, `heading-order` | One `h1` per view state; Marks groups get headings; notes pane gets a heading; canvas gets one. |

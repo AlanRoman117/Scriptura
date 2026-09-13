@@ -64,7 +64,11 @@
   --serif: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
   --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 
-  --reading-size: 1.125rem;
+  /* Text size as a multiplier (1.4.8), set by lib/prefs.ts. It scales the
+     reading text, the notes and the comparison — the prose — and leaves the
+     chrome alone, which is what browser zoom does not do. */
+  --text-scale: 1;
+  --reading-size: calc(1.125rem * var(--text-scale));
   --reading-leading: 1.75;
   /* Space between verses. 1.4.8 wants paragraph spacing of at least 1.5× the
      line spacing; the relaxed and loose presets in Settings reach it, and the
@@ -493,9 +497,15 @@ summary:focus-visible,
 }
 .swatches__action:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 50%, transparent); }
 
-/* A jumped-to verse announces itself, then settles. */
+/* A jumped-to verse announces itself, then settles. Under reduced motion the
+   same class draws a still outline for the same 1.6s instead — the verse is
+   still pointed out, nothing moves (2.3.3). */
 @keyframes verse-flash { from { background: color-mix(in srgb, var(--accent) 34%, transparent); } }
 .verse--flash { animation: verse-flash 1.6s ease-out; }
+:root[data-motion='reduce'] .verse--flash { animation: none; box-shadow: inset 0 0 0 2px var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  .verse--flash { animation: none; box-shadow: inset 0 0 0 2px var(--accent); }
+}
 
 /* ── Marks: the five colours, read back as five collections ───────────────── */
 
@@ -588,6 +598,18 @@ summary:focus-visible,
 }
 .settings__action:hover { color: var(--ink); border-color: var(--ink-soft); }
 .settings__toggle { display: flex; align-items: center; gap: .5rem; font-size: .85rem; margin: .5rem 0 .6rem; cursor: pointer; }
+/* A labelled native select per preference: nothing custom to learn or to
+   make accessible, and the label is the target when it wraps. */
+.settings__field {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .5rem .75rem; margin: .45rem 0; font-size: .85rem;
+}
+.settings__field select {
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem; min-width: 12rem;
+}
+.settings__field select option { background-color: var(--paper-raised); color: var(--ink); }
 .settings__tools { font-size: .78rem; color: var(--ink-soft); margin-top: .6rem; }
 .settings__tools summary { cursor: pointer; }
 .settings__tools ul { list-style: none; margin: .6rem 0 0; padding: 0; }
@@ -791,7 +813,7 @@ summary:focus-visible,
 
 .preview {
   flex: 1; min-height: 0; overflow-y: auto; padding: .3rem .1rem 1rem;
-  font-family: var(--serif); font-size: .95rem; line-height: 1.65;
+  font-family: var(--serif); font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
 }
 .preview--empty { color: var(--ink-soft); font-style: italic; cursor: text; }
 /* Every block is a way back into the editor, so reading and fixing are one
@@ -998,7 +1020,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 }
 .compare__cell {
   vertical-align: top; padding: .45rem .5rem; min-width: 12rem;
-  font-size: .95rem; line-height: 1.6; border-bottom: 1px solid var(--rule);
+  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
 }
 .compare__absent { color: var(--ink-soft); }
 .compare__quote {
@@ -1057,7 +1079,7 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 .notes__surface {
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
-  font-family: var(--serif); font-size: 1rem; line-height: 1.7;
+  font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
 }
 
 .notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
@@ -1120,9 +1142,15 @@ h4.preview__heading, h5.preview__heading, h6.preview__heading { font-size: .98re
 }
 .boot--error { color: var(--danger); }
 
+/* Motion off means off: transitions and animations both, whether the request
+   comes from the operating system or from Settings. `scroll-behavior` covers
+   CSS-driven scrolling; scripted scrolls ask lib/prefs.ts. */
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 
 /* Windows High Contrast and other forced-colour modes replace every colour
    with the system palette. Backgrounds vanish, so a highlight keeps a rule
