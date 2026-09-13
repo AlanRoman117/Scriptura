@@ -1,16 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * HTTP contract tests.
- *
- * API mode only — no browsers are installed or needed; the `request` fixture
- * speaks HTTP directly. When a front-end arrives this same config gains a
- * `projects` entry with a browser and the specs below stay as they are.
+ * HTTP contract tests, and the reader in a browser.
  *
  * Division of labour with jest (see CLAUDE.md): jest owns anything provable
  * in-process, Playwright owns anything that needs a real socket — status lines,
- * headers, CORS, HTTP methods, actual JSON serialisation. The rule of thumb is
- * "does the assertion need a real socket?"
+ * headers, CORS, HTTP methods, actual JSON serialisation — and anything that
+ * needs a real browser. The rule of thumb is "does the assertion need a real
+ * socket?"
  */
 const PORT = Number(process.env.SCRIPTURA_TEST_PORT ?? 3333);
 const READER_PORT = Number(process.env.SCRIPTURA_READER_PORT ?? 4173);
@@ -20,7 +17,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  reporter: process.env.CI ? [['github'], ['list']] : [['list']],
+  // The html reporter is what fills playwright-report/, which CI uploads on
+  // failure; without it that artifact was always empty. `open: 'never'` keeps
+  // it from launching a browser at the end of a local run.
+  reporter: process.env.CI
+    ? [['github'], ['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    : [['list']],
 
   projects: [
     {
@@ -40,6 +42,20 @@ export default defineConfig({
       testDir: './tests/reader',
       use: {
         ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${READER_PORT}`,
+      },
+    },
+    {
+      // The same built app on a phone: a coarse pointer, no hover, touch
+      // events, a 412×839 viewport at 2.6× — Chromium's Pixel 7 emulation, so
+      // no extra browser download. `(hover: none)` and `(pointer: coarse)`
+      // never match under Desktop Chrome, which is how every touch-only rule
+      // in the stylesheet went untested for a year. Playwright cannot show a
+      // software keyboard; specs that need one set `--vvh` directly.
+      name: 'reader-touch',
+      testDir: './tests/reader-touch',
+      use: {
+        ...devices['Pixel 7'],
         baseURL: `http://127.0.0.1:${READER_PORT}`,
       },
     },

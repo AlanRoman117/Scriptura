@@ -26,7 +26,15 @@ const config: Config = {
   },
   // tests/contract/ belongs to Playwright — see playwright.config.ts. Jest must
   // not try to run those specs; they import @playwright/test, not jest globals.
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/tests/contract/', '/tests/reader/', '/apps/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/tests/contract/',
+    '/tests/reader/',
+    '/tests/reader-touch/',
+    '/tests/helpers/',
+    '/apps/',
+  ],
   // Integration tests read real translations off disk on first touch.
   testTimeout: 30000,
 };

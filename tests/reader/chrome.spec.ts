@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { contrastRatio } from '../helpers/contrast';
 
 /**
  * The reading bar — contrast, and what happens when the pane gets small.
@@ -10,21 +11,6 @@ import { expect, test } from '@playwright/test';
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/');
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-}
-
-/** Relative luminance per WCAG, from an `rgb(...)` string. */
-function luminance(rgb: string): number {
-  const [r, g, b] = (rgb.match(/\d+(\.\d+)?/g) ?? ['0', '0', '0']).slice(0, 3).map(Number);
-  const channel = (c: number) => {
-    const v = c / 255;
-    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
-}
-
-function contrastRatio(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return (hi + 0.05) / (lo + 0.05);
 }
 
 test.describe('contrast', () => {

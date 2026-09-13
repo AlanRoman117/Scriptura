@@ -1,7 +1,7 @@
 {
   "name": "scriptura",
   "version": "0.1.0",
-  "description": "Open Bible data ecosystem \u2014 multi-translation, multi-language, developer-first.",
+  "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
   "private": true,
   "workspaces": [
     "packages/*",
@@ -22,7 +22,7 @@
     "schema:gen": "tsx scripts/schema-gen.ts",
     "dev:reader": "npm run dev --workspace @scriptura/reader",
     "build:reader": "npm run build --workspace @scriptura/reader",
-    "test:reader": "playwright test --project=reader --project=reader-dev"
+    "test:reader": "playwright test --project=reader --project=reader-touch --project=reader-dev"
   },
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
   "author": "Alan Roman",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
