@@ -160,6 +160,8 @@ test.describe('reading two translations at once', () => {
     // The slug so it resolves in any translation, and the qualifier so this
     // quote is distinguishable from the same verse quoted from another column.
     await expect(body).toContainText('[[john 1:1@rv1909]]');
+    // Which column it came from is the point of quoting from a comparison.
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Juan 1:1 (RV1909)');
   });
 
   test('a CC BY-SA translation carries its notice into the comparison', async ({ page }) => {

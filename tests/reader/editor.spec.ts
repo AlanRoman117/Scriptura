@@ -142,6 +142,9 @@ test.describe('a board inside a note', () => {
 
     await page.getByTestId('canvas-open').click();
     await page.getByTestId('board-to-note').click();
+    // The board closed behind the button, so the note says what arrived.
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Added the board “Study board”');
+    await expect(page.getByTestId('announcer')).toHaveText('Added the board “Study board” in “Prologue study”');
 
     // Back in the note, the fence is plain text…
     await expect(page.getByTestId('notes-surface')).toContainText('scriptura-board');

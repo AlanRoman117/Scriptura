@@ -55,7 +55,7 @@ Computed with the WCAG relative-luminance formula, not estimated. Light `--ink-s
 
 **E. Announcer** — `apps/reader/src/lib/announce.ts` mounted in `main.tsx` (above App's early boot returns): one polite and one assertive live region for search totals, download progress and errors, panel changes, translation switches, board-save failures and undo.
 
-**F. Tests** — `@axe-core/playwright` pinned exactly; a `reader-touch` Playwright project on the Pixel 7 descriptor (Chromium, `hasTouch`, `isMobile`); jest gates for contrast, preferences and gesture maths; Playwright gates for axe (AAA tags, with a self-check that the AAA rules ran), 44 px targets, keyboard traversal, reduced motion, reflow at 320 px and injected text spacing. Touch drags use CDP touch events; the software keyboard is simulated by setting `--vvh`.
+**F. Tests** — `@axe-core/playwright` pinned exactly; a `reader-touch` Playwright project on the Pixel 7 descriptor (Chromium, `hasTouch`, `isMobile`); jest gates for contrast, preferences and gesture maths; Playwright gates for axe (AAA tags over the whole document, with a self-check that the AAA rules and the page-level rules ran), 44 px targets, keyboard traversal, reduced motion, reflow at 320 px and injected text spacing. Touch drags use CDP touch events; the software keyboard is simulated by setting `--vvh`.
 
 **G. Delegation** — this directory, `/AGENTS.md`, and `.claude/agents/reader-a11y-lead.md`. See `DELEGATION.md`.
 
@@ -121,6 +121,7 @@ Each phase ended with the full suite on Node 24 (`mise exec node@24`); every one
 | 4 — sheet, comparison, phone gates | 80d1bce | 324 | 47 + 230 |
 | 5 — board | 929bb87 | 329 | 47 + 250 |
 | 6 — updates, docs | close-out | 329 | 47 + 253 |
+| after merge — insertions confirmed | `reader/insert-feedback` | 329 | 47 + 268 |
 
 A correction for the record: several commit messages between 8ad97e8 and b9f6573 give Playwright and jest totals that were added up rather than measured, and are too high. The figures in this table are the measured ones (`npm test`, `npx playwright test --list`).
 
@@ -128,7 +129,8 @@ A correction for the record: several commit messages between 8ad97e8 and b9f6573
 
 Recorded so they are not lost; none blocks the conformance claim.
 
-- **Quoting from a phone at "peek" gives no visible feedback.** The quote lands in the open note, but the sheet is collapsed and its save status is not shown. Raising the sheet to half on a quote, or announcing "Quoted into {note}", would close it.
+- **Quoting from a phone at "peek" gave no visible feedback** — nor did any insertion whose control closes behind it. Fixed after the merge, on `reader/insert-feedback`: every insertion is confirmed in words where it went (the notes' status line, the grip at peek, a bar when the Bible is maximized), announced with the note's name, and left until the next action. The sheet is not raised: the reader is still reading.
+- **axe never ran its page-level rules** until after the merge. `tests/helpers/axe.ts` scoped every run to `#root`, and axe files page-level rules under *inapplicable* when the context is narrower than the document — so `bypass` (cited for 2.4.1 in the matrix), `document-title`, `html-has-lang`, `html-lang-valid`, `meta-viewport`, `aria-hidden-body`, `region`, `landmark-one-main` and `page-has-heading-one` were never evaluated. Run over the whole page, all of them passed except `region` on the pane divider, a focusable separator that axe does not exempt as it does a button. Fixed on `reader/insert-feedback`, with the self-check extended to those rules; it surfaced because the first draft of the insertion bar sat between the two landmarks.
 - **Boards laid out before the card size grew** (220 × 132 → 280 × 180) overlap by up to 60px until a card is moved. Positions are the reader's, so nothing rewrites them.
 - **Safari and the docked verse actions.** They are `position: fixed` inside a size container; Chromium keeps that viewport-relative, and brief 91 asks for the same check on Safari.
 - **Two pre-existing bugs were fixed because the work exposed them**, not merely noted: the autosave debounce dropped an edit when a second note was edited within 600ms, and a first-visit Reload onto a new version did nothing.

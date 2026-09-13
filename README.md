@@ -388,7 +388,7 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 329 jest, and 300 Playwright: 47 HTTP contract, 192 reader in Desktop Chrome, 59 reader on an emulated phone, 2 dev server |
+| Tests | 329 jest, and 315 Playwright: 47 HTTP contract, 202 reader in Desktop Chrome, 64 reader on an emulated phone, 2 dev server |
 | Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |

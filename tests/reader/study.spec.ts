@@ -203,11 +203,120 @@ test.describe('getting scripture into a note', () => {
     await expect(page.getByTestId('notes-surface')).toContainText('In the beginning God created');
   });
 
-  test('quoting with no note open starts one', async ({ page }) => {
+  test('quoting with no note open starts one, says so, and reports the save', async ({ page }) => {
     await open(page);
     await page.getByTestId('verse-1').click();
     await page.getByTestId('quote-1').click();
     await expect(page.getByTestId('notes-surface')).toContainText('In the beginning was the Word');
+    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in a new note');
+    // This path used to save without reporting it, leaving the status line
+    // blank. Asserting "Saved" is safe here, and only here: nothing else has
+    // written a note that could have reported it first.
+    await expect(page.getByTestId('note-status')).toContainText('Saved');
+  });
+});
+
+test.describe('knowing that it worked', () => {
+  test('every insertion is confirmed in words, beside the note and to a screen reader', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+    // The Quote button went with the actions row, so the confirmation is where
+    // the quote went: the note's status line…
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:1');
+    // …and the announcer, which also names the note. The mark is decoration;
+    // the words are what is said.
+    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in “Untitled”');
+
+    await page.getByTestId('verse-2').click();
+    await page.getByTestId('link-2').click();
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Linked John 1:2');
+    await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in “Untitled”');
+
+    await page.getByTestId('search-input').fill('In the beginning God created');
+    await page.getByTestId('search-panel').locator('.search__insert').first().click();
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Genesis 1:1');
+  });
+
+  test('the same quote twice is announced twice', async ({ page }) => {
+    // The announcer drops a repeated message, which is right for a search count
+    // typed letter by letter and wrong for two presses of Quote. Every text the
+    // region takes on is recorded, since the second announcement looks exactly
+    // like the first once it has landed.
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.evaluate(() => {
+      const region = document.querySelector('[data-testid="announcer"]')!;
+      const said: string[] = ((window as unknown as { said: string[] }).said = []);
+      new MutationObserver(() => {
+        const text = region.textContent?.trim();
+        if (text) said.push(text);
+      }).observe(region, { childList: true, subtree: true, characterData: true });
+    });
+
+    const surface = page.getByTestId('notes-surface');
+    for (let quotes = 1; quotes <= 2; quotes++) {
+      await page.getByTestId('verse-1').click();
+      await page.getByTestId('quote-1').click();
+      await expect.poll(async () => (await surface.inputValue()).split('[[john 1:1@bsb]]').length - 1).toBe(quotes);
+    }
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => (window as unknown as { said: string[] }).said.filter((t) => t === 'Quoted John 1:1 in “Untitled”').length
+        )
+      )
+      .toBe(2);
+  });
+
+  test('the confirmation waits for the next action, not for a timer', async ({ page }) => {
+    await page.clock.install();
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+    const done = page.getByTestId('note-done');
+    await expect(done).toBeVisible();
+
+    // Two minutes on, every timer the page had set has fired, and it is still
+    // there (2.2.3). A toast that fades is gone before some people read it.
+    await page.clock.fastForward('02:00');
+    await expect(done).toBeVisible();
+
+    // Writing is the next action…
+    await page.keyboard.type('Why the Word?');
+    await expect(done).toHaveCount(0);
+
+    // …and so is moving on to another chapter.
+    await page.getByTestId('verse-3').click();
+    await page.getByTestId('quote-3').click();
+    await expect(done).toBeVisible();
+    await page.getByTestId('chapter-select').selectOption('2');
+    await expect(page.getByTestId('chapter-title')).toContainText('John 2');
+    await expect(done).toHaveCount(0);
+  });
+
+  test('with the Bible maximized, it waits where the notes come back', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('maximize-bible').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+
+    // The note is hidden, so its status line cannot say it.
+    const bar = page.getByTestId('layout-done');
+    await expect(bar).toContainText('Quoted John 1:1');
+    await page.getByTestId('layout-done-show').click();
+
+    await expect(page.getByTestId('layout')).toHaveAttribute('data-maximized', 'none');
+    await expect(page.getByTestId('notes-surface')).toContainText('In the beginning was the Word');
+    // Focus goes to the note rather than to nothing, with the caret after the quote.
+    await expect(page.getByTestId('notes-surface')).toBeFocused();
+    // Seeing the note is what the confirmation stood in for.
+    await expect(bar).toHaveCount(0);
+    await expect(page.getByTestId('note-done')).toHaveCount(0);
   });
 });
 

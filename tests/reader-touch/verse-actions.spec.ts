@@ -36,6 +36,32 @@ test('a tap on the text docks the actions above the sheet, every one finger-size
   expect(verse.y).toBeLessThan(rowBox.y);
 });
 
+test('a quote with the notes folded away is confirmed on the grip, until they are opened', async ({ page }) => {
+  await open(page);
+  await page.locator('.verse[data-verse="2"] .verse__text').tap();
+  await page.getByTestId('quote-2').tap();
+
+  // The sheet stays where the reader left it: they are still reading.
+  const sheet = page.getByTestId('pane-notes');
+  await expect(sheet).toHaveAttribute('data-sheet', 'peek');
+  await expect(page.getByTestId('verse-actions')).toHaveCount(0);
+
+  // So the grip — the way to the note — says what went into it…
+  await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:2');
+  // …in its name as well as on screen, since the words are visible on the button (2.5.3)…
+  const grip = page.getByRole('button', { name: /expand notes/i });
+  await expect(grip).toHaveAccessibleName('Expand notes, Quoted John 1:2');
+  // …and says it aloud, naming the note.
+  await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:2 in a new note');
+
+  // Opening the notes shows the quote itself; the stand-in goes.
+  await grip.tap();
+  await expect(sheet).toHaveAttribute('data-sheet', 'half');
+  await expect(page.getByTestId('notes-surface')).toContainText('He was with God in the beginning.');
+  await expect(page.getByTestId('sheet-done')).toHaveCount(0);
+  await expect(grip).toHaveAccessibleName('Expand notes');
+});
+
 test('a tap marks the verse; a tap elsewhere closes the row', async ({ page }) => {
   await open(page);
   await page.locator('.verse[data-verse="3"] .verse__text').tap();

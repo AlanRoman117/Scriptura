@@ -85,6 +85,7 @@ test.describe('all the matches', () => {
 
     await page.getByTestId('results-insert-jeremiah-2-13').click();
     await expect(page.getByTestId('notes-surface')).toContainText('living water');
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Jeremiah 2:13');
 
     await page.getByTestId('results-go-jeremiah-2-13').click();
     await expect(page.getByTestId('chapter-title')).toContainText('Jeremiah 2');

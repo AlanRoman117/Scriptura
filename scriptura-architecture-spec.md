@@ -371,7 +371,7 @@ The reader is the local-first reading and note-taking app built on these package
 | Colour tokens | `src/styles.css` `@tokens` blocks | `light-dark()` pairs for every token, five themes, `--edge` for control boundaries and `--rule` for decoration only. `tests/unit/contrast.test.ts` parses the blocks and checks 135 pairs: 7:1 for text, 3:1 for edges, focus rings and highlight rules. |
 | Focus | `src/lib/focus.ts` | `useReturnFocus` gives focus back when a surface closes; `useDismissable` is one stack — Escape closes only the newest surface, an outside press closes it; `useRovingTabIndex` makes the verse actions and the formatting toolbar one Tab stop with arrows. The proposal preview is a native `<dialog>`. |
 | Viewport and gestures | `src/lib/viewport.ts`, `src/lib/geometry.ts` | `--vvh`/`--vv-top` publish the visual viewport, so the notes sheet and search suggestions stay above a software keyboard. One pointer-drag helper captures the pointer and treats `pointercancel` as release. Sheet snapping, zoom anchoring and pinch are pure functions with unit tests. |
-| Status | `src/lib/announce.tsx` | One polite and one assertive live region, mounted beside the app, for search totals, download progress and errors, panel changes, removals and undo. |
+| Status | `src/lib/announce.tsx` | One polite and one assertive live region, mounted beside the app, for search totals, download progress and errors, panel changes, removals and undo, and every insertion into a note or onto a board — which is also shown, with a checkmark and the same words, where it went or where that is reached from, until the next action. |
 | Targets | `--control-h: 44px` | Every pointer target is at least 44 × 44 CSS px (2.5.5), with the verse number (inline in text) and links inside prose as the criterion's exceptions. |
 | Updates | `src/components/UpdateNotice.tsx`, `src/lib/pending.ts` | A new service worker waits for the reader's Reload, which first writes note edits still inside the autosave delay. |
 
@@ -381,8 +381,8 @@ The reader is the local-first reading and note-taking app built on these package
 
 | Project | Device | Gates |
 |---|---|---|
-| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in thirteen states and both colour schemes, with a self-check that the two AAA rules really ran; 44 px targets in the same states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
-| `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in ten phone states; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
+| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
+| `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in eleven phone states; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
 | `reader-dev` | Desktop Chrome, dev server | The app boots clean when modules are served unbundled |
 
 ---
