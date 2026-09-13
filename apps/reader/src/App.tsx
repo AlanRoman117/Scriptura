@@ -69,6 +69,7 @@ import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
 import { useVisualViewport } from './lib/viewport';
+import { announce } from './lib/announce';
 import type { SearchResult } from '@scriptura/core/types';
 
 interface Position {
@@ -78,6 +79,24 @@ interface Position {
 
 /** Long enough not to write on every keystroke, short enough to lose nothing. */
 const AUTOSAVE_MS = 600;
+/** A search is announced once the typing has paused, not per keystroke. */
+const ANNOUNCE_SEARCH_MS = 400;
+
+/**
+ * Say when a panel opens or closes (4.1.3). The chapter is replaced without
+ * focus moving, so a screen reader would otherwise hear nothing happen.
+ * Skips the first render: nothing has opened yet.
+ */
+function useAnnounceOpen(open: boolean, name: string) {
+  const first = useRef(true);
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    announce(open ? `${name} opened` : `${name} closed`);
+  }, [open, name]);
+}
 
 export function App() {
   const [bible, setBible] = useState<Bible | null>(null);
@@ -218,6 +237,25 @@ export function App() {
       cancelled = true;
     };
   }, []);
+
+  useAnnounceOpen(marksOpen, 'Marks');
+  useAnnounceOpen(libraryOpen, 'Translations');
+  useAnnounceOpen(settingsOpen, 'Settings');
+  useAnnounceOpen(resultsOpen, 'Search results');
+
+  // The count under the search box changes silently; say it once the typing
+  // pauses. The true total, not the dropdown's slice.
+  useEffect(() => {
+    if (!hitsQuery) return;
+    const t = window.setTimeout(() => {
+      announce(
+        hits.length === 0
+          ? `No matches for “${hitsQuery}”`
+          : `${hits.length} ${hits.length === 1 ? 'match' : 'matches'} for “${hitsQuery}”`
+      );
+    }, ANNOUNCE_SEARCH_MS);
+    return () => window.clearTimeout(t);
+  }, [hits, hitsQuery]);
 
   useEffect(() => {
     if (!bible || !query.trim()) {
@@ -462,7 +500,11 @@ export function App() {
 
   const changeBoard = useCallback((board: Board) => {
     setBoards((current) => current.map((b) => (b.id === board.id ? board : b)));
-    void saveBoard(board, (_store, err) => console.error('Saving the board failed:', err));
+    void saveBoard(board, (_store, err) => {
+      console.error('Saving the board failed:', err);
+      // The notes footer says this for notes; boards had no voice at all.
+      announce('Could not save the board — export your notes', { assertive: true });
+    });
   }, []);
 
   const createBoard = useCallback(() => {
@@ -586,6 +628,7 @@ export function App() {
           setBible(loaded);
           setTranslationId(id);
           setLibraryOpen(false);
+          announce(`Reading ${loaded.meta.name}`);
           // Reading it and comparing against it are the same column, so drop
           // the duplicate rather than showing the text twice.
           setCompareWith((current) => {
@@ -599,36 +642,45 @@ export function App() {
     []
   );
 
+  /** The last quarter announced per download, so progress is said four times, not four hundred. */
+  const announcedQuarter = useRef<Record<string, number>>({});
+
   const download = useCallback(
     (id: string) => {
-      const approx = catalog.find((t) => t.id === id)?.approxBytes;
+      const entry = catalog.find((t) => t.id === id);
+      const approx = entry?.approxBytes;
+      const name = entry?.name ?? id.toUpperCase();
+      announcedQuarter.current[id] = 0;
       setDownloads((d) => ({ ...d, [id]: { received: 0, total: approx ?? 0 } }));
 
       void downloadTranslation(
         id,
-        (received, total) => setDownloads((d) => ({ ...d, [id]: { received, total } })),
+        (received, total) => {
+          setDownloads((d) => ({ ...d, [id]: { received, total } }));
+          const quarter = total > 0 ? Math.floor(Math.min(received / total, 0.99) * 4) : 0;
+          if (quarter > (announcedQuarter.current[id] ?? 0)) {
+            announcedQuarter.current[id] = quarter;
+            announce(`${name}: ${quarter * 25}% downloaded`);
+          }
+        },
         approx
       )
         .then(() => {
           setDownloads(({ [id]: _done, ...rest }) => rest);
+          announce(`${name} downloaded`);
           refreshLocal();
         })
         .catch((e: unknown) => {
           // Kept on the row rather than thrown: one failed download must not
           // take down a library the rest of which is perfectly usable, and
           // "you are offline" is the likeliest cause.
-          setDownloads((d) => ({
-            ...d,
-            [id]: {
-              received: 0,
-              total: 0,
-              error: navigator.onLine
-                ? e instanceof Error
-                  ? e.message
-                  : String(e)
-                : 'No connection — try again when you are online.',
-            },
-          }));
+          const error = navigator.onLine
+            ? e instanceof Error
+              ? e.message
+              : String(e)
+            : 'No connection — try again when you are online.';
+          setDownloads((d) => ({ ...d, [id]: { received: 0, total: 0, error } }));
+          announce(`${name}: ${error}`, { assertive: true });
         });
     },
     [catalog, refreshLocal]

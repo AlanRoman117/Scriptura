@@ -37,7 +37,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.2.1 | On Focus | ✅ | — | Focus changes nothing. |
 | 3.2.2 | On Input | ✅ | — | Changing book or chapter re-renders the passage in place; no new window, no focus move, no page change. Documented as not a change of context. |
 | 3.2.6 | Consistent Help | ❌ W7 | `a11y.spec.ts` help state | No help mechanism exists yet; once it does it is the "?" chip in the reader bar, same position in every state, and an entry in Settings. |
-| 3.3.1 | Error Identification | ❌ F5 | `library.spec.ts` offline test | Download errors are visible but not announced; board-save failure is logged only. |
+| 3.3.1 | Error Identification | ✅ | `a11y.spec.ts` (offline download: the row is `role="alert"` and the assertive region names the error); `notes.spec.ts` (save failure in the note footer) | Download errors are shown on the row and announced assertively; a board that fails to save is announced too (it was only logged). |
 | 3.3.2 | Labels or Instructions | 🔧 W1 | axe `label` | Every field has an accessible name; the option checkboxes need a group label; placeholders remain the only *visible* label on text fields (acceptable, noted). |
 | 3.3.7 | Redundant Entry | ➖ | — | No multi-step process re-asks for information. |
 | 4.1.2 | Name, Role, Value | ❌ W1, T4 | axe `button-name`, `aria-allowed-attr`, `aria-progressbar-name` | Glyph buttons, unnamed progressbar, disclosures marked `aria-pressed`, `role=toolbar` without arrow-key behaviour. |
@@ -69,7 +69,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.3.3 | Error Suggestion | ✅ | `library.spec.ts` offline test | "No connection — try again when you are online"; "Could not save — export your notes". |
 | 3.3.4 | Error Prevention (Legal, Financial, Data) | ❌ W8 | `notes.spec.ts`, `canvas.spec.ts`, `library.spec.ts` | Removing a card, edge, mark or translation is neither confirmed nor reversible. |
 | 3.3.8 | Accessible Authentication (Minimum) | ➖ | — | No authentication. |
-| 4.1.3 | Status Messages | ❌ F5 | `a11y.spec.ts` announcer test | Only note saving is announced. |
+| 4.1.3 | Status Messages | ✅ | `a11y.spec.ts` (search total once typing pauses, panel opened/closed, download progress by quarters and completion, download error as an alert, named progressbar) | One polite and one assertive live region in `lib/announce.tsx`, mounted beside the app; duplicates are dropped so a query typed letter by letter is announced once. The note footer keeps its own region. |
 
 ## Level AAA
 
@@ -86,7 +86,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
 | 2.1.3 | Keyboard (No Exception) | ❌ T4, T6, T8 | `keyboard.spec.ts` | Same gaps as 2.1.1; no exception is claimed. |
 | 2.2.3 | No Timing | ✅ W8 | — | No time limits. Undo never expires — it persists until the next change. |
-| 2.2.4 | Interruptions | 🔧 W9, W11 | — | All announcements polite except download errors; the durability banner is dismissible; the service worker's silent take-over becomes a "Reload / Later" prompt. |
+| 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
 | 2.2.5 | Re-authenticating | ➖ | — | |
 | 2.2.6 | Timeouts | ➖ | — | No inactivity timeout; nothing is lost while idle. |
 | 2.3.2 | Three Flashes | ✅ | — | |

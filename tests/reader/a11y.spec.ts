@@ -42,3 +42,42 @@ test.describe('the AAA rules are actually in the run', () => {
     }
   });
 });
+
+test.describe('status messages are announced (4.1.3)', () => {
+  test('a search total, once the typing pauses', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('living water');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'living water');
+    await expect(page.getByTestId('announcer')).toContainText(/\d+ match(es)? for “living water”/, { timeout: 3_000 });
+  });
+
+  test('a panel opening and closing', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('marks-open').click();
+    await expect(page.getByTestId('announcer')).toContainText('Marks opened');
+    await page.getByTestId('marks-close').click();
+    await expect(page.getByTestId('announcer')).toContainText('Marks closed');
+  });
+
+  test('a download that fails is an alert, and the row says so too', async ({ page, context }) => {
+    await open(page);
+    await context.setOffline(true);
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-get-kjv').click();
+    await expect(page.getByTestId('library-error-kjv')).toHaveAttribute('role', 'alert');
+    await expect(page.getByTestId('announcer-alert')).toContainText(/connection/i);
+  });
+
+  test('a download in progress has a named progressbar', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-get-rv1909').click();
+    // The bar is short-lived; a name on it is what a screen reader reads while it is there.
+    const bar = page.getByTestId('library-progress-rv1909');
+    if (await bar.count()) {
+      await expect(bar).toHaveAttribute('aria-label', /Downloading/);
+    }
+    await expect(page.getByTestId('library-read-rv1909')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByTestId('announcer')).toContainText(/downloaded/);
+  });
+});

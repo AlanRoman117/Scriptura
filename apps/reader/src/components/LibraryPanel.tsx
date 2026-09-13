@@ -129,7 +129,7 @@ export function LibraryPanel({
                       {t.approxBytes ? ` · ~${formatBytes(t.approxBytes)}` : ''}
                     </span>
                     {busy?.error && (
-                      <span className="library__error" data-testid={`library-error-${t.id}`}>
+                      <span className="library__error" role="alert" data-testid={`library-error-${t.id}`}>
                         {busy.error}
                       </span>
                     )}
@@ -138,9 +138,11 @@ export function LibraryPanel({
                         className="library__progress"
                         data-testid={`library-progress-${t.id}`}
                         role="progressbar"
+                        aria-label={`Downloading ${t.name}`}
                         aria-valuenow={Math.round(percent(busy))}
                         aria-valuemin={0}
                         aria-valuemax={100}
+                        aria-valuetext={`${Math.round(percent(busy))}%`}
                       >
                         <span
                           className="library__progress-fill"
