@@ -103,6 +103,13 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('help-open').click();
     await expect(page.getByTestId('help-panel')).toBeVisible();
   },
+  comparison: async (page) => {
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-get-rv1909').click();
+    await expect(page.getByTestId('library-read-rv1909')).toBeVisible({ timeout: 60_000 });
+    await page.getByTestId('library-compare-rv1909').click();
+    await expect(page.getByTestId('compare')).toBeVisible();
+  },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');

@@ -27,7 +27,7 @@ Below about 40 rem of pane width, a chapter comparison is read as a list of vers
 ## Required behaviour
 
 1. `ComparePane` measures its own width with a `ResizeObserver` (state `stacked = width < 640`), or reads a `data-mode="narrow"` from the layout — measuring is preferred because the split layout can also produce a narrow pane.
-2. When `stacked`: render `<ol className="compare__stack" data-testid="compare-stack">`, one `<li data-verse={n}>` per row with a `<h3 className="compare__verse">Verse {n}</h3>`… no — headings per verse would be 100+ headings; instead each `<li>` has the verse number as a `<span className="compare__num">` and a `<dl>`: `<dt>{translation name} ({ID})</dt><dd lang={language}>{text or "Not present in this translation."}</dd>` per column, with the quote button (44 px) after each `<dd>` text. The column headers' drop buttons (✕) render once at the top of the stack as a small bar.
+2. When `stacked`: render `<ol className="compare__stack" data-testid="compare-stack" role="list">`, one `<li data-verse={n}>` per row: the verse number (a visually hidden "Verse" before it), then a `<dl>` with, per column, `<dt>` the translation ID (full name visually hidden) and `<dd>` the text in that column's `lang` with its 44px quote button, or "Not in {ID}". No heading per verse: a chapter would otherwise add a hundred headings to the outline. The drop buttons (✕) render once, in a bar of translation chips above the list.
 3. When not stacked: the existing table, unchanged, plus `lang` on each `<td>` (brief 21 also touches this; whichever lands first adds it) and `.compare__quote` at 44 px (brief 16).
 4. The attribution footer renders in both modes.
 

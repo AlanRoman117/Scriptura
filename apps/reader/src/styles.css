@@ -1225,10 +1225,13 @@ summary:focus-visible,
   padding: .4rem 3rem .4rem .5rem; vertical-align: bottom;
   background: var(--paper); border-bottom: 1px solid var(--rule);
 }
+/* A header tall enough to hold its 44px drop button without the button
+   hanging over the first verse. `height` on a table cell is a floor. */
+.compare__head, .compare__num-head { height: calc(var(--control-h) + .6rem); }
 .compare__head-name { display: block; }
 .compare__head-id { display: block; font-size: .68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: .06em; }
 .compare__drop {
-  position: absolute; top: .2rem; right: .2rem;
+  position: absolute; top: 50%; right: .2rem; transform: translateY(-50%);
   font: inherit; font-size: .7rem; color: var(--ink-soft); cursor: pointer;
   background: transparent; border: none; border-radius: 4px; padding: .1rem .25rem;
 }
@@ -1243,6 +1246,33 @@ summary:focus-visible,
   font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
 }
 .compare__absent { color: var(--ink-soft); }
+
+/* The same comparison, read as a list on a narrow pane. */
+.compare__bar { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; }
+.compare__chip {
+  display: inline-flex; align-items: center; gap: .25rem; min-height: var(--control-h);
+  padding: 0 .1rem 0 .6rem; border: 1px solid var(--edge); border-radius: 999px;
+  font-family: var(--sans); font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+}
+.compare__drop--inline { position: static; transform: none; border-radius: 999px; }
+.compare__stack { list-style: none; margin: 0; padding: 0; }
+.compare__verse {
+  display: grid; grid-template-columns: 2rem 1fr; gap: .25rem .5rem;
+  padding: .6rem 0; border-bottom: 1px solid var(--rule);
+}
+.compare__verse .compare__num { padding-top: .35rem; width: auto; text-align: right; }
+.compare__readings { margin: 0; }
+.compare__reading + .compare__reading { margin-top: .5rem; }
+.compare__reading-id {
+  font-family: var(--sans); font-size: .72rem; font-weight: 600; letter-spacing: .06em; color: var(--ink-soft);
+}
+.compare__reading dd { margin: .1rem 0 0; }
+.compare__reading-text {
+  display: flex; align-items: flex-start; gap: .35rem;
+  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
+}
+.compare__reading-text .compare__text { flex: 1; }
+.compare__reading-text .compare__quote { flex: 0 0 auto; margin-left: 0; }
 /* Always there, quieter until wanted: content that appears only on hover is
    invisible to touch and to anyone who does not know to hover (1.4.13). */
 .compare__quote {
