@@ -19,7 +19,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.3.3 | Sensory Characteristics | ✅ | — | Instructions name controls ("use **Canvas** beside a verse"), never a shape, position or colour alone. |
 | 1.4.1 | Use of Color | 🔧 T4 | `notes.spec.ts` (swatch and verse-number names carry the collection; a marked verse has a strong-hue rule and, with markers on, a shape) | Done: a marked verse's name says its collection in words; every marked verse has a left rule in the collection's strong hue; Settings → "Show a symbol on every highlight" draws ● ▲ ■ ◆ ★ beside marked verses, on the swatches and in the Marks panel. Remaining: a board card's colour named in its text (T4). |
 | 1.4.2 | Audio Control | ➖ | — | |
-| 2.1.1 | Keyboard | 🔧 T4, T8 | `keyboard.spec.ts`; `editor.spec.ts` (preview Edit by keyboard); `reading.spec.ts` (divider Home/End); `study.spec.ts` (Tab and Down arrow reach the search suggestions; Enter submits) | Done: preview click-to-edit, the divider, the search suggestions (a search form with no blur timer). Remaining: the editor toolbar (T8); canvas pan, drag, resize and edge removal (T4). |
+| 2.1.1 | Keyboard | 🔧 T4 | `keyboard.spec.ts`; `editor.spec.ts` (preview Edit by keyboard; Shift+Tab reaches the formatting tools, arrows move, a tool formats and returns focus); `reading.spec.ts` (divider Home/End); `study.spec.ts` (Tab and Down arrow reach the search suggestions) | Done: preview click-to-edit, the divider, the search suggestions, the formatting toolbar (focus-within, no timer). Remaining: canvas pan, drag, resize and edge removal (T4). |
 | 2.1.2 | No Keyboard Trap | ✅ | `keyboard.spec.ts` (Tab from the modal never reaches a page element behind it; Escape closes it) | The proposal is a native `<dialog>` opened with `showModal()`: the page behind it is inert and Escape discards. |
 | 2.1.4 | Character Key Shortcuts | ✅ | — | No single-character shortcuts exist. |
 | 2.2.1 | Timing Adjustable | ✅ | — | No time limits. The 150 ms blur timers that removed UI are deleted by T3/T8. |
@@ -40,7 +40,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 3.3.1 | Error Identification | ✅ | `a11y.spec.ts` (offline download: the row is `role="alert"` and the assertive region names the error); `notes.spec.ts` (save failure in the note footer) | Download errors are shown on the row and announced assertively; a board that fails to save is announced too (it was only logged). |
 | 3.3.2 | Labels or Instructions | ✅ | axe `label` in every state | Every field has a name; the matching options are a fieldset with a legend; Settings controls have visible labels. Placeholders remain the only *visible* label on the note title and body (acceptable: both have names, and the placeholder is the instruction). |
 | 3.3.7 | Redundant Entry | ➖ | — | No multi-step process re-asks for information. |
-| 4.1.2 | Name, Role, Value | 🔧 T4, T8 | axe `button-name`, `aria-allowed-attr`, `aria-allowed-role`, `aria-progressbar-name` in every state | Done: named glyph buttons, named progressbar, the three bar chips are disclosures with `aria-expanded`/`aria-controls`, the durability banner is a named landmark. Remaining: `role=toolbar` gains arrow keys (T8); cards become focusable groups (T4). |
+| 4.1.2 | Name, Role, Value | 🔧 T4 | axe `button-name`, `aria-allowed-attr`, `aria-allowed-role`, `aria-progressbar-name` in every state; `editor.spec.ts` (the toolbar is one Tab stop with arrow keys) | Done: named glyph buttons, named progressbar, disclosures with `aria-expanded`/`aria-controls`, the durability notice a named landmark, `role="toolbar"` behaving as one, the verse actions a named group with roving focus. Remaining: board cards as focusable named groups (T4). |
 
 ## Level AA
 
@@ -84,7 +84,7 @@ Every success criterion in WCAG 2.2 (86: 31 Level A, 24 AA, 31 AAA), with its st
 | 1.4.7 | Low or No Background Audio | ➖ | — | |
 | 1.4.8 | Visual Presentation | ✅ | `tests/reader/settings.spec.ts` (text size ×1.5 measured on the text, relaxed spacing ≥ 1.5 leading and ≥ 1.5 × line between verses, pinned themes and `system`); `tests/unit/prefs.test.ts` | Settings → Reading & display: six colour themes (light, dark, high-contrast light and dark, sepia, or the device's), text size 100–200 %, three spacing presets (relaxed and loose meet the 1.5×/1.5× rule), column width 56/64/70 ch; text is never justified. Preferences are device-scoped and applied before first paint. |
 | 1.4.9 | Images of Text (No Exception) | ✅ | — | No images of text anywhere. |
-| 2.1.3 | Keyboard (No Exception) | 🔧 T4, T8 | `keyboard.spec.ts`, `study.spec.ts` | Same state as 2.1.1; no exception is claimed. |
+| 2.1.3 | Keyboard (No Exception) | 🔧 T4 | `keyboard.spec.ts`, `study.spec.ts`, `editor.spec.ts` | Same state as 2.1.1; no exception is claimed. |
 | 2.2.3 | No Timing | ✅ | `notes.spec.ts` (an armed Delete stays armed until Escape or Cancel; Undo stays offered until the next change) | No time limits anywhere; nothing is dismissed by a timer. |
 | 2.2.4 | Interruptions | 🔧 W11 | `a11y.spec.ts` | Every announcement is polite except a failed download; the durability banner is dismissible. Remaining: the service worker's silent take-over becomes a "Reload / Later" prompt (W11). |
 | 2.2.5 | Re-authenticating | ➖ | — | |

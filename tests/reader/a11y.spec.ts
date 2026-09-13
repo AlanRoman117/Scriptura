@@ -91,6 +91,11 @@ test.describe('status messages are announced (4.1.3)', () => {
  */
 const STATES: Record<string, (page: Page) => Promise<void>> = {
   reading: async () => {},
+  'formatting tools': async (page) => {
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('notes-surface').click();
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+  },
   'verse actions': async (page) => {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();

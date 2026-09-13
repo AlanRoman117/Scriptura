@@ -246,3 +246,45 @@ test.describe('the preview from the keyboard', () => {
     await expect(page.getByTestId('notes-surface')).toBeVisible();
   });
 });
+
+test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
+  test('Shift+Tab from the note reaches the toolbar; arrows move; a tool formats and returns', async ({ page }) => {
+    await open(page);
+    const surface = page.getByTestId('notes-surface');
+    await surface.fill('the Word');
+    await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 8));
+
+    await page.keyboard.press('Shift+Tab');
+    const tools = page.getByTestId('editor-tools');
+    await expect(tools).toBeVisible();
+    await expect(page.getByTestId('tool-h1')).toBeFocused();
+
+    // One Tab stop: the other tools are out of the Tab order.
+    await expect(page.getByTestId('tool-bold')).toHaveAttribute('tabindex', '-1');
+
+    // H1 → H2 → H3 → Bold (the separators are not stops).
+    for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('tool-bold')).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toBeFocused();
+    const picked = await surface.evaluate((el: HTMLTextAreaElement) =>
+      el.value.slice(el.selectionStart, el.selectionEnd)
+    );
+    expect(picked).toBe('Word');
+  });
+
+  test('the tools stay while focus moves between them and the note, and go when it leaves', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('notes-surface').click();
+    await page.keyboard.press('Shift+Tab');
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('notes-surface')).toBeFocused();
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+
+    await page.getByTestId('note-title').focus();
+    await expect(page.getByTestId('editor-tools')).toHaveCount(0);
+  });
+});

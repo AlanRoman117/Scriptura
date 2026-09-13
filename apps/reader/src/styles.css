@@ -256,7 +256,11 @@ summary:focus-visible,
    the floor is the same everywhere and a new control class is added here or
    is caught by tests/reader/targets.spec.ts. Inline exceptions — the verse
    number in the text, text links inside prose — are allowlisted in that test,
-   not here. */
+   not here.
+   ⚠️ This block comes first, so a component rule further down that sets its
+   own `min-width` or `min-height` overrides the floor at equal specificity.
+   The formatting tools kept `min-width: 1.9rem` that way and measured 30px on
+   a phone. Do not size a control with a min-* below `var(--control-h)`. */
 .pane__maximize, .reader__select, .reader__chip, .search__input, .search__jump, .search__ref,
 .search__insert, .search__option, .marks__close, .marks__label, .marks__ref, .marks__remove,
 .notes__link, .settings__close, .settings__action, .settings__toggle, .settings__field select,
@@ -526,7 +530,7 @@ summary:focus-visible,
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .search__insert {
-  flex: 0 0 auto; width: 2rem; font: inherit; font-size: 1rem; color: var(--ink-soft);
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .search__insert:hover { color: var(--ink); border-color: var(--rule); }
@@ -698,7 +702,7 @@ summary:focus-visible,
   overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .marks__remove {
-  flex: 0 0 auto; width: 1.9rem; font: inherit; font-size: .8rem; color: var(--ink-soft);
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: .8rem; color: var(--ink-soft);
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .marks__remove:hover { color: var(--ink); border-color: var(--rule); }
@@ -880,7 +884,7 @@ summary:focus-visible,
 .canvas__zoom { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
 .canvas__zoom button {
   font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: none; padding: .3rem .5rem; min-width: 2.2rem;
+  background-color: var(--paper-raised); border: none; padding: .3rem .5rem;
 }
 .canvas__zoom button:hover { color: var(--ink); }
 .canvas__zoom button + button { border-left: 1px solid var(--edge); }
@@ -991,7 +995,7 @@ summary:focus-visible,
 .tools__button {
   font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
   background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 5px; padding: .2rem .4rem; min-width: 1.9rem;
+  border-radius: 5px; padding: .2rem .4rem;
 }
 .tools__button:hover { color: var(--ink); border-color: var(--ink-soft); }
 .tools__button--bold { font-weight: 700; }
@@ -1129,7 +1133,7 @@ summary:focus-visible,
 .results__ref-label { display: block; font-size: .72rem; color: var(--accent); }
 .results__ref-text { display: block; font-family: var(--serif); font-size: .92rem; line-height: 1.55; }
 .results__insert {
-  flex: 0 0 auto; width: 2rem; font: inherit; font-size: 1rem; color: var(--ink-soft);
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .results__insert:hover { color: var(--ink); border-color: var(--rule); }
@@ -1284,6 +1288,8 @@ summary:focus-visible,
   .notes__select { flex: 1 1 100%; }
 }
 
+/* The editing group fills what the title leaves; the textarea fills the rest. */
+.notes__editor { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .notes__title {
   font: inherit; font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
   color: var(--ink); background: transparent; border: none;

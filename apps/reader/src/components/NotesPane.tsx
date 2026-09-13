@@ -189,6 +189,18 @@ export function NotesPane({
             placeholder="Untitled"
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
+          {/* The editing group: the tools, what the caret is under, and the
+              note itself. The tools show while focus is anywhere in it and
+              withdraw when it leaves — for the title, or anything else. That
+              is decided by where focus went, not by a timer: the old 150ms
+              delay made the tools vanish before Tab could reach them. */}
+          <div
+            className="notes__editor"
+            onFocus={() => setFocused(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+            }}
+          >
           {/* Reserved whether or not the tools are showing, so they do not
               shove the text you just clicked on down the pane. */}
           {mode === 'write' && (
@@ -217,7 +229,6 @@ export function NotesPane({
               type="button"
               className="notes__link"
               data-testid="notes-follow-link"
-              title="Open this passage in the Bible pane"
               onClick={() => onFollowLink?.(link)}
             >
               Go to {linkLabel}
@@ -238,6 +249,7 @@ export function NotesPane({
             <>
               <textarea
                 ref={surface}
+                id="notes-surface"
                 className="notes__surface"
                 data-testid="notes-surface"
                 aria-label="Note body"
@@ -248,12 +260,10 @@ export function NotesPane({
                 onKeyUp={trackHeading}
                 onClick={trackHeading}
                 onSelect={trackHeading}
-                onFocus={() => setFocused(true)}
-                // Delayed so a toolbar click lands before the tools withdraw.
-                onBlur={() => window.setTimeout(() => setFocused(false), 150)}
               />
             </>
           )}
+          </div>
         </>
       ) : (
         <div className="notes__empty">
