@@ -60,6 +60,10 @@ cd scriptura
 # Install all workspace dependencies
 npm install
 
+# Compile the packages. Do not skip this: `npm install` does not build them,
+# and the compiled output is not in the repo.
+npm run build
+
 # Validate all translation data
 npm run validate
 
@@ -68,7 +72,50 @@ npm test
 
 # Start the REST API on :3000, with hot reload
 npm run dev:api
+
+# …or the reader PWA on :5173
+npm run dev:reader
 ```
+
+**Why the build step is not optional.** Each package publishes its modules from
+`dist/`, which is generated and gitignored. Until it exists, `@scriptura/core/books`
+and its sibling subpaths resolve to files that are not there, and both of these
+fail on a fresh clone:
+
+```
+✘ [ERROR] Could not resolve "@scriptura/core/books"        # npm test
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module …/dist/books.js   # npm run dev:api
+```
+
+`npm run build` fixes both. If a later build looks like it did nothing — no
+`dist/`, yet nothing is compiled — its incremental cache is stale, and
+`npm run build -- --force` clears it.
+
+### Every script
+
+They all live in [`package.json`](package.json); this is what each one is for.
+[`CLAUDE.md`](CLAUDE.md) explains the reasoning behind the ones with surprises
+in them.
+
+| Script | What it does |
+|---|---|
+| `npm run build` | Compiles every package to `dist/` with `tsc --build`. Run it after `npm install` and after pulling changes |
+| `npm run lint` | The type-check. It is the same `tsc --build`: TypeScript rejects `--noEmit` on composite project references, so the emitted declarations are a byproduct of checking |
+| `npm test` | The jest suite: everything provable in-process, including the parity check between the dynamic and static serving paths |
+| `npm run test:contract` | The HTTP contract tests, over a real socket. Playwright in API mode, so no browser is downloaded |
+| `npm run test:reader` | The reader PWA in Chromium: desktop, an emulated phone, and the dev server. Needs `npx playwright install chromium` |
+| `npm run validate` | Checks every translation in `data/` against the canon. Add `-- --strict` to fail on warnings too |
+| `npm run check:canon` | Verifies the three canon definitions still agree with each other and with the data |
+| `npm run dev:api` | The REST API on :3000 with hot reload, through `tsx` |
+| `npm run start:api` | Builds, then runs the compiled API on :3000 |
+| `npm run build:api` | Compiles `data/` into a static JSON tree under `dist/`, one file per endpoint, for S3 or any static host |
+| `npm run dev:reader` | The reader PWA's dev server on :5173 |
+| `npm run build:reader` | A production build of the reader |
+| `npm run schema:gen` | Regenerates the JSON schemas under `data/schemas/` from the canonical types |
+
+The data tooling is Python, standard library only, and is invoked directly:
+`python3 scripts/ingest.py --list`, `python3 scripts/validate.py --strict`,
+`python3 scripts/check-canon-sync.py`.
 
 ### Load a verse in Node
 
