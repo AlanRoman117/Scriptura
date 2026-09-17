@@ -74,16 +74,22 @@ export function listFor(locale: Locale): (items: string[]) => string {
  * lower case, as Spanish and French do.
  */
 export function languageNameFor(locale: Locale): (code: string) => string {
+  const word = languageWordFor(locale);
+  return (code) => {
+    const name = word(code);
+    return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
+  };
+}
+
+/** A language code as a word inside a sentence, cased as the language writes it: "español", "japonais". */
+export function languageWordFor(locale: Locale): (code: string) => string {
   let names: Intl.DisplayNames | null = null;
   try {
     names = new Intl.DisplayNames([locale], { type: 'language' });
   } catch {
     // Widely supported, not universally: a code is a poor heading, not a broken one.
   }
-  return (code) => {
-    const name = names?.of(code) ?? code;
-    return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
-  };
+  return (code) => names?.of(code) ?? code;
 }
 
 /** Everything a component formats, bound to one locale. */
@@ -94,6 +100,7 @@ export interface Formatters {
   bytes: (bytes: number) => string;
   list: (items: string[]) => string;
   languageName: (code: string) => string;
+  languageWord: (code: string) => string;
   /** Sort order for names, in the interface language. */
   compare: (a: string, b: string) => number;
 }
@@ -106,6 +113,7 @@ export function formattersFor(locale: Locale): Formatters {
     bytes: bytesFor(locale),
     list: listFor(locale),
     languageName: languageNameFor(locale),
+    languageWord: languageWordFor(locale),
     compare: (a, b) => collator.compare(a, b),
   };
 }

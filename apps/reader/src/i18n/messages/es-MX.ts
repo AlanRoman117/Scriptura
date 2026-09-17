@@ -123,6 +123,7 @@ export const esMX = {
     name: 'Scriptura Reader',
     downloading: 'Descargando el texto para usarlo sin conexión…',
     opening: 'Abriendo…',
+    bootFailed: 'No se pudo abrir el texto bíblico. Recarga para intentarlo de nuevo.',
     skipToScripture: 'Saltar a las Escrituras',
     skipToNotes: 'Saltar a las notas',
     title: (where: string) => `${where} · Scriptura`,
@@ -291,6 +292,7 @@ export const esMX = {
     progress: (name: string, percent: string) => `${name}: ${percent} descargado`,
     downloaded: (name: string) => `Se descargó ${name}`,
     failed: (name: string, error: string) => `${name}: ${error}`,
+    failedOnline: 'La descarga no terminó. Inténtalo de nuevo más tarde.',
     offline: 'Sin conexión. Inténtalo de nuevo cuando tengas internet.',
   },
 
@@ -373,6 +375,15 @@ export const esMX = {
     save: 'Guardar esta nota',
     mark: (count: number) =>
       plural(count, { one: `Marcar ${count} versículo`, other: `Marcar ${count} versículos` }),
+  },
+
+  offer: {
+    title: (language: string) => `Biblias en ${language}`,
+    intro: 'Estas traducciones están en tu idioma. Descarga una para leerla, con o sin conexión.',
+    downloadAndRead: 'Descargar y leer',
+    downloadAndReadName: (name: string) => `Descargar y leer ${name}`,
+    allTranslations: 'Todas las traducciones',
+    notNow: 'Ahora no',
   },
 
   update: {

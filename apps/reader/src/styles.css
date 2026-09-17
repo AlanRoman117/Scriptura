@@ -1470,6 +1470,33 @@ summary:focus-visible,
 .notes__done { font-size: .8rem; }
 .notes__status--bad { color: var(--danger); }
 
+/* ── Bibles in the reader's language ──────────────────────────────────────── */
+
+.offer {
+  margin: 1rem 1.25rem 0; padding: .75rem .9rem;
+  background: var(--paper-raised); color: var(--ink);
+  border: 1px solid var(--edge); border-radius: 12px;
+}
+.offer__title { margin: 0 0 .25rem; font-weight: 600; }
+.offer__text { margin: 0 0 .5rem; font-size: .9rem; }
+.offer__list { list-style: none; margin: 0; padding: 0; }
+.offer__item {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem .75rem;
+  padding: .4rem 0; border-top: 1px solid var(--rule);
+}
+.offer__meta { display: flex; flex-direction: column; min-width: 0; }
+.offer__name { font-weight: 600; }
+.offer__detail { font-size: .8rem; color: var(--ink-soft); }
+.offer__error { font-size: .8rem; color: var(--danger); }
+.offer__actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; margin-top: .5rem; }
+.offer__action {
+  min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
+  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+.offer__action--primary { border-color: var(--ink-soft); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
+.offer__action:disabled { cursor: progress; }
+
 /* ── Durability ───────────────────────────────────────────────────────────── */
 
 .durability {

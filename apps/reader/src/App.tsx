@@ -74,6 +74,9 @@ import { announce } from './lib/announce';
 import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
 import { useI18n } from './i18n';
+import { primaryLanguage } from './i18n/locales';
+import { BibleOffer } from './components/BibleOffer';
+import { dismissOffer, loadDismissed, offerFor } from './lib/offer';
 import type { Messages } from './i18n/messages/en-US';
 import type { BookExample } from './i18n/types';
 
@@ -114,7 +117,7 @@ function johnIn(bible: Bible): BookExample {
 }
 
 export function App() {
-  const { t: words, fmt } = useI18n();
+  const { t: words, fmt, locale } = useI18n();
   const fmtNow = useRef(fmt);
   fmtNow.current = fmt;
   /**
@@ -150,6 +153,8 @@ export function App() {
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  /** Languages whose Bible offer was put away on this device. */
+  const [offerDismissed, setOfferDismissed] = useState<string[]>(() => loadDismissed());
 
   const [boards, setBoards] = useState<Board[]>([]);
   const [boardId, setBoardId] = useState<string | null>(null);
@@ -795,7 +800,8 @@ export function App() {
   const announcedQuarter = useRef<Record<string, number>>({});
 
   const download = useCallback(
-    (id: string) => {
+    /** `then: 'read'` opens the translation once it is installed — the offer's "Download and read". */
+    (id: string, then?: 'read') => {
       const entry = catalog.find((t) => t.id === id);
       const approx = entry?.approxBytes;
       const name = entry?.name ?? id.toUpperCase();
@@ -818,21 +824,21 @@ export function App() {
           setDownloads(({ [id]: _done, ...rest }) => rest);
           announce(wordsNow.current.library.downloaded(name));
           refreshLocal();
+          if (then === 'read') readTranslation(id);
         })
         .catch((e: unknown) => {
           // Kept on the row rather than thrown: one failed download must not
           // take down a library the rest of which is perfectly usable, and
           // "you are offline" is the likeliest cause.
-          const error = navigator.onLine
-            ? e instanceof Error
-              ? e.message
-              : String(e)
-            : wordsNow.current.library.offline;
+          // The reader gets a sentence in their language; the detail (a
+          // status code, a parse error) goes to the console.
+          console.warn(`Could not download "${id}":`, e);
+          const error = navigator.onLine ? wordsNow.current.library.failedOnline : wordsNow.current.library.offline;
           setDownloads((d) => ({ ...d, [id]: { received: 0, total: 0, error } }));
           announce(wordsNow.current.library.failed(name, error), { assertive: true });
         });
     },
-    [catalog, refreshLocal]
+    [catalog, refreshLocal, readTranslation]
   );
 
   const removeFromDevice = useCallback(
@@ -970,7 +976,11 @@ export function App() {
   if (error) {
     return (
       <div className="boot boot--error" role="alert">
-        <p>{error}</p>
+        <p>{words.app.bootFailed}</p>
+        {/* The technical detail, as the browser reported it: English (3.1.2). */}
+        <p>
+          <code lang="en">{error}</code>
+        </p>
       </div>
     );
   }
@@ -1184,6 +1194,21 @@ export function App() {
                   onQuote={quoteFrom}
                 />
               ) : null
+            }
+            offer={
+              <BibleOffer
+                entries={offerFor(locale, catalog, installed, offerDismissed)}
+                downloads={downloads}
+                onDownloadAndRead={(id) => download(id, 'read')}
+                onShowLibrary={() => {
+                  setMarksOpen(false);
+                  setResultsOpen(false);
+                  setSettingsOpen(false);
+                  setHelpOpen(false);
+                  setLibraryOpen(true);
+                }}
+                onDismiss={() => setOfferDismissed(dismissOffer(primaryLanguage(locale)))}
+              />
             }
             search={
               <SearchBar

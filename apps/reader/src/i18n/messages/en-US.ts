@@ -129,6 +129,7 @@ export const enUS = {
     name: 'Scriptura Reader',
     downloading: 'Downloading the text for offline use…',
     opening: 'Opening…',
+    bootFailed: 'The Bible text could not be opened. Reload to try again.',
     skipToScripture: 'Skip to scripture',
     skipToNotes: 'Skip to notes',
     title: (where: string) => `${where} · Scriptura`,
@@ -300,6 +301,7 @@ export const enUS = {
     progress: (name: string, percent: string) => `${name}: ${percent} downloaded`,
     downloaded: (name: string) => `${name} downloaded`,
     failed: (name: string, error: string) => `${name}: ${error}`,
+    failedOnline: 'The download did not finish. Try again later.',
     offline: 'No connection — try again when you are online.',
   },
 
@@ -382,6 +384,15 @@ export const enUS = {
     discard: 'Discard',
     save: 'Save this note',
     mark: (count: number) => plural(count, { one: `Mark ${count} verse`, other: `Mark ${count} verses` }),
+  },
+
+  offer: {
+    title: (language: string) => `Bibles in ${language}`,
+    intro: 'These translations are in your language. Download one to read it, online or offline.',
+    downloadAndRead: 'Download and read',
+    downloadAndReadName: (name: string) => `Download and read ${name}`,
+    allTranslations: 'All translations',
+    notNow: 'Not now',
   },
 
   update: {

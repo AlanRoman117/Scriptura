@@ -127,6 +127,7 @@ const catalog = {
     name: 'Scriptura Reader',
     downloading: 'Téléchargement du texte pour une lecture hors ligne…',
     opening: 'Ouverture…',
+    bootFailed: 'Le texte biblique n’a pas pu être ouvert. Rechargez pour réessayer.',
     skipToScripture: 'Aller au texte biblique',
     skipToNotes: 'Aller aux notes',
     title: (where: string) => `${where} · Scriptura`,
@@ -296,6 +297,7 @@ const catalog = {
     progress: (name: string, percent: string) => `${name} : ${percent} téléchargés`,
     downloaded: (name: string) => `${name} téléchargée`,
     failed: (name: string, error: string) => `${name} : ${error}`,
+    failedOnline: 'Le téléchargement n’a pas abouti. Réessayez plus tard.',
     offline: 'Pas de connexion. Réessayez quand vous serez en ligne.',
   },
 
@@ -377,6 +379,15 @@ const catalog = {
     discard: 'Écarter',
     save: 'Enregistrer cette note',
     mark: (count: number) => plural(count, { one: `Marquer ${count} verset`, other: `Marquer ${count} versets` }),
+  },
+
+  offer: {
+    title: (language: string) => `Bibles en ${language}`,
+    intro: 'Ces traductions sont dans votre langue. Téléchargez-en une pour la lire, en ligne ou hors ligne.',
+    downloadAndRead: 'Télécharger et lire',
+    downloadAndReadName: (name: string) => `Télécharger et lire ${name}`,
+    allTranslations: 'Toutes les traductions',
+    notNow: 'Pas maintenant',
   },
 
   update: {

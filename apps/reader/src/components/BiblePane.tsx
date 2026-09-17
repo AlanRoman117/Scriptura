@@ -29,6 +29,8 @@ interface BiblePaneProps {
   onSendToCanvas?: (verse: number) => void;
   focusVerse?: number | null;
   search?: React.ReactNode;
+  /** Bibles in the interface's language, offered above the chapter while reading. */
+  offer?: React.ReactNode;
   /** Marks or the library, rendered over the text while open. */
   overlay?: React.ReactNode;
   /** Side-by-side reading, rendered *instead of* the single-column chapter. */
@@ -57,6 +59,7 @@ export function BiblePane({
   onSendToCanvas,
   focusVerse,
   search,
+  offer,
   overlay,
   compare,
   marksOpen = false,
@@ -255,6 +258,8 @@ export function BiblePane({
       </header>
 
       {search}
+
+      {!overlay && offer}
 
       {overlay}
 

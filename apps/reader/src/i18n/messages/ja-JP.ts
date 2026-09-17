@@ -130,6 +130,7 @@ export const jaJP = {
     name: 'Scriptura Reader',
     downloading: 'オフラインで読むために本文をダウンロードしています…',
     opening: '開いています…',
+    bootFailed: '聖書本文を開けませんでした。再読み込みしてもう一度お試しください。',
     skipToScripture: '聖書本文へ移動',
     skipToNotes: 'ノートへ移動',
     title: (where: string) => `${where} · Scriptura`,
@@ -296,6 +297,7 @@ export const jaJP = {
     progress: (name: string, percent: string) => `${name}：${percent}をダウンロードしました`,
     downloaded: (name: string) => `${name}のダウンロードが完了しました`,
     failed: (name: string, error: string) => `${name}：${error}`,
+    failedOnline: 'ダウンロードを完了できませんでした。しばらくしてからもう一度お試しください。',
     offline: '接続がありません。オンラインになってからもう一度お試しください。',
   },
 
@@ -376,6 +378,15 @@ export const jaJP = {
     discard: '破棄',
     save: 'このノートを保存',
     mark: (count: number) => `${count}節をマーク`,
+  },
+
+  offer: {
+    title: (language: string) => `${language}の聖書`,
+    intro: 'お使いの言語の訳があります。ダウンロードすると、オフラインでも読めます。',
+    downloadAndRead: 'ダウンロードして読む',
+    downloadAndReadName: (name: string) => `ダウンロードして読む：${name}`,
+    allTranslations: 'すべての訳',
+    notNow: '今はしない',
   },
 
   update: {
