@@ -40,6 +40,8 @@
  *   node scripts/build-static-api.mjs --skip-verses   # chapters only (lean)
  *   node scripts/build-static-api.mjs --pretty        # indent output (debug)
  *   node scripts/build-static-api.mjs --only bsb      # one translation only
+ *   node scripts/build-static-api.mjs --full-only     # translations.json and each
+ *                                                     # full.json, nothing else
  *
  * Zero dependencies — Node built-ins only (Node 18+).
  */
@@ -66,6 +68,10 @@ const ONLY = (() => {
   return ids.length ? new Set(ids) : null;
 })();
 const PRETTY = args.includes("--pretty");
+// --full-only → /translations.json and each /translations/<id>/full.json, and
+// nothing else: what the reader downloads, for a site that publishes the app
+// without the whole API tree (scripts/build-site.mjs).
+const FULL_ONLY = args.includes("--full-only");
 
 const serialize = (obj) => JSON.stringify(obj, null, PRETTY ? 2 : 0);
 
@@ -130,6 +136,7 @@ function build() {
 
   console.log(`Building static API from ${DATA_DIR}/ → ${OUT_DIR}/`);
   if (SKIP_VERSES) console.log("  (--skip-verses: chapters only, no per-verse files)");
+  if (FULL_ONLY) console.log("  (--full-only: translations.json and each full.json only)");
 
   const allTranslations = [];
   const totals = { translations: 0, books: 0, chapters: 0, verses: 0 };
@@ -173,7 +180,7 @@ function build() {
       const chapters = Array.isArray(book.chapters) ? book.chapters : [];
 
       // Book-level index endpoint (chapter numbers + verse counts).
-      writeEndpoint(join("translations", id, slug), {
+      if (!FULL_ONLY) writeEndpoint(join("translations", id, slug), {
         translation: id,
         book: book.name,
         slug,
@@ -189,8 +196,10 @@ function build() {
       for (const chapter of chapters) {
         const verses = Array.isArray(chapter.verses) ? chapter.verses : [];
 
-        // Full-chapter endpoint.
-        writeEndpoint(join("translations", id, slug, numericSegment(chapter.number, "chapter.number")), {
+        // Full-chapter endpoint. The numbers are checked even when nothing is
+        // written, so --full-only refuses the same data the full build does.
+        const chapterSegment = numericSegment(chapter.number, "chapter.number");
+        if (!FULL_ONLY) writeEndpoint(join("translations", id, slug, chapterSegment), {
           translation: id,
           license: meta.license,
           attribution: meta.attribution,
@@ -203,7 +212,7 @@ function build() {
         totals.chapters++;
 
         // Single-verse endpoints.
-        if (!SKIP_VERSES) {
+        if (!SKIP_VERSES && !FULL_ONLY) {
           for (const v of verses) {
             writeEndpoint(
               join(
@@ -260,7 +269,7 @@ function build() {
     }
 
     // Translation-level endpoint: metadata + navigable book index.
-    writeEndpoint(join("translations", id), { ...meta, books: bookIndex });
+    if (!FULL_ONLY) writeEndpoint(join("translations", id), { ...meta, books: bookIndex });
 
     // Whole translation in one file, for offline clients.
     //
@@ -290,7 +299,7 @@ function build() {
     `${totals.chapters} chapter(s), ${totals.verses} verse(s).`
   );
   console.log(`Wrote ${filesWritten.toLocaleString()} JSON file(s) to ${OUT_DIR}/`);
-  if (!SKIP_VERSES && totals.verses > 20000) {
+  if (!SKIP_VERSES && !FULL_ONLY && totals.verses > 20000) {
     console.log(
       `Note: per-verse files make this a large object count. That's fine on S3, ` +
       `but the first sync is slower and each PUT has a tiny cost. Use ` +

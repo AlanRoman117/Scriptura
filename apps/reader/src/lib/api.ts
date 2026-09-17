@@ -19,9 +19,11 @@ export const DEFAULT_TRANSLATION = 'bsb';
 /**
  * Where the JSON API lives.
  *
- * A path by default, so a same-origin deployment (or the dev/preview proxy)
- * needs no configuration; `VITE_SCRIPTURA_API` points it at a CDN instead.
+ * `api` beside the app by default, so a same-origin deployment (or the
+ * dev/preview proxy) needs no configuration — and a site published under a
+ * path, like GitHub Pages' `/Scriptura/`, finds `/Scriptura/api` rather than
+ * the account's root. `VITE_SCRIPTURA_API` points it at a CDN instead.
  * `/translations/:id/full.json` resolves against the static tree and against a
  * live server alike — the router accepts the `.json` for exactly this reason.
  */
-export const API_BASE: string = import.meta.env.VITE_SCRIPTURA_API ?? '/api';
+export const API_BASE: string = import.meta.env.VITE_SCRIPTURA_API ?? `${import.meta.env.BASE_URL}api`;
