@@ -170,7 +170,9 @@ test.describe('a narrow notes pane', () => {
 
     // Still usable, not merely present.
     await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+    await page.getByTestId('confirm-cancel').click();
+    await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
   });
 });
 
@@ -285,11 +287,6 @@ test.describe('the divider, and each pane\'s own controls', () => {
       await page.setViewportSize({ width, height: 720 });
       await check(`at ${width}px`);
     }
-    // Armed, Delete grows a Cancel beside it.
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete-cancel')).toBeVisible();
-    await check('with Delete armed');
   });
   }
 });

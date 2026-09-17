@@ -33,7 +33,8 @@ const SCREENS: Record<string, Shot> = {
     await expect(page.getByTestId('note-done')).toBeVisible();
     await save('writing-a-note');
     await page.getByTestId('note-delete').click();
-    await save('delete-armed');
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+    await save('delete-confirm');
   },
   preview: async (page, save) => {
     await page.getByTestId('note-new').click();

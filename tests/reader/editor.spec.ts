@@ -221,7 +221,7 @@ test.describe('a board inside a note', () => {
 
     await page.getByTestId('canvas-open').click();
     await page.getByTestId('board-delete').click();
-    await page.getByTestId('board-delete').click();
+    await page.getByTestId('confirm-accept').click();
     await page.getByTestId('canvas-close').click();
 
     await page.getByTestId('note-preview').click();

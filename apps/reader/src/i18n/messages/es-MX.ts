@@ -147,16 +147,59 @@ export const esMX = {
 
   common: {
     cancel: 'Cancelar',
-    sure: '¿Seguro?',
-    armed: (name: string, question: string) => `${name}: ${question}`,
-    confirmAnnounce: 'Presiona otra vez para confirmar, o Escape para cancelar',
-    confirmHint: 'Presiona otra vez para confirmar, o Escape para cancelar.',
     untitledNote: 'Sin título',
     untitledBoard: 'Tablero sin título',
     source: (name: string) => `Fuente de ${name}`,
     undoRemove: 'Deshacer',
     remove: 'Quitar',
     done: 'Listo',
+  },
+
+  confirm: {
+    permanent: 'No se puede deshacer.',
+    undoable: 'Puedes deshacerlo hasta tu próximo cambio.',
+    note: {
+      title: (name: string) => `¿Eliminar la nota “${name}”?`,
+      gone: 'Se eliminará de este dispositivo.',
+      keepCopy: 'Para conservar una copia, exporta tus notas antes.',
+      action: 'Eliminar nota',
+      done: (name: string) => `Se eliminó la nota “${name}”`,
+    },
+    board: {
+      title: (name: string) => `¿Eliminar el tablero “${name}”?`,
+      cards: (cards: number) =>
+        plural(cards, {
+          one: 'Se eliminarán el tablero y su tarjeta.',
+          other: `Se eliminarán el tablero y sus ${num(cards)} tarjetas.`,
+        }),
+      empty: 'El tablero está vacío.',
+      kept: 'Tus notas no cambian.',
+      action: 'Eliminar tablero',
+      done: (name: string) => `Se eliminó el tablero “${name}”`,
+    },
+    card: {
+      title: (card: string) => `¿Quitar ${card} del tablero?`,
+      connections: (count: number) =>
+        plural(count, {
+          one: 'También se quita su conexión.',
+          other: `También se quitan sus ${num(count)} conexiones.`,
+        }),
+      noteKept: 'La nota en sí no cambia.',
+      action: 'Quitar tarjeta',
+    },
+    mark: {
+      title: (ref: string) => `¿Quitar la marca de ${ref}?`,
+      leaves: (collection: string) => `El versículo sale de la colección “${collection}”.`,
+      action: 'Quitar marca',
+    },
+    translation: {
+      title: (name: string) => `¿Quitar ${name} de este dispositivo?`,
+      frees: (size: string) => `Se liberarán unos ${size}.`,
+      kept: 'Tus notas y marcas no cambian.',
+      again: 'Puedes volver a descargarla cuando tengas conexión.',
+      action: 'Quitar traducción',
+      done: (name: string) => `Se quitó ${name} de este dispositivo`,
+    },
   },
 
   colours,

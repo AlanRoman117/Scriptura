@@ -89,11 +89,17 @@ test.describe('the library', () => {
     await page.getByTestId('note-title').fill('Kept');
 
     await install(page, 'kjv');
-    // Two presses: a multi-megabyte download is not thrown away by one slip.
+    // A multi-megabyte download is not thrown away by one slip: it asks, and
+    // says the notes stay.
     await page.getByTestId('library-remove-kjv').click();
-    await expect(page.getByTestId('library-remove-kjv')).toContainText('Sure?');
-    await page.getByTestId('library-remove-kjv').click();
+    const dialog = page.getByRole('alertdialog', { name: /^Remove King James Version .*from this device\?$/ });
+    await expect(dialog).toBeVisible();
+    await expect(page.getByTestId('confirm-body')).toContainText('Your notes and marks are not changed.');
+    await dialog.getByRole('button', { name: 'Remove translation' }).click();
     await expect(page.getByTestId('library-get-kjv')).toBeVisible();
+    // Focus takes the place of the button that went, and the removal is said.
+    await expect(page.getByTestId('library-get-kjv')).toBeFocused();
+    await expect(page.getByTestId('announcer')).toContainText(/^Removed King James Version .*from this device$/);
 
     await expect(page.getByTestId('note-title')).toHaveValue('Kept');
   });

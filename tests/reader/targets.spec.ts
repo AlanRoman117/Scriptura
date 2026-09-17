@@ -79,6 +79,13 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('search-see-all').click();
     await expect(page.getByTestId('search-results')).toBeVisible();
   },
+  'asked before deleting': async (page) => {
+    await page.getByTestId('note-new').click();
+    // A long name, so the question wraps.
+    await page.getByTestId('note-title').fill('Notes on the prologue of John, verse by verse, with the cross-references');
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+  },
 };
 
 test.describe('every pointer target is 44 × 44 or larger', () => {

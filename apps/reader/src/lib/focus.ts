@@ -63,6 +63,82 @@ export function useReturnFocus(open: boolean, fallback?: string): void {
   }, [open, fallback]);
 }
 
+/* ── Focus after a removal ────────────────────────────────────────────────── */
+
+/**
+ * Where focus goes once the thing a control acted on is gone.
+ *
+ * `item` names the kind of thing removed (`.marks__item`, `.card`): focus moves
+ * to the next one, or to the one before when it was the last. `to` is tried
+ * after that, in order. With neither, focus stays on the control that asked.
+ */
+export interface FocusAfter {
+  item?: string;
+  to?: string[];
+}
+
+function sibling(el: Element, selector: string, step: 'nextElementSibling' | 'previousElementSibling'): Element | null {
+  for (let at = el[step]; at; at = at[step]) if (at.matches(selector)) return at;
+  return null;
+}
+
+/**
+ * Call just before a change that removes `trigger` or what it stands for.
+ *
+ * Deleting the focused control drops focus onto <body>, and a keyboard or
+ * screen reader user starts again from the top of the page (2.4.3). The
+ * neighbour is found now, while the removed item is still on screen; focus
+ * lands once the change has rendered. A removal that waits on storage (a
+ * translation) renders later, so until something matches, the DOM is watched
+ * — and the watch ends the moment the reader does anything else, so focus is
+ * never taken from somewhere they chose. `landed` runs once the change has
+ * happened and focus is in its new place: news said before then would be cut
+ * off by the focus change, or would report a removal that has not happened.
+ */
+export function settleFocus(trigger: HTMLElement, after: FocusAfter = {}, landed?: () => void): void {
+  const item = after.item ? trigger.closest(after.item) : null;
+  const next =
+    item && after.item
+      ? sibling(item, after.item, 'nextElementSibling') ?? sibling(item, after.item, 'previousElementSibling')
+      : null;
+  const neighbour =
+    next instanceof HTMLElement && next.matches(FOCUSABLE) ? next : next?.querySelector<HTMLElement>(FOCUSABLE) ?? null;
+
+  const pick = (): HTMLElement | null => {
+    if (neighbour?.isConnected) return neighbour;
+    for (const selector of after.to ?? []) {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (el) return el;
+    }
+    return null;
+  };
+
+  let observer: MutationObserver | null = null;
+  const stop = () => {
+    observer?.disconnect();
+    document.removeEventListener('pointerdown', stop, true);
+    document.removeEventListener('keydown', stop, true);
+  };
+  // True once there is nothing left to wait for.
+  const land = (): boolean => {
+    const target = pick();
+    if (target) target.focus();
+    else if (trigger.isConnected && (after.item || after.to?.length)) return false;
+    landed?.();
+    return true;
+  };
+
+  requestAnimationFrame(() => {
+    if (land()) return;
+    observer = new MutationObserver(() => {
+      if (land()) stop();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener('pointerdown', stop, true);
+    document.addEventListener('keydown', stop, true);
+  });
+}
+
 /* ── The dismiss stack ────────────────────────────────────────────────────── */
 
 interface Entry {

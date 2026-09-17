@@ -155,16 +155,51 @@ export const jaJP = {
 
   common: {
     cancel: 'キャンセル',
-    sure: 'よろしいですか？',
-    armed: (name: string, question: string) => `${name}：${question}`,
-    confirmAnnounce: 'もう一度押すと確定します。Esc でキャンセルします',
-    confirmHint: 'もう一度押すと確定します。Esc でキャンセルします。',
     untitledNote: '無題',
     untitledBoard: '無題のボード',
     source: (name: string) => `${name}の出典`,
     undoRemove: '元に戻す',
     remove: '削除',
     done: '完了',
+  },
+
+  confirm: {
+    permanent: 'この操作は元に戻せません。',
+    undoable: '次に変更を加えるまでは元に戻せます。',
+    note: {
+      title: (name: string) => `ノート「${name}」を削除しますか？`,
+      gone: 'この端末から削除されます。',
+      keepCopy: 'コピーを残すには、先にノートをエクスポートしてください。',
+      action: 'ノートを削除',
+      done: (name: string) => `ノート「${name}」を削除しました`,
+    },
+    board: {
+      title: (name: string) => `ボード「${name}」を削除しますか？`,
+      cards: (cards: number) => `ボードとカード${num(cards)}枚が削除されます。`,
+      empty: 'このボードは空です。',
+      kept: 'ノートは変更されません。',
+      action: 'ボードを削除',
+      done: (name: string) => `ボード「${name}」を削除しました`,
+    },
+    card: {
+      title: (card: string) => `${card}をボードから削除しますか？`,
+      connections: (count: number) => `つながり${num(count)}件も削除されます。`,
+      noteKept: 'ノート自体は変更されません。',
+      action: 'カードを削除',
+    },
+    mark: {
+      title: (ref: string) => `${ref}のマークを削除しますか？`,
+      leaves: (collection: string) => `この節はコレクション「${collection}」から外れます。`,
+      action: 'マークを削除',
+    },
+    translation: {
+      title: (name: string) => `${name}をこの端末から削除しますか？`,
+      frees: (size: string) => `約${size}の空き容量が増えます。`,
+      kept: 'ノートとマークは変更されません。',
+      again: 'オンラインのときに、もう一度ダウンロードできます。',
+      action: '翻訳を削除',
+      done: (name: string) => `${name}をこの端末から削除しました`,
+    },
   },
 
   colours,

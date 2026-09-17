@@ -175,7 +175,9 @@ export function LibraryPanel({
                             leaves nothing to read the moment the network goes,
                             which is the state this app exists to survive. */}
                         {t.id !== DEFAULT_TRANSLATION && (
-                          // A multi-megabyte download goes in two presses (3.3.6).
+                          // A multi-megabyte download is not thrown away by one
+                          // slip: it asks first (3.3.4). Once it is gone, focus
+                          // goes to the Download button that takes its place.
                           <ConfirmButton
                             label={words.common.remove}
                             className="library__action library__action--danger"
@@ -186,7 +188,18 @@ export function LibraryPanel({
                                 : words.library.removeFromDevice(t.name)
                             }
                             disabled={isActive}
-                            onConfirm={() => onRemove(t.id)}
+                            confirm={{
+                              title: words.confirm.translation.title(t.name),
+                              body: [
+                                ...(t.approxBytes ? [words.confirm.translation.frees(fmt.bytes(t.approxBytes))] : []),
+                                words.confirm.translation.kept,
+                                words.confirm.translation.again,
+                              ],
+                              action: words.confirm.translation.action,
+                              onConfirm: () => onRemove(t.id),
+                              focusAfter: { to: [`[data-testid="library-get-${t.id}"]`] },
+                              done: words.confirm.translation.done(t.name),
+                            }}
                           />
                         )}
                       </>

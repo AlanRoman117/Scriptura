@@ -83,6 +83,14 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('search-input').press('Enter');
     await expect(page.getByTestId('search-results')).toBeVisible();
   },
+  'asked before deleting': async (page) => {
+    await expandSheet(page);
+    await page.getByTestId('note-new').tap();
+    // A long name, so the question wraps on a narrow screen.
+    await page.getByTestId('note-title').fill('Notes on the prologue of John, verse by verse, with the cross-references');
+    await page.getByTestId('note-delete').tap();
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+  },
 };
 
 /** Horizontal overflow of the page and of every scrolling region, in px. */
@@ -94,7 +102,7 @@ const sidewaysOverflow = (page: Page) =>
       if (over > 1) out.push(`${name} overflows by ${over}px`);
     };
     check(document.documentElement, 'the page');
-    for (const el of Array.from(document.querySelectorAll('.pane, .sheet__body, .search__panel'))) {
+    for (const el of Array.from(document.querySelectorAll('.pane, .sheet__body, .search__panel, .confirm-dialog__box'))) {
       if ((el as HTMLElement).checkVisibility()) check(el, `.${el.className.split(' ').join('.')}`);
     }
     return out;
@@ -224,7 +232,7 @@ test.describe('text spacing (1.4.12)', () => {
  * in English can wrap, clip or shrink in another language. In these states
  * the reading view also carries the offer of Bibles in the language.
  */
-const TEXT_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'help', 'library', 'board', 'results'];
+const TEXT_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'help', 'library', 'board', 'results', 'asked before deleting'];
 
 for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
   test.describe(`in ${locale}`, () => {

@@ -140,32 +140,43 @@ export function MarksPanel({
               <p className="marks__empty">{t.marks.empty}</p>
             ) : (
               <ul className="marks__list" role="list">
-                {marks.map((m) => (
-                  <li className="marks__item" key={m.id}>
-                    <button
-                      type="button"
-                      className="marks__ref"
-                      data-testid={`marks-go-${m.book_slug}-${m.chapter}-${m.verse}`}
-                      onClick={() => onGo(m.book_slug, m.chapter, m.verse)}
-                    >
-                      <span className="marks__ref-label">
-                        {m.name} {m.chapter}:{m.verse}
-                      </span>
-                      {m.text && (
-                        <span className="marks__ref-text" lang={bible.meta.language}>
-                          {m.text}
+                {marks.map((m) => {
+                  const ref = `${m.name} ${m.chapter}:${m.verse}`;
+                  return (
+                    <li className="marks__item" key={m.id}>
+                      <button
+                        type="button"
+                        className="marks__ref"
+                        data-testid={`marks-go-${m.book_slug}-${m.chapter}-${m.verse}`}
+                        onClick={() => onGo(m.book_slug, m.chapter, m.verse)}
+                      >
+                        <span className="marks__ref-label">
+                          {m.name} {m.chapter}:{m.verse}
                         </span>
-                      )}
-                    </button>
-                    <ConfirmButton
-                      label="✕"
-                      className="marks__remove"
-                      data-testid={`marks-remove-${m.book_slug}-${m.chapter}-${m.verse}`}
-                      aria-label={t.marks.remove(`${m.name} ${m.chapter}:${m.verse}`)}
-                      onConfirm={() => onRemove(m.id)}
-                    />
-                  </li>
-                ))}
+                        {m.text && (
+                          <span className="marks__ref-text" lang={bible.meta.language}>
+                            {m.text}
+                          </span>
+                        )}
+                      </button>
+                      {/* Asks first; Undo stands until the next change (3.3.6).
+                          Focus moves on to the next mark in the list. */}
+                      <ConfirmButton
+                        label="✕"
+                        className="marks__remove"
+                        data-testid={`marks-remove-${m.book_slug}-${m.chapter}-${m.verse}`}
+                        aria-label={t.marks.remove(ref)}
+                        confirm={{
+                          title: t.confirm.mark.title(ref),
+                          body: [t.confirm.mark.leaves(colorLabel(color, labels, t.colours)), t.confirm.undoable],
+                          action: t.confirm.mark.action,
+                          onConfirm: () => onRemove(m.id),
+                          focusAfter: { item: '.marks__item', to: [`[data-testid="marks-label-${color}"]`] },
+                        }}
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </section>

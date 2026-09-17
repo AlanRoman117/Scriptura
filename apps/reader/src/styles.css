@@ -293,7 +293,7 @@ summary:focus-visible,
 .results__ref, .results__insert, .library__close, .library__action, .notes__select,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
-.card__title-input, .canvas__panel .swatch, .layout__done-show {
+.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -302,18 +302,13 @@ summary:focus-visible,
 .settings__close, .settings__action, .canvas__zoom button, .canvas__action, .tools__button,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
-.compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show {
+.compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show,
+.confirm-dialog__action {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
 .search__option, .settings__toggle, .proposal__item label { display: inline-flex; align-items: center; }
 .settings__tools summary { display: flex; align-items: center; }
-
-/* A destructive button and, once armed, its Cancel beside it. Cancel inherits
-   the button's class for size and shape, and is never styled as danger. */
-.confirm { display: inline-flex; align-items: stretch; gap: .25rem; }
-.confirm__cancel, .confirm__cancel:hover { color: var(--ink-soft); border-color: var(--edge); }
-.confirm__cancel:hover { color: var(--ink); }
 
 /* ── Layout ───────────────────────────────────────────────────────────────── */
 
@@ -928,6 +923,46 @@ summary:focus-visible,
 .proposal__action:disabled { opacity: .5; cursor: default; }
 .proposal__action--primary { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 20%, var(--paper)); }
 
+/* ── Confirmation, before anything is deleted ─────────────────────────────── */
+
+/* Like the proposal, the dialog covers the screen and centres its box, so a
+   press on the dialog itself is a press on the backdrop. It covers the
+   *visible* screen: --vvh and --vv-top shrink for the software keyboard. */
+.confirm-dialog {
+  position: fixed; inset: var(--vv-top, 0px) 0 auto 0;
+  width: 100%; height: var(--vvh, 100dvh); max-width: none; max-height: none;
+  margin: 0; padding: 1rem; border: 0; background: transparent; color: var(--ink);
+}
+.confirm-dialog[open] { display: flex; align-items: center; justify-content: center; }
+.confirm-dialog::backdrop { background: color-mix(in srgb, #000 55%, transparent); }
+/* The box scrolls rather than overflowing: a long note title at 200% text on
+   a phone held sideways still leaves both buttons reachable (1.4.10). */
+.confirm-dialog__box {
+  width: min(30rem, 100%); max-height: 100%; overflow-y: auto;
+  padding: 1.1rem 1.25rem 1rem;
+  background: var(--paper); border: 1px solid var(--edge); border-top: 6px solid var(--danger);
+  border-radius: 12px; box-shadow: 0 20px 60px rgb(0 0 0 / .35);
+}
+.confirm-dialog__title {
+  display: flex; align-items: flex-start; gap: .55rem; margin: 0 0 .7rem;
+  font-family: var(--serif); font-size: 1.2rem; line-height: 1.35; overflow-wrap: anywhere;
+}
+.confirm-dialog__sign { flex: none; width: 1.35em; height: 1.35em; color: var(--danger); }
+.confirm-dialog__body { font-size: .92rem; line-height: 1.6; overflow-wrap: anywhere; }
+.confirm-dialog__body p { margin: 0 0 .6em; }
+.confirm-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+.confirm-dialog__action {
+  font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; padding: .45rem 1rem;
+  color: var(--ink); background-color: var(--paper-raised);
+  border: 1px solid var(--edge); border-radius: 8px;
+}
+.confirm-dialog__action:hover { border-color: var(--ink-soft); }
+/* The one button here that loses something is filled with the danger colour,
+   and its words say so as well. Under forced colours it is drawn inverted
+   instead (see the forced-colors block at the end). */
+.confirm-dialog__action--danger { color: var(--paper); background-color: var(--danger); border: 2px solid var(--danger); }
+.confirm-dialog__action--danger:hover { border-color: var(--danger); text-decoration: underline; text-underline-offset: .15em; }
+
 /* ── Canvas: verses and notes on a plane ──────────────────────────────────── */
 
 .canvas { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper); }
@@ -980,9 +1015,16 @@ summary:focus-visible,
 .canvas__edge-x { stroke: var(--ink-soft); stroke-width: 2; stroke-linecap: round; }
 .canvas__edge-cut:hover .canvas__edge-chip { stroke: var(--danger); }
 .canvas__edge-cut:hover .canvas__edge-x { stroke: var(--danger); }
+/* The hint over an empty board. A drag starting on it pans the board, so it
+   takes no presses — and so it must never hold a control. */
 .canvas__empty {
   position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
   color: var(--ink-soft); font-size: .85rem; pointer-events: none;
+}
+/* No board at all: a message and the button that starts one, in the flow. */
+.canvas__none {
+  flex: 1; display: grid; place-content: center; justify-items: center; gap: .6rem;
+  padding: 1rem; text-align: center; color: var(--ink-soft); font-size: .9rem;
 }
 
 /* Cards are a fixed size on purpose: an edge can then be drawn from centre to
@@ -1061,9 +1103,9 @@ summary:focus-visible,
 .card__action:hover { color: var(--ink); border-color: var(--rule); }
 .card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
 .card__action--danger:hover { color: var(--danger); border-color: var(--danger); }
-/* Remove sits at the end of the row; armed, it and Cancel may take a second
-   row, which the card's body gives up its height for. */
-.card__actions .confirm { margin-left: auto; }
+/* Remove sits at the end of the row. If the row wraps, the card's body gives
+   up its height for the second one. */
+.card__actions .card__action--danger { margin-left: auto; }
 .card__actions { flex-wrap: wrap; }
 .canvas__action--undo { border-color: var(--ink-soft); color: var(--ink); }
 
@@ -1633,5 +1675,11 @@ summary:focus-visible,
   .divider::before { forced-color-adjust: none; background: radial-gradient(circle, CanvasText 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y; }
   .verse[data-highlight] { border-left-color: Highlight; }
   .swatch__disc { forced-color-adjust: none; }
+  /* The confirmation's delete button loses its fill, and the rule above would
+     give it the same border as Cancel. An inverted block in the system's own
+     pair keeps it apart, and clear of the Highlight focus ring. */
+  button.confirm-dialog__action--danger {
+    forced-color-adjust: none; color: Canvas; background-color: CanvasText; border: 2px solid CanvasText;
+  }
   :focus-visible { outline-color: Highlight; }
 }

@@ -151,16 +151,59 @@ const catalog = {
 
   common: {
     cancel: 'Annuler',
-    sure: 'Confirmer ?',
-    armed: (name: string, question: string) => `${name} : ${question}`,
-    confirmAnnounce: 'Appuyez de nouveau pour confirmer, ou sur Échap pour annuler',
-    confirmHint: 'Appuyez de nouveau pour confirmer, ou sur Échap pour annuler.',
     untitledNote: 'Sans titre',
     untitledBoard: 'Tableau sans titre',
     source: (name: string) => `Source de ${name}`,
     undoRemove: 'Annuler le retrait',
     remove: 'Retirer',
     done: 'Terminé',
+  },
+
+  confirm: {
+    permanent: 'Vous ne pourrez pas annuler.',
+    undoable: 'Vous pourrez annuler jusqu’à votre prochaine modification.',
+    note: {
+      title: (name: string) => `Supprimer la note « ${name} » ?`,
+      gone: 'Elle sera supprimée de cet appareil.',
+      keepCopy: 'Pour en garder une copie, exportez d’abord vos notes.',
+      action: 'Supprimer la note',
+      done: (name: string) => `Note « ${name} » supprimée`,
+    },
+    board: {
+      title: (name: string) => `Supprimer le tableau « ${name} » ?`,
+      cards: (cards: number) =>
+        plural(cards, {
+          one: 'Le tableau et sa fiche seront supprimés.',
+          other: `Le tableau et ses ${num(cards)} fiches seront supprimés.`,
+        }),
+      empty: 'Le tableau est vide.',
+      kept: 'Vos notes ne sont pas modifiées.',
+      action: 'Supprimer le tableau',
+      done: (name: string) => `Tableau « ${name} » supprimé`,
+    },
+    card: {
+      title: (card: string) => `Retirer ${card} du tableau ?`,
+      connections: (count: number) =>
+        plural(count, {
+          one: 'Sa connexion sera aussi retirée.',
+          other: `Ses ${num(count)} connexions seront aussi retirées.`,
+        }),
+      noteKept: 'La note elle-même n’est pas modifiée.',
+      action: 'Retirer la fiche',
+    },
+    mark: {
+      title: (ref: string) => `Retirer la marque de ${ref} ?`,
+      leaves: (collection: string) => `Le verset quittera la collection « ${collection} ».`,
+      action: 'Retirer la marque',
+    },
+    translation: {
+      title: (name: string) => `Retirer ${name} de cet appareil ?`,
+      frees: (size: string) => `Environ ${size} seront libérés.`,
+      kept: 'Vos notes et vos marques ne sont pas modifiées.',
+      again: 'Vous pourrez la télécharger de nouveau une fois en ligne.',
+      action: 'Retirer la traduction',
+      done: (name: string) => `Traduction ${name} retirée de cet appareil`,
+    },
   },
 
   colours,
