@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { readFile, stat } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { extname, join, resolve, sep } from 'node:path';
 
 /**
@@ -71,7 +71,9 @@ export async function serveStatic(options: StaticServerOptions): Promise<StaticS
     };
     try {
       if (file !== root && !file.startsWith(root + sep)) throw new Error('outside the root');
-      if (!(await stat(file)).isFile()) throw new Error('not a file');
+      // Read straight away rather than asking about the file first: a
+      // directory or a missing file throws, and the catch answers as the host
+      // would. (Checking and then reading is also a race, which CodeQL flags.)
       const body = await readFile(file);
       send(options.transform ? options.transform(path, body) : body, CONTENT_TYPES[extname(file)] ?? 'application/octet-stream');
     } catch {
