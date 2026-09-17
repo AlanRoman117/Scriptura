@@ -1,4 +1,5 @@
 import { fileSystemAccessSupported } from '../lib/export';
+import { useI18n } from '../i18n';
 
 export type Persistence = 'persisted' | 'denied' | 'unsupported' | 'unknown';
 
@@ -28,23 +29,24 @@ export function DurabilityBanner({
   onExport,
   onDismiss,
 }: DurabilityBannerProps) {
+  const { t } = useI18n();
   // A folder mirror on disk outranks anything the browser can promise.
   if (mirroring && !exportStale) return null;
   if (persistence === 'persisted' && !exportStale && !fileSystemAccessSupported()) return null;
 
   const message =
     persistence === 'denied'
-      ? 'This browser may delete your notes to free up space. Save a copy.'
+      ? t.durability.denied
       : exportStale
-        ? 'You have not exported your notes for a while.'
-        : 'Your notes live in this browser only.';
+        ? t.durability.stale
+        : t.durability.local;
 
   return (
     // A named complementary landmark, not a live region: it is on the page
     // when the page loads, and a region that is already there is not
     // announced anyway — while `role="status"` on an <aside> is a role the
     // element may not take (axe: aria-allowed-role).
-    <aside className="durability" data-testid="durability" aria-label="Where your notes are kept">
+    <aside className="durability" data-testid="durability" aria-label={t.durability.label}>
       <p className="durability__text">{message}</p>
       <div className="durability__actions">
         {fileSystemAccessSupported() && !mirroring && (
@@ -53,9 +55,9 @@ export function DurabilityBanner({
             className="durability__action"
             data-testid="choose-folder"
             onClick={onChooseFolder}
-            title="Keep a copy as .md files in a folder you choose"
+            title={t.durability.saveFolderTitle}
           >
-            Save to a folder
+            {t.durability.saveFolder}
           </button>
         )}
         <button
@@ -64,13 +66,13 @@ export function DurabilityBanner({
           data-testid="durability-export"
           onClick={onExport}
         >
-          Export now
+          {t.durability.exportNow}
         </button>
         <button
           type="button"
           className="durability__dismiss"
           onClick={onDismiss}
-          aria-label="Dismiss this notice"
+          aria-label={t.durability.dismiss}
         >
           ×
         </button>

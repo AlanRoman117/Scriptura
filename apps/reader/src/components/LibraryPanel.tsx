@@ -2,8 +2,9 @@ import { useRef, useMemo } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import { ConfirmButton } from './ConfirmButton';
 import type { CatalogEntry } from '../lib/library';
-import { downloadPercent, formatBytes } from '../lib/library';
+import { downloadPercent } from '../lib/library';
 import { DEFAULT_TRANSLATION } from '../lib/api';
+import { useI18n } from '../i18n';
 
 /** A download in flight, as a fraction plus the bytes behind it. */
 export interface DownloadState {
@@ -26,13 +27,6 @@ interface LibraryPanelProps {
   onClose: () => void;
 }
 
-const LICENSE_LABEL: Record<string, string> = {
-  'public-domain': 'Public domain',
-  'cc-by-sa-4.0': 'CC BY-SA 4.0',
-  cc0: 'CC0',
-  'custom-free': 'Free licence',
-};
-
 /**
  * Which translations exist, which are on this device, and what they cost.
  *
@@ -53,6 +47,7 @@ export function LibraryPanel({
   onCompare,
   onClose,
 }: LibraryPanelProps) {
+  const { t: words, fmt } = useI18n();
   // Grouped by language: the reason to add a translation is usually to read it
   // in another one, and eleven flat rows buries that.
   //
@@ -62,13 +57,13 @@ export function LibraryPanel({
   const byLanguage = useMemo(() => {
     const groups = new Map<string, CatalogEntry[]>();
     for (const t of catalog) {
-      const name = languageName(t.language);
+      const name = fmt.languageName(t.language);
       const list = groups.get(name) ?? [];
       list.push(t);
       groups.set(name, list);
     }
-    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [catalog]);
+    return [...groups.entries()].sort(([a], [b]) => fmt.compare(a, b));
+  }, [catalog, fmt]);
 
   const localBytes = catalog
     .filter((t) => installed.includes(t.id))
@@ -81,15 +76,15 @@ export function LibraryPanel({
   useReturnFocus(true, '[data-testid="library-open"]');
 
   return (
-    <section ref={root} className="library" id="library-panel" data-testid="library-panel" aria-label="Translations">
+    <section ref={root} className="library" id="library-panel" data-testid="library-panel" aria-label={words.library.title}>
       <header className="library__bar">
-        <h1 className="library__title">Translations</h1>
+        <h1 className="library__title">{words.library.title}</h1>
         <button
           type="button"
           className="library__close"
           data-testid="library-close"
           onClick={onClose}
-          aria-label="Close translations"
+          aria-label={words.library.close}
         >
           ✕
         </button>
@@ -100,10 +95,10 @@ export function LibraryPanel({
           used" — two numbers for one question, inviting the reader to work out
           which is lying. */}
       <p className="library__storage" data-testid="library-storage">
-        {installed.length} on this device ·{' '}
+        {words.library.onDevice(installed.length)} ·{' '}
         {storage && storage.quota > 0
-          ? `${formatBytes(storage.usage)} of ${formatBytes(storage.quota)} used`
-          : `about ${formatBytes(localBytes)}`}
+          ? words.library.used(fmt.bytes(storage.usage), fmt.bytes(storage.quota))
+          : words.library.about(fmt.bytes(localBytes))}
       </p>
 
       {byLanguage.map(([language, entries]) => (
@@ -121,13 +116,13 @@ export function LibraryPanel({
                   <div className="library__meta">
                     <span className="library__name">
                       {t.name}
-                      {isActive && <span className="library__badge">Reading</span>}
-                      {comparing && <span className="library__badge">Comparing</span>}
+                      {isActive && <span className="library__badge">{words.library.reading}</span>}
+                      {comparing && <span className="library__badge">{words.library.comparing}</span>}
                     </span>
                     <span className="library__detail">
-                      {t.id.toUpperCase()} · {LICENSE_LABEL[t.license] ?? t.license}
+                      {t.id.toUpperCase()} · {words.library.licences[t.license] ?? t.license}
                       {t.year ? ` · ${t.year}` : ''}
-                      {t.approxBytes ? ` · ~${formatBytes(t.approxBytes)}` : ''}
+                      {t.approxBytes ? ` · ~${fmt.bytes(t.approxBytes)}` : ''}
                     </span>
                     {busy?.error && (
                       <span className="library__error" role="alert" data-testid={`library-error-${t.id}`}>
@@ -139,11 +134,11 @@ export function LibraryPanel({
                         className="library__progress"
                         data-testid={`library-progress-${t.id}`}
                         role="progressbar"
-                        aria-label={`Downloading ${t.name}`}
+                        aria-label={words.library.downloading(t.name)}
                         aria-valuenow={Math.round(percent(busy))}
                         aria-valuemin={0}
                         aria-valuemax={100}
-                        aria-valuetext={`${Math.round(percent(busy))}%`}
+                        aria-valuetext={fmt.percent(Math.round(percent(busy)))}
                       >
                         <span
                           className="library__progress-fill"
@@ -163,7 +158,7 @@ export function LibraryPanel({
                           disabled={isActive}
                           onClick={() => onRead(t.id)}
                         >
-                          {isActive ? 'Reading' : 'Read'}
+                          {isActive ? words.library.reading : words.library.read}
                         </button>
                         <button
                           type="button"
@@ -171,10 +166,10 @@ export function LibraryPanel({
                           data-testid={`library-compare-${t.id}`}
                           disabled={isActive}
                           aria-pressed={comparing}
-                          title="Show beside the translation you are reading"
+                          title={words.library.compareTitle}
                           onClick={() => onCompare(t.id)}
                         >
-                          {comparing ? 'Comparing' : 'Compare'}
+                          {comparing ? words.library.comparing : words.library.compare}
                         </button>
                         {/* The bundled default has no Remove: deleting it
                             leaves nothing to read the moment the network goes,
@@ -182,13 +177,13 @@ export function LibraryPanel({
                         {t.id !== DEFAULT_TRANSLATION && (
                           // A multi-megabyte download goes in two presses (3.3.6).
                           <ConfirmButton
-                            label="Remove"
+                            label={words.common.remove}
                             className="library__action library__action--danger"
                             data-testid={`library-remove-${t.id}`}
                             aria-label={
                               isActive
-                                ? `Remove ${t.name} — switch to another translation first`
-                                : `Remove ${t.name} from this device`
+                                ? words.library.removeActive(t.name)
+                                : words.library.removeFromDevice(t.name)
                             }
                             disabled={isActive}
                             onConfirm={() => onRemove(t.id)}
@@ -203,7 +198,7 @@ export function LibraryPanel({
                         disabled={!!busy && !busy.error}
                         onClick={() => onDownload(t.id)}
                       >
-                        {busy && !busy.error ? `${Math.round(percent(busy))}%` : 'Download'}
+                        {busy && !busy.error ? fmt.percent(Math.round(percent(busy))) : words.library.download}
                       </button>
                     )}
                   </div>
@@ -215,8 +210,7 @@ export function LibraryPanel({
       ))}
 
       <p className="library__note">
-        A downloaded translation stays on this device and can be read offline. Removing one
-        never touches your notes or marks: both belong to the passage, not to a translation.
+        {words.library.note}
       </p>
     </section>
   );
@@ -224,13 +218,4 @@ export function LibraryPanel({
 
 const percent = (d: DownloadState): number => downloadPercent(d.received, d.total);
 
-/** "es" → "Spanish", in whatever language the reader's browser is set to. */
-function languageName(code: string): string {
-  try {
-    return new Intl.DisplayNames(undefined, { type: 'language' }).of(code) ?? code;
-  } catch {
-    // Intl.DisplayNames is widely supported but not universally; an ISO code is
-    // a poor heading, not a broken one.
-    return code;
-  }
-}
+

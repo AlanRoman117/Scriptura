@@ -2,11 +2,12 @@ import { useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { announce } from '../lib/announce';
 import { useDismissable } from '../lib/focus';
+import { useI18n } from '../i18n';
 
 interface ConfirmButtonProps {
   /** What the button says at rest. */
   label: ReactNode;
-  /** What it says once armed. "Sure?" is the house style, and two specs assert it. */
+  /** What it says once armed. The catalog's "Sure?" is the house style, and two specs assert it. */
   confirmLabel?: string;
   onConfirm: () => void;
   className?: string;
@@ -32,13 +33,15 @@ interface ConfirmButtonProps {
  */
 export function ConfirmButton({
   label,
-  confirmLabel = 'Sure?',
+  confirmLabel: armedLabel,
   onConfirm,
   className,
   disabled,
   resetKey,
   ...rest
 }: ConfirmButtonProps) {
+  const { t } = useI18n();
+  const confirmLabel = armedLabel ?? t.common.sure;
   const [armed, setArmed] = useState(false);
   const root = useRef<HTMLSpanElement>(null);
   const hintId = useId();
@@ -53,7 +56,7 @@ export function ConfirmButton({
         type="button"
         className={className}
         data-testid={testid}
-        aria-label={armed && rest['aria-label'] ? `${rest['aria-label']} — ${confirmLabel}` : rest['aria-label']}
+        aria-label={armed && rest['aria-label'] ? t.common.armed(rest['aria-label'], confirmLabel) : rest['aria-label']}
         aria-describedby={armed ? hintId : undefined}
         disabled={disabled}
         onClick={() => {
@@ -63,7 +66,7 @@ export function ConfirmButton({
             return;
           }
           setArmed(true);
-          announce('Press again to confirm, or Escape to cancel', { force: true });
+          announce(t.common.confirmAnnounce, { force: true });
         }}
       >
         {armed ? confirmLabel : label}
@@ -71,7 +74,7 @@ export function ConfirmButton({
       {armed && (
         <>
           <span id={hintId} className="visually-hidden">
-            Press again to confirm, or Escape to cancel.
+            {t.common.confirmHint}
           </span>
           <button
             type="button"
@@ -79,7 +82,7 @@ export function ConfirmButton({
             data-testid={testid ? `${testid}-cancel` : undefined}
             onClick={() => setArmed(false)}
           >
-            Cancel
+            {t.common.cancel}
           </button>
         </>
       )}

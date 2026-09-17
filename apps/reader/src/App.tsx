@@ -73,6 +73,12 @@ import { useVisualViewport } from './lib/viewport';
 import { announce } from './lib/announce';
 import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
+import { useI18n } from './i18n';
+import { primaryLanguage } from './i18n/locales';
+import { BibleOffer } from './components/BibleOffer';
+import { dismissOffer, loadDismissed, offerFor } from './lib/offer';
+import type { Messages } from './i18n/messages/en-US';
+import type { BookExample } from './i18n/types';
 
 interface Position {
   bookSlug: string;
@@ -87,20 +93,40 @@ const ANNOUNCE_SEARCH_MS = 400;
 /**
  * Say when a panel opens or closes (4.1.3). The chapter is replaced without
  * focus moving, so a screen reader would otherwise hear nothing happen.
- * Skips the first render: nothing has opened yet.
+ *
+ * Keyed on the open state alone, compared with what it was: nothing has
+ * opened on the first render, and a change of interface language changes the
+ * panel's *name* without opening or closing anything.
  */
-function useAnnounceOpen(open: boolean, name: string) {
-  const first = useRef(true);
+function useAnnounceOpen(open: boolean, name: string, words: Messages['app']) {
+  const was = useRef(open);
+  const latest = useRef({ name, words });
+  latest.current = { name, words };
   useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    announce(open ? `${name} opened` : `${name} closed`);
-  }, [open, name]);
+    if (was.current === open) return;
+    was.current = open;
+    const now = latest.current;
+    announce(open ? now.words.opened(now.name) : now.words.closed(now.name));
+  }, [open]);
+}
+
+/** John, as the open translation names and abbreviates it: examples the reader can type and have resolve. */
+function johnIn(bible: Bible): BookExample {
+  const john = bible.book('john');
+  return { john: john?.name ?? 'John', abbr: john?.abbreviation ?? 'Jhn' };
 }
 
 export function App() {
+  const { t: words, fmt, locale } = useI18n();
+  const fmtNow = useRef(fmt);
+  fmtNow.current = fmt;
+  /**
+   * The catalog, for callbacks that are created once and fire later — a save
+   * failure, a download's progress. They read the language current when they
+   * fire, without being rebuilt whenever it changes.
+   */
+  const wordsNow = useRef(words);
+  wordsNow.current = words;
   const [bible, setBible] = useState<Bible | null>(null);
   const [stage, setStage] = useState<LoadStage>('cache');
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +153,8 @@ export function App() {
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  /** Languages whose Bible offer was put away on this device. */
+  const [offerDismissed, setOfferDismissed] = useState<string[]>(() => loadDismissed());
 
   const [boards, setBoards] = useState<Board[]>([]);
   const [boardId, setBoardId] = useState<string | null>(null);
@@ -257,22 +285,19 @@ export function App() {
     };
   }, []);
 
-  useAnnounceOpen(marksOpen, 'Marks');
-  useAnnounceOpen(libraryOpen, 'Translations');
-  useAnnounceOpen(settingsOpen, 'Settings');
-  useAnnounceOpen(helpOpen, 'Help');
-  useAnnounceOpen(resultsOpen, 'Search results');
+  useAnnounceOpen(marksOpen, words.panels.marks, words.app);
+  useAnnounceOpen(libraryOpen, words.panels.translations, words.app);
+  useAnnounceOpen(settingsOpen, words.panels.settings, words.app);
+  useAnnounceOpen(helpOpen, words.panels.help, words.app);
+  useAnnounceOpen(resultsOpen, words.panels.results, words.app);
 
   // The count under the search box changes silently; say it once the typing
   // pauses. The true total, not the dropdown's slice.
   useEffect(() => {
     if (!hitsQuery) return;
     const t = window.setTimeout(() => {
-      announce(
-        hits.length === 0
-          ? `No matches for “${hitsQuery}”`
-          : `${hits.length} ${hits.length === 1 ? 'match' : 'matches'} for “${hitsQuery}”`
-      );
+      const said = wordsNow.current.search;
+      announce(hits.length === 0 ? said.announceNone(hitsQuery) : said.announceCount(hits.length, hitsQuery));
     }, ANNOUNCE_SEARCH_MS);
     return () => window.clearTimeout(t);
   }, [hits, hitsQuery]);
@@ -344,7 +369,7 @@ export function App() {
         // one quote that started a note left its status line blank.
         setSaving('saving');
         void saveNote(note).then((ok) => setSaving(ok ? 'saved' : 'failed'));
-        confirmInsert(done, `${done} in a new note`);
+        confirmInsert(done, wordsNow.current.insert.inNewNote(done));
         return;
       }
       const current = notes.find((n) => n.id === activeId);
@@ -357,7 +382,8 @@ export function App() {
       caret.current = { at: at + spacer.length + block.length, focus };
       changeNote(activeId, { body: `${before}${spacer}${block}${after}` });
       const title = current.title.trim();
-      confirmInsert(done, `${done} in ${title ? `“${title}”` : 'an untitled note'}`);
+      const said = wordsNow.current.insert;
+      confirmInsert(done, title ? said.inNote(done, title) : said.inUntitledNote(done));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [activeId, notes, confirmInsert]
@@ -370,9 +396,11 @@ export function App() {
       const ch = b?.chapters.find((c) => c.number === position.chapter);
       const v = ch?.verses.find((x) => x.number === verse);
       if (!b || !ch || !v) return;
-      insertIntoNote(quotePassage(bible, b, position.chapter, [v]), `Quoted ${b.name} ${position.chapter}:${verse}`, {
-        focus: true,
-      });
+      insertIntoNote(
+        quotePassage(bible, b, position.chapter, [v]),
+        wordsNow.current.insert.quoted(`${b.name} ${position.chapter}:${verse}`),
+        { focus: true }
+      );
     },
     [bible, position, insertIntoNote]
   );
@@ -389,7 +417,7 @@ export function App() {
           // two translations is otherwise the same string twice.
           translation: translationId,
         }),
-        `Linked ${name} ${position.chapter}:${verse}`,
+        wordsNow.current.insert.linked(`${name} ${position.chapter}:${verse}`),
         { focus: true }
       );
     },
@@ -429,22 +457,26 @@ export function App() {
   // reading, the panel's name while one covers the text, the board in canvas.
   useEffect(() => {
     const where = canvasOpen
-      ? `${boards.find((b) => b.id === boardId)?.name || 'Untitled board'} · Boards`
+      ? words.app.boardTitle(boards.find((b) => b.id === boardId)?.name || words.common.untitledBoard)
       : marksOpen
-        ? 'Marks'
+        ? words.panels.marks
         : libraryOpen
-          ? 'Translations'
+          ? words.panels.translations
           : settingsOpen
-            ? 'Settings'
+            ? words.panels.settings
             : helpOpen
-              ? 'Help'
-            : resultsOpen
-              ? 'Search results'
-              : bible
-                ? `${(bible.book(position.bookSlug) ?? bible.books[0]).name} ${position.chapter} · ${bible.meta.id.toUpperCase()}`
-                : null;
-    document.title = where ? `${where} · Scriptura` : 'Scriptura Reader';
-  }, [canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
+              ? words.panels.help
+              : resultsOpen
+                ? words.panels.results
+                : bible
+                  ? words.app.passageTitle(
+                      (bible.book(position.bookSlug) ?? bible.books[0]).name,
+                      position.chapter,
+                      bible.meta.id.toUpperCase()
+                    )
+                  : null;
+    document.title = where ? words.app.title(where) : words.app.name;
+  }, [words, canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
 
   notesNow.current = notes;
   mirroringNow.current = isMirroring;
@@ -470,7 +502,7 @@ export function App() {
     );
     const ok = results.every(Boolean);
     setSaving(ok ? 'saved' : 'failed');
-    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current);
+    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current, wordsNow.current.cards);
   }, []);
 
   // The update notice flushes before it reloads; a phone putting the tab in
@@ -618,7 +650,7 @@ export function App() {
     void saveBoard(board, (_store, err) => {
       console.error('Saving the board failed:', err);
       // The notes footer says this for notes; boards had no voice at all.
-      announce('Could not save the board — export your notes', { assertive: true });
+      announce(wordsNow.current.app.boardSaveFailed, { assertive: true });
     });
   }, []);
 
@@ -646,7 +678,7 @@ export function App() {
    */
   const sendToCanvas = useCallback(
     (verse: number) => {
-      const target = boards.find((b) => b.id === boardId) ?? newBoard('Study board');
+      const target = boards.find((b) => b.id === boardId) ?? newBoard(wordsNow.current.insert.studyBoard);
       const node: BoardNode = {
         id: crypto.randomUUID(),
         kind: 'verse',
@@ -675,16 +707,17 @@ export function App() {
 
       // The board is out of sight, so this is the only sign anything happened.
       const what = `${bible?.book(position.bookSlug)?.name ?? position.bookSlug} ${position.chapter}:${verse}`;
-      const where = `“${next.name || 'Untitled board'}”`;
-      confirmInsert(already ? `${what} is already on ${where}` : `Added ${what} to ${where}`);
+      const said = wordsNow.current;
+      const where = next.name || said.common.untitledBoard;
+      confirmInsert(already ? said.insert.alreadyOnBoard(what, where) : said.insert.addedToBoard(what, where));
     },
     [bible, boards, boardId, position, translationId, confirmInsert]
   );
 
   /** A card in one line, for the export. */
   const describeCard = useCallback(
-    (node: BoardNode): string => nodeLabel(node, { bible, notes }),
-    [bible, notes]
+    (node: BoardNode): string => nodeLabel(node, { bible, notes }, words.cards),
+    [bible, notes, words]
   );
 
   /**
@@ -696,22 +729,22 @@ export function App() {
   const renderEmbeddedBoard = useCallback(
     (id: string): string | null => {
       const board = boards.find((b) => b.id === id);
-      return board ? boardToMarkdown(board, describeCard) : null;
+      return board ? boardToMarkdown(board, describeCard, words.cards) : null;
     },
     [boards, describeCard]
   );
 
   const doExport = useCallback(() => {
-    void downloadNotes(notes, boards, describeCard, renderEmbeddedBoard).then(() =>
+    void downloadNotes(notes, boards, describeCard, renderEmbeddedBoard, words.cards).then(() =>
       setStaleExport(false)
     );
-  }, [notes, boards, describeCard, renderEmbeddedBoard]);
+  }, [notes, boards, describeCard, renderEmbeddedBoard, words]);
 
   const doChooseFolder = useCallback(() => {
     void chooseNotesFolder().then((ok) => {
       if (!ok) return;
       setIsMirroring(true);
-      void mirrorNotes(notes);
+      void mirrorNotes(notes, wordsNow.current.cards);
     });
   }, [notes]);
 
@@ -749,7 +782,7 @@ export function App() {
           setBible(loaded);
           setTranslationId(id);
           setLibraryOpen(false);
-          announce(`Reading ${loaded.meta.name}`);
+          announce(wordsNow.current.reader.readingAnnounce(loaded.meta.name));
           // Reading it and comparing against it are the same column, so drop
           // the duplicate rather than showing the text twice.
           setCompareWith((current) => {
@@ -767,7 +800,8 @@ export function App() {
   const announcedQuarter = useRef<Record<string, number>>({});
 
   const download = useCallback(
-    (id: string) => {
+    /** `then: 'read'` opens the translation once it is installed — the offer's "Download and read". */
+    (id: string, then?: 'read') => {
       const entry = catalog.find((t) => t.id === id);
       const approx = entry?.approxBytes;
       const name = entry?.name ?? id.toUpperCase();
@@ -781,30 +815,30 @@ export function App() {
           const quarter = total > 0 ? Math.floor(Math.min(received / total, 0.99) * 4) : 0;
           if (quarter > (announcedQuarter.current[id] ?? 0)) {
             announcedQuarter.current[id] = quarter;
-            announce(`${name}: ${quarter * 25}% downloaded`);
+            announce(wordsNow.current.library.progress(name, fmtNow.current.percent(quarter * 25)));
           }
         },
         approx
       )
         .then(() => {
           setDownloads(({ [id]: _done, ...rest }) => rest);
-          announce(`${name} downloaded`);
+          announce(wordsNow.current.library.downloaded(name));
           refreshLocal();
+          if (then === 'read') readTranslation(id);
         })
         .catch((e: unknown) => {
           // Kept on the row rather than thrown: one failed download must not
           // take down a library the rest of which is perfectly usable, and
           // "you are offline" is the likeliest cause.
-          const error = navigator.onLine
-            ? e instanceof Error
-              ? e.message
-              : String(e)
-            : 'No connection — try again when you are online.';
+          // The reader gets a sentence in their language; the detail (a
+          // status code, a parse error) goes to the console.
+          console.warn(`Could not download "${id}":`, e);
+          const error = navigator.onLine ? wordsNow.current.library.failedOnline : wordsNow.current.library.offline;
           setDownloads((d) => ({ ...d, [id]: { received: 0, total: 0, error } }));
-          announce(`${name}: ${error}`, { assertive: true });
+          announce(wordsNow.current.library.failed(name, error), { assertive: true });
         });
     },
-    [catalog, refreshLocal]
+    [catalog, refreshLocal, readTranslation]
   );
 
   const removeFromDevice = useCallback(
@@ -852,7 +886,7 @@ export function App() {
       setHighlights((current) => current.filter((h) => h.id !== id));
       // Reversible, not timed: the offer stands until the next change (2.2.3, 3.3.6).
       setUndoMark(removed);
-      if (removed) announce('Mark removed. Undo is available in the Marks bar.');
+      if (removed) announce(wordsNow.current.marks.removed);
     },
     [highlights]
   );
@@ -863,7 +897,7 @@ export function App() {
     void toggleHighlight(anchor, color, highlights).then((next) => {
       setHighlights(next);
       setUndoMark(null);
-      announce('Mark restored');
+      announce(wordsNow.current.marks.restored);
     });
   }, [undoMark, highlights]);
 
@@ -895,8 +929,8 @@ export function App() {
 
     const id = link.translation.toUpperCase();
     return installed.includes(link.translation)
-      ? `${where} (${id})`
-      : `${where} (${id} — not downloaded)`;
+      ? words.notes.linkIn(where, id)
+      : words.notes.linkMissing(where, id);
   };
 
   const followLink = (inner: string) => {
@@ -920,7 +954,7 @@ export function App() {
     if (!bible) return;
     const b = bible.book(r.book_slug);
     const v = b?.chapters.find((c) => c.number === r.chapter)?.verses.find((x) => x.number === r.verse);
-    if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]), `Quoted ${r.ref}`);
+    if (b && v) insertIntoNote(quotePassage(bible, b, r.chapter, [v]), words.insert.quoted(r.ref));
   };
 
   /** Quote one column of a comparison, in that column's own words. */
@@ -934,7 +968,7 @@ export function App() {
     // Which column, in the words: the point of quoting from a comparison.
     insertIntoNote(
       quotePassage(from, book, position.chapter, [v]),
-      `Quoted ${book.name} ${position.chapter}:${verse} (${id.toUpperCase()})`,
+      words.insert.quotedFrom(`${book.name} ${position.chapter}:${verse}`, id.toUpperCase()),
       { focus: true }
     );
   };
@@ -942,7 +976,11 @@ export function App() {
   if (error) {
     return (
       <div className="boot boot--error" role="alert">
-        <p>{error}</p>
+        <p>{words.app.bootFailed}</p>
+        {/* The technical detail, as the browser reported it: English (3.1.2). */}
+        <p>
+          <code lang="en">{error}</code>
+        </p>
       </div>
     );
   }
@@ -950,7 +988,7 @@ export function App() {
   if (!bible) {
     return (
       <div className="boot" role="status" aria-live="polite">
-        <p>{stage === 'download' ? 'Downloading the text for offline use…' : 'Opening…'}</p>
+        <p>{stage === 'download' ? words.app.downloading : words.app.opening}</p>
       </div>
     );
   }
@@ -991,8 +1029,8 @@ export function App() {
             setCanvasOpen(false);
           }}
           onAddToNote={(id) => {
-            const name = boards.find((b) => b.id === id)?.name || 'Untitled board';
-            insertIntoNote(boardEmbed(id), `Added the board “${name}”`);
+            const name = boards.find((b) => b.id === id)?.name || words.common.untitledBoard;
+            insertIntoNote(boardEmbed(id), words.insert.addedBoard(name));
             setCanvasOpen(false);
           }}
         />
@@ -1007,10 +1045,10 @@ export function App() {
           notes in one press instead of tabbing through the bar and the search
           box — and, in Psalm 119, 176 verse numbers. */}
       <a className="skip" href="#scripture" data-testid="skip-scripture">
-        Skip to scripture
+        {words.app.skipToScripture}
       </a>
       <a className="skip" href="#notes" data-testid="skip-notes">
-        Skip to notes
+        {words.app.skipToNotes}
       </a>
       {!bannerDismissed && (
         <DurabilityBanner
@@ -1076,7 +1114,11 @@ export function App() {
             }}
             overlay={
               helpOpen ? (
-                <HelpPanel catalog={catalog} onClose={() => setHelpOpen(false)} />
+                <HelpPanel
+                  catalog={catalog}
+                  book={johnIn(bible)}
+                  onClose={() => setHelpOpen(false)}
+                />
               ) : marksOpen ? (
                 <MarksPanel
                   bible={bible}
@@ -1153,10 +1195,26 @@ export function App() {
                 />
               ) : null
             }
+            offer={
+              <BibleOffer
+                entries={offerFor(locale, catalog, installed, offerDismissed)}
+                downloads={downloads}
+                onDownloadAndRead={(id) => download(id, 'read')}
+                onShowLibrary={() => {
+                  setMarksOpen(false);
+                  setResultsOpen(false);
+                  setSettingsOpen(false);
+                  setHelpOpen(false);
+                  setLibraryOpen(true);
+                }}
+                onDismiss={() => setOfferDismissed(dismissOffer(primaryLanguage(locale)))}
+              />
+            }
             search={
               <SearchBar
                 query={query}
                 lang={bible.meta.language}
+                example={`${johnIn(bible).john} 3:16`}
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}

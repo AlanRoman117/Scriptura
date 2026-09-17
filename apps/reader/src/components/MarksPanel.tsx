@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import { ConfirmButton } from './ConfirmButton';
+import { useI18n } from '../i18n';
 import type { Bible } from '@scriptura/core/types';
 import {
   HIGHLIGHT_COLORS,
@@ -52,6 +53,7 @@ export function MarksPanel({
   onUndo,
   onClose,
 }: MarksPanelProps) {
+  const { t, fmt } = useI18n();
   const byColor = useMemo(() => {
     const groups = new Map<HighlightColor, Mark[]>(HIGHLIGHT_COLORS.map((c) => [c, []]));
 
@@ -85,14 +87,14 @@ export function MarksPanel({
   useReturnFocus(true, '[data-testid="marks-open"]');
 
   return (
-    <section ref={root} className="marks" id="marks-panel" data-testid="marks-panel" aria-label="Marked verses">
+    <section ref={root} className="marks" id="marks-panel" data-testid="marks-panel" aria-label={t.marks.label}>
       <header className="marks__bar">
         {/* The chapter's h1 is hidden while this panel covers it, so this is
             the page's level-1 heading for as long as it is open (2.4.10). */}
-        <h1 className="marks__title">Marks</h1>
+        <h1 className="marks__title">{t.marks.title}</h1>
         {onUndo && (
           <button type="button" className="marks__close" data-testid="marks-undo" onClick={onUndo}>
-            Undo remove
+            {t.common.undoRemove}
           </button>
         )}
         <button
@@ -100,14 +102,14 @@ export function MarksPanel({
           className="marks__close"
           data-testid="marks-close"
           onClick={onClose}
-          aria-label="Close marks"
+          aria-label={t.marks.close}
         >
           ✕
         </button>
       </header>
 
       <p className="marks__hint">
-        Each colour is a running list. Name one for the subject you are tracking.
+        {t.marks.hint}
       </p>
 
       {HIGHLIGHT_COLORS.map((color) => {
@@ -116,7 +118,7 @@ export function MarksPanel({
           <section className="marks__group" key={color} data-testid={`marks-group-${color}`}>
             {/* Five collections are five sections; the editable label is the
                 control, and this is the heading a screen reader navigates by. */}
-            <h2 className="visually-hidden">{colorLabel(color, labels)}</h2>
+            <h2 className="visually-hidden">{colorLabel(color, labels, t.colours)}</h2>
             <header className="marks__group-bar">
               <span className="swatch__disc swatch__disc--static" data-color={color} aria-hidden="true">
                 <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
@@ -124,18 +126,18 @@ export function MarksPanel({
               <input
                 className="marks__label"
                 data-testid={`marks-label-${color}`}
-                aria-label={`Name for the ${color} collection`}
+                aria-label={t.marks.nameFor(t.colourWords[color])}
                 value={labels[color] ?? ''}
-                placeholder={colorLabel(color, {})}
+                placeholder={colorLabel(color, {}, t.colours)}
                 onChange={(e) => onLabel(color, e.target.value)}
               />
               <span className="marks__count" data-testid={`marks-count-${color}`}>
-                {marks.length}
+                {fmt.number(marks.length)}
               </span>
             </header>
 
             {marks.length === 0 ? (
-              <p className="marks__empty">Nothing marked in this colour yet.</p>
+              <p className="marks__empty">{t.marks.empty}</p>
             ) : (
               <ul className="marks__list" role="list">
                 {marks.map((m) => (
@@ -159,7 +161,7 @@ export function MarksPanel({
                       label="✕"
                       className="marks__remove"
                       data-testid={`marks-remove-${m.book_slug}-${m.chapter}-${m.verse}`}
-                      aria-label={`Remove the mark on ${m.name} ${m.chapter}:${m.verse}`}
+                      aria-label={t.marks.remove(`${m.name} ${m.chapter}:${m.verse}`)}
                       onConfirm={() => onRemove(m.id)}
                     />
                   </li>

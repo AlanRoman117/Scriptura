@@ -155,6 +155,26 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
   },
 };
 
+/**
+ * The other interface languages, in light: colour does not change with
+ * language, but names, lang and layout do. Reading carries the offer of
+ * Bibles in the language, so it is checked too. The label-in-name and lang
+ * rules are the ones this is for.
+ */
+for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
+  test.describe(`no axe violations, ${locale}`, () => {
+    test.use({ locale });
+    for (const name of ['reading', 'verse actions', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed']) {
+      test(name, async ({ page }) => {
+        await open(page);
+        await STATES[name](page);
+        const results = await axeFor(page).analyze();
+        expect(results.violations.length, describeViolations(results)).toBe(0);
+      });
+    }
+  });
+}
+
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`no axe violations, ${scheme}`, () => {
     for (const [name, arrange] of Object.entries(STATES)) {

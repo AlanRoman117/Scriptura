@@ -60,7 +60,8 @@ The reader is held to WCAG 2.2 Level AAA for its interface. The record is [`docs
 - [ ] Nothing is conveyed by colour alone, and nothing appears only on hover.
 - [ ] It works from the keyboard, and anything dragged can also be done with a single press.
 - [ ] Escape and outside presses go through `useDismissable` in `src/lib/focus.ts`; focus returns to where it was when a surface closes.
-- [ ] Scripture in another language carries `lang`.
+- [ ] New interface text goes in all four catalogs under `src/i18n/messages/` (English, Spanish, French, Japanese), with `plural()` for counts and a key per noun where gender matters — never English written into a component. See [`docs/plans/reader-i18n/`](plans/reader-i18n/README.md).
+- [ ] Scripture carries its translation's `lang` on the text itself, never on a container that also holds a control.
 - [ ] Animation and smooth scrolling stop under reduced motion.
 - [ ] Changes that happen without moving focus are announced with `announce()`.
 - [ ] An action whose result lands out of sight says so in words where the result went, and leaves it there until the next action — never on a timer.

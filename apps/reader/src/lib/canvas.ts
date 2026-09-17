@@ -15,6 +15,7 @@
 import type { Bible } from '@scriptura/core/types';
 import { BOARDS, del, readSafely, writeSafely } from './db';
 import type { HighlightColor, Note } from './notes';
+import { enUS } from '../i18n/messages/en-US';
 
 export type NodeKind = 'verse' | 'note' | 'text';
 
@@ -71,7 +72,8 @@ export const saveBoard = (board: Board, onFirstFailure?: Reporter): Promise<bool
 export const deleteBoard = (id: string): Promise<unknown> =>
   del(BOARDS, id).catch(() => undefined);
 
-export function newBoard(name = 'Untitled board'): Board {
+/** A new board, unnamed unless given one: the screen supplies "Untitled board" in the reader's language. */
+export function newBoard(name = ''): Board {
   const now = Date.now();
   return { id: crypto.randomUUID(), name, nodes: [], edges: [], created: now, updated: now };
 }
@@ -129,6 +131,13 @@ export function freeSlot(nodes: BoardNode[]): { x: number; y: number } {
 }
 
 /**
+ * What cards and board exports say when there is nothing else to show, in the
+ * interface language. English by default, which is what the assistant tools
+ * and a caller with no language get.
+ */
+export type CardWords = typeof enUS.cards;
+
+/**
  * What a card says, resolved from the anchor it holds.
  *
  * One implementation because three places need it — the board, the thumbnail
@@ -137,7 +146,8 @@ export function freeSlot(nodes: BoardNode[]): { x: number; y: number } {
  */
 export function describeNode(
   node: BoardNode,
-  ctx: { bible: Bible | null; notes: Note[] }
+  ctx: { bible: Bible | null; notes: Note[] },
+  words: CardWords = enUS.cards
 ): { title: string; body: string } {
   if (node.kind === 'verse') {
     const book = ctx.bible?.book(node.book_slug ?? '');
@@ -146,22 +156,26 @@ export function describeNode(
       ?.verses.find((v) => v.number === node.verse);
     return {
       title: `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`,
-      body: verse?.text ?? 'Not in this translation.',
+      body: verse?.text ?? words.verseMissing,
     };
   }
   if (node.kind === 'note') {
     const note = ctx.notes.find((n) => n.id === node.noteId);
     return {
-      title: note?.title || 'Untitled note',
-      body: note ? note.body || 'Empty note.' : 'This note has been deleted.',
+      title: note?.title || words.untitledNote,
+      body: note ? note.body || words.emptyNote : words.deletedNote,
     };
   }
-  return { title: node.title?.trim() || 'Card', body: node.text ?? '' };
+  return { title: node.title?.trim() || words.card, body: node.text ?? '' };
 }
 
 /** One line naming a card, for the export and for connection lists. */
-export function nodeLabel(node: BoardNode, ctx: { bible: Bible | null; notes: Note[] }): string {
-  const { title } = describeNode(node, ctx);
+export function nodeLabel(
+  node: BoardNode,
+  ctx: { bible: Bible | null; notes: Note[] },
+  words: CardWords = enUS.cards
+): string {
+  const { title } = describeNode(node, ctx, words);
   if (node.kind === 'verse' && node.translation) return `${title} (${node.translation.toUpperCase()})`;
   return title;
 }
@@ -179,20 +193,21 @@ export const verseNodeId = (n: Pick<BoardNode, 'book_slug' | 'chapter' | 'verse'
  */
 export function boardToMarkdown(
   board: Board,
-  describe: (node: BoardNode) => string
+  describe: (node: BoardNode) => string,
+  words: CardWords = enUS.cards
 ): string {
-  const lines = [`# ${board.name}`, ''];
+  const lines = [`# ${board.name || words.untitledBoard}`, ''];
 
-  if (board.nodes.length === 0) lines.push('_Empty board._');
+  if (board.nodes.length === 0) lines.push(words.emptyBoard);
   for (const node of board.nodes) {
     lines.push(`- ${describe(node)}`);
   }
 
   if (board.edges.length > 0) {
-    lines.push('', '## Connections', '');
+    lines.push('', `## ${words.connections}`, '');
     const label = (id: string) => {
       const node = board.nodes.find((n) => n.id === id);
-      return node ? describe(node) : '(missing card)';
+      return node ? describe(node) : words.missingCard;
     };
     for (const edge of board.edges) {
       lines.push(`- ${label(edge.from)} → ${label(edge.to)}${edge.label ? ` — ${edge.label}` : ''}`);

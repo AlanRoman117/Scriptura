@@ -98,9 +98,16 @@ export const loadColorLabels = (): Promise<ColorLabels> =>
 export const saveColorLabels = (labels: ColorLabels): Promise<unknown> =>
   put(SETTINGS, COLOR_LABELS, labels).catch(() => undefined);
 
-/** The label to show for a colour, falling back to the colour's own name. */
-export const colorLabel = (color: HighlightColor, labels: ColorLabels): string =>
-  labels[color]?.trim() || color.charAt(0).toUpperCase() + color.slice(1);
+/**
+ * The label to show for a colour, falling back to the colour's own name —
+ * in the interface language when the caller passes the catalog's names, and
+ * in English otherwise (the assistant tools, which speak English).
+ */
+export const colorLabel = (
+  color: HighlightColor,
+  labels: ColorLabels,
+  names?: Partial<Record<HighlightColor, string>>
+): string => labels[color]?.trim() || names?.[color] || color.charAt(0).toUpperCase() + color.slice(1);
 
 type Reporter = (store: string, error: unknown) => void;
 
@@ -116,7 +123,12 @@ export const saveNote = (note: Note, onFirstFailure?: Reporter): Promise<boolean
 
 export const deleteNote = (id: string): Promise<unknown> => del(NOTES, id).catch(() => undefined);
 
-export function newNote(title = 'Untitled'): Note {
+/**
+ * A new note. Its title starts empty rather than as the word "Untitled": a
+ * stored word stays in the language it was stored in, so every screen shows
+ * the placeholder in the interface language instead.
+ */
+export function newNote(title = ''): Note {
   const now = Date.now();
   return { id: crypto.randomUUID(), title, body: '', created: now, updated: now };
 }

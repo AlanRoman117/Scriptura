@@ -13,6 +13,7 @@ import {
 } from '../lib/notes';
 import { VerseActions } from './VerseActions';
 import { MaximizeButton } from './PaneControl';
+import { useI18n } from '../i18n';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -28,6 +29,8 @@ interface BiblePaneProps {
   onSendToCanvas?: (verse: number) => void;
   focusVerse?: number | null;
   search?: React.ReactNode;
+  /** Bibles in the interface's language, offered above the chapter while reading. */
+  offer?: React.ReactNode;
   /** Marks or the library, rendered over the text while open. */
   overlay?: React.ReactNode;
   /** Side-by-side reading, rendered *instead of* the single-column chapter. */
@@ -56,6 +59,7 @@ export function BiblePane({
   onSendToCanvas,
   focusVerse,
   search,
+  offer,
   overlay,
   compare,
   marksOpen = false,
@@ -68,6 +72,7 @@ export function BiblePane({
   helpOpen = false,
   onToggleHelp,
 }: BiblePaneProps) {
+  const { t, fmt } = useI18n();
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   /** Whether the actions were opened from the verse number, which moves focus into them. */
   const [fromNumber, setFromNumber] = useState(false);
@@ -164,10 +169,10 @@ export function BiblePane({
       <header className="reader__bar" ref={bar}>
         {/* A landmark of its own: "where am I, and how do I move" is the first
             thing a screen reader user looks for (2.4.8). */}
-        <nav className="reader__nav" aria-label="Passage">
+        <nav className="reader__nav" aria-label={t.reader.passage}>
           <select
             className="reader__select"
-            aria-label="Book"
+            aria-label={t.reader.book}
             data-testid="book-select"
             value={book.slug}
             onChange={(e) => onNavigate(e.target.value, 1)}
@@ -180,7 +185,7 @@ export function BiblePane({
           </select>
           <select
             className="reader__select reader__select--chapter"
-            aria-label="Chapter"
+            aria-label={t.reader.chapter}
             data-testid="chapter-select"
             value={chapter}
             onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
@@ -205,7 +210,7 @@ export function BiblePane({
           data-testid="library-open"
           aria-expanded={libraryOpen}
           aria-controls="library-panel"
-          aria-label={`${meta.id.toUpperCase()} — ${meta.name}. Choose or add a translation`}
+          aria-label={t.reader.translationChip(meta.id.toUpperCase(), meta.name)}
           onClick={onToggleLibrary}
         >
           {meta.id.toUpperCase()}
@@ -216,12 +221,12 @@ export function BiblePane({
           data-testid="marks-open"
           aria-expanded={marksOpen}
           aria-controls="marks-panel"
-          aria-label={`Marks (${markCount}) — verses you have marked, by colour`}
+          aria-label={t.reader.marksChip(markCount)}
           onClick={onToggleMarks}
         >
-          <span className="reader__chip-label">Marks</span>
+          <span className="reader__chip-label">{t.reader.marks}</span>
           <span className="reader__chip-count" data-empty={markCount === 0 || undefined}>
-            {markCount}
+            {fmt.number(markCount)}
           </span>
         </button>
         <button
@@ -230,7 +235,7 @@ export function BiblePane({
           data-testid="settings-open"
           aria-expanded={settingsOpen}
           aria-controls="settings-panel"
-          aria-label="Settings — display, storage, export, and assistant access"
+          aria-label={t.reader.settingsChip}
           onClick={onToggleSettings}
         >
           ⚙
@@ -242,7 +247,7 @@ export function BiblePane({
           data-testid="help-open"
           aria-expanded={helpOpen}
           aria-controls="help-panel"
-          aria-label="Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean"
+          aria-label={t.reader.helpChip}
           onClick={onToggleHelp}
         >
           ?
@@ -253,6 +258,8 @@ export function BiblePane({
       </header>
 
       {search}
+
+      {!overlay && offer}
 
       {overlay}
 
@@ -269,10 +276,12 @@ export function BiblePane({
         {compare ? (
           compare
         ) : current ? (
-          // The translation's language, so a screen reader switches voice for
-          // Spanish, French or Japanese scripture instead of reading it with
-          // English phonemes (3.1.2).
-          <div className="chapter__text" lang={meta.language}>
+          // The chapter holds interface controls as well as scripture — the
+          // verse numbers and the verse actions — so the translation's
+          // language goes on each verse's text, not here. On the container,
+          // a Spanish Bible read with an English interface had every "Mark
+          // John 1:2" and "Quote" spoken with Spanish phonemes (3.1.2).
+          <div className="chapter__text">
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
@@ -316,8 +325,12 @@ export function BiblePane({
                     // is in does not depend on seeing the colour (1.4.1).
                     aria-label={
                       mark
-                        ? `Mark ${book.name} ${chapter}:${v.number} — in ${colorLabel(mark.color, labels)} (${mark.color})`
-                        : `Mark ${book.name} ${chapter}:${v.number}`
+                        ? t.reader.markVerseIn(
+                            `${book.name} ${chapter}:${v.number}`,
+                            colorLabel(mark.color, labels, t.colours),
+                            t.colourWords[mark.color]
+                          )
+                        : t.reader.markVerse(`${book.name} ${chapter}:${v.number}`)
                     }
                     aria-expanded={open}
                     onClick={(e) => {
@@ -328,7 +341,9 @@ export function BiblePane({
                   >
                     {v.number}
                   </button>
-                  <span className="verse__text">{v.text}</span>
+                  <span className="verse__text" lang={meta.language}>
+                    {v.text}
+                  </span>
 
                   {open && (
                     <VerseActions
@@ -365,7 +380,7 @@ export function BiblePane({
             })}
           </div>
         ) : (
-          <p className="empty">This chapter is not in {meta.name}.</p>
+          <p className="empty">{t.reader.chapterMissing(meta.name)}</p>
         )}
       </article>
 
@@ -376,7 +391,7 @@ export function BiblePane({
           {meta.attribution} ·{' '}
           {/* The link's own text says whose source (2.4.9). */}
           <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            {meta.name} source
+            {t.common.source(meta.name)}
           </a>
         </footer>
       )}

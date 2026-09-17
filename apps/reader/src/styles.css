@@ -61,8 +61,10 @@
   --sw-mint: #3fb984;
   --sw-violet: #9b7bd4;
 
-  --serif: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
-  --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --serif-latin: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
+  --sans-latin: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --serif: var(--serif-latin);
+  --sans: var(--sans-latin);
 
   /* Text size as a multiplier (1.4.8), set by lib/prefs.ts. It scales the
      reading text, the notes and the comparison — the prose — and leaves the
@@ -89,6 +91,22 @@
   --focus-ring: 2px solid var(--focus);
   color-scheme: light dark;
 }
+
+/* Japanese, in the interface or in scripture: the system's Japanese faces, so
+   kanji shared with Chinese take their Japanese forms and nothing falls back
+   to a Latin face. Still system stacks, never a web font. Text marked as
+   another language inside Japanese goes back to the Latin stacks. */
+:lang(ja) {
+  --serif: 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, 'Noto Serif CJK JP', 'Noto Serif JP', serif;
+  --sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', system-ui, sans-serif;
+}
+:lang(ja) :not(:lang(ja)) {
+  --serif: var(--serif-latin);
+  --sans: var(--sans-latin);
+}
+/* Japanese has no italic; slanting kanji is a typographic error. Emphasis
+   in the interface keeps its weight and loses the slant. */
+:lang(ja) em { font-style: normal; font-weight: 600; }
 
 /* The reader's choice pins the scheme; `light-dark()` follows it. */
 :root[data-theme='light'] { color-scheme: light; }
@@ -500,6 +518,13 @@ summary:focus-visible,
    quiet. */
 .chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
+/* Scripture carries its translation's lang on the text itself, not on the
+   containers around it (3.1.2), so the family is declared again right there:
+   a family resolved on a Latin container would otherwise be inherited as the
+   Latin stack, and Japanese verses would miss their Japanese faces. It also
+   keeps scripture in the reading face in the stacked comparison, which used
+   to show it in the interface's sans. */
+.verse__text, .compare__text, .card__body > [lang] { font-family: var(--serif); }
 
 .verse { margin: 0 0 var(--verse-gap); }
 
@@ -1444,6 +1469,33 @@ summary:focus-visible,
 }
 .notes__done { font-size: .8rem; }
 .notes__status--bad { color: var(--danger); }
+
+/* ── Bibles in the reader's language ──────────────────────────────────────── */
+
+.offer {
+  margin: 1rem 1.25rem 0; padding: .75rem .9rem;
+  background: var(--paper-raised); color: var(--ink);
+  border: 1px solid var(--edge); border-radius: 12px;
+}
+.offer__title { margin: 0 0 .25rem; font-weight: 600; }
+.offer__text { margin: 0 0 .5rem; font-size: .9rem; }
+.offer__list { list-style: none; margin: 0; padding: 0; }
+.offer__item {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem .75rem;
+  padding: .4rem 0; border-top: 1px solid var(--rule);
+}
+.offer__meta { display: flex; flex-direction: column; min-width: 0; }
+.offer__name { font-weight: 600; }
+.offer__detail { font-size: .8rem; color: var(--ink-soft); }
+.offer__error { font-size: .8rem; color: var(--danger); }
+.offer__actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; margin-top: .5rem; }
+.offer__action {
+  min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
+  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+.offer__action--primary { border-color: var(--ink-soft); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
+.offer__action:disabled { cursor: progress; }
 
 /* ── Durability ───────────────────────────────────────────────────────────── */
 

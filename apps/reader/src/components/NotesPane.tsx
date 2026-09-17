@@ -8,6 +8,7 @@ import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
 import { ConfirmButton } from './ConfirmButton';
 import { MaximizeButton } from './PaneControl';
+import { useI18n } from '../i18n';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -69,6 +70,7 @@ export function NotesPane({
   boards = [],
   onOpenBoard,
 }: NotesPaneProps) {
+  const { t } = useI18n();
   const active = notes.find((n) => n.id === activeId) ?? null;
   const surface = useRef<HTMLTextAreaElement>(null);
   const [heading, setHeading] = useState<string | null>(null);
@@ -122,25 +124,25 @@ export function NotesPane({
     <div className="notes" id="notes" tabIndex={-1} data-testid="notes">
       {/* The pane's own heading, so a note's headings have a parent and the
           outline reads chapter → notes → the note (2.4.10). */}
-      <h2 className="visually-hidden">Notes</h2>
+      <h2 className="visually-hidden">{t.notes.heading}</h2>
       <header className="notes__bar">
         <select
           className="notes__select"
-          aria-label="Note"
+          aria-label={t.notes.picker}
           data-testid="note-select"
           value={activeId ?? ''}
           onChange={(e) => onSelect(e.target.value)}
         >
-          {notes.length === 0 && <option value="">No notes yet</option>}
+          {notes.length === 0 && <option value="">{t.notes.none}</option>}
           {notes.map((n) => (
             <option key={n.id} value={n.id}>
-              {n.title || 'Untitled'}
+              {n.title || t.common.untitledNote}
             </option>
           ))}
         </select>
 
         <button type="button" className="notes__action" data-testid="note-new" onClick={onCreate}>
-          New
+          {t.notes.new}
         </button>
         <button
           type="button"
@@ -149,18 +151,18 @@ export function NotesPane({
           aria-pressed={mode === 'read'}
           onClick={() => setMode(mode === 'read' ? 'write' : 'read')}
           disabled={!active}
-          title={mode === 'read' ? 'Back to writing' : 'See it rendered'}
+          title={mode === 'read' ? t.notes.writeTitle : t.notes.previewTitle}
         >
-          {mode === 'read' ? 'Write' : 'Preview'}
+          {mode === 'read' ? t.notes.write : t.notes.preview}
         </button>
         <button
           type="button"
           className="notes__action"
           data-testid="canvas-open"
           onClick={onOpenCanvas}
-          title="Lay verses and notes out on a board"
+          title={t.notes.canvasTitle}
         >
-          Canvas
+          {t.notes.canvas}
         </button>
         <button
           type="button"
@@ -168,9 +170,9 @@ export function NotesPane({
           data-testid="note-export"
           onClick={onExport}
           disabled={notes.length === 0 && boardCount === 0}
-          title="Download every note and board as Markdown in a .zip"
+          title={t.notes.exportTitle}
         >
-          Export
+          {t.notes.export}
         </button>
         {/* The last two wrap together: armed, Delete grows a Cancel, and on
             its own the maximize button would be left alone on a second line. */}
@@ -178,7 +180,7 @@ export function NotesPane({
           {active && (
             // Two presses, announced, with a way back (3.3.6).
             <ConfirmButton
-              label="Delete"
+              label={t.notes.delete}
               className="notes__action notes__action--danger"
               data-testid="note-delete"
               resetKey={active.id}
@@ -194,9 +196,9 @@ export function NotesPane({
           <input
             className="notes__title"
             data-testid="note-title"
-            aria-label="Note title"
+            aria-label={t.notes.title}
             value={active.title}
-            placeholder="Untitled"
+            placeholder={t.common.untitledNote}
             onChange={(e) => onChange(active.id, { title: e.target.value })}
           />
           {/* The editing group: the tools, what the caret is under, and the
@@ -230,7 +232,7 @@ export function NotesPane({
               data-testid="notes-follow-link"
               onClick={() => onFollowLink?.(link)}
             >
-              Go to {linkLabel}
+              {t.notes.goTo(linkLabel)}
             </button>
           )}
           {mode === 'read' ? (
@@ -251,8 +253,8 @@ export function NotesPane({
                 id="notes-surface"
                 className="notes__surface"
                 data-testid="notes-surface"
-                aria-label="Note body"
-                placeholder="Write here…"
+                aria-label={t.notes.body}
+                placeholder={t.notes.placeholder}
                 spellCheck
                 value={active.body}
                 onChange={(e) => onChange(active.id, { body: e.target.value })}
@@ -266,9 +268,9 @@ export function NotesPane({
         </>
       ) : (
         <div className="notes__empty">
-          <p>No note open.</p>
+          <p>{t.notes.noneOpen}</p>
           <button type="button" className="notes__action" onClick={onCreate}>
-            Start one
+            {t.notes.startOne}
           </button>
         </div>
       )}
@@ -287,11 +289,11 @@ export function NotesPane({
         )}
         <span className="notes__saving" aria-live="polite">
           {saving === 'failed' ? (
-            <span className="notes__status--bad">Could not save — export your notes</span>
+            <span className="notes__status--bad">{t.notes.saveFailed}</span>
           ) : saving === 'saving' ? (
-            'Saving…'
+            t.notes.saving
           ) : saving === 'saved' ? (
-            'Saved'
+            t.notes.saved
           ) : (
             ''
           )}

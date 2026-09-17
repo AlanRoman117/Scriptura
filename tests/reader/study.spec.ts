@@ -7,6 +7,9 @@ import { expect, test } from '@playwright/test';
  * matcher — so these also assert that online and offline results agree.
  */
 
+/** A displayed count as a number: counts are grouped for reading ("1,382"). */
+const countOf = (text: string | null) => Number((text ?? '').replace(/\D/g, ''));
+
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/');
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
@@ -117,7 +120,8 @@ test.describe('one box for finding things', () => {
       // wrong number with no retry.
       await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', q);
       const text = (await page.getByTestId('search-count').textContent()) ?? '';
-      return Number(text.match(/^(\d+)/)?.[1] ?? 0);
+      // Counts are grouped for reading ("1,382"); the separators are not digits.
+      return Number(text.match(/^([\d,]+)/)?.[1].replace(/,/g, '') ?? 0);
     };
 
     const broad = await countFor('God');
@@ -228,12 +232,12 @@ test.describe('knowing that it worked', () => {
     await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:1');
     // …and the announcer, which also names the note. The mark is decoration;
     // the words are what is said.
-    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in “Untitled”');
+    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in an untitled note');
 
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
     await expect(page.getByTestId('note-done')).toHaveText('✓ Linked John 1:2');
-    await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in “Untitled”');
+    await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in an untitled note');
 
     await page.getByTestId('search-input').fill('In the beginning God created');
     await page.getByTestId('search-panel').locator('.search__insert').first().click();
@@ -265,7 +269,7 @@ test.describe('knowing that it worked', () => {
     await expect
       .poll(() =>
         page.evaluate(
-          () => (window as unknown as { said: string[] }).said.filter((t) => t === 'Quoted John 1:1 in “Untitled”').length
+          () => (window as unknown as { said: string[] }).said.filter((t) => t === 'Quoted John 1:1 in an untitled note').length
         )
       )
       .toBe(2);
@@ -384,7 +388,7 @@ test.describe('the suggestions from the keyboard and under a keyboard', () => {
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'living water');
     await page.getByTestId('search-input').press('Enter');
     await expect(page.getByTestId('search-results')).toBeVisible();
-    expect(Number(await page.getByTestId('results-total').textContent())).toBeGreaterThan(0);
+    expect(countOf(await page.getByTestId('results-total').textContent())).toBeGreaterThan(0);
   });
 
   test('Tab reaches the suggestions without closing them; Down arrow jumps in', async ({ page }) => {

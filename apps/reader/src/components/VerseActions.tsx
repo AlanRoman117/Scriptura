@@ -8,6 +8,7 @@ import {
 } from '../lib/notes';
 import { useRovingTabIndex } from '../lib/focus';
 import { prefersReducedMotion } from '../lib/prefs';
+import { useI18n } from '../i18n';
 
 interface VerseActionsProps {
   /** "John 1:2", for the group's name. */
@@ -56,6 +57,7 @@ export function VerseActions({
   onSendToCanvas,
   onClose,
 }: VerseActionsProps) {
+  const { t } = useI18n();
   const group = useRef<HTMLSpanElement>(null);
 
   // Roving first, so the tab stop exists before focus lands on it.
@@ -91,7 +93,7 @@ export function VerseActions({
     <span
       className="swatches"
       role="group"
-      aria-label={`Actions for ${reference}`}
+      aria-label={t.verseActions.group(reference)}
       data-testid="verse-actions"
       ref={group}
       // A press inside the row is not a press on the verse, which toggles it.
@@ -105,7 +107,7 @@ export function VerseActions({
             className="swatch"
             data-color={color}
             data-testid={`swatch-${color}`}
-            aria-label={`Mark as ${colorLabel(color, labels)} (${color})`}
+            aria-label={t.verseActions.mark(colorLabel(color, labels, t.colours), t.colourWords[color])}
             aria-pressed={current === color}
             onClick={() => onHighlight(color)}
           >
@@ -118,27 +120,27 @@ export function VerseActions({
       <span className="swatches__rule" aria-hidden="true" />
       <span className="swatches__set">
         <button type="button" className="swatches__action" data-testid={`quote-${verse}`} onClick={onQuote}>
-          Quote
+          {t.verseActions.quote}
         </button>
         <button type="button" className="swatches__action" data-testid={`link-${verse}`} onClick={onLink}>
-          Link
+          {t.verseActions.link}
         </button>
         {onSendToCanvas && (
           <button
             type="button"
             className="swatches__action"
             data-testid={`canvas-${verse}`}
-            aria-label="Canvas — put this verse on the board"
+            aria-label={t.verseActions.canvasName}
             onClick={onSendToCanvas}
           >
-            Canvas
+            {t.verseActions.canvas}
           </button>
         )}
         <button
           type="button"
           className="swatches__action swatches__close"
           data-testid="verse-actions-close"
-          aria-label={`Close actions for ${reference}`}
+          aria-label={t.verseActions.close(reference)}
           onClick={onClose}
         >
           ✕

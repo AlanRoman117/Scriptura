@@ -3,11 +3,14 @@ import type { KeyboardEvent, FormEvent } from 'react';
 import type { SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions, type ResolvedReference } from '../lib/search';
 import { useDismissable, useReturnFocus } from '../lib/focus';
+import { useI18n } from '../i18n';
 
 interface SearchBarProps {
   query: string;
   /** The translation's language, for the verse text in the suggestions (3.1.2). */
   lang?: string;
+  /** A reference the open translation resolves, for the placeholder: "Juan 3:16" in RV1909. */
+  example?: string;
   results: SearchResult[];
   reference: ResolvedReference | null;
   total: number;
@@ -44,6 +47,7 @@ interface SearchBarProps {
 export function SearchBar({
   query,
   lang,
+  example = 'John 3:16',
   results,
   reference,
   total,
@@ -55,6 +59,7 @@ export function SearchBar({
   onInsert,
   onSeeAll,
 }: SearchBarProps) {
+  const { t } = useI18n();
   // Dismissed by the reader, until the next keystroke. Typing reopens: Enter
   // closes the panel to clear the way for the passage, but the input keeps
   // focus, so without this a second reference typed would show nothing.
@@ -100,9 +105,9 @@ export function SearchBar({
         className="search__input"
         data-testid="search-input"
         type="search"
-        aria-label="Search or go to a reference"
+        aria-label={t.search.label}
         aria-describedby={hintId}
-        placeholder='Search, or go to "John 3:16"'
+        placeholder={t.search.placeholder(example)}
         value={query}
         onChange={(e) => {
           onQuery(e.target.value);
@@ -111,11 +116,11 @@ export function SearchBar({
         onKeyDown={onInputKey}
       />
       <span id={hintId} className="visually-hidden">
-        Enter opens the passage, or every match. Down arrow moves into the suggestions.
+        {t.search.hint}
       </span>
 
       {open && (
-        <section className="search__panel" data-testid="search-panel" ref={panel} aria-label="Suggestions">
+        <section className="search__panel" data-testid="search-panel" ref={panel} aria-label={t.search.suggestions}>
           <div className="search__panel-bar">
             {reference && (
               <button
@@ -127,15 +132,16 @@ export function SearchBar({
                   dismiss();
                 }}
               >
-                Go to {reference.book} {reference.chapter}
-                {reference.verse !== undefined ? `:${reference.verse}` : ''}
+                {t.search.goTo(
+                  `${reference.book} ${reference.chapter}${reference.verse !== undefined ? `:${reference.verse}` : ''}`
+                )}
               </button>
             )}
             <button
               type="button"
               className="search__close"
               data-testid="search-close"
-              aria-label="Close suggestions"
+              aria-label={t.search.close}
               onClick={() => {
                 dismiss();
                 input.current?.focus();
@@ -155,7 +161,7 @@ export function SearchBar({
               if (e.key === 'Enter') e.preventDefault();
             }}
           >
-            <legend className="visually-hidden">Matching</legend>
+            <legend className="visually-hidden">{t.search.matching}</legend>
             <label className="search__option">
               <input
                 type="checkbox"
@@ -164,9 +170,9 @@ export function SearchBar({
                 checked={options.mode === 'word'}
                 onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
               />
-              Whole words only
+              {t.search.wholeWords}
               <span id={wordHint} className="visually-hidden">
-                Finds love but not loveth. Off, the search also looks inside longer words.
+                {t.search.wholeWordsHint}
               </span>
             </label>
             <label className="search__option">
@@ -177,19 +183,17 @@ export function SearchBar({
                 checked={!!options.caseSensitive}
                 onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
               />
-              Match case
+              {t.search.matchCase}
               <span id={caseHint} className="visually-hidden">
-                Capital letters matter: God and god are different.
+                {t.search.matchCaseHint}
               </span>
             </label>
           </fieldset>
 
           <p className="search__count" data-testid="search-count" data-query={resultsFor}>
             {total === 0
-              ? 'No matches'
-              : `${total} match${total === 1 ? '' : 'es'}${
-                  results.length < total ? ` — showing ${results.length}` : ''
-                }`}
+              ? t.search.noMatches
+              : `${t.search.matches(total)}${results.length < total ? t.search.showing(results.length) : ''}`}
             {/* The dropdown is for jumping to a verse. Anything past the first
                 few dozen needs somewhere with room to walk them. */}
             {results.length < total && (
@@ -204,7 +208,7 @@ export function SearchBar({
                     dismiss();
                   }}
                 >
-                  See all {total}
+                  {t.search.seeAll(total)}
                 </button>
               </>
             )}
@@ -218,7 +222,7 @@ export function SearchBar({
                     here too, or the ranking looks like no ranking at all. */}
                 {startsWeakMatches(results[i - 1], r) && (
                   <p className="search__divider" data-testid="search-divider">
-                    Below: inside a longer word
+                    {t.search.weakBelow}
                   </p>
                 )}
                 <button
@@ -239,7 +243,7 @@ export function SearchBar({
                   type="button"
                   className="search__insert"
                   data-testid={`search-insert-${r.book_slug}-${r.chapter}-${r.verse}`}
-                  aria-label={`Insert ${r.ref} into the open note`}
+                  aria-label={t.search.insert(r.ref)}
                   onClick={() => onInsert(r)}
                 >
                   +

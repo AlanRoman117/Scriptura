@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import { useI18n } from '../i18n';
 
 export type Pane = 'bible' | 'notes';
 export type Maximized = 'none' | Pane;
@@ -15,8 +16,6 @@ interface PaneControls {
  */
 export const PaneControlsContext = createContext<PaneControls | null>(null);
 
-const NAMES: Record<Pane, string> = { bible: 'Bible', notes: 'Notes' };
-
 /**
  * Maximize or restore a pane, from the end of that pane's own row of controls.
  *
@@ -29,9 +28,11 @@ const NAMES: Record<Pane, string> = { bible: 'Bible', notes: 'Notes' };
  */
 export function MaximizeButton({ pane, className }: { pane: Pane; className: string }) {
   const controls = useContext(PaneControlsContext);
+  const { t } = useI18n();
   if (!controls) return null;
   const active = controls.maximized === pane;
-  const label = `${active ? 'Restore' : 'Maximize'} ${NAMES[pane]}`;
+  const name = pane === 'bible' ? t.layout.paneBible : t.layout.paneNotes;
+  const label = active ? t.layout.restore(name) : t.layout.maximize(name);
   return (
     <button
       type="button"
