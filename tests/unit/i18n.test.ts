@@ -11,7 +11,7 @@ import {
 } from '../../apps/reader/src/i18n/locales';
 import { bytesFor, formattersFor, numberFor, percentFor, pluralFor } from '../../apps/reader/src/i18n/format';
 import { CATALOGS } from '../../apps/reader/src/i18n/catalogs';
-import { frenchSpacing } from '../../apps/reader/src/i18n/typography';
+import { frenchSpacing, withFrenchSpacing } from '../../apps/reader/src/i18n/typography';
 
 /**
  * Language tags, formatting and the catalogs.
@@ -196,6 +196,29 @@ describe('punctuation follows each language', () => {
     expect(frenchSpacingProblems(typed)).toHaveLength(5);
     expect(frenchSpacingProblems(['Jean 3:16', 'un contraste de 7:1'])).toEqual([]);
     expect(frenchSpacingProblems(typed.map(frenchSpacing))).toHaveLength(1);
+  });
+
+  test('French spacing leaves what a message quotes as it was given', () => {
+    const fr = CATALOGS['fr-FR'];
+    // A note's own name keeps its own spacing; the message's punctuation is spaced.
+    expect(fr.confirm.note.title('Plan: semaine 1 ?')).toBe('Supprimer la note «\u00a0Plan: semaine 1 ?\u00a0»\u202f?');
+    expect(fr.confirm.note.done('Plan: semaine 1')).toBe('Note «\u00a0Plan: semaine 1\u00a0» supprimée');
+    // Inside an object argument too, and without changing what the message switches on.
+    expect(fr.canvas.removed({ kind: 'card', label: 'Idée : brouillon' })).toBe(
+      'Fiche retirée\u00a0: Idée : brouillon. Vous pouvez annuler depuis la barre du tableau.'
+    );
+    expect(fr.canvas.removed({ kind: 'connection', label: 'A ; B' })).toMatch(/^Connexion retirée\u00a0: A ; B\./);
+  });
+
+  test('the spacing step keeps a quoted string whole, however often it appears, and spaces around it', () => {
+    const say = withFrenchSpacing({ say: (a: string, b: string) => `« ${a} » : ${b} ?` }).say;
+    // The longer string is kept whole where the shorter one starts it.
+    expect(say('x : y', 'x : y !')).toBe('«\u00a0x : y\u00a0»\u00a0: x : y !\u202f?');
+    // Unquoted, the same text is respaced: the keeping is what spares it.
+    expect(frenchSpacing('« x : y » : x : y ! ?')).toBe('«\u00a0x\u00a0: y\u00a0»\u00a0: x\u00a0: y\u202f!\u202f?');
+    // Strings with nothing to respace, and numbers, pass straight through.
+    const count = withFrenchSpacing({ n: (n: number, word: string) => `${n} ${word} ?` }).n;
+    expect(count(3, 'fiches')).toBe('3 fiches\u202f?');
   });
 
   test('Japanese uses Japanese punctuation after Japanese text', () => {
