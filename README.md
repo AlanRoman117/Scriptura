@@ -17,7 +17,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 ## ✨ Features
 
 - 📚 **Multi-translation** — 11 verified translations, 10 fully ingested
-- 🌍 **Multi-language** — English, Spanish, French, and Japanese
+- 🌍 **Multi-language** — Bibles in English, Spanish, French and Japanese, and a reader whose interface speaks all four
 - 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
@@ -111,6 +111,7 @@ in them.
 | `npm run build:api` | Compiles `data/` into a static JSON tree under `dist/`, one file per endpoint, for S3 or any static host |
 | `npm run dev:reader` | The reader PWA's dev server on :5173 |
 | `npm run build:reader` | A production build of the reader |
+| `npm run review:screens` | Screenshots of every reader screen in every interface language, desktop and phone, into `review-screenshots/` for translation reviewers. Not a test |
 | `npm run schema:gen` | Regenerates the JSON schemas under `data/schemas/` from the canonical types |
 
 The data tooling is Python, standard library only, and is invoked directly:
@@ -435,8 +436,8 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 344 jest, and 320 Playwright: 47 HTTP contract, 207 reader in Desktop Chrome, 64 reader on an emulated phone, 2 dev server |
-| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Real-device and screen-reader checks are still to do. |
+| Tests | 433 jest, and 462 Playwright: 47 HTTP contract, 277 reader in Desktop Chrome, 136 reader on an emulated phone, 2 dev server |
+| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French and Japanese, chosen from the browser or Settings, and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
@@ -460,6 +461,7 @@ the dynamic `/search` and `/compare` paths) is specified in
 | **v3.1** | Public domain commentary integration (via CCEL) |
 | **v4.0** | Study Bible UI — React app consuming all packages ✅ (`apps/reader`) |
 | **v4.1** | Reader usable by touch, conformant with WCAG 2.2 AAA ✅ — device and screen-reader checks planned |
+| **v4.2** | Reader interface in English, Spanish, French and Japanese ✅ — native review of the non-English copy pending ([plan](docs/plans/reader-i18n/README.md)) |
 
 ---
 

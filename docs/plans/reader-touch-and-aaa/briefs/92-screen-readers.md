@@ -6,7 +6,7 @@
 | **Size** | M (two to three hours across three readers) |
 | **Depends on** | `21-semantics`, `03-focus`, `05-announcer`, `12-verse-actions`, `14-canvas` |
 | **Status** | assigned (owner) |
-| **Criteria** | 1.3.1, 2.4.3, 4.1.2, 4.1.3 — as experienced, not as computed |
+| **Criteria** | 1.3.1, 2.4.3, 4.1.2, 4.1.3, 3.1.1, 3.1.2 — as experienced, not as computed |
 
 ## Outcome
 
@@ -24,8 +24,9 @@ Every state of the reader has been walked with a screen reader, and what is anno
 8. **Notes.** New note; type; "Saved" is announced once after a pause, not on every keystroke. Shift+Tab reaches the formatting toolbar, announced as a toolbar; arrows move between tools with names ("Bold", "Heading 2").
 9. **Delete.** Delete: announced "Press again to confirm, or Escape to cancel"; Escape: the button reads "Delete" again.
 10. **Proposal (Chromium with the mock, or via Settings → assistant test hook if one exists).** The dialog announces its title and the "nothing has been saved" lede first; Tab stays inside; Escape returns focus to where it was.
-11. **Canvas.** Open Boards: level-1 heading "Board: …"; Tab reaches a card announced by its label; arrows move it (announce the card's new position if the reader supports it); the Connections list reads each connection and its Remove button.
+11. **Interface languages.** Repeat steps 1–5 with the browser set to Spanish, then French, then Japanese: the interface is spoken in that language's voice from the first announcement. With the interface in Japanese and BSB open, verse text switches to an English voice and verse numbers and buttons stay Japanese. In Settings, choose another language: the change is announced in the new language. Note any reader that keeps the old voice until a reload (docs/plans/reader-i18n/README.md, known limits).
+12. **Canvas.** Open Boards: level-1 heading "Board: …"; Tab reaches a card announced by its label; arrows move it (announce the card's new position if the reader supports it); the Connections list reads each connection and its Remove button.
 
 ## Hand-back
 
-Per reader, per step: pass, or the exact announcement heard and what was expected. File one issue per failure against the brief that owns the surface. Update the matrix rows 1.3.1, 2.4.3, 4.1.2, 4.1.3 with "verified with X" notes.
+Per reader, per step: pass, or the exact announcement heard and what was expected. File one issue per failure against the brief that owns the surface. Update the matrix rows 1.3.1, 2.4.3, 4.1.2, 4.1.3, 3.1.1, 3.1.2 with "verified with X" notes.

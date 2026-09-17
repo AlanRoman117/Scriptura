@@ -14,7 +14,7 @@ npm run build               # tsc --build (the packages emit ESM)
 npm run lint                # also tsc --build — this *is* the type-check
 npm test                    # jest, running as ESM
 npm run test:contract       # HTTP contract tests (Playwright in API mode, no browser)
-npm run test:reader         # the reader PWA in Chromium: projects reader, reader-dev, reader-touch
+npm run test:reader         # the reader PWA in Chromium: projects reader, reader-dev, reader-touch (and every interface language)
 npm run dev:reader          # reader dev server on :5173
 npm run dev:api             # REST API on :3000
 ```
@@ -31,7 +31,7 @@ Node 24 (`.nvmrc`); use `mise exec node@24 -- <command>` if your default differs
 6. **Do not change response shapes in `packages/api/src/format.ts` or `scripts/build-static-api.mjs`.** They are one contract, enforced by a parity test. *(Architecture → Packages → @scriptura/api)*
 7. **Tests select by `data-testid` and wait on content, not presence.** Never remove or rename an existing `data-testid`; new ones are kebab-case `area-noun`. A search surface lags its query by one render — wait for the attribute or text that proves the new state landed. Never assert `John 1` in a jump test; the reader opens there. *(Architecture → Apps)*
 8. **Validate a translation `id` at the sink, never in the caller.** Anything that turns input into a path goes through `translationDir()` in `packages/core`. *(Architecture → Packages → @scriptura/core, security invariant)*
-9. **Accessibility floor for any reader change**: controls are 44 × 44 CSS px; text is at least 7:1 against its background; every focusable element shows the focus ring (no `outline: none`); every control has an accessible name that contains its visible text; non-English scripture carries `lang`; meaning is never colour alone; animation and smooth scrolling respect reduced motion; Escape and outside-click go through the dismiss stack in `apps/reader/src/lib/focus.ts`, never a new `window.addEventListener('keydown')`. *(docs/plans/reader-touch-and-aaa/README.md)*
+9. **Accessibility floor for any reader change**: controls are 44 × 44 CSS px; text is at least 7:1 against its background; every focusable element shows the focus ring (no `outline: none`); every control has an accessible name that contains its visible text; interface text comes from the catalogs in `apps/reader/src/i18n/messages/`, in all four languages, never written into a component; scripture carries its translation's `lang` on the text, never on a container holding controls; meaning is never colour alone; animation and smooth scrolling respect reduced motion; Escape and outside-click go through the dismiss stack in `apps/reader/src/lib/focus.ts`, never a new `window.addEventListener('keydown')`. *(docs/plans/reader-touch-and-aaa/README.md)*
 10. **Architecture changes go to both `docs/Architecture.md` and `scriptura-architecture-spec.md`.** Anything described but not built is labelled *planned* in its heading. *(Architecture → Docs)*
 11. **Comments say why, not what.** Match the voice of the file you are in: the reason a rule exists, the bug it prevents, the number that was measured. *(everywhere in the tree)*
 12. **Commits**: imperative subject, explanatory body at about 72 columns, the repository's trailers. Delegates work on `brief/NN-slug`; the lead works on `reader/touch-aaa`; nobody commits to `main` or `develop` directly. *(git log)*

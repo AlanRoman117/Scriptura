@@ -381,11 +381,25 @@ The reader is the local-first reading and note-taking app built on these package
 
 | Project | Device | Gates |
 |---|---|---|
-| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
-| `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in eleven phone states; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
+| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, and in eleven states in each of the other three interface languages, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
+| `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in eleven phone states, and targets, reflow and text spacing in eight of them in each other interface language; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
 | `reader-dev` | Desktop Chrome, dev server | The app boots clean when modules are served unbundled |
 
 ---
+
+### The reader's interface languages
+
+The interface speaks the four languages of the Bibles the library offers: English (United States), Español (México), Français (France) and 日本語 (日本). The page's `lang` is always one of those BCP 47 tags, built from the IANA registry and set by an inline script before the app runs, so a screen reader starts in the right voice (3.1.1). The first of the browser's languages the app has decides, a setting overrides it, and nothing detected means English. A reader in another language whose Bible is not yet installed is offered every Bible in that language, and nothing downloads without a press.
+
+| Concern | Where | What it does |
+|---|---|---|
+| Catalogs | `src/i18n/messages/*.ts` | Every string, typed against the English source so a missing key fails the build; functions wherever a number or name goes in. A test fails on English written into a component. |
+| Formatting | `src/i18n/format.ts` | Plurals, counts, percentages, sizes, lists and language names through `Intl`, per locale. |
+| Language of parts | components | A Bible's `lang` sits on its text only, never on a container holding interface controls (3.1.2). |
+| Punctuation and type | `src/i18n/typography.ts`, `styles.css` | French no-break spaces applied to the whole catalog; Japanese system faces under `:lang(ja)`. |
+| The offer | `src/lib/offer.ts`, `BibleOffer` | Bibles in the interface language, with "Download and read" and a per-language "Not now". |
+
+The plan, glossary and translation review status are in [`docs/plans/reader-i18n/`](docs/plans/reader-i18n/README.md). The Spanish, French and Japanese copy are drafts until a native speaker of each has reviewed them.
 
 ## 5. API layer (`packages/api`)
 
@@ -629,6 +643,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 | v3.1 | Commentary integration (public domain commentaries via CCEL) |
 | v4 | Study Bible UI (React) consuming all packages ✅ (`apps/reader`, five stages) |
 | v4.1 | Reader usable by touch and conformant with WCAG 2.2 AAA ✅ — real-device and screen-reader checks ⏳ planned ([plan](docs/plans/reader-touch-and-aaa/README.md)) |
+| v4.2 | Reader interface in English, Spanish, French and Japanese ✅ — native review of the non-English copy ⏳ planned ([plan](docs/plans/reader-i18n/README.md)) |
 
 ---
 
