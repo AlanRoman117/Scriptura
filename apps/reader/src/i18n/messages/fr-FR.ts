@@ -444,6 +444,19 @@ const catalog = {
     later: 'Plus tard',
   },
 
+  previewBuild: {
+    label: 'Préversion',
+    intro: '**Préversion.** Une version anticipée pour les personnes qui relisent ses traductions.',
+    report: 'Signaler une correction de traduction sur GitHub (s’ouvre dans un nouvel onglet)',
+    reportShort: 'Signaler une correction',
+    newTab: '(sur GitHub, s’ouvre dans un nouvel onglet)',
+    hide: 'Masquer',
+    heading: 'À propos de cette préversion',
+    about:
+      'Cette version est destinée aux personnes qui relisent l’interface en espagnol, en français et en japonais. Rien de ce que vous faites ici n’est envoyé : vos notes et vos marques restent dans ce navigateur. Pour signaler un mot incorrect ou peu clair, utilisez le lien ci-dessous. Il ouvre un court formulaire sur GitHub, qui demande un compte gratuit.',
+    version: (version: string) => `Version : ${version}`,
+  },
+
   durability: {
     label: 'Où vos notes sont conservées',
     denied: 'Ce navigateur peut supprimer vos notes pour libérer de l’espace. Enregistrez une copie.',

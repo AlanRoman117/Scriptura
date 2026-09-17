@@ -1,0 +1,49 @@
+name: Correction de traduction (français)
+description: Signaler un mot ou une phrase de l’interface en français qui est erroné ou peu clair.
+title: "[fr-FR] "
+labels: ["translation", "preview", "lang: fr"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de relire le texte de l’application. Une correction par signalement est le plus simple à traiter.
+  - type: input
+    id: screen
+    attributes:
+      label: Où se trouve-t-il ?
+      description: L’écran ou le panneau, par exemple « Paramètres », « Aide → Tableaux » ou « la question avant de supprimer une note ».
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Ce qui est écrit aujourd’hui
+      description: Copiez le texte à l’identique, si possible.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Ce qui devrait être écrit
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Pourquoi (facultatif)
+      description: Par exemple un mot plus clair, une règle de grammaire ou la façon dont un lecteur d’écran le prononce.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Rempli par le lien de l’application.
+  - type: input
+    id: language
+    attributes:
+      label: Langue de l’interface
+      description: Rempli par le lien de l’application.
+  - type: input
+    id: device
+    attributes:
+      label: Appareil et navigateur (facultatif)
+      description: Par exemple « iPhone 15, Safari » ou « Windows 11, Chrome ».

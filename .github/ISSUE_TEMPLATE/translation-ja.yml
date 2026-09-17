@@ -1,0 +1,49 @@
+name: 翻訳の修正（日本語）
+description: 日本語の画面表示で、誤りやわかりにくい言葉を報告します。
+title: "[ja-JP] "
+labels: ["translation", "preview", "lang: ja"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        アプリの文言を確認していただき、ありがとうございます。1件の報告につき1つの修正にしていただくと、対応しやすくなります。
+  - type: input
+    id: screen
+    attributes:
+      label: 場所
+      description: 画面やパネルの名前。例：「設定」「ヘルプ → ボード」「ノートを削除するときの確認」
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 現在の表示
+      description: できれば、表示されている文言をそのまま貼り付けてください。
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: 修正案
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 理由（任意）
+      description: 例：より自然な言葉、文法上の理由、スクリーンリーダーでの読み上げ方など。
+  - type: input
+    id: version
+    attributes:
+      label: バージョン
+      description: アプリのリンクから自動で入力されます。
+  - type: input
+    id: language
+    attributes:
+      label: 表示言語
+      description: アプリのリンクから自動で入力されます。
+  - type: input
+    id: device
+    attributes:
+      label: 端末とブラウザー（任意）
+      description: 例：「iPhone 15、Safari」「Windows 11、Chrome」

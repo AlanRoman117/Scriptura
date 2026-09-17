@@ -293,7 +293,8 @@ summary:focus-visible,
 .results__ref, .results__insert, .library__close, .library__action, .notes__select,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
-.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name {
+.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name,
+.preview-notice__hide, .preview-notice__link {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -303,7 +304,7 @@ summary:focus-visible,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
 .compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show,
-.confirm-dialog__action {
+.confirm-dialog__action, .preview-notice__hide {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
@@ -1559,6 +1560,33 @@ summary:focus-visible,
   font-size: .8rem;
 }
 .durability__text { margin: 0; flex: 1; min-width: 12rem; }
+
+/* A build for the translation reviewers says so, above everything else, and
+   links to where corrections go. The link stands on its own line of controls,
+   so it is a full-size target rather than a link inside a sentence. */
+.preview-notice {
+  display: flex; gap: .4rem .75rem; align-items: center; flex-wrap: wrap;
+  padding: .35rem .9rem;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--rule);
+  font-size: .8rem;
+}
+.preview-notice__text { margin: 0; flex: 1; min-width: 12rem; }
+.preview-notice__actions { display: flex; gap: .4rem .75rem; align-items: center; flex-wrap: wrap; }
+.preview-notice__link {
+  display: inline-flex; align-items: center; gap: .2em;
+  color: var(--accent); font-weight: 600; text-decoration: none;
+}
+/* The words are underlined, and the new-tab arrow beside them is not: a flex
+   item takes its link's underline, and cannot shed it once it has it. */
+.preview-notice__words { text-decoration: underline; text-underline-offset: .15em; }
+.preview-notice__link:hover .preview-notice__words { text-decoration-thickness: 2px; }
+.preview-notice__hide {
+  font: inherit; font-size: .78rem; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
+}
+.preview-notice__hide:hover { border-color: var(--ink-soft); }
 .durability__actions { display: flex; gap: .4rem; align-items: center; }
 .durability__action {
   font: inherit; font-size: .78rem; color: var(--ink);
