@@ -3,8 +3,11 @@ import type { Page } from '@playwright/test';
 import { join } from 'node:path';
 import { serveStatic } from '../helpers/static-server';
 
-/** The path GitHub Pages serves this repository under. */
-const LOCAL_BASE = '/Scriptura/';
+/**
+ * The path the site was built for: GitHub Pages serves this repository under
+ * /Scriptura/. The Pages workflow passes the path Pages reports.
+ */
+const LOCAL_BASE = process.env.SITE_BASE ?? '/Scriptura/';
 
 /**
  * `site` is the published site's address, ending in a slash.

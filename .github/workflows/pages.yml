@@ -1,0 +1,82 @@
+name: Pages preview
+
+# Publishes the reader, with the translations it downloads, to GitHub Pages —
+# https://alanroman117.github.io/Scriptura/ — as a preview build for the
+# people reviewing the interface's translations (scripts/build-site.mjs).
+#
+# Only after CI has passed on main, and only the commit CI tested, so a red
+# build is never published. A `workflow_run` workflow runs from the default
+# branch's copy of this file: nothing publishes until it is on main.
+#
+# One-time setup, by hand: Settings → Pages → Build and deployment → Source:
+# GitHub Actions. That also creates the `github-pages` environment, which by
+# default lets only the default branch publish.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time, and never one cancelled halfway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and check the site
+    # CI's pull-request runs report a head branch too, so how CI was started
+    # is checked as well as how it ended.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      # The path Pages serves this repository under, exactly as Pages says it.
+      - id: pages
+        uses: actions/configure-pages@v6
+      - run: node scripts/build-site.mjs --base "${{ steps.pages.outputs.base_path }}/" --preview
+      # The checks `npm run test:site` runs, on the very files about to be
+      # published. --with-deps shells out to apt-get; this job is Linux.
+      - run: npx playwright install chromium --with-deps
+      - run: npx playwright test --project=site
+        env:
+          SCRIPTURA_SITE_ONLY: '1'
+          SITE_BASE: ${{ steps.pages.outputs.base_path }}/
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-site
+          path: playwright-report/
+          retention-days: 7
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/
+
+  deploy:
+    name: Publish
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

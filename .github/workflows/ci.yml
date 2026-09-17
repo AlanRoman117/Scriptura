@@ -118,6 +118,11 @@ jobs:
       - run: npx playwright install chromium
         if: runner.os != 'Linux'
       - run: npm run test:reader
+      # The app as it is published: under /Scriptura/, from files alone. A pull
+      # request that would break the published site fails here, before it can
+      # reach main and the Pages workflow. Linux only, as Pages builds there.
+      - run: npm run test:site
+        if: runner.os == 'Linux'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
