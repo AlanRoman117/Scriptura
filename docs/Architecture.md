@@ -583,12 +583,39 @@ each book's JSON, which carries them.
 
 ---
 
-## 8. Deployment & hosting — ⚠️ specified, not provisioned
+## 8. Deployment & hosting — Pages preview built; AWS ⚠️ specified, not provisioned
 
 No AWS infrastructure exists yet and `deploy.yml` has not been written. The
 static build itself (`npm run build:api`) does work today — it emits ~12,500
-JSON files across the ten ingested translations. Everything below the static
-build is a design target.
+JSON files across the eleven ingested translations. Everything below the
+static build is a design target, except the GitHub Pages preview of the
+reader, which is built.
+
+### GitHub Pages preview (built)
+
+The reader is published at <https://alanroman117.github.io/Scriptura/> as a
+preview for the people reviewing its interface translations.
+
+- `npm run build:site -- --base /Scriptura/ --preview` assembles `site/`: the
+  reader built for that path, plus `api/translations.json` and each
+  `api/translations/<id>/full.json` (`build-static-api.mjs --full-only`), the
+  only files the reader fetches. About 57 MB.
+- `.github/workflows/pages.yml` runs when CI completes on `main`. It builds the
+  site under the path Pages reports, runs the `site` Playwright project on
+  those files, and publishes them with `actions/deploy-pages`. A red build is
+  never published.
+- The app's base path comes from `SCRIPTURA_BASE`; the manifest's `start_url`
+  and `scope`, the service worker, the bundled Bible and the API all follow
+  it. The API defaults to `api` beside the app, and the router answers
+  `/translations.json` as well as `/translations`, so the same strings work
+  against a live server and against the static files.
+- Pages allows no custom headers: every file is cached for ten minutes, and a
+  site cannot be put behind a password. A preview build therefore carries
+  `noindex`, and links to an issue form for corrections in each interface
+  language.
+
+The public JSON API tree and the dynamic endpoints stay with the AWS design
+below.
 
 Scriptura serves the same data two ways.
 

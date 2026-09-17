@@ -12,11 +12,13 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 **The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.**
 
+**Try the reader:** <https://alanroman117.github.io/Scriptura/>. It is a preview, published for the people reviewing its Spanish, French and Japanese text; what changed is in [`CHANGELOG.md`](CHANGELOG.md).
+
 ---
 
 ## ✨ Features
 
-- 📚 **Multi-translation** — 11 verified translations, 10 fully ingested
+- 📚 **Multi-translation** — 11 verified translations, all ingested
 - 🌍 **Multi-language** — Bibles in English, Spanish, French and Japanese, and a reader whose interface speaks all four
 - 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
@@ -111,6 +113,8 @@ in them.
 | `npm run build:api` | Compiles `data/` into a static JSON tree under `dist/`, one file per endpoint, for S3 or any static host |
 | `npm run dev:reader` | The reader PWA's dev server on :5173 |
 | `npm run build:reader` | A production build of the reader |
+| `npm run build:site` | The publishable site in `site/`: the reader plus the translation files it downloads. `-- --base /Scriptura/` builds it for a path, as GitHub Pages serves it; `-- --preview` marks it for translation reviewers |
+| `npm run test:site` | Builds the preview site for `/Scriptura/` and tests it the way Pages serves it: from files alone, under the path. `SITE_URL=… npx playwright test --project=site` (with `SCRIPTURA_SITE_ONLY=1`) runs the same checks against the live site |
 | `npm run review:screens` | Screenshots of every reader screen in every interface language, desktop and phone, into `review-screenshots/` for translation reviewers. Not a test |
 | `npm run schema:gen` | Regenerates the JSON schemas under `data/schemas/` from the canonical types |
 
@@ -436,16 +440,19 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 436 jest, and 497 Playwright: 47 HTTP contract, 299 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server |
+| Tests | 449 jest, and 518 Playwright: 48 HTTP contract, 300 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server, 19 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French and Japanese, chosen from the browser or Settings, and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
-| Deployment | **Not built** — no AWS infrastructure, no `deploy.yml` |
+| Preview site | The reader and its translation files on GitHub Pages, published from `main` by `.github/workflows/pages.yml` once CI has passed — a preview for the translation reviewers |
+| Deployment | **AWS not built** — no infrastructure, no `deploy.yml` |
 
 The AWS hosting design (S3 + CloudFront with OAC, GitHub OIDC auth, Lambda for
 the dynamic `/search` and `/compare` paths) is specified in
-[`docs/Architecture.md`](docs/Architecture.md) but not yet provisioned.
+[`docs/Architecture.md`](docs/Architecture.md) but not yet provisioned. It is
+the home planned for the production release and the public JSON API; the Pages
+preview publishes only the reader.
 
 ---
 
