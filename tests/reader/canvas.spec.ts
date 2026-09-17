@@ -14,6 +14,33 @@ async function open(page: import('@playwright/test').Page) {
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
 }
 
+/**
+ * The boards as they are in IndexedDB.
+ *
+ * Every change to a board is written asynchronously, and nothing on screen
+ * says when that has finished, so a reload can outrun the write — which is
+ * what failed on a macOS runner: a card's name came back empty. A test that
+ * reloads waits on this first, the way notes.spec.ts waits with `persisted()`.
+ */
+interface StoredBoard {
+  name: string;
+  nodes: { title?: string; text?: string; x: number }[];
+}
+
+const storedBoards = (page: import('@playwright/test').Page): Promise<StoredBoard[]> =>
+  page.evaluate(
+    () =>
+      new Promise<StoredBoard[]>((resolve) => {
+        const open = indexedDB.open('scriptura');
+        open.onsuccess = () => {
+          const all = open.result.transaction('boards').objectStore('boards').getAll();
+          all.onsuccess = () => resolve(all.result as StoredBoard[]);
+          all.onerror = () => resolve([]);
+        };
+        open.onerror = () => resolve([]);
+      })
+  );
+
 /** Put John 1:1 and 1:3 on a board, and end up looking at it. */
 async function boardWithTwoVerses(page: import('@playwright/test').Page) {
   await page.getByTestId('verse-1').click();
@@ -46,20 +73,7 @@ test.describe('a board', () => {
     await name.fill('Signs in John');
     await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText('Signs in John');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Board: Signs in John');
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () =>
-            new Promise<string[]>((resolve) => {
-              const req = indexedDB.open('scriptura');
-              req.onsuccess = () => {
-                const all = req.result.transaction('boards').objectStore('boards').getAll();
-                all.onsuccess = () => resolve((all.result as { name: string }[]).map((b) => b.name));
-              };
-            })
-        )
-      )
-      .toEqual(['Signs in John']);
+    await expect.poll(() => storedBoards(page).then((boards) => boards.map((b) => b.name))).toEqual(['Signs in John']);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
@@ -98,6 +112,9 @@ test.describe('a board', () => {
 
     const after = (await card.boundingBox())!;
     expect(after.x).toBeGreaterThan(before.x + 100);
+
+    const storedX = async () => (await storedBoards(page))[0]?.nodes?.[0]?.x;
+    await expect.poll(storedX).toBeGreaterThan(0);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
@@ -294,6 +311,9 @@ test.describe('getting around the board', () => {
     const id = await card.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
     await page.getByTestId(`card-title-${id}`).fill('The argument');
     await page.getByTestId(`card-text-${id}`).fill('Light overcomes darkness.');
+    await expect
+      .poll(() => storedBoards(page).then(([board]) => board?.nodes?.[0]))
+      .toMatchObject({ title: 'The argument', text: 'Light overcomes darkness.' });
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
