@@ -3,15 +3,15 @@ import type { Express, Request, Response } from 'express';
 import { createRouter } from '@scriptura/api';
 
 /**
- * Anything from a request that is written to a log, made safe to print.
+ * Anything from a request that is written to a log, quoted for printing.
  *
- * Line breaks first and by name: a newline in a request path would otherwise
- * write a log line of its own, one that looks as trustworthy as ours
- * (CodeQL js/log-injection). The rest of the control and format characters go
- * too, and the result is cut short.
+ * A newline in a request path would otherwise write a log line of its own,
+ * one that looks as trustworthy as ours (CodeQL js/log-injection).
+ * `JSON.stringify` escapes newlines and control characters rather than
+ * dropping them, so the log still shows what was sent, and the quotes show
+ * where the client's text begins and ends.
  */
-const sanitize = (value: string): string =>
-  value.replace(/[\r\n]/g, ' ').replace(/[\p{Cc}\p{Cf}]/gu, ' ').slice(0, 200);
+const forLog = (value: string): string => JSON.stringify(value.slice(0, 200));
 
 /** Methods a read-only scripture API answers. */
 const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS'] as const;
@@ -130,7 +130,7 @@ export function createApp(): Express {
       // the format itself, and control characters are stripped. A "%s" in a
       // request path must not consume the error, and a newline must not write
       // a line of its own (CodeQL js/tainted-format-string, js/log-injection).
-      console.error('%s %s failed:', sanitize(req.method), sanitize(req.path), err);
+      console.error('%s %s failed:', forLog(req.method), forLog(req.path), err);
       res.setHeader('Cache-Control', 'no-store');
       res.status(500).json({ error: 'Internal server error' });
     }
