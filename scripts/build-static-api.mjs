@@ -306,8 +306,11 @@ function build() {
       `--skip-verses for a leaner build (verses still available via chapters).`
     );
   }
-  console.log(`Next: aws s3 sync ${OUT_DIR}/ s3://<bucket>/ --delete ` +
-    `--content-type application/json`);
+  // A --full-only tree is a part of a site (scripts/build-site.mjs), not an API to sync.
+  if (!FULL_ONLY) {
+    console.log(`Next: aws s3 sync ${OUT_DIR}/ s3://<bucket>/ --delete ` +
+      `--content-type application/json`);
+  }
 }
 
 build();

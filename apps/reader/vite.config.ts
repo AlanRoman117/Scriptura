@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -30,6 +30,20 @@ const proxy = {
 const trimmedBase = (process.env.SCRIPTURA_BASE ?? '').replace(/^\/+|\/+$/g, '');
 const BASE = trimmedBase ? `/${trimmedBase}/` : '/';
 
+/**
+ * A build for the translation reviewers (scripts/build-site.mjs --preview).
+ *
+ * GitHub Pages cannot put a site behind a password, so a preview asks search
+ * engines to leave it out. A meta tag rather than robots.txt: a crawler reads
+ * robots.txt only at the root of the host, and this site lives under a path.
+ */
+const PREVIEW = process.env.VITE_SCRIPTURA_PREVIEW === '1';
+const noindex: Plugin = {
+  name: 'scriptura-preview-noindex',
+  transformIndexHtml: () =>
+    PREVIEW ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' }, injectTo: 'head' }] : [],
+};
+
 export default defineConfig({
   base: BASE,
   // No `optimizeDeps.include` here, and that is the point.
@@ -45,6 +59,7 @@ export default defineConfig({
   // production resolve them the same way. `tests/reader-dev/` still guards it.
   plugins: [
     react(),
+    noindex,
     VitePWA({
       // A new build waits until the reader says so (components/UpdateNotice).
       // `autoUpdate` skipped waiting and took the open page the moment a build
