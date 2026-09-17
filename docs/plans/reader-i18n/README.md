@@ -70,7 +70,8 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
   - grouped counts.
 - **`tests/reader/language-of-parts.spec.ts`:** both sides of the language boundary in seven states, with planted slips.
 - **`tests/reader/bible-offer.spec.ts`:** the offer, download-and-read, "Not now", offline failure, and none in English.
-- **In the other three languages:** axe in eleven desktop states (`a11y.spec.ts`), and the phone's target, reflow and text-spacing gates in eight states (`gates.spec.ts`).
+- **`tests/reader/confirm.spec.ts`:** the delete confirmation asks, names its buttons and reports the deletion in each language.
+- **In the other three languages:** axe in twelve desktop states (`a11y.spec.ts`), and the phone's target, reflow and text-spacing gates in nine states (`gates.spec.ts`), the delete confirmation among them.
 
 ## Review
 
@@ -96,6 +97,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] Nothing is cut off, overlaps or wraps badly in the screenshots.
 - [ ] Punctuation, numbers and plurals follow the language.
 - [ ] The Help screen reads well, glossary and accessibility statement included.
+- [ ] The delete confirmation (`delete-confirm` screenshots) says plainly what will go and whether it can come back. The other confirmations (board, card, mark, translation) are the `confirm` section of the catalog.
 - [ ] With a screen reader: the interface is spoken in the language, and a Bible in another language switches voice (brief 92).
 
 Corrections come back as notes, a marked-up copy or edits to the catalog file. Apply them, rerun the tests, regenerate the screenshots, and mark the row above.
@@ -125,7 +127,8 @@ Corrections come back as notes, a marked-up copy or edits to the catalog file. A
 | Export | Exportar | Exporter | エクスポート |
 | Preview / Write | Vista previa / Escribir | Aperçu / Écrire | プレビュー / 編集 |
 | Delete / Remove | Eliminar / Quitar | Supprimer / Retirer | 削除 |
-| Sure? | ¿Seguro? | Confirmer ? | よろしいですか？ |
+| Delete the note “…”? (the confirmation) | ¿Eliminar la nota “…”? | Supprimer la note « … » ? | ノート「…」を削除しますか？ |
+| You cannot undo this. | No se puede deshacer. | Vous ne pourrez pas annuler. | この操作は元に戻せません。 |
 | Untitled | Sin título | Sans titre | 無題 |
 | Bold / Italic glyphs | N / K | G / I | B / I |
 
