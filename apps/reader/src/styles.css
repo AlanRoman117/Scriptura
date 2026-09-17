@@ -1,0 +1,1723 @@
+/*
+ * Type and colour are deliberately restrained: the text is the interface.
+ *
+ * Fonts are system stacks rather than webfonts. A local-first reader should not
+ * depend on a font download to render scripture, and self-hosting a face would
+ * put binary assets in a repository whose product is text. A serif for the
+ * reading column, a UI sans for chrome.
+ */
+/*
+ * Colours are tokens, and the tokens are measured.
+ *
+ * `light-dark()` holds the light and dark value of each token in one place;
+ * `color-scheme` decides which is used — `light dark` follows the operating
+ * system, and `[data-theme]` (written by lib/prefs.ts) pins it. The
+ * high-contrast and sepia themes override the whole set. Every value below is
+ * checked by tests/unit/contrast.test.ts against WCAG 2.2 AAA: 7:1 for text,
+ * 3:1 for control boundaries, focus rings and highlight rules. Change a value
+ * and the test tells you what it now fails against; do not round to a nicer
+ * hex without running it.
+ *
+ * `--rule` is decorative (separators, dividers between list items) and is
+ * allowed to be faint. `--edge` is the boundary of a control — input, select,
+ * button, chip, swatch — and must clear 3:1 (1.4.11). They used to be one
+ * token, which is how every control border came to be 1.24:1.
+ *
+ * Highlights: `--hl-*` is the verse tint (opaque, so it can be measured; the
+ * ink reads at 7:1 over it), `--hl-*-strong` is the same hue dark or light
+ * enough for a 3:1 rule or border, and `--sw-*` is the hue itself, used only
+ * for swatch fills that carry their own ring. Amber, sky and mint are below
+ * 3:1 against white as hues, which is why a highlight also has a rule and,
+ * when the reader asks, a glyph — colour is never the only signal.
+ */
+/* @tokens light-dark */
+:root {
+  --ink: light-dark(#1f1d1a, #ece8e1);
+  --ink-soft: light-dark(#57534e, #b3ada5);
+  --paper: light-dark(#faf9f7, #171614);
+  --paper-raised: light-dark(#ffffff, #1f1e1b);
+  --rule: light-dark(#e5e1da, #33302b);
+  --edge: light-dark(#8f8a82, #8a857d);
+  --accent: light-dark(#5f4a0e, #d4b355);
+  --danger: light-dark(#9a1f18, #f2b8b5);
+  --focus: light-dark(#3b6ea5, #7aa7d9);
+  --hl-amber: light-dark(#f7e7c1, #58451a);
+  --hl-rose: light-dark(#f3d1d8, #532c34);
+  --hl-sky: light-dark(#cde1f3, #273e54);
+  --hl-mint: light-dark(#c9e8d9, #234736);
+  --hl-violet: light-dark(#e1d8ee, #3f344e);
+  --hl-amber-strong: light-dark(#b4871f, #f0b429);
+  --hl-rose-strong: light-dark(#e0607e, #e0607e);
+  --hl-sky-strong: light-dark(#4792da, #4c9be8);
+  --hl-mint-strong: light-dark(#369f72, #3fb984);
+  --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
+}
+/* @tokens end */
+
+:root {
+  --sw-amber: #f0b429;
+  --sw-rose: #e0607e;
+  --sw-sky: #4c9be8;
+  --sw-mint: #3fb984;
+  --sw-violet: #9b7bd4;
+
+  --serif-latin: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
+  --sans-latin: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --serif: var(--serif-latin);
+  --sans: var(--sans-latin);
+
+  /* Text size as a multiplier (1.4.8), set by lib/prefs.ts. It scales the
+     reading text, the notes and the comparison — the prose — and leaves the
+     chrome alone, which is what browser zoom does not do. */
+  --text-scale: 1;
+  --reading-size: calc(1.125rem * var(--text-scale));
+  --reading-leading: 1.75;
+  /* Space between verses. 1.4.8 wants paragraph spacing of at least 1.5× the
+     line spacing; the relaxed and loose presets in Settings reach it, and the
+     default keeps the compact rhythm the column was designed around. */
+  --verse-gap: .85rem;
+  /* Never more than 70ch: 1.4.8's ceiling is 80 characters, and a serif at
+     this size runs about 1.15 characters per ch. */
+  --measure: 64ch;
+  /* Height of the sticky reading bar. The chapter title parks directly beneath
+     it, so both are pinned from one constant. */
+  --bar-h: 3.1rem;
+  /* Every pointer target is at least this on both axes (2.5.5). There is no
+     compact mode: the criterion has no exception for a fine pointer. */
+  --control-h: 44px;
+  /* The pane divider: a bar a little wider than the buttons it holds. Layout
+     measures the column rather than repeating the number. */
+  --divider-w: calc(var(--control-h) + 8px);
+  --focus-ring: 2px solid var(--focus);
+  color-scheme: light dark;
+}
+
+/* Japanese, in the interface or in scripture: the system's Japanese faces, so
+   kanji shared with Chinese take their Japanese forms and nothing falls back
+   to a Latin face. Still system stacks, never a web font. Text marked as
+   another language inside Japanese goes back to the Latin stacks. */
+:lang(ja) {
+  --serif: 'Hiragino Mincho ProN', 'Yu Mincho', YuMincho, 'Noto Serif CJK JP', 'Noto Serif JP', serif;
+  --sans: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', system-ui, sans-serif;
+}
+:lang(ja) :not(:lang(ja)) {
+  --serif: var(--serif-latin);
+  --sans: var(--sans-latin);
+}
+/* Japanese has no italic; slanting kanji is a typographic error. Emphasis
+   in the interface keeps its weight and loses the slant. */
+:lang(ja) em { font-style: normal; font-weight: 600; }
+
+/* The reader's choice pins the scheme; `light-dark()` follows it. */
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* High contrast, in both polarities. One block, `light-dark()` again, with
+   the polarity chosen by the theme name. */
+/* @tokens hc */
+:root[data-theme='hc-light'],
+:root[data-theme='hc-dark'] {
+  --ink: light-dark(#000000, #ffffff);
+  --ink-soft: light-dark(#333333, #d9d9d9);
+  --paper: light-dark(#ffffff, #000000);
+  --paper-raised: light-dark(#ffffff, #000000);
+  --rule: light-dark(#cfcfcf, #444444);
+  --edge: light-dark(#000000, #ffffff);
+  --accent: light-dark(#4a3a08, #ffd76a);
+  --danger: light-dark(#a00000, #ffb4ab);
+  --focus: light-dark(#0000ee, #8ab4f8);
+  --hl-amber: light-dark(#fbecc7, #48360c);
+  --hl-rose: light-dark(#f7d6dd, #431d26);
+  --hl-sky: light-dark(#d0e5f9, #172f46);
+  --hl-mint: light-dark(#cdeddf, #133828);
+  --hl-violet: light-dark(#e5ddf4, #2f2540);
+  --hl-amber-strong: light-dark(#b6891f, #f0b429);
+  --hl-rose-strong: light-dark(#e0607e, #e0607e);
+  --hl-sky-strong: light-dark(#4a96e1, #4c9be8);
+  --hl-mint-strong: light-dark(#37a374, #3fb984);
+  --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
+}
+/* @tokens end */
+:root[data-theme='hc-light'] { color-scheme: light; }
+:root[data-theme='hc-dark'] { color-scheme: dark; }
+
+/* The same tokens when the operating system asks for more contrast and the
+   reader has not chosen a theme. CSS cannot reference the block above from
+   inside a media query, so it is repeated; contrast.test.ts asserts the two
+   copies are identical. */
+@media (prefers-contrast: more) {
+  /* @tokens hc-auto */
+  :root:not([data-theme]) {
+    --ink: light-dark(#000000, #ffffff);
+    --ink-soft: light-dark(#333333, #d9d9d9);
+    --paper: light-dark(#ffffff, #000000);
+    --paper-raised: light-dark(#ffffff, #000000);
+    --rule: light-dark(#cfcfcf, #444444);
+    --edge: light-dark(#000000, #ffffff);
+    --accent: light-dark(#4a3a08, #ffd76a);
+    --danger: light-dark(#a00000, #ffb4ab);
+    --focus: light-dark(#0000ee, #8ab4f8);
+    --hl-amber: light-dark(#fbecc7, #48360c);
+    --hl-rose: light-dark(#f7d6dd, #431d26);
+    --hl-sky: light-dark(#d0e5f9, #172f46);
+    --hl-mint: light-dark(#cdeddf, #133828);
+    --hl-violet: light-dark(#e5ddf4, #2f2540);
+    --hl-amber-strong: light-dark(#b6891f, #f0b429);
+    --hl-rose-strong: light-dark(#e0607e, #e0607e);
+    --hl-sky-strong: light-dark(#4a96e1, #4c9be8);
+    --hl-mint-strong: light-dark(#37a374, #3fb984);
+    --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
+  }
+  /* @tokens end */
+}
+
+/* Sepia: warm paper, dark ink — the reading mode e-readers settle on. */
+/* @tokens sepia */
+:root[data-theme='sepia'] {
+  color-scheme: light;
+  --ink: #2b2418;
+  --ink-soft: #54482f;
+  --paper: #f4ecd8;
+  --paper-raised: #fbf6ea;
+  --rule: #d8cdb2;
+  --edge: #8a857d;
+  --accent: #5a4410;
+  --danger: #8f1c15;
+  --focus: #2c5a88;
+  --hl-amber: #f3ddab;
+  --hl-rose: #efc8c1;
+  --hl-sky: #c8d7dc;
+  --hl-mint: #c5dfc2;
+  --hl-violet: #ddcfd7;
+  --hl-amber-strong: #a87e1d;
+  --hl-rose-strong: #d75c79;
+  --hl-sky-strong: #4388cc;
+  --hl-mint-strong: #33966b;
+  --hl-violet-strong: #9576cc;
+}
+/* @tokens end */
+
+* { box-sizing: border-box; }
+
+/* The document itself never scrolls — the panes do. Holding it still is what
+   stops a phone from scrolling the page out from under the notes sheet when
+   the keyboard opens, and from bouncing it when the sheet is dragged. */
+html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+#root { height: 100%; display: flex; flex-direction: column; }
+#root > .layout { flex: 1; min-height: 0; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-text-size-adjust: 100%;
+}
+
+body.dragging { cursor: col-resize; user-select: none; }
+
+/* Touch. The verse is a tap target, so without this every tap in the reading
+   column flashes the browser's grey box across a whole paragraph; controls
+   draw their own pressed state instead. `manipulation` keeps pinch-zoom of the
+   page but removes the double-tap delay on controls; `none` on the surfaces
+   that are dragged tells the browser the gesture is ours, which is what stops
+   it firing pointercancel and scrolling instead. */
+html { -webkit-tap-highlight-color: transparent; }
+button, select, [role='button'], .sheet__grip { touch-action: manipulation; }
+.divider, .sheet__grip, .canvas__frame, .card__grip, .card__resize { touch-action: none; }
+.verse:active { background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.reader__chip:active, .notes__action:active, .canvas__action:active, .library__action:active,
+.settings__action:active, .results__book:active, .tools__button:active, .search__ref:active,
+.results__ref:active, .marks__ref:active { background-color: color-mix(in srgb, var(--rule) 60%, var(--paper-raised)); }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
+/* Skip links (2.4.1): first in the Tab order, off-screen until focused, then a
+   pill at the top-left that says where it goes. */
+.skip {
+  position: absolute; top: .5rem; left: .5rem; z-index: 30;
+  display: inline-flex; align-items: center; min-height: var(--control-h);
+  padding: .5rem 1rem; border-radius: 999px;
+  background: var(--paper-raised); color: var(--ink); border: 1px solid var(--edge);
+  font: inherit; font-size: .9rem; text-decoration: none;
+  transform: translateY(-200%);
+}
+.skip:focus-visible { transform: none; }
+.skip + .skip { left: calc(.5rem + 11rem); }
+
+/* One ring, on everything that can take focus (2.4.7, 2.4.13). Written with
+   real specificity, not `:where()`: at zero specificity the rule lost to every
+   later declaration that switched the outline off, which is how the main
+   writing surface ended up with no focus indicator at all. Text fields that sit flush draw it inset so it is
+   not clipped by their container. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible,
+[contenteditable]:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+.notes__title:focus-visible,
+.notes__surface:focus-visible,
+.card__title-input:focus-visible,
+.card__editor:focus-visible,
+.marks__label:focus-visible {
+  outline-offset: -2px;
+}
+
+/* ── Targets (2.5.5) ─────────────────────────────────────────────────────── */
+
+/* Every pointer target is at least 44 × 44 CSS px. One list, one token, so
+   the floor is the same everywhere and a new control class is added here or
+   is caught by tests/reader/targets.spec.ts. Inline exceptions — the verse
+   number in the text, text links inside prose — are allowlisted in that test,
+   not here.
+   ⚠️ This block comes first, so a component rule further down that sets its
+   own `min-width` or `min-height` overrides the floor at equal specificity.
+   The formatting tools kept `min-width: 1.9rem` that way and measured 30px on
+   a phone. Do not size a control with a min-* below `var(--control-h)`. */
+.pane__maximize, .reader__select, .reader__chip, .search__input, .search__jump, .search__ref,
+.search__insert, .search__option, .marks__close, .marks__label, .marks__ref, .marks__remove,
+.notes__link, .settings__close, .settings__action, .settings__toggle, .settings__field select,
+.settings__tools summary, .proposal__action, .proposal__item label, .canvas__select,
+.canvas__action, .canvas__zoom button, .tools__button, .results__close, .results__book,
+.results__ref, .results__insert, .library__close, .library__action, .notes__select,
+.notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
+.compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
+.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name,
+.preview-notice__hide, .preview-notice__link {
+  min-height: var(--control-h);
+}
+/* Icon-only controls, and text buttons whose label can be shorter than 44px
+   ("New"). */
+.pane__maximize, .reader__chip, .search__insert, .marks__close, .marks__remove,
+.settings__close, .settings__action, .canvas__zoom button, .canvas__action, .tools__button,
+.results__close, .results__insert, .results__book, .library__close, .library__action,
+.notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
+.compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show,
+.confirm-dialog__action, .preview-notice__hide {
+  min-width: var(--control-h);
+}
+/* Checkbox labels are the target; lay them out so the whole row is it. */
+.search__option, .settings__toggle, .proposal__item label { display: inline-flex; align-items: center; }
+.settings__tools summary { display: flex; align-items: center; }
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  /* The Bible column is the reader's split, held between both panes' floors:
+     320px for itself (MIN_PANE in Layout.tsx), and 320px plus the divider for
+     the notes. Layout clamps the split the same way; this keeps the floor for
+     a window made narrower after the split was set. */
+  grid-template-columns: clamp(320px, var(--split, 56%), calc(100% - 320px - var(--divider-w))) var(--divider-w) 1fr;
+  height: 100%;
+}
+.layout[data-maximized='bible'],
+.layout[data-maximized='notes'] { grid-template-columns: 1fr; }
+
+/* ── Something went into a note ───────────────────────────────────────────
+   A checkmark and the words, at the destination: the notes' status line, the
+   sheet's grip at peek, or this bar while the Bible is maximized. The words
+   carry the meaning; the mark is decoration and hidden from screen readers,
+   which hear the same words through the announcer. Nothing here fades or
+   times out (2.2.3) — the reader's next action clears it. */
+.done { color: var(--ink); }
+.done__check { font-weight: 700; font-size: 1.15em; line-height: 1; }
+.layout__done {
+  position: fixed; right: 1.25rem; bottom: 1rem; z-index: 4;
+  max-width: calc(100% - 2.5rem);
+  display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem;
+  padding: .3rem .3rem .3rem .85rem;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 12px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / .14);
+  font-size: .9rem;
+}
+.layout__done-show {
+  padding: 0 .9rem; font: inherit; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+/* A verse number focused near the bottom scrolls clear of the bar (2.4.12). */
+.pane--bible:has(> .layout__done) { scroll-padding-bottom: calc(var(--control-h) + 3rem); }
+
+.pane {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Keyboard focus scrolls a control into view; without this it lands under
+     the sticky bar, focused and invisible (2.4.11, 2.4.12). `--search-h` and
+     `--sheet-h` are set by the components that own those surfaces. */
+  scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + .5rem);
+  scroll-padding-bottom: calc(var(--sheet-h, 0px) + .5rem);
+}
+.pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); }
+
+/* The divider is a bar a little wider than the two buttons it holds, so they
+   sit inside it instead of hanging over the edges of both panes — they were
+   44px boxes on an 11px line. The bar is the rule colour. The grip and the
+   buttons' borders on it are --ink-soft: --edge, the usual control boundary,
+   is only 2.6:1 against the rule colour in the light theme, and
+   tests/unit/contrast.test.ts measures both on the bar. The bar between the
+   buttons is the drag target; the buttons resize without a drag (2.5.7). */
+.divider-col {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  width: var(--divider-w);
+  background: var(--rule);
+}
+.divider {
+  --grip: var(--ink-soft);
+  position: relative; flex: 1; align-self: stretch;
+  cursor: col-resize; background: transparent; border: none;
+}
+/* Three dots at the centre: three 8px tiles, each dot at a tile's centre. At
+   20px tall the box cut the third dot in half. */
+.divider::before {
+  content: ''; position: absolute; left: calc(50% - 2px); top: calc(50% - 12px);
+  width: 4px; height: 24px; border-radius: 2px;
+  background: radial-gradient(circle, var(--grip) 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y;
+}
+.divider:hover, .divider:focus-visible { --grip: var(--accent); }
+/* Drawn inside the bar: outside it, the ring would lie over both panes. */
+.divider:focus-visible { outline-offset: -4px; }
+.divider__nudge {
+  flex: 0 0 auto; width: var(--control-h);
+  font: inherit; font-size: 1.35rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--ink-soft); border-radius: 6px;
+}
+.divider__nudge:hover { color: var(--ink); border-color: var(--ink); }
+/* Level with the first row of controls in both panes' bars. */
+.divider__nudge:first-child { margin-top: .6rem; }
+.divider__nudge:last-child { margin-bottom: .6rem; }
+
+/* ── Reader ───────────────────────────────────────────────────────────────── */
+
+/* Container, not viewport: the pane can be dragged narrow while the window
+   stays wide, so the controls have to respond to their own width. */
+.reader { display: flex; flex-direction: column; min-height: 100%; container-type: inline-size; }
+
+.reader__bar {
+  position: sticky; top: 0; z-index: 1;
+  display: flex; gap: .5rem; align-items: center;
+  padding: .6rem 1rem;
+  min-height: var(--bar-h);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.reader__select {
+  font: inherit; font-size: .9rem;
+  color: var(--ink);
+  /* Explicit, not transparent. A transparent <select> leaves the browser to
+     paint the open dropdown from an unresolved background, which is how the
+     list ended up unreadable — and the options need their own colours because
+     they are rendered outside the page's stacking context. */
+  background-color: var(--paper-raised);
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  padding: .3rem .5rem;
+  max-width: 14rem;
+  /* Let it shrink rather than overflow when the pane is narrowed. */
+  min-width: 0;
+  flex: 0 1 auto;
+  text-overflow: ellipsis;
+}
+.reader__select option { background-color: var(--paper-raised); color: var(--ink); }
+.reader__select:hover { border-color: var(--ink-soft); }
+.reader__select--chapter { max-width: 5.5rem; flex: 0 0 auto; }
+
+/* Both chips are controls — the translation opens the library, Marks opens the
+   collections — so neither is dropped when the bar runs short. */
+.reader__chip {
+  /* Centred on both axes: the chip is at least 44px wide, and a flex box
+     packs its content to the start, which drew the settings gear 5px and the
+     question mark 10px left of centre. */
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
+  font: inherit; font-size: .78rem; color: var(--ink-soft);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
+}
+.reader__chip:hover { color: var(--ink); border-color: var(--ink-soft); }
+.reader__nav { display: contents; }
+.reader__chip[aria-expanded='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
+.reader__chip--translation { margin-left: auto; letter-spacing: .06em; }
+.reader__chip-count {
+  font-size: .7rem; line-height: 1; padding: .15rem .3rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink);
+}
+/* A zero count is noise beside a word that already says what the button is. */
+.reader__chip-count[data-empty] { display: none; }
+/* The maximize button, last in each pane's bar, takes its neighbours' class;
+   this only sizes the arrow so it reads the same in both bars. */
+.reader__chip.pane__maximize, .notes__action.pane__maximize { font-size: .95rem; line-height: 1; }
+.pane__maximize[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
+
+/* Below this the bar cannot hold every label. Drop the word, not the control:
+   the count stands in for it, and is shown even at zero so the button keeps a
+   visible target.
+   The selects then need floors, or flexbox happily squeezes the book name to
+   18px — present, inside the pane, and completely unusable. */
+/* Four 44px chips and two selects do not fit one row below about 26rem; the bar
+   wraps rather than shrinking a control past use, and its height is measured
+   (see BiblePane), so the sticky title still parks right under it. */
+@container (max-width: 26rem) {
+  .reader__bar { flex-wrap: wrap; row-gap: .35rem; }
+  .reader__nav { display: flex; gap: .5rem; flex: 1 1 100%; }
+}
+@container (max-width: 22rem) {
+  .reader__bar { gap: .35rem; }
+  .reader__chip-label { display: none; }
+  .reader__chip-count[data-empty] { display: inline; }
+  .reader__select { max-width: none; min-width: 5.5rem; }
+  .reader__select--chapter { max-width: 4rem; min-width: 3.4rem; }
+}
+
+.chapter { padding: 2rem 1.25rem 3rem; margin-inline: auto; max-width: var(--measure); }
+/* Focus scrolls a verse number clear of the sticky bar, not flush under it. */
+.verse { scroll-margin-block: .5rem; }
+/*
+ * Sticky, like a code editor keeps the enclosing function visible.
+ *
+ * A chapter is long enough that the heading scrolls away within a screen or
+ * two — Psalm 119 puts it nearly 4,000px above the viewport — and someone
+ * returning to the tab after a while has no way to tell where they are. The
+ * dropdowns still hold the answer, but a control reads as something to change,
+ * not something to consult.
+ */
+.chapter__title {
+  position: sticky; top: var(--bar-h); z-index: 1;
+  font-family: var(--serif); font-size: 1.5rem; font-weight: 600;
+  margin: 0 0 1.5rem; padding: .4rem 0 .5rem;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid transparent;
+}
+/* Only draw the rule once it is actually pinned, so the resting state stays
+   quiet. */
+.chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
+.chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
+/* Scripture carries its translation's lang on the text itself, not on the
+   containers around it (3.1.2), so the family is declared again right there:
+   a family resolved on a Latin container would otherwise be inherited as the
+   Latin stack, and Japanese verses would miss their Japanese faces. It also
+   keeps scripture in the reading face in the stacked comparison, which used
+   to show it in the interface's sans. */
+.verse__text, .compare__text, .card__body > [lang] { font-family: var(--serif); }
+
+.verse { margin: 0 0 var(--verse-gap); }
+
+.attribution {
+  margin-top: auto; padding: .75rem 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: .75rem; color: var(--ink-soft);
+}
+.attribution a { color: inherit; }
+
+.empty { color: var(--ink-soft); font-style: italic; }
+
+/* ── Search ───────────────────────────────────────────────────────────────── */
+
+.search { position: sticky; top: var(--bar-h); z-index: 2; padding: .5rem 1rem; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.search__input {
+  width: 100%; font: inherit; font-size: .88rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 8px; padding: .4rem .6rem;
+}
+/* Never taller than the part of the screen the reader can see. `--vvh` and
+   `--vv-top` are the visual viewport, which shrinks for the software keyboard
+   where `vh` does not; the panel starts below whatever sits above the pane,
+   the bar and the search box, all measured. So the last suggestion is always
+   above the keyboard. */
+.search__panel {
+  position: absolute; left: 1rem; right: 1rem; top: 100%; z-index: 3;
+  max-height: min(
+    60vh,
+    calc(var(--vv-top, 0px) + var(--vvh, 100vh) - var(--pane-top, 0px) - var(--bar-h) - var(--search-h, 3rem) - .75rem)
+  );
+  overflow-y: auto;
+  background: var(--paper-raised); border: 1px solid var(--rule);
+  border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .16); padding: .35rem;
+}
+.search__panel-bar { display: flex; align-items: stretch; gap: .25rem; margin-bottom: .25rem; }
+.search__jump {
+  flex: 1; text-align: left; font: inherit; font-size: .88rem;
+  color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: none; border-radius: 6px; padding: .5rem .6rem; cursor: pointer;
+}
+.search__close {
+  flex: 0 0 auto; margin-left: auto; min-width: var(--control-h); min-height: var(--control-h);
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+}
+.search__close:hover { color: var(--ink); }
+.search__options, .results__options {
+  display: flex; flex-wrap: wrap; gap: .75rem;
+  padding: .35rem .6rem; font-size: .74rem; color: var(--ink-soft);
+}
+.results__options { padding: .5rem 0 0; }
+.search__option { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
+.search__option input { margin: 0; }
+
+.search__count { margin: .25rem .6rem .4rem; font-size: .72rem; color: var(--ink-soft); }
+.search__results { list-style: none; margin: 0; padding: 0; }
+.search__result { display: flex; align-items: stretch; gap: .25rem; flex-wrap: wrap; }
+.search__divider {
+  flex: 1 1 100%; margin: .5rem 0 .1rem; padding-top: .35rem;
+  border-top: 1px solid var(--rule);
+  font-size: .68rem; color: var(--ink-soft); font-style: italic;
+}
+.search__ref {
+  flex: 1; min-width: 0; text-align: left; font: inherit;
+  background: transparent; border: none; border-radius: 6px;
+  padding: .4rem .6rem; cursor: pointer; color: var(--ink);
+}
+.search__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.search__result-ref { display: block; font-size: .72rem; color: var(--accent); }
+.search__result-text {
+  display: block; font-family: var(--serif); font-size: .85rem; line-height: 1.45;
+  overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.search__insert {
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.search__insert:hover { color: var(--ink); border-color: var(--rule); }
+
+/* Search sits under the bar, so the chapter title parks below both. Both
+   heights are measured by BiblePane's ResizeObserver: at 44px controls, and
+   at any text size the reader picks, the old constants were wrong. */
+.reader:has(.search) .chapter__title { top: calc(var(--bar-h) + var(--search-h, 2.9rem)); }
+
+/* ── Highlights ───────────────────────────────────────────────────────────── */
+
+/* Every verse carries a 3px left border, transparent until it is marked, so
+   marking one never moves its text. A marked verse's rule is the collection's
+   strong hue — 3:1 against the paper, where the tint behind the text is too
+   pale to be a boundary on its own (1.4.11). */
+.verse {
+  position: relative; border-radius: 4px; margin: 0 -.2rem var(--verse-gap);
+  padding: .1rem .2rem .1rem calc(.2rem - 3px); border-left: 3px solid transparent;
+}
+.verse[data-highlight='amber']  { background: var(--hl-amber);  border-left-color: var(--hl-amber-strong); }
+.verse[data-highlight='rose']   { background: var(--hl-rose);   border-left-color: var(--hl-rose-strong); }
+.verse[data-highlight='sky']    { background: var(--hl-sky);    border-left-color: var(--hl-sky-strong); }
+.verse[data-highlight='mint']   { background: var(--hl-mint);   border-left-color: var(--hl-mint-strong); }
+.verse[data-highlight='violet'] { background: var(--hl-violet); border-left-color: var(--hl-violet-strong); }
+/* The collection's shape, when Settings asks for one (1.4.1). */
+.verse__marker {
+  display: none; font-family: var(--sans); font-size: .7em; line-height: 1; color: var(--ink);
+  margin-right: .3em; position: relative; top: -.3em;
+}
+:root[data-markers='true'] .verse__marker { display: inline; }
+/* The accent is 7:1 on paper but not over a tint, so a highlighted verse's
+   number reads in ink. Measured: #5f4a0e over the amber tint is 6.9:1. */
+.verse[data-highlight] .verse__num { color: var(--ink); }
+
+/* The whole verse is the target.
+ *
+ * It used to be a small square in the left margin — which meant reaching out to
+ * the margin, clicking, then travelling back across the line to reach the
+ * swatches at the far end. That is a lot of mouse for one quick act, so the
+ * verse itself takes the click and the swatches open directly beneath it.
+ *
+ * A drag that selects text is excluded in the handler, so reading and copying
+ * still work: the click only counts when the selection is collapsed. */
+.verse { cursor: pointer; transition: background-color .12s ease, box-shadow .12s ease; }
+.verse:not([data-highlight]):hover { background: color-mix(in srgb, var(--rule) 42%, transparent); }
+.verse[data-highlight]:hover { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 16%, transparent); }
+/* The verse you are acting on, held visibly while the swatches are open. */
+.verse[data-open],
+.verse[data-open]:hover {
+  background: color-mix(in srgb, var(--focus) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--focus) 55%, transparent);
+}
+/* Touch has no hover, so the number stays the visible affordance there. */
+@media (hover: none) { .verse:hover { background: none; } }
+
+/* The verse number is the control, rather than an invisible one beside it.
+ *
+ * Raised with `position: relative` rather than `vertical-align: super`, which
+ * needs `line-height: 0` to keep from stretching the line box — and a zero line
+ * height collapses a button to no height at all, leaving it unclickable. */
+.verse__num {
+  font-family: var(--sans); font-size: .68em; color: var(--accent);
+  margin-right: .35em; padding: .05em .15em; line-height: 1;
+  position: relative; top: -.35em;
+  background: none; border: none; cursor: pointer; border-radius: 3px;
+}
+.verse__num:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+/* Centred under the verse it belongs to: short travel from anywhere in it. */
+.swatches {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .15rem .3rem;
+  width: fit-content; max-width: 100%; margin: .5rem auto 0; padding: .25rem .45rem;
+  cursor: default;
+  background: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 24px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
+}
+.swatches__set { display: inline-flex; align-items: center; gap: .1rem; }
+/* The button is the 44px target; the coloured disc inside it is what shows. */
+.swatch {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--control-h); min-height: var(--control-h); padding: 0;
+  background: transparent; border: none; border-radius: 50%; cursor: pointer;
+}
+.swatch__disc {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--edge);
+  /* The glyph sits on the hue, which is the same in every theme. */
+  font-family: var(--sans); font-size: .8rem; line-height: 1; color: #1f1d1a;
+}
+.swatch__disc--static { width: 1.2rem; height: 1.2rem; font-size: .65rem; }
+.swatch__disc[data-color='amber']  { background: var(--sw-amber); }
+.swatch__disc[data-color='rose']   { background: var(--sw-rose); }
+.swatch__disc[data-color='sky']    { background: var(--sw-sky); }
+.swatch__disc[data-color='mint']   { background: var(--sw-mint); }
+.swatch__disc[data-color='violet'] { background: var(--sw-violet); }
+.swatch__glyph { display: none; }
+:root[data-markers='true'] .swatch__glyph { display: inline; }
+.swatch[aria-pressed='true'] .swatch__disc { outline: 2px solid var(--ink); outline-offset: 2px; }
+.swatches__rule { width: 1px; align-self: stretch; background: var(--rule); margin: .3rem .15rem; }
+.swatches__action {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--control-h); min-width: var(--control-h);
+  font: inherit; font-size: .85rem; color: var(--ink-soft);
+  background: transparent; border: none; border-radius: 8px;
+  padding: 0 .55rem; cursor: pointer;
+}
+.swatches__action:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 50%, transparent); }
+
+/* On a phone the row docks above the notes sheet: in reach of a thumb, and it
+   no longer pushes the rest of the chapter down the screen when it opens. It
+   stays inside the verse in the DOM, so focus order and outside presses work
+   the same as inline. The pane keeps the verse above it by the height the row
+   publishes as --actions-h. */
+.layout--narrow .swatches {
+  position: fixed; z-index: 4; left: .5rem; right: .5rem; width: auto; margin: 0;
+  bottom: calc(var(--sheet-h, 3.25rem) + .5rem + env(safe-area-inset-bottom));
+  border-radius: 14px; padding: .3rem;
+}
+.layout--narrow .pane--bible { scroll-padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
+.layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
+
+/* A jumped-to verse announces itself, then settles. Under reduced motion the
+   same class draws a still outline for the same 1.6s instead — the verse is
+   still pointed out, nothing moves (2.3.3). */
+@keyframes verse-flash { from { background: color-mix(in srgb, var(--accent) 34%, transparent); } }
+.verse--flash { animation: verse-flash 1.6s ease-out; }
+:root[data-motion='reduce'] .verse--flash { animation: none; box-shadow: inset 0 0 0 2px var(--accent); }
+@media (prefers-reduced-motion: reduce) {
+  .verse--flash { animation: none; box-shadow: inset 0 0 0 2px var(--accent); }
+}
+
+/* ── Marks: the five colours, read back as five collections ───────────────── */
+
+.marks { padding: 1rem 1.25rem 2rem; overflow-y: auto; }
+.marks__bar { display: flex; align-items: center; gap: .5rem; }
+.marks__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.marks__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+}
+.marks__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.marks__hint { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+
+.marks__group { margin-bottom: 1.4rem; }
+.marks__group-bar { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
+.marks__label {
+  flex: 1; min-width: 0; font: inherit; font-size: .88rem; font-weight: 600; color: var(--ink);
+  background-color: transparent; border: 1px solid var(--edge); border-radius: 6px;
+  padding: .25rem .35rem;
+}
+/* The border shows that the label can be edited. It used to appear on hover
+   only, which told a mouse and nobody else. */
+.marks__label:hover { border-color: var(--ink-soft); }
+.marks__label:focus { border-color: var(--edge); background-color: var(--paper-raised); }
+.marks__label::placeholder { color: var(--ink-soft); font-weight: 500; }
+.marks__count { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+.marks__empty { font-size: .78rem; color: var(--ink-soft); font-style: italic; margin: 0 0 0 1.55rem; }
+.marks__list { list-style: none; margin: 0; padding: 0 0 0 1.55rem; }
+.marks__item { display: flex; align-items: stretch; gap: .25rem; }
+.marks__ref {
+  flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
+  background: transparent; border: none; border-radius: 6px; padding: .35rem .45rem; cursor: pointer;
+}
+.marks__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.marks__ref-label { display: block; font-size: .74rem; color: var(--accent); }
+.marks__ref-text {
+  display: -webkit-box; font-family: var(--serif); font-size: .85rem; line-height: 1.45;
+  overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.marks__remove {
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: .8rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.marks__remove:hover { color: var(--ink); border-color: var(--rule); }
+
+/* A link is inert text in a textarea, so the follow action sits beside the
+   heading rather than on the link itself. */
+.notes__link {
+  align-self: flex-start; margin-bottom: .35rem;
+  font: inherit; font-size: .74rem; color: var(--ink);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  border: 1px solid var(--edge); border-radius: 6px;
+  padding: .2rem .45rem; cursor: pointer;
+}
+.notes__link:hover { border-color: var(--ink-soft); }
+
+/* The heading the cursor is under, pinned like an editor's sticky scroll. */
+.notes__heading {
+  position: sticky; top: 0; z-index: 1;
+  font-size: .72rem; letter-spacing: .04em; color: var(--ink-soft);
+  padding: .2rem 0 .35rem; margin-bottom: .2rem;
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* ── Settings, and what an assistant may do ───────────────────────────────── */
+
+.reader__chip--icon { padding: .3rem .45rem; font-size: .9rem; line-height: 1; }
+
+.settings { padding: 1rem 1.25rem 2rem; max-width: 40rem; }
+.settings__bar { display: flex; align-items: center; gap: .5rem; }
+.settings__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.settings__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+}
+.settings__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.settings__group { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
+.settings__heading { font-size: .95rem; margin: 0 0 .5rem; }
+.settings__body { font-size: .82rem; line-height: 1.6; color: var(--ink-soft); margin: 0 0 .6rem; }
+.settings__body strong { color: var(--ink); }
+.settings__note { font-size: .76rem; color: var(--ink-soft); font-style: italic; margin: 0 0 .8rem; }
+.settings__actions { display: flex; gap: .4rem; flex-wrap: wrap; }
+.settings__action {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.settings__action:hover { color: var(--ink); border-color: var(--ink-soft); }
+.settings__toggle { display: flex; align-items: center; gap: .5rem; font-size: .85rem; margin: .5rem 0 .6rem; cursor: pointer; }
+/* A labelled native select per preference: nothing custom to learn or to
+   make accessible, and the label is the target when it wraps. */
+.settings__field {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: .5rem .75rem; margin: .45rem 0; font-size: .85rem;
+}
+.settings__field select {
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem; min-width: 12rem;
+}
+.settings__field select option { background-color: var(--paper-raised); color: var(--ink); }
+.settings__tools { font-size: .78rem; color: var(--ink-soft); margin-top: .6rem; }
+.settings__tools summary { cursor: pointer; }
+.settings__tools ul { list-style: none; margin: .6rem 0 0; padding: 0; }
+.settings__tools li { padding: .4rem 0; border-top: 1px solid var(--rule); }
+.settings__tools code { font-size: .76rem; color: var(--ink); }
+.settings__tag {
+  font-size: .65rem; text-transform: uppercase; letter-spacing: .04em;
+  padding: .1rem .3rem; border-radius: 4px; margin-left: .3rem;
+  background: color-mix(in srgb, var(--rule) 70%, transparent); color: var(--ink-soft);
+}
+.settings__tag--write { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
+.settings__tool-desc { display: block; margin-top: .2rem; line-height: 1.5; }
+
+/* ── Help ─────────────────────────────────────────────────────────────────── */
+
+.help { padding: 1rem 1.25rem 2rem; max-width: 44rem; }
+.help__bar { display: flex; align-items: center; gap: .5rem; }
+.help__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.help__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  min-height: var(--control-h); min-width: var(--control-h);
+}
+.help__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.help__section { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .88rem; line-height: 1.65; }
+.help__section h2 { font-size: 1rem; margin: 0 0 .5rem; }
+.help__section p, .help__section ul { margin: 0 0 .6rem; }
+.help__section li { margin: .2rem 0; }
+.help__section code, .help__section kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px; padding: .05em .3em;
+}
+.help__section kbd { border: 1px solid var(--edge); }
+.help__table { border-collapse: collapse; width: 100%; }
+.help__table th, .help__table td { text-align: left; vertical-align: top; padding: .35rem .5rem .35rem 0; border-bottom: 1px solid var(--rule); }
+.help__table th[scope='row'] { font-weight: 600; white-space: nowrap; }
+.help__table abbr { text-decoration: none; }
+.help__glossary { margin: 0; }
+.help__term { margin: 0 0 .6rem; }
+.help__term dt { font-weight: 600; }
+.help__term dd { margin: .1rem 0 0; }
+.canvas__action--icon { font-size: 1rem; }
+
+/* ── A staged proposal: contents, not counts ──────────────────────────────── */
+
+/* A native <dialog> in the top layer. The UA hides a closed dialog with
+   `display: none`; the flex layout is scoped to `[open]` so the frame between
+   mount and showModal() never paints an un-modal box. */
+.proposal {
+  position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;
+  margin: 0; padding: 1.5rem; border: 0; background: transparent; color: inherit;
+}
+.proposal[open] { display: flex; align-items: center; justify-content: center; }
+.proposal::backdrop { background: color-mix(in srgb, #000 45%, transparent); }
+.proposal__box {
+  display: flex; flex-direction: column; width: min(42rem, 100%); max-height: 85vh;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;
+  box-shadow: 0 20px 60px rgb(0 0 0 / .35); overflow: hidden;
+}
+.proposal__bar { padding: 1rem 1.25rem .25rem; }
+.proposal__title { font-family: var(--serif); font-size: 1.2rem; margin: 0; }
+.proposal__lede {
+  margin: 0; padding: .5rem 1.25rem 1rem; font-size: .8rem; line-height: 1.6; color: var(--ink-soft);
+}
+.proposal__body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 1.25rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.proposal__meta { font-size: .82rem; margin: 0; }
+.proposal__field {
+  font: inherit; font-size: .95rem; color: var(--ink); background-color: var(--paper-raised);
+  border: 1px solid var(--edge); border-radius: 6px; padding: .45rem .6rem;
+}
+.proposal__text {
+  font: inherit; font-size: .88rem; line-height: 1.6; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  padding: .6rem; min-height: 14rem; resize: vertical;
+}
+.proposal__list { list-style: none; margin: 0; padding: 0; }
+.proposal__item { padding: .5rem 0; border-bottom: 1px solid var(--rule); }
+.proposal__item[data-dropped] { opacity: .45; }
+.proposal__item label { display: flex; align-items: center; gap: .45rem; cursor: pointer; }
+.proposal__ref { font-size: .78rem; color: var(--accent); font-weight: 600; }
+.proposal__verse { margin: .2rem 0 0 1.5rem; font-family: var(--serif); font-size: .88rem; line-height: 1.5; }
+.proposal__actions {
+  display: flex; justify-content: flex-end; gap: .5rem;
+  padding: .85rem 1.25rem; border-top: 1px solid var(--rule); background: var(--paper-raised);
+}
+.proposal__action {
+  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper); border: 1px solid var(--edge); border-radius: 6px; padding: .4rem .8rem;
+}
+.proposal__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.proposal__action:disabled { opacity: .5; cursor: default; }
+.proposal__action--primary { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 20%, var(--paper)); }
+
+/* ── Confirmation, before anything is deleted ─────────────────────────────── */
+
+/* Like the proposal, the dialog covers the screen and centres its box, so a
+   press on the dialog itself is a press on the backdrop. It covers the
+   *visible* screen: --vvh and --vv-top shrink for the software keyboard. */
+.confirm-dialog {
+  position: fixed; inset: var(--vv-top, 0px) 0 auto 0;
+  width: 100%; height: var(--vvh, 100dvh); max-width: none; max-height: none;
+  margin: 0; padding: 1rem; border: 0; background: transparent; color: var(--ink);
+}
+.confirm-dialog[open] { display: flex; align-items: center; justify-content: center; }
+.confirm-dialog::backdrop { background: color-mix(in srgb, #000 55%, transparent); }
+/* The box scrolls rather than overflowing: a long note title at 200% text on
+   a phone held sideways still leaves both buttons reachable (1.4.10). */
+.confirm-dialog__box {
+  width: min(30rem, 100%); max-height: 100%; overflow-y: auto;
+  padding: 1.1rem 1.25rem 1rem;
+  background: var(--paper); border: 1px solid var(--edge); border-top: 6px solid var(--danger);
+  border-radius: 12px; box-shadow: 0 20px 60px rgb(0 0 0 / .35);
+}
+.confirm-dialog__title {
+  display: flex; align-items: flex-start; gap: .55rem; margin: 0 0 .7rem;
+  font-family: var(--serif); font-size: 1.2rem; line-height: 1.35; overflow-wrap: anywhere;
+}
+.confirm-dialog__sign { flex: none; width: 1.35em; height: 1.35em; color: var(--danger); }
+.confirm-dialog__body { font-size: .92rem; line-height: 1.6; overflow-wrap: anywhere; }
+.confirm-dialog__body p { margin: 0 0 .6em; }
+.confirm-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
+.confirm-dialog__action {
+  font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; padding: .45rem 1rem;
+  color: var(--ink); background-color: var(--paper-raised);
+  border: 1px solid var(--edge); border-radius: 8px;
+}
+.confirm-dialog__action:hover { border-color: var(--ink-soft); }
+/* The one button here that loses something is filled with the danger colour,
+   and its words say so as well. Under forced colours it is drawn inverted
+   instead (see the forced-colors block at the end). */
+.confirm-dialog__action--danger { color: var(--paper); background-color: var(--danger); border: 2px solid var(--danger); }
+.confirm-dialog__action--danger:hover { border-color: var(--danger); text-decoration: underline; text-underline-offset: .15em; }
+
+/* ── Canvas: verses and notes on a plane ──────────────────────────────────── */
+
+.canvas { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper); }
+.canvas__bar {
+  display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
+  padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.canvas__spacer { flex: 1; }
+.canvas__select {
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
+}
+.canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
+/* The board's name, beside the menu that picks it. It gives way before the
+   buttons do, down to a width that still shows a word or two. */
+.canvas__name {
+  flex: 0 1 12rem; min-width: 6rem;
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem;
+}
+.canvas__name::placeholder { color: var(--ink-soft); opacity: 1; }
+.canvas__name:hover { border-color: var(--ink-soft); }
+.canvas__action {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.canvas__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.canvas__action:disabled { opacity: .55; cursor: default; }
+.canvas__action--danger:hover { color: var(--danger); border-color: var(--danger); }
+
+.canvas__zoom { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+.canvas__zoom button {
+  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: none; padding: .3rem .5rem;
+}
+.canvas__zoom button:hover { color: var(--ink); }
+.canvas__zoom button + button { border-left: 1px solid var(--edge); }
+
+/* The plane is dotted so panning and zooming have something to read against —
+   an empty white field gives no sense of having moved at all. */
+.canvas__frame {
+  position: relative; flex: 1; min-height: 0; overflow: hidden; cursor: grab;
+  /* Its focus ring is drawn inside: the frame fills the view, so an outside
+     ring would be clipped by the edges of the window. */
+  outline-offset: -3px !important;
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 14%, transparent) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.canvas__frame[data-connecting] { cursor: crosshair; }
+.canvas__plane { position: absolute; inset: 0; transform-origin: 0 0; }
+.canvas__edges { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.canvas__edges line { stroke: var(--ink-soft); stroke-width: 2; }
+.canvas__edges marker path { fill: var(--ink-soft); }
+.canvas__edge-cut { pointer-events: auto; cursor: pointer; }
+.canvas__edge-hit { fill: transparent; }
+.canvas__edge-chip { fill: var(--paper-raised); stroke: var(--edge); stroke-width: 1.5; }
+.canvas__edge-x { stroke: var(--ink-soft); stroke-width: 2; stroke-linecap: round; }
+.canvas__edge-cut:hover .canvas__edge-chip { stroke: var(--danger); }
+.canvas__edge-cut:hover .canvas__edge-x { stroke: var(--danger); }
+/* The hint over an empty board. A drag starting on it pans the board, so it
+   takes no presses — and so it must never hold a control. */
+.canvas__empty {
+  position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
+  color: var(--ink-soft); font-size: .85rem; pointer-events: none;
+}
+/* No board at all: a message and the button that starts one, in the flow. */
+.canvas__none {
+  flex: 1; display: grid; place-content: center; justify-items: center; gap: .6rem;
+  padding: 1rem; text-align: center; color: var(--ink-soft); font-size: .9rem;
+}
+
+/* Cards are a fixed size on purpose: an edge can then be drawn from centre to
+   centre without measuring the DOM on every drag frame. */
+.card {
+  position: absolute; display: flex; flex-direction: column;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 10px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / .12); overflow: hidden;
+}
+/* A coloured card carries a 6px top rule in the collection's strong hue, so
+   its colour is more than a thin outline — and its name is in its label. */
+.card[data-color] { border-top-width: 6px; }
+.card[data-color='amber']  { border-color: var(--hl-amber-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-amber-strong) 35%, transparent); }
+.card[data-color='rose']   { border-color: var(--hl-rose-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-rose-strong) 35%, transparent); }
+.card[data-color='sky']    { border-color: var(--hl-sky-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-sky-strong) 35%, transparent); }
+.card[data-color='mint']   { border-color: var(--hl-mint-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-mint-strong) 35%, transparent); }
+.card[data-color='violet'] { border-color: var(--hl-violet-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-violet-strong) 35%, transparent); }
+
+/* The header is the drag handle, a full 44px tall so a finger finds it. */
+.card__grip {
+  display: flex; align-items: center; gap: .35rem; min-height: var(--control-h);
+  cursor: grab; padding: 0 .5rem; border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--rule) 35%, transparent);
+  flex: 0 0 auto;
+}
+.card__glyph { font-size: .75rem; color: var(--ink); }
+.card__title-input {
+  flex: 1; min-width: 0; width: 100%; font: inherit; font-size: .8rem; font-weight: 600; color: var(--ink);
+  background: transparent; border: none; border-radius: 4px; padding: 0 .2rem;
+}
+.card__title-input:focus { background: var(--paper-raised); }
+.card__title-input::placeholder { color: var(--ink-soft); font-weight: 500; }
+.card__title {
+  display: block; flex: 1; min-width: 0; font-size: .8rem; font-weight: 600; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Scrollable, not clipped: a card can hold a whole note or a long verse, and
+   no fixed height fits both. Clipping made the rest simply unreachable. */
+.card__body {
+  flex: 1; min-height: 0; margin: 0; padding: .4rem .5rem;
+  font-family: var(--serif); font-size: .8rem; line-height: 1.45;
+  overflow-y: auto; overscroll-behavior: contain; white-space: pre-wrap;
+}
+.card__editor {
+  flex: 1; margin: 0; padding: .4rem .5rem; font: inherit; font-size: .8rem;
+  line-height: 1.45; color: var(--ink); background: transparent;
+  border: none; resize: none;
+}
+/* The right padding clears the 44px resize corner, which otherwise sits on
+   top of the last action and swallows every press aimed at it. */
+.card__actions {
+  display: flex; align-items: center; gap: .1rem;
+  padding: 0 var(--control-h) 0 .15rem;
+  border-top: 1px solid var(--rule); flex: 0 0 auto;
+}
+/* A 44px corner to press (2.5.5), with an 18px triangle drawn in the boundary
+   colour so it can be seen (1.4.11). Dragging it has a button alternative:
+   the card's Move/Size panel (2.5.7). */
+.card__resize {
+  position: absolute; right: 0; bottom: 0; width: var(--control-h); height: var(--control-h);
+  cursor: nwse-resize;
+}
+.card__resize::after {
+  content: ''; position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px;
+  background: linear-gradient(135deg, transparent 50%, var(--edge) 50%);
+  border-bottom-right-radius: 7px;
+}
+.card__action {
+  display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; font-size: .95rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 0;
+}
+/* The colour button shows the card's colour, or an empty dashed ring. */
+.card__colour { width: 1.1rem; height: 1.1rem; }
+.card__colour:not([data-color]) { background: transparent; border-style: dashed; }
+.card__action:hover { color: var(--ink); border-color: var(--rule); }
+.card__action[aria-pressed='true'] { color: var(--ink); border-color: var(--ink-soft); }
+.card__action--danger:hover { color: var(--danger); border-color: var(--danger); }
+/* Remove sits at the end of the row. If the row wraps, the card's body gives
+   up its height for the second one. */
+.card__actions .card__action--danger { margin-left: auto; }
+.card__actions { flex-wrap: wrap; }
+.canvas__action--undo { border-color: var(--ink-soft); color: var(--ink); }
+
+/* The connections, in words. */
+.canvas__connections {
+  padding: .5rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper-raised);
+  max-height: 40vh; overflow-y: auto; font-size: .85rem;
+}
+.canvas__connections-empty { margin: .4rem 0; color: var(--ink-soft); }
+.canvas__connections-list { list-style: none; margin: 0; padding: 0; }
+.canvas__connection {
+  display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  padding: .15rem 0; border-bottom: 1px solid var(--rule);
+}
+.canvas__connection:last-child { border-bottom: none; }
+.canvas__connection-text { min-width: 0; }
+
+/* Moving the view and changing a card without dragging (2.5.7): a panel of
+   plain buttons, at the bottom of the board where a thumb reaches it and
+   where panning and zooming never carry it off screen. */
+.canvas__pan button { font-size: .95rem; }
+.canvas__panel {
+  position: absolute; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 5;
+  transform: translateX(-50%); width: max-content; max-width: calc(100% - 1rem);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem .6rem;
+  padding: .5rem .7rem; cursor: default;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 14px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+}
+.canvas__panel-title { flex: 1 1 100%; margin: 0; font-size: .8rem; font-weight: 600; text-align: center; }
+.canvas__panel-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
+.canvas__panel-row .canvas__action { min-width: var(--control-h); font-size: .85rem; }
+
+/* ── Writing: the tools, and reading it back ──────────────────────────────── */
+
+/* Always shown while a note is being written: nobody discovers that ## makes
+   a heading by staring at a textarea, and tools that come and go with focus
+   are tools nobody can rely on finding. */
+/* Above the writing, not below it: at the bottom of a long note the tools are
+   a scroll away from the heading you wanted to make. The slot holds the
+   tools' rows, so the note starts at the same place in every state. */
+.tools__slot { min-height: calc(var(--control-h) + .35rem); flex: 0 0 auto; }
+/* Ten 44px tools wrap onto two rows in a narrow pane. */
+@container (max-width: 34rem) { .tools__slot { min-height: calc(2 * var(--control-h) + .55rem); } }
+.tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .2rem;
+  padding: 0 0 .35rem; border-bottom: 1px solid var(--rule); margin-bottom: .4rem;
+}
+.tools__button {
+  font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 5px; padding: .2rem .4rem;
+}
+.tools__button:hover { color: var(--ink); border-color: var(--ink-soft); }
+.tools__button--bold { font-weight: 700; }
+.tools__button--italic { font-style: italic; font-family: var(--serif); }
+.tools__button--code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .66rem; }
+.tools__rule { width: 1px; align-self: stretch; background: var(--rule); margin: .1rem .2rem; }
+
+.preview {
+  flex: 1; min-height: 0; overflow-y: auto; padding: .3rem .1rem 1rem;
+  font-family: var(--serif); font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
+}
+.preview--empty { color: var(--ink-soft); font-style: italic; cursor: text; }
+/* Every block is a way back into the editor, so reading and fixing are one
+   gesture rather than a mode you have to leave first. */
+.preview__block { position: relative; cursor: text; border-radius: 4px; }
+.preview__block:hover { background: color-mix(in srgb, var(--rule) 28%, transparent); }
+/* A real control for what the click on a block does, so the keyboard and a
+   finger have it too (2.1.1). Quiet until the block is hovered or focused;
+   always shown where there is no hover. */
+.preview__edit {
+  position: absolute; top: 0; right: 0; z-index: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  font: inherit; font-size: 1rem; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  opacity: 0;
+}
+.preview__block:hover .preview__edit, .preview__block:focus-within .preview__edit, .preview__edit:focus-visible { opacity: 1; }
+.preview__edit:hover { color: var(--ink); }
+@media (hover: none) {
+  .preview__edit { opacity: .7; }
+  .preview__block { padding-right: 3rem; }
+}
+/* The empty state is a button now: the one way back into the editor cannot be
+   a div. */
+.preview--empty { font: inherit; font-family: var(--serif); font-size: inherit; line-height: inherit; text-align: left; width: 100%; background: transparent; border: none; }
+.preview__heading { font-family: var(--serif); line-height: 1.3; margin: 1.1rem 0 .4rem; }
+.preview__block:first-child .preview__heading { margin-top: .2rem; }
+/* Sized by the level the author wrote, not the level the outline gives it. */
+.preview__heading[data-level='1'] { font-size: 1.5rem; }
+.preview__heading[data-level='2'] { font-size: 1.25rem; }
+.preview__heading[data-level='3'] { font-size: 1.08rem; }
+.preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: .98rem; }
+.preview__p { margin: .5rem 0; white-space: pre-wrap; }
+.preview__quote {
+  margin: .6rem 0; padding: .2rem 0 .2rem .8rem;
+  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  color: var(--ink-soft); white-space: pre-wrap;
+}
+.preview__list { margin: .5rem 0; padding-left: 1.4rem; }
+.preview__list li { margin: .2rem 0; }
+.preview__code {
+  margin: .6rem 0; padding: .6rem .7rem; overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
+  background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px;
+}
+.preview__inline-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+  background: color-mix(in srgb, var(--rule) 55%, transparent);
+  border-radius: 4px; padding: .05em .3em;
+}
+.preview__rule { border: none; border-top: 1px solid var(--rule); margin: 1.2rem 0; }
+.preview__link {
+  font: inherit; font-family: var(--sans); font-size: .85em; color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: none; border-radius: 4px; padding: .05em .35em; cursor: pointer;
+}
+.preview__link:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+
+/* An embedded board, drawn where it was written — the role a mermaid fence
+   plays, with the note keeping only a plain-text reference. */
+.embed { margin: .8rem 0; padding: 0; }
+/* Scrolls rather than shrinking past legibility — a genealogy is a wide board,
+   and 560px of squeezed boxes is not a diagram. */
+.embed__scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-raised); }
+.embed__canvas { display: block; }
+.embed__canvas line { stroke: var(--ink-soft); stroke-width: 1.5; }
+.embed__canvas marker path { fill: var(--ink-soft); }
+.embed__card { fill: var(--paper); stroke: var(--rule); }
+.embed__card[data-color='amber']  { stroke: var(--hl-amber-strong); fill: var(--hl-amber); }
+.embed__card[data-color='rose']   { stroke: var(--hl-rose-strong); fill: var(--hl-rose); }
+.embed__card[data-color='sky']    { stroke: var(--hl-sky-strong); fill: var(--hl-sky); }
+.embed__card[data-color='mint']   { stroke: var(--hl-mint-strong); fill: var(--hl-mint); }
+.embed__card[data-color='violet'] { stroke: var(--hl-violet-strong); fill: var(--hl-violet); }
+.embed__label { font-family: var(--sans); font-size: 10px; fill: var(--ink); }
+.embed__empty, .embed--missing { font-size: .8rem; color: var(--ink-soft); font-style: italic; }
+.embed__caption { font-family: var(--sans); font-size: .72rem; color: var(--ink-soft); margin-top: .3rem; }
+.embed__open {
+  font: inherit; font-size: inherit; color: var(--ink); background: none;
+  border: none; padding: 0; cursor: pointer; text-decoration: underline;
+}
+
+/* ── Search results: every match, and where they fall ─────────────────────── */
+
+.search__see-all {
+  font: inherit; font-size: inherit; color: var(--ink);
+  background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline;
+}
+
+.results { padding: 1rem 1.25rem 2rem; }
+.results__bar { display: flex; align-items: baseline; gap: .5rem; }
+.results__title { font-family: var(--serif); font-size: 1.15rem; margin: 0; flex: 1; font-weight: 600; }
+.results__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+}
+.results__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+/* The breakdown is the better answer to a counting question, and doubles as
+   the filter. Wraps rather than scrolls: 40-odd books is a paragraph. */
+.results__books { display: flex; flex-wrap: wrap; gap: .3rem; margin: .75rem 0 1rem; }
+.results__book {
+  font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 999px; padding: .2rem .5rem;
+}
+.results__book:hover { color: var(--ink); border-color: var(--ink-soft); }
+.results__book[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 18%, var(--paper-raised));
+}
+.results__book-count { color: var(--accent); font-variant-numeric: tabular-nums; }
+/* On the pressed chip the background is already accent-tinted; the accent as
+   text on it is 6.4:1 in light and less in dark. Ink clears 7:1 on both
+   (1.4.6) — axe caught this one, which is what the backstop is for. */
+.results__book[aria-pressed='true'] .results__book-count { color: var(--ink); }
+
+.results__list { list-style: none; margin: 0; padding: 0; }
+.results__item { display: flex; align-items: stretch; gap: .25rem; border-bottom: 1px solid var(--rule); }
+.results__ref {
+  flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
+  background: transparent; border: none; border-radius: 6px; padding: .45rem .5rem; cursor: pointer;
+}
+.results__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
+.results__ref-label { display: block; font-size: .72rem; color: var(--accent); }
+.results__ref-text { display: block; font-family: var(--serif); font-size: .92rem; line-height: 1.55; }
+.results__insert {
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+}
+.results__insert:hover { color: var(--ink); border-color: var(--rule); }
+
+/* Ranked order needs to say why, or it reads as shuffled. */
+.results__divider {
+  margin: .9rem 0 .3rem; padding-top: .5rem;
+  border-top: 1px solid var(--rule);
+  font-size: .72rem; color: var(--ink-soft); font-style: italic;
+}
+
+.results__footer { font-size: .76rem; color: var(--ink-soft); margin-top: 1rem; }
+.results__more {
+  font: inherit; font-size: inherit; color: var(--ink); cursor: pointer;
+  background: none; border: none; padding: 0; text-decoration: underline;
+}
+
+/* ── Library: what exists, what is here, what it costs ────────────────────── */
+
+.library { padding: 1rem 1.25rem 2rem; }
+.library__bar { display: flex; align-items: center; gap: .5rem; }
+.library__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.library__close {
+  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+}
+.library__close:hover { color: var(--ink); border-color: var(--ink-soft); }
+.library__storage { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+
+.library__group { margin-bottom: 1.3rem; }
+.library__language {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--ink-soft); margin: 0 0 .4rem; font-weight: 600;
+}
+.library__list { list-style: none; margin: 0; padding: 0; }
+.library__item {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .5rem 0; border-bottom: 1px solid var(--rule);
+}
+.library__meta { flex: 1 1 12rem; min-width: 0; }
+.library__name { display: block; font-size: .92rem; font-weight: 600; }
+.library__badge {
+  margin-left: .4rem; font-size: .62rem; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; padding: .1rem .3rem; border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--ink);
+}
+.library__detail { display: block; font-size: .74rem; color: var(--ink-soft); }
+.library__error { display: block; font-size: .74rem; color: var(--danger); margin-top: .15rem; }
+
+.library__progress {
+  display: block; height: 4px; margin-top: .35rem; border-radius: 999px;
+  background: color-mix(in srgb, var(--rule) 70%, transparent); overflow: hidden;
+}
+.library__progress-fill { display: block; height: 100%; background: var(--accent); transition: width .15s linear; }
+
+.library__actions { display: flex; gap: .35rem; flex: 0 0 auto; }
+.library__action {
+  font: inherit; font-size: .76rem; color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .55rem;
+}
+.library__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.library__action:disabled { opacity: .55; cursor: default; }
+.library__action[aria-pressed='true'] {
+  color: var(--ink); border-color: var(--ink-soft);
+  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+}
+.library__action--primary { color: var(--ink); border-color: var(--ink-soft); }
+.library__action--danger:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
+.library__note { font-size: .74rem; color: var(--ink-soft); margin-top: 1rem; line-height: 1.5; }
+
+/* ── Compare: one chapter, side by side ───────────────────────────────────── */
+
+/* `--measure` is the right width for one column of prose and the wrong one for
+   a table: it squeezed two columns into 544px of an 812px pane. */
+.chapter--compare { max-width: none; }
+
+/* The table scrolls inside its own box. A comparison must never make the page
+   scroll sideways — the notes pane is right there and would go with it. */
+.compare__scroll { overflow-x: auto; }
+.compare__table { border-collapse: collapse; width: 100%; font-family: var(--serif); }
+.compare__head, .compare__num-head {
+  position: sticky; top: 0; z-index: 1;
+  text-align: left; font-family: var(--sans); font-weight: 600; font-size: .78rem;
+  /* Room on the right for the 44px drop button. */
+  padding: .4rem 3rem .4rem .5rem; vertical-align: bottom;
+  background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+/* A header tall enough to hold its 44px drop button without the button
+   hanging over the first verse. `height` on a table cell is a floor. */
+.compare__head, .compare__num-head { height: calc(var(--control-h) + .6rem); }
+.compare__head-name { display: block; }
+.compare__head-id { display: block; font-size: .68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: .06em; }
+.compare__drop {
+  position: absolute; top: 50%; right: .2rem; transform: translateY(-50%);
+  font: inherit; font-size: .7rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: none; border-radius: 4px; padding: .1rem .25rem;
+}
+.compare__head { position: sticky; }
+.compare__drop:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.compare__num {
+  font-family: var(--sans); font-size: .7rem; font-weight: 500; color: var(--accent);
+  text-align: right; vertical-align: top; padding: .5rem .4rem 0 0; width: 2.2rem;
+}
+.compare__cell {
+  vertical-align: top; padding: .45rem .5rem; min-width: 12rem;
+  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
+}
+.compare__absent { color: var(--ink-soft); }
+
+/* The same comparison, read as a list on a narrow pane. */
+.compare__bar { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; }
+.compare__chip {
+  display: inline-flex; align-items: center; gap: .25rem; min-height: var(--control-h);
+  padding: 0 .1rem 0 .6rem; border: 1px solid var(--edge); border-radius: 999px;
+  font-family: var(--sans); font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+}
+.compare__drop--inline { position: static; transform: none; border-radius: 999px; }
+.compare__stack { list-style: none; margin: 0; padding: 0; }
+.compare__verse {
+  display: grid; grid-template-columns: 2rem 1fr; gap: .25rem .5rem;
+  padding: .6rem 0; border-bottom: 1px solid var(--rule);
+}
+.compare__verse .compare__num { padding-top: .35rem; width: auto; text-align: right; }
+.compare__readings { margin: 0; }
+.compare__reading + .compare__reading { margin-top: .5rem; }
+.compare__reading-id {
+  font-family: var(--sans); font-size: .72rem; font-weight: 600; letter-spacing: .06em; color: var(--ink-soft);
+}
+.compare__reading dd { margin: .1rem 0 0; }
+.compare__reading-text {
+  display: flex; align-items: flex-start; gap: .35rem;
+  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
+}
+.compare__reading-text .compare__text { flex: 1; }
+.compare__reading-text .compare__quote { flex: 0 0 auto; margin-left: 0; }
+/* Always there, quieter until wanted: content that appears only on hover is
+   invisible to touch and to anyone who does not know to hover (1.4.13). */
+.compare__quote {
+  display: inline-flex; align-items: center; justify-content: center;
+  opacity: .75; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: .9rem;
+  color: var(--ink-soft); background: transparent; border: 1px solid var(--edge);
+  border-radius: 6px; padding: 0 .3rem; cursor: pointer; vertical-align: middle;
+}
+.compare__cell:hover .compare__quote, .compare__quote:focus-visible, .compare__quote:hover { opacity: 1; color: var(--ink); }
+
+.attribution__line { display: block; }
+
+/* ── Notes ────────────────────────────────────────────────────────────────── */
+
+.notes { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size; }
+
+/* One row while every control fits at its own size, and never by squeezing
+   one: a button that shrinks below its label draws the label across its
+   border. Wrapping is always allowed, so a longer row — Delete armed, with
+   Cancel beside it — puts its last control on a second line instead. */
+.notes__bar { display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; margin-bottom: .75rem; }
+.notes__bar > :not(.notes__select) { flex: none; }
+.notes__bar-end { display: inline-flex; align-items: center; gap: .35rem; }
+.notes__bar-end:empty { display: none; }
+.notes__select {
+  font: inherit; font-size: .85rem; color: var(--ink);
+  /* Explicit for the same reason as .reader__select: a transparent <select>
+     leaves the browser to paint the open list from an unresolved colour. */
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .25rem .4rem; flex: 1; min-width: 6.5rem;
+  text-overflow: ellipsis;
+}
+.notes__select option { background-color: var(--paper-raised); color: var(--ink); }
+.notes__select:hover { border-color: var(--ink-soft); }
+.notes__action {
+  font: inherit; font-size: .78rem; color: var(--ink-soft);
+  background: transparent; border: 1px solid var(--edge);
+  border-radius: 6px; padding: .25rem .4rem; cursor: pointer;
+}
+.notes__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.notes__action:disabled { opacity: .45; cursor: default; }
+.notes__action--danger:hover { color: var(--danger); border-color: var(--danger); }
+
+/* Seven controls do not fit a narrow pane on one line, and squeezing them left
+   Delete a sliver wide — present, and not usably so. The bar is not sticky, so
+   it can simply wrap: the picker takes the first row and the actions the rest,
+   all of them full size. The one row needs about 27.7rem at rest here; the
+   break is at 29rem so a wider system font still wraps the whole row rather
+   than dropping only its last button onto a line of its own. The default
+   split leaves the notes 29.4rem at 1280px, so that width keeps one row.
+   This has to come *after* the rules above: an @container block adds no
+   specificity, so declared earlier it loses to `.notes__select { flex: 1 }`
+   and the picker collapses to a bare chevron. */
+@container (max-width: 29rem) {
+  .notes__select { flex: 1 1 100%; }
+}
+
+/* The editing group fills what the title leaves; the textarea fills the rest. */
+.notes__editor { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.notes__title {
+  font: inherit; font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
+  color: var(--ink); background: transparent; border: none;
+  border-bottom: 1px solid transparent; padding: .2rem 0; margin-bottom: .5rem;
+}
+.notes__title:focus { border-bottom-color: var(--edge); }
+
+.notes__surface {
+  flex: 1; width: 100%; resize: none; min-height: 0;
+  border: none; background: transparent; color: var(--ink);
+  font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
+}
+
+.notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
+.notes__status {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .75rem;
+  min-height: 1.2rem; font-size: .72rem; color: var(--ink-soft);
+}
+.notes__done { font-size: .8rem; }
+.notes__status--bad { color: var(--danger); }
+
+/* ── Bibles in the reader's language ──────────────────────────────────────── */
+
+.offer {
+  margin: 1rem 1.25rem 0; padding: .75rem .9rem;
+  background: var(--paper-raised); color: var(--ink);
+  border: 1px solid var(--edge); border-radius: 12px;
+}
+.offer__title { margin: 0 0 .25rem; font-weight: 600; }
+.offer__text { margin: 0 0 .5rem; font-size: .9rem; }
+.offer__list { list-style: none; margin: 0; padding: 0; }
+.offer__item {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem .75rem;
+  padding: .4rem 0; border-top: 1px solid var(--rule);
+}
+.offer__meta { display: flex; flex-direction: column; min-width: 0; }
+.offer__name { font-weight: 600; }
+.offer__detail { font-size: .8rem; color: var(--ink-soft); }
+.offer__error { font-size: .8rem; color: var(--danger); }
+.offer__actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; margin-top: .5rem; }
+.offer__action {
+  min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
+  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+.offer__action--primary { border-color: var(--ink-soft); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
+.offer__action:disabled { cursor: progress; }
+
+/* ── Durability ───────────────────────────────────────────────────────────── */
+
+.durability {
+  display: flex; gap: .75rem; align-items: center; flex-wrap: wrap;
+  padding: .5rem .9rem;
+  background: color-mix(in srgb, var(--accent) 14%, var(--paper));
+  border-bottom: 1px solid var(--rule);
+  font-size: .8rem;
+}
+.durability__text { margin: 0; flex: 1; min-width: 12rem; }
+
+/* A build for the translation reviewers says so, above everything else, and
+   links to where corrections go. The link stands on its own line of controls,
+   so it is a full-size target rather than a link inside a sentence. */
+.preview-notice {
+  display: flex; gap: .4rem .75rem; align-items: center; flex-wrap: wrap;
+  padding: .35rem .9rem;
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--rule);
+  font-size: .8rem;
+}
+.preview-notice__text { margin: 0; flex: 1; min-width: 12rem; }
+.preview-notice__actions { display: flex; gap: .4rem .75rem; align-items: center; flex-wrap: wrap; }
+.preview-notice__link {
+  display: inline-flex; align-items: center; gap: .2em;
+  color: var(--accent); font-weight: 600; text-decoration: none;
+}
+/* The words are underlined, and the new-tab arrow beside them is not: a flex
+   item takes its link's underline, and cannot shed it once it has it. */
+.preview-notice__words { text-decoration: underline; text-underline-offset: .15em; }
+.preview-notice__link:hover .preview-notice__words { text-decoration-thickness: 2px; }
+.preview-notice__hide {
+  font: inherit; font-size: .78rem; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
+}
+.preview-notice__hide:hover { border-color: var(--ink-soft); }
+.durability__actions { display: flex; gap: .4rem; align-items: center; }
+.durability__action {
+  font: inherit; font-size: .78rem; color: var(--ink);
+  background: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
+}
+.durability__dismiss {
+  font: inherit; font-size: 1rem; line-height: 1; color: var(--ink-soft);
+  background: transparent; border: none; cursor: pointer; padding: .1rem .3rem;
+}
+
+/* ── Narrow: Bible full-screen, notes as a sheet ──────────────────────────── */
+
+.layout--narrow { display: block; position: relative; }
+/* The chapter can always be scrolled clear of the sheet, whatever its height. */
+.layout--narrow .pane--bible { height: 100%; padding-bottom: calc(var(--sheet-h, 3.25rem) + .5rem); }
+/* Nothing under the notch or the status bar in standalone mode. `env()` is 0
+   everywhere else, so this costs the desktop nothing. */
+.layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+.layout--narrow .notes { padding-top: .75rem; }
+.canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+
+/* Anchored to the bottom of the *visible* viewport, not the layout viewport:
+   iOS does not move fixed elements when the keyboard opens, so a sheet with
+   `bottom: 0` sat behind the keys with the note being typed into. `--vvh` and
+   `--vv-top` are the visible area; the sheet's top is placed so its bottom
+   meets the visible bottom. `--sheet-peek` is the grip's measured height;
+   `--sheet-drag` is the height while a finger is moving it. */
+.sheet {
+  --sheet-size: var(--sheet-peek, 3.25rem);
+  position: fixed; left: 0; right: 0; z-index: 3;
+  top: calc(var(--vv-top, 0px) + var(--vvh, 100dvh) - var(--sheet-size));
+  height: var(--sheet-size);
+  display: flex; flex-direction: column;
+  background: var(--paper-raised);
+  border-top: 1px solid var(--edge);
+  border-radius: 14px 14px 0 0;
+  box-shadow: 0 -8px 28px rgb(0 0 0 / .12);
+  transition: height .22s ease, top .22s ease;
+}
+.sheet[data-sheet='half'] { --sheet-size: max(var(--sheet-peek, 3.25rem), calc(var(--vvh, 100dvh) * .5)); }
+/* 0.92 is FULL_SHARE in Layout.tsx: a sliver of the page stays visible above,
+   so the sheet still reads as a sheet. */
+.sheet[data-sheet='full'] { --sheet-size: calc(var(--vvh, 100dvh) * .92 - env(safe-area-inset-top)); }
+.sheet[data-dragging] { --sheet-size: var(--sheet-drag); transition: none; }
+
+.sheet__grip {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  padding: .5rem; border: none; background: transparent;
+  color: var(--ink-soft); font: inherit; font-size: .78rem; cursor: pointer;
+  /* The grip is the one control in the thumb zone; the home indicator must
+     not sit on it. */
+  padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
+}
+.sheet__grip { flex: 0 0 auto; width: 100%; cursor: grab; }
+.sheet[data-dragging] .sheet__grip { cursor: grabbing; }
+.sheet__handle { width: 2.75rem; height: 5px; border-radius: 3px; background: var(--edge); }
+/* "Notes", and beside it what was just put into them. Wraps rather than
+   truncating; the peek height is the grip's measured height, so a second
+   line raises the sheet instead of being cut off. */
+.sheet__label { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .6rem; text-align: center; }
+.sheet__done { font-size: .82rem; }
+.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; }
+/* With a keyboard up, the sheet is what is left above it — about 330px on a
+   phone — and the note bar, the title and two rows of tools took all but
+   40px of that, leaving the one thing being typed into a line and a half
+   tall. While the note is being edited in a sheet that short, the note bar
+   steps aside and the tools scroll in one row. Nothing is removed from the
+   keyboard path: Shift+Tab to the title leaves the editing group, and the bar
+   comes back. */
+@container sheet-body (max-height: 28rem) {
+  .notes:has(.notes__editor:focus-within) .notes__bar { display: none; }
+  .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
+  .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
+}
+.sheet[data-sheet='peek'] .sheet__body { display: none; }
+
+/* ── A new version is ready ───────────────────────────────────────────────── */
+
+/* Not a dialog: it takes no focus and blocks nothing, and it waits as long as
+   the reader likes. Above the notes sheet on a phone. */
+.update {
+  position: fixed; z-index: 25; left: 1rem; right: 1rem; margin-inline: auto; max-width: 30rem;
+  bottom: calc(var(--sheet-h, 0px) + 1rem + env(safe-area-inset-bottom));
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
+  padding: .5rem .75rem; border: 1px solid var(--edge); border-radius: 12px;
+  background: var(--paper-raised); color: var(--ink); box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+}
+.update__text { margin: 0; font-size: .9rem; }
+.update__actions { display: flex; gap: .4rem; }
+.update__action {
+  min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
+  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+}
+.update__action--primary { background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised)); border-color: var(--ink-soft); }
+
+/* ── Boot ─────────────────────────────────────────────────────────────────── */
+
+.boot {
+  display: grid; place-items: center; height: 100%;
+  color: var(--ink-soft); font-size: .95rem; padding: 2rem; text-align: center;
+}
+.boot--error { color: var(--danger); }
+
+/* Motion off means off: transitions and animations both, whether the request
+   comes from the operating system or from Settings. `scroll-behavior` covers
+   CSS-driven scrolling; scripted scrolls ask lib/prefs.ts. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+:root[data-motion='reduce'] *,
+:root[data-motion='reduce'] *::before,
+:root[data-motion='reduce'] *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+
+/* Windows High Contrast and other forced-colour modes replace every colour
+   with the system palette. Backgrounds vanish, so a highlight keeps a rule
+   and every control keeps a border; swatches opt out so a colour choice is
+   still a colour. */
+@media (forced-colors: active) {
+  button:not(.swatch), select, input, textarea, .reader__chip, .card, .sheet { border: 1px solid CanvasText; }
+  /* The bar's colour is forced to the page's: its edges and grip carry it instead. */
+  .divider-col { border-inline: 1px solid CanvasText; }
+  .divider::before { forced-color-adjust: none; background: radial-gradient(circle, CanvasText 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y; }
+  .verse[data-highlight] { border-left-color: Highlight; }
+  .swatch__disc { forced-color-adjust: none; }
+  /* The confirmation's delete button loses its fill, and the rule above would
+     give it the same border as Cancel. An inverted block in the system's own
+     pair keeps it apart, and clear of the Highlight focus ring. */
+  button.confirm-dialog__action--danger {
+    forced-color-adjust: none; color: Canvas; background-color: CanvasText; border: 2px solid CanvasText;
+  }
+  :focus-visible { outline-color: Highlight; }
+}

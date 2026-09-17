@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/search" },
+    { "path": "packages/compare" },
+    { "path": "packages/validate" },
+    { "path": "packages/api" },
+    { "path": "examples/node-server" }
+  ]
+}

@@ -1,0 +1,212 @@
+import { useId, useRef, useMemo, useState } from 'react';
+import { useDismissable, useReturnFocus } from '../lib/focus';
+import type { Bible, SearchResult } from '@scriptura/core/types';
+import { startsWeakMatches, type MatchOptions } from '../lib/search';
+import { useI18n } from '../i18n';
+import { withSlots } from '../i18n/rich';
+
+interface SearchResultsProps {
+  bible: Bible;
+  query: string;
+  /** Every match, not a page of them. */
+  results: SearchResult[];
+  options: MatchOptions;
+  onOptions: (next: MatchOptions) => void;
+  onGo: (bookSlug: string, chapter: number, verse: number) => void;
+  onInsert: (result: SearchResult) => void;
+  onClose: () => void;
+}
+
+/** How many rows to add at a time. */
+const PAGE = 100;
+
+/**
+ * Every match, and where they fall.
+ *
+ * The dropdown answers "take me to a verse"; this answers "how often does this
+ * word occur, and where" — which the dropdown could not, because it showed the
+ * first forty of a number it had no way to walk. *Jesus* is roughly 900 verses
+ * and *the* is tens of thousands, so the list grows on request rather than
+ * rendering everything: 28,000 rows of DOM is a hung tab, and pretending
+ * otherwise is how a reading app becomes unusable on the one query that matters.
+ *
+ * The per-book breakdown is the more useful answer to a counting question
+ * anyway — "Matthew 152, Mark 82" says something a flat list of 900 does not —
+ * and doubles as the filter.
+ */
+export function SearchResults({
+  bible,
+  query,
+  results,
+  options,
+  onOptions,
+  onGo,
+  onInsert,
+  onClose,
+}: SearchResultsProps) {
+  const { t, fmt } = useI18n();
+  const [book, setBook] = useState<string | null>(null);
+  const [shown, setShown] = useState(PAGE);
+  const wordHint = useId();
+  const caseHint = useId();
+
+  const books = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of results) counts.set(r.book_slug, (counts.get(r.book_slug) ?? 0) + 1);
+
+    return [...counts.entries()]
+      .map(([slug, count]) => {
+        const found = bible.book(slug);
+        return { slug, count, name: found?.name ?? slug, order: found?.number ?? 0 };
+      })
+      .sort((a, b) => a.order - b.order);
+  }, [bible, results]);
+
+  const filtered = useMemo(
+    () => (book ? results.filter((r) => r.book_slug === book) : results),
+    [results, book]
+  );
+
+  const visible = filtered.slice(0, shown);
+
+  const choose = (slug: string | null) => {
+    setBook(slug);
+    setShown(PAGE);
+  };
+
+  const root = useRef<HTMLElement>(null);
+  // Only mounted while open: Escape closes it, and focus returns to the
+  // control that opened it when it unmounts (2.4.3).
+  useDismissable(true, onClose, root, { outside: false });
+  useReturnFocus(true, '[data-testid="search-input"]');
+
+  return (
+    <section ref={root} className="results" id="search-results" data-testid="search-results" aria-label={t.results.label}>
+      <header className="results__bar">
+        <h1 className="results__title">
+          {withSlots(t.results.heading(results.length, query), {
+            count: <span data-testid="results-total">{fmt.number(results.length)}</span>,
+          })}
+        </h1>
+        <button
+          type="button"
+          className="results__close"
+          data-testid="results-close"
+          onClick={onClose}
+          aria-label={t.results.close}
+        >
+          ✕
+        </button>
+      </header>
+
+      <fieldset className="results__options">
+        <legend className="visually-hidden">{t.search.matching}</legend>
+        <label className="search__option">
+          <input
+            type="checkbox"
+            data-testid="results-whole-word"
+            aria-describedby={wordHint}
+            checked={options.mode === 'word'}
+            onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
+          />
+          {t.search.wholeWords}
+          <span id={wordHint} className="visually-hidden">
+            {t.search.wholeWordsHint}
+          </span>
+        </label>
+        <label className="search__option">
+          <input
+            type="checkbox"
+            data-testid="results-match-case"
+            aria-describedby={caseHint}
+            checked={!!options.caseSensitive}
+            onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
+          />
+          {t.search.matchCase}
+          <span id={caseHint} className="visually-hidden">
+            {t.search.matchCaseHint}
+          </span>
+        </label>
+      </fieldset>
+
+      <div className="results__books" data-testid="results-books" role="group" aria-label={t.results.filter}>
+        <button
+          type="button"
+          className="results__book"
+          aria-pressed={book === null}
+          onClick={() => choose(null)}
+        >
+          {t.results.allBooks} <span className="results__book-count">{fmt.number(results.length)}</span>
+        </button>
+        {books.map((b) => (
+          <button
+            type="button"
+            className="results__book"
+            key={b.slug}
+            data-testid={`results-book-${b.slug}`}
+            aria-pressed={book === b.slug}
+            onClick={() => choose(book === b.slug ? null : b.slug)}
+          >
+            {b.name} <span className="results__book-count">{fmt.number(b.count)}</span>
+          </button>
+        ))}
+      </div>
+
+      <ul className="results__list" data-testid="results-list" role="list">
+        {visible.map((r, i) => (
+          <li className="results__item" key={`${r.book_slug}-${r.chapter}-${r.verse}`}>
+            {/* Ranked order looks arbitrary unless it says why. The rule is
+                drawn once, where whole-word matches give way to verses that
+                merely contain the query inside a longer word. */}
+            {startsWeakMatches(visible[i - 1], r) && (
+              <p className="results__divider" data-testid="results-divider">
+                {t.results.weakBelow(query.trim())}
+              </p>
+            )}
+            <button
+              type="button"
+              className="results__ref"
+              data-testid={`results-go-${r.book_slug}-${r.chapter}-${r.verse}`}
+              onClick={() => onGo(r.book_slug, r.chapter, r.verse)}
+            >
+              <span className="results__ref-label">{r.ref}</span>
+              <span className="results__ref-text" lang={bible.meta.language}>
+                {r.text}
+              </span>
+            </button>
+            <button
+              type="button"
+              className="results__insert"
+              data-testid={`results-insert-${r.book_slug}-${r.chapter}-${r.verse}`}
+              title={t.results.insertTitle}
+              aria-label={t.results.insert(r.ref)}
+              onClick={() => onInsert(r)}
+            >
+              +
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      <p className="results__footer">
+        {/* Says what is on screen against what exists, so "showing 100" is
+            never mistaken for "there are 100". */}
+        {t.results.showing(visible.length, filtered.length)}
+        {book ? t.results.inBook(books.find((b) => b.slug === book)?.name ?? book) : ''}
+        {visible.length < filtered.length && (
+          <>
+            {' · '}
+            <button
+              type="button"
+              className="results__more"
+              data-testid="results-more"
+              onClick={() => setShown((n) => n + PAGE)}
+            >
+              {t.results.more(Math.min(PAGE, filtered.length - visible.length))}
+            </button>
+          </>
+        )}
+      </p>
+    </section>
+  );
+}

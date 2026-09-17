@@ -1,0 +1,49 @@
+name: Translation correction (English)
+description: Report a word or sentence in the reader's English interface that is wrong or unclear.
+title: "[en-US] "
+labels: ["translation", "preview", "lang: en"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for checking the reader's words. One correction per report is easiest to act on.
+  - type: input
+    id: screen
+    attributes:
+      label: Where is it?
+      description: The screen or panel, for example "Settings", "Help → Boards" or "the delete question for a note".
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: What it says now
+      description: Copy the text exactly, if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: What it should say
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why (optional)
+      description: For example a clearer word, a grammar rule, or how the text reads with a screen reader.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Filled in by the link in the app.
+  - type: input
+    id: language
+    attributes:
+      label: Interface language
+      description: Filled in by the link in the app.
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser (optional)
+      description: For example "iPhone 15, Safari" or "Windows 11, Chrome".

@@ -1,0 +1,59 @@
+{
+  "name": "scriptura",
+  "version": "0.1.0-preview.1",
+  "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "examples/node-server",
+    "examples/cli-demo"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "test": "NODE_OPTIONS=\"--experimental-vm-modules --disable-warning=ExperimentalWarning\" jest",
+    "test:contract": "playwright test --project=contract",
+    "validate": "python3 scripts/validate.py",
+    "check:canon": "python3 scripts/check-canon-sync.py",
+    "lint": "tsc --build",
+    "start:api": "npm run build && node examples/node-server/dist/index.js",
+    "dev:api": "tsx watch --tsconfig tsconfig.dev.json examples/node-server/src/index.ts",
+    "build:api": "node scripts/build-static-api.mjs",
+    "schema:gen": "tsx scripts/schema-gen.ts",
+    "dev:reader": "npm run dev --workspace @scriptura/reader",
+    "build:reader": "npm run build --workspace @scriptura/reader",
+    "build:site": "node scripts/build-site.mjs",
+    "test:site": "npm run build && node scripts/build-site.mjs --base /Scriptura/ --preview && SCRIPTURA_SITE_ONLY=1 playwright test --project=site",
+    "test:reader": "playwright test --project=reader --project=reader-touch --project=reader-dev",
+    "review:screens": "playwright test --project=review"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlanRoman117/scriptura.git"
+  },
+  "keywords": [
+    "bible",
+    "scripture",
+    "translations",
+    "open-data",
+    "kjv",
+    "search",
+    "api"
+  ],
+  "author": "Alan Roman",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  // Used ONLY by `npm run dev:api` (tsx). It maps @scriptura/* straight at the
+  // package sources so tsx watches and reloads on edits anywhere in the
+  // monorepo — with the default resolution the specifiers land on
+  // packages/*/dist, which only changes when you run a build.
+  //
+  // Not for compiling: `composite` is off and no project references are
+  // declared, so `tsc --build` must keep using tsconfig.json.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@scriptura/core": ["packages/core/src"],
+      "@scriptura/search": ["packages/search/src"],
+      "@scriptura/compare": ["packages/compare/src"],
+      "@scriptura/validate": ["packages/validate/src"],
+      "@scriptura/api": ["packages/api/src"]
+    }
+  },
+  "include": ["packages/*/src", "examples/node-server/src"]
+}

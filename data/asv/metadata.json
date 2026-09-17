@@ -1,0 +1,11 @@
+{
+  "id": "asv",
+  "name": "American Standard Version",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "American Standard Version (1901) — Public Domain",
+  "source_url": "https://ebible.org/eng-asv/",
+  "year": 1901,
+  "testament": "both",
+  "book_count": 66
+}

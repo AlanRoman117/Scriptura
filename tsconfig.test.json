@@ -1,0 +1,46 @@
+{
+  // ts-jest's config. Separate from tsconfig.json because that is a solution
+  // file (references only, no compilerOptions) — ts-jest pointed at it silently
+  // falls back to compiler defaults, quietly dropping `strict` and
+  // `esModuleInterop` from every test.
+  //
+  // `composite` must be off: ts-jest and composite projects fight over emit
+  // and tsbuildinfo.
+  //
+  // ⚠️ `module` must be an ESM target. The packages emit ESM, and `loader.ts`
+  // uses `import.meta.url` to find `data/` — which TypeScript rejects outright
+  // under CommonJS (TS1343). Compiling the tests as CJS would also reintroduce
+  // exactly the split this migration removed: shipping ESM while testing
+  // something else.
+  //
+  // `Bundler` resolution rather than `NodeNext` so the specs can keep importing
+  // `../../apps/reader/src/lib/references` without an extension; it still maps
+  // the sources' `./loader.js` specifiers onto the `.ts` files.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    // Off for tests only: unused fixtures and placeholder params are normal in
+    // test scaffolding and shouldn't fail the suite.
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "types": ["jest", "node"],
+    // Spelled out for ts-jest: jest's own moduleNameMapper handles resolution
+    // at runtime, and these keep the type-checker agreeing with it.
+    "baseUrl": ".",
+    "paths": {
+      "@scriptura/*/": ["packages/*/src/"],
+      "@scriptura/core/books": ["packages/core/src/books.ts"],
+      "@scriptura/core/bible": ["packages/core/src/bible.ts"],
+      "@scriptura/core/types": ["packages/core/src/types.ts"],
+      "@scriptura/search/matcher": ["packages/search/src/matcher.ts"],
+      "@scriptura/compare/chapters": ["packages/compare/src/chapters.ts"],
+      "@scriptura/*": ["packages/*/src"]
+    }
+  },
+  "include": ["tests", "packages/*/src"]
+}

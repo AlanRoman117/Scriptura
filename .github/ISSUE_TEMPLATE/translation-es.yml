@@ -1,0 +1,49 @@
+name: Corrección de traducción (español)
+description: Reporta una palabra o frase de la interfaz en español que esté mal o no se entienda.
+title: "[es-MX] "
+labels: ["translation", "preview", "lang: es"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por revisar el texto de la aplicación. Una corrección por reporte es lo más fácil de atender.
+  - type: input
+    id: screen
+    attributes:
+      label: ¿Dónde está?
+      description: La pantalla o el panel, por ejemplo «Configuración», «Ayuda → Tableros» o «la pregunta al eliminar una nota».
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Lo que dice ahora
+      description: Copia el texto tal cual, si puedes.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Lo que debería decir
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Por qué (opcional)
+      description: Por ejemplo, una palabra más clara, una regla gramatical o cómo suena con un lector de pantalla.
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      description: La completa el enlace de la aplicación.
+  - type: input
+    id: language
+    attributes:
+      label: Idioma de la interfaz
+      description: Lo completa el enlace de la aplicación.
+  - type: input
+    id: device
+    attributes:
+      label: Dispositivo y navegador (opcional)
+      description: Por ejemplo, «iPhone 15, Safari» o «Windows 11, Chrome».

@@ -1,0 +1,11 @@
+{
+  "id": "ostervald",
+  "name": "Bible Ostervald",
+  "language": "fr",
+  "license": "public-domain",
+  "attribution": "Bible Ostervald 1867 — Domaine public",
+  "source_url": "https://ebible.org/fra_fob/",
+  "year": 1867,
+  "testament": "both",
+  "book_count": 66
+}

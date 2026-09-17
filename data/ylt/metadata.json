@@ -1,0 +1,11 @@
+{
+  "id": "ylt",
+  "name": "Young's Literal Translation",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "Young's Literal Translation — Public Domain",
+  "source_url": "https://ebible.org/find/details.php?id=engylt",
+  "year": 1898,
+  "testament": "both",
+  "book_count": 66
+}

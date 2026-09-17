@@ -1,0 +1,11 @@
+{
+  "id": "web",
+  "name": "World English Bible",
+  "language": "en",
+  "license": "public-domain",
+  "attribution": "World English Bible — Public Domain",
+  "source_url": "https://worldenglish.bible",
+  "year": 2020,
+  "testament": "both",
+  "book_count": 66
+}

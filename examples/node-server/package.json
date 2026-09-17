@@ -1,0 +1,22 @@
+{
+  "name": "scriptura-node-server",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Express REST server example using @scriptura/api.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@scriptura/api": "0.1.0",
+    "@scriptura/core": "0.1.0",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "typescript": "^5.9.0"
+  }
+}
