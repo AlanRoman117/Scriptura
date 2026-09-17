@@ -77,6 +77,18 @@ export default defineConfig({
         locale: 'en-US',
       },
     },
+    {
+      // Not a test: screenshots of every main screen in every interface
+      // language, desktop and phone, for the people reviewing the
+      // translations. Written to review-screenshots/ (gitignored). Run with
+      // `npm run review:screens`; never part of test:reader or CI.
+      name: 'review',
+      testDir: './tests/review',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: `http://127.0.0.1:${READER_PORT}`,
+      },
+    },
   ],
 
   webServer: [
