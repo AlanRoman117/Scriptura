@@ -90,7 +90,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Tableaux',
     blocks: [
       {
-        p: 'Un tableau dispose des versets et des notes sous forme de fiches que vous pouvez déplacer et relier par des flèches. **Au tableau**, à côté d’un verset, le place sur le tableau en cours. Les fiches gardent une référence, pas une copie du texte : elles affichent la traduction que vous lisez.',
+        p: 'Un tableau dispose des versets et des notes sous forme de fiches que vous pouvez déplacer et relier par des flèches. **Au tableau**, à côté d’un verset, le place sur le tableau en cours. Les fiches gardent une référence, pas une copie du texte : elles affichent la traduction que vous lisez. Donnez un nom au tableau dans le champ à côté du menu des tableaux.',
       },
       {
         p: 'Pour déplacer ou redimensionner une fiche sans la faire glisser, utilisez son bouton **✥** ; pour la colorer, son bouton de couleur. Les boutons fléchés à côté du zoom déplacent la vue. **Connexions**, dans la barre du tableau, décrit chaque flèche en toutes lettres et permet d’en retirer une. Retirer une fiche demande confirmation, et le retrait d’une fiche ou d’une connexion peut être annulé tant que vous ne modifiez rien d’autre.',
@@ -557,6 +557,7 @@ const catalog = {
     heading: (board: string) => `Tableau : ${board}`,
     noneOpenHeading: 'aucun ouvert',
     picker: 'Tableau',
+    name: 'Nom du tableau',
     none: 'Aucun tableau pour l’instant',
     undo: (what: Removed) =>
       `Annuler : remettre ${what.kind === 'card' ? `la fiche ${what.label}` : `la connexion ${what.label}`}`,

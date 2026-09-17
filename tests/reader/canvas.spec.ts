@@ -34,6 +34,44 @@ test.describe('a board', () => {
     await expect(page.locator('.card').first()).toContainText('In the beginning was the Word');
   });
 
+  test('a board can be named, and the name is kept and shown wherever the board is', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('board-start').click();
+    const name = page.getByTestId('board-name');
+    await expect(name).toHaveAccessibleName('Board name');
+    await expect(name).toHaveValue('');
+    await expect(name).toHaveAttribute('placeholder', 'Untitled board');
+
+    await name.fill('Signs in John');
+    await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText('Signs in John');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Board: Signs in John');
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () =>
+            new Promise<string[]>((resolve) => {
+              const req = indexedDB.open('scriptura');
+              req.onsuccess = () => {
+                const all = req.result.transaction('boards').objectStore('boards').getAll();
+                all.onsuccess = () => resolve((all.result as { name: string }[]).map((b) => b.name));
+              };
+            })
+        )
+      )
+      .toEqual(['Signs in John']);
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.getByTestId('canvas-open').click();
+    await expect(page.getByTestId('board-name')).toHaveValue('Signs in John');
+
+    // Emptied, it is untitled again: the placeholder is shown, never stored.
+    await page.getByTestId('board-name').fill('');
+    await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText('Untitled board');
+    await expect(page.getByTestId('board-name')).toHaveValue('');
+  });
+
   test('putting a verse on the board says so, since the board is out of sight', async ({ page }) => {
     await open(page);
     await page.getByTestId('verse-1').click();

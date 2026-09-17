@@ -558,6 +558,19 @@ export function CanvasView({
             </option>
           ))}
         </select>
+        {board && (
+          // The board's name, the reader's to give. A new board has none and
+          // shows "Untitled board" in the interface language until it does:
+          // the placeholder is never stored.
+          <input
+            className="canvas__name"
+            data-testid="board-name"
+            aria-label={words.name}
+            placeholder={t.common.untitledBoard}
+            value={board.name}
+            onChange={(e) => patch({ name: e.target.value })}
+          />
+        )}
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
           {words.new}
         </button>

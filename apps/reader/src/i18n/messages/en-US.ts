@@ -92,7 +92,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Boards',
     blocks: [
       {
-        p: 'A board lays verses and notes out as cards you can move and join with arrows. **Canvas** beside a verse puts it on the current board. Cards hold a reference, not a copy of the text, so they show the translation you are reading.',
+        p: 'A board lays verses and notes out as cards you can move and join with arrows. **Canvas** beside a verse puts it on the current board. Cards hold a reference, not a copy of the text, so they show the translation you are reading. Give a board a name in the box beside the board menu.',
       },
       {
         p: "To move or resize a card without dragging, use its **✥** button; to colour it, its colour button. The arrow buttons beside the zoom move the view. **Connections**, in the board's bar, lists every arrow in words and removes one. Removing a card asks first, and removing a card or a connection can be undone until you change something else.",
@@ -569,6 +569,7 @@ export const enUS = {
     heading: (board: string) => `Board: ${board}`,
     noneOpenHeading: 'none open',
     picker: 'Board',
+    name: 'Board name',
     none: 'No boards yet',
     undo: (what: Removed) => `Undo: put back ${what.kind === 'card' ? what.label : `the connection ${what.label}`}`,
     putBack: (what: Removed) => `${what.kind === 'card' ? what.label : `The connection ${what.label}`} put back`,
