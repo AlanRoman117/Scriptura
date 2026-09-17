@@ -123,7 +123,12 @@ export const saveNote = (note: Note, onFirstFailure?: Reporter): Promise<boolean
 
 export const deleteNote = (id: string): Promise<unknown> => del(NOTES, id).catch(() => undefined);
 
-export function newNote(title = 'Untitled'): Note {
+/**
+ * A new note. Its title starts empty rather than as the word "Untitled": a
+ * stored word stays in the language it was stored in, so every screen shows
+ * the placeholder in the interface language instead.
+ */
+export function newNote(title = ''): Note {
   const now = Date.now();
   return { id: crypto.randomUUID(), title, body: '', created: now, updated: now };
 }

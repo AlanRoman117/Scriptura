@@ -72,7 +72,8 @@ export const saveBoard = (board: Board, onFirstFailure?: Reporter): Promise<bool
 export const deleteBoard = (id: string): Promise<unknown> =>
   del(BOARDS, id).catch(() => undefined);
 
-export function newBoard(name = 'Untitled board'): Board {
+/** A new board, unnamed unless given one: the screen supplies "Untitled board" in the reader's language. */
+export function newBoard(name = ''): Board {
   const now = Date.now();
   return { id: crypto.randomUUID(), name, nodes: [], edges: [], created: now, updated: now };
 }
@@ -195,7 +196,7 @@ export function boardToMarkdown(
   describe: (node: BoardNode) => string,
   words: CardWords = enUS.cards
 ): string {
-  const lines = [`# ${board.name}`, ''];
+  const lines = [`# ${board.name || words.untitledBoard}`, ''];
 
   if (board.nodes.length === 0) lines.push(words.emptyBoard);
   for (const node of board.nodes) {

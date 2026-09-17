@@ -158,8 +158,6 @@ export const enUS = {
     untitledNote: 'Untitled',
     untitledBoard: 'Untitled board',
     source: (name: string) => `${name} source`,
-    newItem: 'New',
-    startOne: 'Start one',
     undoRemove: 'Undo remove',
     remove: 'Remove',
     done: 'Done',
@@ -178,7 +176,8 @@ export const enUS = {
     notesMoreRoom: 'Give the notes more room',
     bibleMoreRoom: 'Give the Bible more room',
     resize: 'Resize panes',
-    split: (bible: number, notes: number) => `${bible}% Bible, ${notes}% notes`,
+    /** Both shares arrive formatted as percentages. */
+    split: (bible: string, notes: string) => `${bible} Bible, ${notes} notes`,
     showNotes: 'Show notes',
     paneBible: 'Bible',
     paneNotes: 'Notes',
@@ -298,7 +297,7 @@ export const enUS = {
     removeActive: (name: string) => `Remove ${name} — switch to another translation first`,
     removeFromDevice: (name: string) => `Remove ${name} from this device`,
     note: 'A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation.',
-    progress: (name: string, percent: number) => `${name}: ${percent}% downloaded`,
+    progress: (name: string, percent: string) => `${name}: ${percent} downloaded`,
     downloaded: (name: string) => `${name} downloaded`,
     failed: (name: string, error: string) => `${name}: ${error}`,
     offline: 'No connection — try again when you are online.',
@@ -315,6 +314,9 @@ export const enUS = {
   },
 
   notes: {
+    /** A new note. Nouns have gender in other languages, so notes and boards each say it. */
+    new: 'New',
+    startOne: 'Start one',
     heading: 'Notes',
     picker: 'Note',
     none: 'No notes yet',
@@ -499,6 +501,9 @@ export const enUS = {
   },
 
   canvas: {
+    /** A new board. */
+    new: 'New',
+    startOne: 'Start one',
     label: 'Boards',
     heading: (board: string) => `Board: ${board}`,
     noneOpenHeading: 'none open',
@@ -520,7 +525,7 @@ export const enUS = {
     zoom: 'Zoom',
     zoomOut: 'Zoom out',
     zoomIn: 'Zoom in',
-    zoomReset: (percent: number) => `Zoom ${percent}%. Reset to full size, showing your cards`,
+    zoomReset: (percent: string) => `Zoom ${percent}. Reset to full size, showing your cards`,
     moveView: 'Move the view',
     viewLeft: 'Move the view left',
     viewUp: 'Move the view up',
@@ -584,6 +589,7 @@ export const enUS = {
   cards: {
     verseMissing: 'Not in this translation.',
     untitledNote: 'Untitled note',
+    untitledBoard: 'Untitled board',
     emptyNote: 'Empty note.',
     deletedNote: 'This note has been deleted.',
     card: 'Card',

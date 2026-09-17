@@ -86,7 +86,7 @@ interface LayoutProps {
  * the context the layout exists to preserve.
  */
 export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutProps) {
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const narrow = useIsNarrow();
   // 56%, not the 58% it was while the divider was an 11px line: the 52px bar
   // takes its width from both panes, rather than all of it from the notes,
@@ -421,7 +421,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             aria-valuenow={Math.round(shown * 100)}
             aria-valuemin={Math.round(limits[0] * 100)}
             aria-valuemax={Math.round(limits[1] * 100)}
-            aria-valuetext={t.layout.split(Math.round(shown * 100), Math.round((1 - shown) * 100))}
+            aria-valuetext={t.layout.split(fmt.percent(Math.round(shown * 100)), fmt.percent(Math.round((1 - shown) * 100)))}
             tabIndex={0}
             {...divider}
             // Keyboard-resizable: a pointer-only divider is unusable without a mouse.

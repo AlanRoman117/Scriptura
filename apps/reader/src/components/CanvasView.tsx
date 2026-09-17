@@ -542,7 +542,7 @@ export function CanvasView({
           ))}
         </select>
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
-          {t.common.newItem}
+          {words.new}
         </button>
         {board && undo && undo.boardId === board.id && (
           <button
@@ -621,7 +621,7 @@ export function CanvasView({
           <button
             type="button"
             data-testid="zoom-reset"
-            aria-label={words.zoomReset(Math.round(zoom * 100))}
+            aria-label={words.zoomReset(fmt.percent(Math.round(zoom * 100)))}
             onClick={() => {
               // Panned to the content, not to the origin: a board whose cards
               // all sit at x=2000 would otherwise "reset" to empty space.
@@ -1011,7 +1011,7 @@ export function CanvasView({
         <div className="canvas__empty">
           <p>{words.noneOpen}</p>
           <button type="button" className="canvas__action" onClick={onCreate}>
-            {t.common.startOne}
+            {words.startOne}
           </button>
         </div>
       )}

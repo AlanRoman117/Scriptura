@@ -96,6 +96,7 @@ export function ProposalPreview({
               className="proposal__field"
               data-testid="proposal-title-input"
               aria-label={t.proposal.titleInput}
+              placeholder={t.common.untitledNote}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />

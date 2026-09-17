@@ -114,7 +114,9 @@ function johnIn(bible: Bible): BookExample {
 }
 
 export function App() {
-  const { t: words } = useI18n();
+  const { t: words, fmt } = useI18n();
+  const fmtNow = useRef(fmt);
+  fmtNow.current = fmt;
   /**
    * The catalog, for callbacks that are created once and fire later — a save
    * failure, a download's progress. They read the language current when they
@@ -495,7 +497,7 @@ export function App() {
     );
     const ok = results.every(Boolean);
     setSaving(ok ? 'saved' : 'failed');
-    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current);
+    if (ok && mirroringNow.current) void mirrorNotes(notesNow.current, wordsNow.current.cards);
   }, []);
 
   // The update notice flushes before it reloads; a phone putting the tab in
@@ -737,7 +739,7 @@ export function App() {
     void chooseNotesFolder().then((ok) => {
       if (!ok) return;
       setIsMirroring(true);
-      void mirrorNotes(notes);
+      void mirrorNotes(notes, wordsNow.current.cards);
     });
   }, [notes]);
 
@@ -807,7 +809,7 @@ export function App() {
           const quarter = total > 0 ? Math.floor(Math.min(received / total, 0.99) * 4) : 0;
           if (quarter > (announcedQuarter.current[id] ?? 0)) {
             announcedQuarter.current[id] = quarter;
-            announce(wordsNow.current.library.progress(name, quarter * 25));
+            announce(wordsNow.current.library.progress(name, fmtNow.current.percent(quarter * 25)));
           }
         },
         approx

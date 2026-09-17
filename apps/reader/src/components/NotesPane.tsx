@@ -142,7 +142,7 @@ export function NotesPane({
         </select>
 
         <button type="button" className="notes__action" data-testid="note-new" onClick={onCreate}>
-          {t.common.newItem}
+          {t.notes.new}
         </button>
         <button
           type="button"
@@ -270,7 +270,7 @@ export function NotesPane({
         <div className="notes__empty">
           <p>{t.notes.noneOpen}</p>
           <button type="button" className="notes__action" onClick={onCreate}>
-            {t.common.startOne}
+            {t.notes.startOne}
           </button>
         </div>
       )}

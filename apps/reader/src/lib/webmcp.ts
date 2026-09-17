@@ -385,7 +385,9 @@ export const TOOLS: Tool[] = [
       if (body.length > MAX_PROPOSED_BODY) {
         return failure(`That note is ${body.length} characters; ${MAX_PROPOSED_BODY} is the most that can be proposed at once.`);
       }
-      if (!host.propose({ kind: 'note', title: title || 'Untitled', body })) {
+      // An untitled draft stays untitled; the preview and the notes pane show
+      // "Untitled" in the reader's own language.
+      if (!host.propose({ kind: 'note', title, body })) {
         return failure('Another proposal is already waiting for the reader. Ask them to deal with it first.');
       }
       return reply(

@@ -19,12 +19,12 @@ import { createZip, safeFilename } from './zip';
 const DIR_HANDLE = 'notesDirectory';
 
 /** Markdown, with the metadata a note needs to be worth something on its own. */
-function toMarkdown(note: Note, renderBoard?: (id: string) => string | null): string {
+function toMarkdown(note: Note, words: CardWords, renderBoard?: (id: string) => string | null): string {
   const stamp = new Date(note.updated).toISOString();
   // An embedded board is a fence holding a UUID. In the app that draws a
   // diagram; in a file it is noise, so it is replaced with what it stood for.
   const body = renderBoard ? inlineBoardEmbeds(note.body, renderBoard) : note.body;
-  return `# ${note.title}\n\n<!-- scriptura:note ${note.id} updated:${stamp} -->\n\n${body}\n`;
+  return `# ${note.title || words.untitledNote}\n\n<!-- scriptura:note ${note.id} updated:${stamp} -->\n\n${body}\n`;
 }
 
 /**
@@ -53,11 +53,11 @@ export function exportNotes(
   return createZip([
     ...notes.map((note) => ({
       // Two notes may share a title; a zip with duplicate paths is ambiguous.
-      name: unique('notes', note.title, note.id),
-      content: toMarkdown(note, renderBoard),
+      name: unique('notes', note.title || words.untitledNote, note.id),
+      content: toMarkdown(note, words, renderBoard),
     })),
     ...boards.map((board) => ({
-      name: unique('boards', board.name, board.id),
+      name: unique('boards', board.name || words.untitledBoard, board.id),
       content: boardToMarkdown(board, name, words),
     })),
   ]);
@@ -134,13 +134,16 @@ async function notesFolder(): Promise<DirectoryHandle | null> {
 export const mirroring = (): Promise<boolean> => notesFolder().then((h) => h !== null);
 
 /** Write every note into the chosen folder as `.md`. Best-effort by design. */
-export async function mirrorNotes(notes: Note[]): Promise<number> {
+export async function mirrorNotes(notes: Note[], words: CardWords = enUS.cards): Promise<number> {
   const folder = await notesFolder();
   if (!folder) return 0;
 
   let written = 0;
   const seen = new Map<string, number>();
   for (const note of notes) {
+    // An untitled note is named by its id here, not by the word "Untitled":
+    // the folder outlives a change of language, and a new name would leave a
+    // second copy of the same note behind.
     const base = safeFilename(note.title, note.id);
     const n = (seen.get(base) ?? 0) + 1;
     seen.set(base, n);
@@ -149,7 +152,7 @@ export async function mirrorNotes(notes: Note[]): Promise<number> {
         create: true,
       });
       const stream = await file.createWritable();
-      await stream.write(toMarkdown(note));
+      await stream.write(toMarkdown(note, words));
       await stream.close();
       written++;
     } catch {

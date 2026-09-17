@@ -228,12 +228,12 @@ test.describe('knowing that it worked', () => {
     await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:1');
     // …and the announcer, which also names the note. The mark is decoration;
     // the words are what is said.
-    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in “Untitled”');
+    await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in an untitled note');
 
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
     await expect(page.getByTestId('note-done')).toHaveText('✓ Linked John 1:2');
-    await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in “Untitled”');
+    await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in an untitled note');
 
     await page.getByTestId('search-input').fill('In the beginning God created');
     await page.getByTestId('search-panel').locator('.search__insert').first().click();
@@ -265,7 +265,7 @@ test.describe('knowing that it worked', () => {
     await expect
       .poll(() =>
         page.evaluate(
-          () => (window as unknown as { said: string[] }).said.filter((t) => t === 'Quoted John 1:1 in “Untitled”').length
+          () => (window as unknown as { said: string[] }).said.filter((t) => t === 'Quoted John 1:1 in an untitled note').length
         )
       )
       .toBe(2);

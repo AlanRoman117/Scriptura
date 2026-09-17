@@ -98,3 +98,53 @@ test.describe('choosing a language', () => {
     expect(await lang(page)).toBe('en-US');
   });
 });
+
+test.describe('in Spanish (Mexico)', () => {
+  test.use({ locale: 'es-MX' });
+
+  test('a Spanish browser opens in Spanish, and says so to a screen reader', async ({ page }) => {
+    await open(page);
+    expect(await lang(page)).toBe('es-MX');
+    // The passage keeps the open Bible's own book name: BSB is English.
+    await expect(page).toHaveTitle('John 1 · BSB · Scriptura');
+    await expect(page.getByTestId('marks-open')).toContainText('Marcas');
+    await expect(page.getByTestId('search-input')).toHaveAttribute('placeholder', 'Busca, o ve a “John 3:16”');
+    await expect(page.getByRole('main', { name: 'Escrituras' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Configuración/ })).toBeVisible();
+  });
+
+  test('panels, titles and announcements are Spanish', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Configuración');
+    await expect(page).toHaveTitle('Configuración · Scriptura');
+    await expect(page.getByTestId('announcer')).toHaveText('Se abrió Configuración');
+    await expect(page.getByTestId('pref-language').locator('option').first()).toHaveText('Igual que este dispositivo');
+  });
+
+  test('switching to English changes the words and announces it in English', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    await page.getByTestId('pref-language').selectOption('en-US');
+    expect(await lang(page)).toBe('en-US');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Settings');
+    await expect(page.getByTestId('announcer')).toHaveText('The interface is now in English.');
+    // The panel stayed open: changing the name alone announces nothing else.
+    await expect(page.getByTestId('settings-panel')).toBeVisible();
+
+    await page.getByTestId('pref-language').selectOption('es-MX');
+    await expect(page.getByTestId('announcer')).toHaveText('La interfaz ahora está en español.');
+  });
+
+  test('a quote is confirmed in Spanish', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('quote-1').click();
+    await expect(page.getByTestId('note-done')).toHaveText('✓ Se citó John 1:1');
+    await expect(page.getByTestId('announcer')).toHaveText('Se citó John 1:1 en una nota sin título');
+    // Nothing English was stored: the untitled note reads as untitled in Spanish too.
+    await expect(page.getByTestId('note-select').locator('option:checked')).toHaveText('Sin título');
+    await expect(page.getByTestId('note-title')).toHaveAttribute('placeholder', 'Sin título');
+  });
+});
