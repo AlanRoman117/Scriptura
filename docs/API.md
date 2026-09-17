@@ -68,6 +68,10 @@ covered by a test, so they cannot rot.
 ]
 ```
 
+Also answered as `/translations.json`, the name the static tree gives it: the
+reader fetches this list directly, so the same string has to work against a
+live server and a static host (see the offline bundle below).
+
 ### `GET /translations/kjv`
 
 Translation metadata, plus a book index you can navigate from.
@@ -112,12 +116,12 @@ it to display.
 }
 ```
 
-Served by the live API **and** emitted by `npm run build:api`. Uniquely among
-the endpoints, the router also accepts the `.json` suffix
-(`/translations/bsb/full.json`), because the static tree appends `.json` to
-every path and this is the one URL a browser client fetches directly — the same
-string has to resolve against a local server and against the CDN. The reader PWA
-uses exactly that URL.
+Served by the live API **and** emitted by `npm run build:api`. Like the list
+above, and unlike the other endpoints, the router also accepts the `.json`
+suffix (`/translations/bsb/full.json`), because the static tree appends `.json`
+to every path and these are the URLs a browser client fetches directly — the
+same string has to resolve against a local server and against the CDN. The
+reader PWA uses exactly those URLs.
 
 ### `GET /translations/kjv/john/3`
 

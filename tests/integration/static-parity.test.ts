@@ -23,6 +23,8 @@ import { clearCache, setDataDir } from '@scriptura/core';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
 const ROUTES = [
+  // The list the reader fetches as translations.json.
+  'translations',
   'translations/tkjv',
   // The offline bundle. It is the payload the reader downloads, so a drift
   // here breaks every installed translation rather than one endpoint.

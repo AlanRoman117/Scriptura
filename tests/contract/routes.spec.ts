@@ -144,6 +144,15 @@ test.describe('the offline bundle', () => {
    * live server or a bucket. If the two ever disagree, the reader installs
    * translations from one origin and 404s against the other.
    */
+  test('lists the translations with or without the .json suffix, as the reader fetches it', async ({ request }) => {
+    const bare = await request.get('/translations');
+    const suffixed = await request.get('/translations.json');
+
+    expect(bare.status()).toBe(200);
+    expect(suffixed.status()).toBe(200);
+    expect(await suffixed.json()).toEqual(await bare.json());
+  });
+
   test('serves a whole translation, with or without the .json suffix', async ({ request }) => {
     const bare = await request.get('/translations/kjv/full');
     const suffixed = await request.get('/translations/kjv/full.json');
