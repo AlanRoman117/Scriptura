@@ -66,7 +66,10 @@ test.describe('the library', () => {
     await expect(page.getByTestId('chapter')).toContainText('el principio era el Verbo');
     // And a screen reader is told it is Spanish (3.1.2) — six of the eleven
     // translations are not English, and none of their text carried a lang.
-    await expect(page.locator('.chapter__text')).toHaveAttribute('lang', 'es');
+    // On each verse's text, not the chapter, which also holds the interface's
+    // verse numbers (tests/reader/language-of-parts.spec.ts).
+    await expect(page.locator('.verse__text').first()).toHaveAttribute('lang', 'es');
+    await expect(page.locator('.chapter__text')).not.toHaveAttribute('lang', /.*/);
   });
 
   test('the choice survives a reload', async ({ page }) => {
@@ -129,9 +132,11 @@ test.describe('reading two translations at once', () => {
     const first = compare.locator('tbody tr').first();
     await expect(first).toHaveAttribute('data-verse', '1');
     await expect(first.locator('td')).toHaveCount(2);
-    // Each column is read in its own language.
-    await expect(first.locator('td').nth(0)).toHaveAttribute('lang', 'en');
-    await expect(first.locator('td').nth(1)).toHaveAttribute('lang', 'es');
+    // Each column's text is read in its own language; the cell, which also
+    // holds a quote button, is not.
+    await expect(first.locator('td').nth(0).locator('.compare__text')).toHaveAttribute('lang', 'en');
+    await expect(first.locator('td').nth(1).locator('.compare__text')).toHaveAttribute('lang', 'es');
+    await expect(first.locator('td').nth(1)).not.toHaveAttribute('lang', /.*/);
   });
 
   test('a column can be dropped, and the first one cannot', async ({ page }) => {

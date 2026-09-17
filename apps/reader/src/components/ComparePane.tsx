@@ -101,9 +101,7 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
                           <span className="visually-hidden">{nameOf(id)}</span>
                         </dt>
                         {text === null ? (
-                          <dd className="compare__absent" lang="en">
-                            {t.compare.missing(id.toUpperCase())}
-                          </dd>
+                          <dd className="compare__absent">{t.compare.missing(id.toUpperCase())}</dd>
                         ) : (
                           <dd className="compare__reading-text">
                             <span className="compare__text" lang={languageOf(id)}>
@@ -164,18 +162,22 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
                   {row.number}
                 </th>
                 {row.cells.map((text, i) => (
-                  <td key={columns[i].translation} className="compare__cell" lang={languageOf(columns[i].translation)}>
+                  // The column's language is on its text, not the cell: the
+                  // cell also holds the interface's quote button (3.1.2).
+                  <td key={columns[i].translation} className="compare__cell">
                     {text === null ? (
                       // Absent, not empty: say so in words, because a blank
                       // cell reads as a rendering bug rather than a
                       // versification fact — and a dash with a tooltip said
                       // it only to a mouse.
-                      <span className="compare__absent" lang="en">
+                      <span className="compare__absent">
                         {t.compare.missing(columns[i].translation.toUpperCase())}
                       </span>
                     ) : (
                       <>
-                        <span className="compare__text">{text}</span>
+                        <span className="compare__text" lang={languageOf(columns[i].translation)}>
+                          {text}
+                        </span>
                         <button
                           type="button"
                           className="compare__quote"

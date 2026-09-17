@@ -236,6 +236,8 @@ test.describe('writes are staged, never applied', () => {
     // Contents, not counts: a list of citations is not something anyone can
     // meaningfully approve.
     await expect(page.getByTestId('proposal-list')).toContainText('In the beginning was the Word');
+    // The verse is scripture, in its translation's language (3.1.2).
+    await expect(page.locator('.proposal__verse').first()).toHaveAttribute('lang', 'en');
 
     await page.getByTestId('proposal-keep-john-1-3').uncheck();
     await page.getByTestId('proposal-accept').click();

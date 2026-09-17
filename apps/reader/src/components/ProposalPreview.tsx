@@ -145,7 +145,13 @@ export function ProposalPreview({
                     </label>
                     {/* The verse itself, because the reference alone is not
                         something a reader can check a claim against. */}
-                    <p className="proposal__verse">{text ?? t.proposal.missing}</p>
+                    {text ? (
+                      <p className="proposal__verse" lang={bible.meta.language}>
+                        {text}
+                      </p>
+                    ) : (
+                      <p className="proposal__verse">{t.proposal.missing}</p>
+                    )}
                   </li>
                 );
               })}

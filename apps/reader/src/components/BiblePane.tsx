@@ -271,10 +271,12 @@ export function BiblePane({
         {compare ? (
           compare
         ) : current ? (
-          // The translation's language, so a screen reader switches voice for
-          // Spanish, French or Japanese scripture instead of reading it with
-          // English phonemes (3.1.2).
-          <div className="chapter__text" lang={meta.language}>
+          // The chapter holds interface controls as well as scripture — the
+          // verse numbers and the verse actions — so the translation's
+          // language goes on each verse's text, not here. On the container,
+          // a Spanish Bible read with an English interface had every "Mark
+          // John 1:2" and "Quote" spoken with Spanish phonemes (3.1.2).
+          <div className="chapter__text">
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
@@ -334,7 +336,9 @@ export function BiblePane({
                   >
                     {v.number}
                   </button>
-                  <span className="verse__text">{v.text}</span>
+                  <span className="verse__text" lang={meta.language}>
+                    {v.text}
+                  </span>
 
                   {open && (
                     <VerseActions

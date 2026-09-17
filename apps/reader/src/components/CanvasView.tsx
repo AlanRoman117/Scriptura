@@ -841,9 +841,9 @@ export function CanvasView({
                       tabIndex={0}
                       role="group"
                       aria-label={words.cardBody(title)}
-                      lang={node.kind === 'verse' ? bible.meta.language : undefined}
                     >
-                      {body}
+                      {/* The group's name is interface text; only the verse is scripture (3.1.2). */}
+                      <span lang={node.kind === 'verse' ? bible.meta.language : undefined}>{body}</span>
                     </div>
                   )}
 

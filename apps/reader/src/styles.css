@@ -518,6 +518,13 @@ summary:focus-visible,
    quiet. */
 .chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
+/* Scripture carries its translation's lang on the text itself, not on the
+   containers around it (3.1.2), so the family is declared again right there:
+   a family resolved on a Latin container would otherwise be inherited as the
+   Latin stack, and Japanese verses would miss their Japanese faces. It also
+   keeps scripture in the reading face in the stacked comparison, which used
+   to show it in the interface's sans. */
+.verse__text, .compare__text, .card__body > [lang] { font-family: var(--serif); }
 
 .verse { margin: 0 0 var(--verse-gap); }
 
