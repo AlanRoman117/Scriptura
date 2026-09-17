@@ -9,8 +9,11 @@
  * ⚠️ Drafted, not written by a native speaker: a native Japanese reviewer
  * must check it before release (docs/plans/reader-i18n/README.md).
  */
+import { numberFor } from '../format';
 import type { BookExample, ColourNames, HelpSection, Removed } from '../types';
 import type { Messages } from './en-US';
+
+const num = numberFor('ja-JP');
 
 const colours: ColourNames = { amber: '琥珀色', rose: 'ばら色', sky: '空色', mint: 'ミント', violet: 'すみれ色' };
 const colourWords: ColourNames = colours;
@@ -191,7 +194,7 @@ export const jaJP = {
     chapter: '章',
     translationChip: (id: string, name: string) => `${id}：${name}。訳を選ぶ、または追加する`,
     marks: 'マーク',
-    marksChip: (count: number) => `マーク（${count}件）：マークした節を色ごとに表示`,
+    marksChip: (count: number) => `マーク（${num(count)}件）：マークした節を色ごとに表示`,
     settingsChip: '設定：表示、保存、エクスポート、アシスタントのアクセス',
     helpChip: 'ヘルプ：箇所の開き方、検索、ノート、マーク、ボード、キーボード、略語の意味',
     markVerse: (ref: string) => `${ref}をマーク`,
@@ -237,13 +240,13 @@ export const jaJP = {
     matchCase: '大文字と小文字を区別',
     matchCaseHint: '大文字と小文字を区別します。God と god は別の語になります。',
     noMatches: '該当なし',
-    matches: (total: number) => `${total}件`,
-    showing: (shown: number) => `（${shown}件を表示）`,
-    seeAll: (total: number) => `${total}件をすべて表示`,
+    matches: (total: number) => `${num(total)}件`,
+    showing: (shown: number) => `（${num(shown)}件を表示）`,
+    seeAll: (total: number) => `${num(total)}件をすべて表示`,
     insert: (ref: string) => `${ref}を開いているノートに挿入`,
     weakBelow: 'ここから下：長い語の一部として一致',
     announceNone: (query: string) => `「${query}」は見つかりませんでした`,
-    announceCount: (total: number, query: string) => `「${query}」の検索結果：${total}件`,
+    announceCount: (total: number, query: string) => `「${query}」の検索結果：${num(total)}件`,
   },
 
   results: {
@@ -255,9 +258,9 @@ export const jaJP = {
     weakBelow: (query: string) => `ここから下：「${query}」が長い語の一部として一致`,
     insert: (ref: string) => `${ref}を開いているノートに引用`,
     insertTitle: '開いているノートに引用',
-    showing: (shown: number, total: number) => `${total}件中${shown}件を表示`,
+    showing: (shown: number, total: number) => `${num(total)}件中${num(shown)}件を表示`,
     inBook: (book: string) => `（${book}）`,
-    more: (count: number) => `さらに${count}件を表示`,
+    more: (count: number) => `さらに${num(count)}件を表示`,
   },
 
   marks: {
@@ -275,7 +278,7 @@ export const jaJP = {
   library: {
     title: '翻訳',
     close: '翻訳を閉じる',
-    onDevice: (count: number) => `この端末に${count}件`,
+    onDevice: (count: number) => `この端末に${num(count)}件`,
     used: (used: string, quota: string) => `${quota}中${used}を使用`,
     about: (size: string) => `約${size}`,
     licences: {
@@ -361,7 +364,7 @@ export const jaJP = {
 
   embed: {
     scrolls: (board: string) => `ボード：${board}（横にスクロールできます）`,
-    picture: (board: string, cards: number) => `ボード：${board}、カード${cards}枚`,
+    picture: (board: string, cards: number) => `ボード：${board}、カード${num(cards)}枚`,
     empty: 'このボードは空です。',
     missing: 'ここにはボードが埋め込まれていましたが、そのボードはもうありません。',
     open: 'ボードを開く',
@@ -377,7 +380,7 @@ export const jaJP = {
     missing: 'この訳にはありません。',
     discard: '破棄',
     save: 'このノートを保存',
-    mark: (count: number) => `${count}節をマーク`,
+    mark: (count: number) => `${num(count)}節をマーク`,
   },
 
   offer: {
@@ -455,7 +458,7 @@ export const jaJP = {
       'このブラウザーはまだアシスタント用ツールに対応していません。WebMCP は初期の草案で、Chrome では試験運用機能として使えます。このスイッチの状態は、対応したときのために記憶されます。',
     assistantReadOnly:
       '**読むことはできても、書き込むことはできません。**アシスタントはノート、マーク、箇所を読めますが、何も変更できません。追加したい内容は、まず全文が表示され、承認したときにだけ保存されます。',
-    assistantTools: (count: number) => `アシスタントができること（ツール${count}個）`,
+    assistantTools: (count: number) => `アシスタントができること（ツール${num(count)}個）`,
     toolReads: '読み取り',
     toolNeedsApproval: '承認が必要',
     toolsInEnglish: '説明は、アシスタントが読むとおり英語で表示しています。',
@@ -524,7 +527,7 @@ export const jaJP = {
     addNoteNoNotes: 'ノートを追加：先にノートを書いてください',
     toNote: 'ノートに追加',
     toNoteName: 'ノートに追加：このボードを開いているノートに入れる',
-    connections: (count: number) => `つながり（${count}）`,
+    connections: (count: number) => `つながり（${num(count)}）`,
     connectionsLabel: 'つながり',
     deleteBoard: 'ボードを削除',
     zoom: 'ズーム',
@@ -542,7 +545,7 @@ export const jaJP = {
     removeConnection: (edge: string) => `つながり「${edge}」を削除`,
     missingCard: '見つからないカード',
     edge: (from: string, to: string) => `${from} → ${to}`,
-    frame: (cards: number) => `ボードの表示領域、カード${cards}枚`,
+    frame: (cards: number) => `ボードの表示領域、カード${num(cards)}枚`,
     frameHint:
       '矢印キーで表示位置を動かし、プラスとマイナスでズームします。カードにはフォーカスが移ります。矢印キーで動かし、Alt と矢印キーでサイズを変えます。',
     verseCard: '節のカード',

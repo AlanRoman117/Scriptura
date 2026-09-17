@@ -13,10 +13,12 @@
  * Machine-facing text stays English and is not here: the assistant tools'
  * names and descriptions, console messages, stored ids.
  */
-import { pluralFor } from '../format';
+import { numberFor, pluralFor } from '../format';
 import type { BookExample, ColourNames, HelpSection, Removed } from '../types';
 
 const plural = pluralFor('en-US');
+/** Counts, grouped as the language groups thousands. */
+const num = numberFor('en-US');
 
 const colours: ColourNames = { amber: 'Amber', rose: 'Rose', sky: 'Sky', mint: 'Mint', violet: 'Violet' };
 /** The colour as a word inside a sentence: "(amber)". */
@@ -192,7 +194,7 @@ export const enUS = {
     chapter: 'Chapter',
     translationChip: (id: string, name: string) => `${id} — ${name}. Choose or add a translation`,
     marks: 'Marks',
-    marksChip: (count: number) => `Marks (${count}) — verses you have marked, by colour`,
+    marksChip: (count: number) => `Marks (${num(count)}) — verses you have marked, by colour`,
     settingsChip: 'Settings — display, storage, export, and assistant access',
     helpChip:
       'Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean',
@@ -238,14 +240,14 @@ export const enUS = {
     matchCase: 'Match case',
     matchCaseHint: 'Capital letters matter: God and god are different.',
     noMatches: 'No matches',
-    matches: (total: number) => plural(total, { one: `${total} match`, other: `${total} matches` }),
-    showing: (shown: number) => ` — showing ${shown}`,
-    seeAll: (total: number) => `See all ${total}`,
+    matches: (total: number) => plural(total, { one: `${num(total)} match`, other: `${num(total)} matches` }),
+    showing: (shown: number) => ` — showing ${num(shown)}`,
+    seeAll: (total: number) => `See all ${num(total)}`,
     insert: (ref: string) => `Insert ${ref} into the open note`,
     weakBelow: 'Below: inside a longer word',
     announceNone: (query: string) => `No matches for “${query}”`,
     announceCount: (total: number, query: string) =>
-      plural(total, { one: `${total} match for “${query}”`, other: `${total} matches for “${query}”` }),
+      plural(total, { one: `${num(total)} match for “${query}”`, other: `${num(total)} matches for “${query}”` }),
   },
 
   results: {
@@ -259,9 +261,9 @@ export const enUS = {
     weakBelow: (query: string) => `Below: “${query}” inside a longer word`,
     insert: (ref: string) => `Quote ${ref} into the open note`,
     insertTitle: 'Quote into the open note',
-    showing: (shown: number, total: number) => `Showing ${shown} of ${total}`,
+    showing: (shown: number, total: number) => `Showing ${num(shown)} of ${num(total)}`,
     inBook: (book: string) => ` in ${book}`,
-    more: (count: number) => `Show ${count} more`,
+    more: (count: number) => `Show ${num(count)} more`,
   },
 
   marks: {
@@ -279,7 +281,7 @@ export const enUS = {
   library: {
     title: 'Translations',
     close: 'Close translations',
-    onDevice: (count: number) => `${count} on this device`,
+    onDevice: (count: number) => `${num(count)} on this device`,
     used: (used: string, quota: string) => `${used} of ${quota} used`,
     about: (size: string) => `about ${size}`,
     licences: {
@@ -366,7 +368,7 @@ export const enUS = {
 
   embed: {
     scrolls: (board: string) => `Board: ${board}, scrolls sideways`,
-    picture: (board: string, cards: number) => `Board: ${board}, ${cards} cards`,
+    picture: (board: string, cards: number) => `Board: ${board}, ${num(cards)} cards`,
     empty: 'This board is empty.',
     missing: 'A board was embedded here, but it no longer exists.',
     open: 'Open board',
@@ -383,7 +385,7 @@ export const enUS = {
     missing: 'Not in this translation.',
     discard: 'Discard',
     save: 'Save this note',
-    mark: (count: number) => plural(count, { one: `Mark ${count} verse`, other: `Mark ${count} verses` }),
+    mark: (count: number) => plural(count, { one: `Mark ${num(count)} verse`, other: `Mark ${num(count)} verses` }),
   },
 
   offer: {
@@ -461,7 +463,7 @@ export const enUS = {
       'This browser does not support assistant tools yet — WebMCP is an early draft, available in Chrome behind a flag. The switch is remembered for when it does.',
     assistantReadOnly:
       '**It can read, not write.** An assistant can read your notes, marks and passages, but it cannot change anything. Anything it wants to add is shown to you in full first, and is saved only when you accept it.',
-    assistantTools: (count: number) => `What an assistant would be able to do (${count} tools)`,
+    assistantTools: (count: number) => `What an assistant would be able to do (${num(count)} tools)`,
     toolReads: 'reads',
     toolNeedsApproval: 'needs your approval',
     /** Shown only in the other languages, beside the tool descriptions, which stay English. */
@@ -530,7 +532,7 @@ export const enUS = {
     addNoteNoNotes: 'Add note — write a note first',
     toNote: 'Add to note',
     toNoteName: 'Add to note — put this board into the note you have open',
-    connections: (count: number) => `Connections (${count})`,
+    connections: (count: number) => `Connections (${num(count)})`,
     connectionsLabel: 'Connections',
     deleteBoard: 'Delete board',
     zoom: 'Zoom',
@@ -549,7 +551,7 @@ export const enUS = {
     missingCard: 'a missing card',
     edge: (from: string, to: string) => `${from} → ${to}`,
     frame: (cards: number) =>
-      plural(cards, { one: `Board canvas, ${cards} card`, other: `Board canvas, ${cards} cards` }),
+      plural(cards, { one: `Board canvas, ${num(cards)} card`, other: `Board canvas, ${num(cards)} cards` }),
     frameHint:
       'Arrow keys move the view; plus and minus zoom. Each card takes focus: arrow keys move it, and Alt with an arrow resizes it.',
     verseCard: 'Verse card',

@@ -44,7 +44,7 @@ export function SearchResults({
   onInsert,
   onClose,
 }: SearchResultsProps) {
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const [book, setBook] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
   const wordHint = useId();
@@ -85,7 +85,7 @@ export function SearchResults({
       <header className="results__bar">
         <h1 className="results__title">
           {withSlots(t.results.heading(results.length, query), {
-            count: <span data-testid="results-total">{results.length}</span>,
+            count: <span data-testid="results-total">{fmt.number(results.length)}</span>,
           })}
         </h1>
         <button
@@ -136,7 +136,7 @@ export function SearchResults({
           aria-pressed={book === null}
           onClick={() => choose(null)}
         >
-          {t.results.allBooks} <span className="results__book-count">{results.length}</span>
+          {t.results.allBooks} <span className="results__book-count">{fmt.number(results.length)}</span>
         </button>
         {books.map((b) => (
           <button
@@ -147,7 +147,7 @@ export function SearchResults({
             aria-pressed={book === b.slug}
             onClick={() => choose(book === b.slug ? null : b.slug)}
           >
-            {b.name} <span className="results__book-count">{b.count}</span>
+            {b.name} <span className="results__book-count">{fmt.number(b.count)}</span>
           </button>
         ))}
       </div>

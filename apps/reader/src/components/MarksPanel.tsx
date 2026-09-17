@@ -53,7 +53,7 @@ export function MarksPanel({
   onUndo,
   onClose,
 }: MarksPanelProps) {
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const byColor = useMemo(() => {
     const groups = new Map<HighlightColor, Mark[]>(HIGHLIGHT_COLORS.map((c) => [c, []]));
 
@@ -132,7 +132,7 @@ export function MarksPanel({
                 onChange={(e) => onLabel(color, e.target.value)}
               />
               <span className="marks__count" data-testid={`marks-count-${color}`}>
-                {marks.length}
+                {fmt.number(marks.length)}
               </span>
             </header>
 

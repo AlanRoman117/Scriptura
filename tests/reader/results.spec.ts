@@ -8,6 +8,9 @@ import { expect, test } from '@playwright/test';
  * and not act on.
  */
 
+/** A displayed count as a number: counts are grouped for reading ("1,382"). */
+const countOf = (text: string | null) => Number((text ?? '').replace(/\D/g, ''));
+
 async function open(page: import('@playwright/test').Page) {
   await page.goto('/');
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
@@ -30,7 +33,7 @@ test.describe('all the matches', () => {
     await page.getByTestId('search-see-all').click();
 
     // The total in the view is the true total, not the page.
-    const total = Number(await page.getByTestId('results-total').textContent());
+    const total = countOf(await page.getByTestId('results-total').textContent());
     expect(total).toBeGreaterThan(40);
     await expect(page.getByTestId('search-results')).toContainText(`for “love”`);
   });
@@ -57,8 +60,8 @@ test.describe('all the matches', () => {
     await expect(books.first()).toContainText('All books');
     await expect(page.getByTestId('results-book-matthew')).toBeVisible();
 
-    const total = Number(await page.getByTestId('results-total').textContent());
-    const inMatthew = Number(
+    const total = countOf(await page.getByTestId('results-total').textContent());
+    const inMatthew = countOf(
       await page.getByTestId('results-book-matthew').locator('.results__book-count').textContent()
     );
     expect(inMatthew).toBeGreaterThan(0);
@@ -66,7 +69,7 @@ test.describe('all the matches', () => {
 
     // The counts sum to the total: the breakdown is the whole result set.
     const counts = await books.locator('.results__book-count').allTextContents();
-    const summed = counts.slice(1).reduce((n, c) => n + Number(c), 0);
+    const summed = counts.slice(1).reduce((n, c) => n + countOf(c), 0);
     expect(summed).toBe(total);
 
     await page.getByTestId('results-book-matthew').click();

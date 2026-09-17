@@ -10,12 +10,14 @@
  * ⚠️ Drafted, not written by a native speaker: a native French reviewer must
  * check it before release (docs/plans/reader-i18n/README.md).
  */
-import { pluralFor } from '../format';
+import { numberFor, pluralFor } from '../format';
 import { withFrenchSpacing } from '../typography';
 import type { BookExample, ColourNames, HelpSection, Removed } from '../types';
 import type { Messages } from './en-US';
 
 const plural = pluralFor('fr-FR');
+/** Counts, grouped as the language groups thousands. */
+const num = numberFor('fr-FR');
 
 const colours: ColourNames = { amber: 'Ambre', rose: 'Rose', sky: 'Ciel', mint: 'Menthe', violet: 'Violet' };
 const colourWords: ColourNames = { amber: 'ambre', rose: 'rose', sky: 'ciel', mint: 'menthe', violet: 'violet' };
@@ -188,7 +190,7 @@ const catalog = {
     chapter: 'Chapitre',
     translationChip: (id: string, name: string) => `${id} : ${name}. Choisir ou ajouter une traduction`,
     marks: 'Marques',
-    marksChip: (count: number) => `Marques (${count}) : les versets que vous avez marqués, par couleur`,
+    marksChip: (count: number) => `Marques (${num(count)}) : les versets que vous avez marqués, par couleur`,
     settingsChip: 'Paramètres : affichage, stockage, exportation et accès des assistants',
     helpChip:
       'Aide : trouver un passage, rechercher, notes, marques, tableaux, clavier et sens des abréviations',
@@ -235,14 +237,14 @@ const catalog = {
     matchCase: 'Respecter la casse',
     matchCaseHint: 'Les majuscules comptent : Dieu et dieu sont différents.',
     noMatches: 'Aucun résultat',
-    matches: (total: number) => plural(total, { one: `${total} résultat`, other: `${total} résultats` }),
-    showing: (shown: number) => ` ; ${shown} affichés`,
-    seeAll: (total: number) => `Voir les ${total}`,
+    matches: (total: number) => plural(total, { one: `${num(total)} résultat`, other: `${num(total)} résultats` }),
+    showing: (shown: number) => ` ; ${num(shown)} affichés`,
+    seeAll: (total: number) => `Voir les ${num(total)}`,
     insert: (ref: string) => `Insérer ${ref} dans la note ouverte`,
     weakBelow: 'Ci-dessous : à l’intérieur d’un mot plus long',
     announceNone: (query: string) => `Aucun résultat pour « ${query} »`,
     announceCount: (total: number, query: string) =>
-      plural(total, { one: `${total} résultat pour « ${query} »`, other: `${total} résultats pour « ${query} »` }),
+      plural(total, { one: `${num(total)} résultat pour « ${query} »`, other: `${num(total)} résultats pour « ${query} »` }),
   },
 
   results: {
@@ -255,9 +257,9 @@ const catalog = {
     weakBelow: (query: string) => `Ci-dessous : « ${query} » à l’intérieur d’un mot plus long`,
     insert: (ref: string) => `Citer ${ref} dans la note ouverte`,
     insertTitle: 'Citer dans la note ouverte',
-    showing: (shown: number, total: number) => `${shown} affichés sur ${total}`,
+    showing: (shown: number, total: number) => `${num(shown)} affichés sur ${num(total)}`,
     inBook: (book: string) => ` dans ${book}`,
-    more: (count: number) => `Afficher ${count} de plus`,
+    more: (count: number) => `Afficher ${num(count)} de plus`,
   },
 
   marks: {
@@ -275,7 +277,7 @@ const catalog = {
   library: {
     title: 'Traductions',
     close: 'Fermer les traductions',
-    onDevice: (count: number) => `${count} sur cet appareil`,
+    onDevice: (count: number) => `${num(count)} sur cet appareil`,
     used: (used: string, quota: string) => `${used} utilisés sur ${quota}`,
     about: (size: string) => `environ ${size}`,
     licences: {
@@ -362,7 +364,7 @@ const catalog = {
   embed: {
     scrolls: (board: string) => `Tableau : ${board}, défile horizontalement`,
     picture: (board: string, cards: number) =>
-      plural(cards, { one: `Tableau : ${board}, ${cards} fiche`, other: `Tableau : ${board}, ${cards} fiches` }),
+      plural(cards, { one: `Tableau : ${board}, ${num(cards)} fiche`, other: `Tableau : ${board}, ${num(cards)} fiches` }),
     empty: 'Ce tableau est vide.',
     missing: 'Un tableau était intégré ici, mais il n’existe plus.',
     open: 'Ouvrir le tableau',
@@ -378,7 +380,7 @@ const catalog = {
     missing: 'Absent de cette traduction.',
     discard: 'Écarter',
     save: 'Enregistrer cette note',
-    mark: (count: number) => plural(count, { one: `Marquer ${count} verset`, other: `Marquer ${count} versets` }),
+    mark: (count: number) => plural(count, { one: `Marquer ${num(count)} verset`, other: `Marquer ${num(count)} versets` }),
   },
 
   offer: {
@@ -456,7 +458,7 @@ const catalog = {
       'Ce navigateur ne prend pas encore en charge les outils pour assistants : WebMCP est un premier brouillon, disponible dans Chrome derrière une option expérimentale. Le réglage est mémorisé pour le jour où il le fera.',
     assistantReadOnly:
       '**Il peut lire, pas écrire.** Un assistant peut lire vos notes, vos marques et les passages, mais il ne peut rien modifier. Tout ce qu’il veut ajouter vous est d’abord montré en entier, et n’est enregistré que si vous l’acceptez.',
-    assistantTools: (count: number) => `Ce qu’un assistant pourrait faire (${count} outils)`,
+    assistantTools: (count: number) => `Ce qu’un assistant pourrait faire (${num(count)} outils)`,
     toolReads: 'lecture',
     toolNeedsApproval: 'votre accord est nécessaire',
     toolsInEnglish: 'Les descriptions sont en anglais, telles que l’assistant les lit.',
@@ -525,7 +527,7 @@ const catalog = {
     addNoteNoNotes: 'Ajouter une note : écrivez d’abord une note',
     toNote: 'Ajouter à la note',
     toNoteName: 'Ajouter à la note : placer ce tableau dans la note ouverte',
-    connections: (count: number) => `Connexions (${count})`,
+    connections: (count: number) => `Connexions (${num(count)})`,
     connectionsLabel: 'Connexions',
     deleteBoard: 'Supprimer le tableau',
     zoom: 'Zoom',
@@ -544,7 +546,7 @@ const catalog = {
     missingCard: 'une fiche disparue',
     edge: (from: string, to: string) => `${from} → ${to}`,
     frame: (cards: number) =>
-      plural(cards, { one: `Surface du tableau, ${cards} fiche`, other: `Surface du tableau, ${cards} fiches` }),
+      plural(cards, { one: `Surface du tableau, ${num(cards)} fiche`, other: `Surface du tableau, ${num(cards)} fiches` }),
     frameHint:
       'Les flèches déplacent la vue ; plus et moins zooment. Chaque fiche prend le focus : les flèches la déplacent, et Alt avec une flèche la redimensionne.',
     verseCard: 'Fiche de verset',

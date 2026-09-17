@@ -7,11 +7,13 @@
  * in Mexico. Drafted for review by the owner, a native speaker, before
  * release; the glossary and checklist are in docs/plans/reader-i18n/README.md.
  */
-import { pluralFor } from '../format';
+import { numberFor, pluralFor } from '../format';
 import type { BookExample, ColourNames, HelpSection, Removed } from '../types';
 import type { Messages } from './en-US';
 
 const plural = pluralFor('es-MX');
+/** Counts, grouped as the language groups thousands. */
+const num = numberFor('es-MX');
 
 const colours: ColourNames = { amber: 'Ámbar', rose: 'Rosa', sky: 'Cielo', mint: 'Menta', violet: 'Violeta' };
 const colourWords: ColourNames = { amber: 'ámbar', rose: 'rosa', sky: 'cielo', mint: 'menta', violet: 'violeta' };
@@ -184,7 +186,7 @@ export const esMX = {
     chapter: 'Capítulo',
     translationChip: (id: string, name: string) => `${id}: ${name}. Elige o agrega una traducción`,
     marks: 'Marcas',
-    marksChip: (count: number) => `Marcas (${count}): los versículos que marcaste, por color`,
+    marksChip: (count: number) => `Marcas (${num(count)}): los versículos que marcaste, por color`,
     settingsChip: 'Configuración: pantalla, almacenamiento, exportación y acceso de asistentes',
     helpChip:
       'Ayuda: encontrar pasajes, buscar, notas, marcas, tableros, teclado y el significado de las abreviaturas',
@@ -230,14 +232,14 @@ export const esMX = {
     matchCase: 'Distinguir mayúsculas',
     matchCaseHint: 'Las mayúsculas cuentan: Dios y dios son distintos.',
     noMatches: 'Sin resultados',
-    matches: (total: number) => plural(total, { one: `${total} resultado`, other: `${total} resultados` }),
-    showing: (shown: number) => `; se muestran ${shown}`,
-    seeAll: (total: number) => `Ver los ${total}`,
+    matches: (total: number) => plural(total, { one: `${num(total)} resultado`, other: `${num(total)} resultados` }),
+    showing: (shown: number) => `; se muestran ${num(shown)}`,
+    seeAll: (total: number) => `Ver los ${num(total)}`,
     insert: (ref: string) => `Insertar ${ref} en la nota abierta`,
     weakBelow: 'Abajo: dentro de una palabra más larga',
     announceNone: (query: string) => `Sin resultados para “${query}”`,
     announceCount: (total: number, query: string) =>
-      plural(total, { one: `${total} resultado para “${query}”`, other: `${total} resultados para “${query}”` }),
+      plural(total, { one: `${num(total)} resultado para “${query}”`, other: `${num(total)} resultados para “${query}”` }),
   },
 
   results: {
@@ -250,9 +252,9 @@ export const esMX = {
     weakBelow: (query: string) => `Abajo: “${query}” dentro de una palabra más larga`,
     insert: (ref: string) => `Citar ${ref} en la nota abierta`,
     insertTitle: 'Citar en la nota abierta',
-    showing: (shown: number, total: number) => `Se muestran ${shown} de ${total}`,
+    showing: (shown: number, total: number) => `Se muestran ${num(shown)} de ${num(total)}`,
     inBook: (book: string) => ` en ${book}`,
-    more: (count: number) => `Mostrar ${count} más`,
+    more: (count: number) => `Mostrar ${num(count)} más`,
   },
 
   marks: {
@@ -270,7 +272,7 @@ export const esMX = {
   library: {
     title: 'Traducciones',
     close: 'Cerrar las traducciones',
-    onDevice: (count: number) => `${count} en este dispositivo`,
+    onDevice: (count: number) => `${num(count)} en este dispositivo`,
     used: (used: string, quota: string) => `${used} de ${quota} en uso`,
     about: (size: string) => `unos ${size}`,
     licences: {
@@ -357,7 +359,7 @@ export const esMX = {
   embed: {
     scrolls: (board: string) => `Tablero: ${board}; se desplaza hacia los lados`,
     picture: (board: string, cards: number) =>
-      plural(cards, { one: `Tablero: ${board}, ${cards} tarjeta`, other: `Tablero: ${board}, ${cards} tarjetas` }),
+      plural(cards, { one: `Tablero: ${board}, ${num(cards)} tarjeta`, other: `Tablero: ${board}, ${num(cards)} tarjetas` }),
     empty: 'Este tablero está vacío.',
     missing: 'Aquí había un tablero, pero ya no existe.',
     open: 'Abrir el tablero',
@@ -374,7 +376,7 @@ export const esMX = {
     discard: 'Descartar',
     save: 'Guardar esta nota',
     mark: (count: number) =>
-      plural(count, { one: `Marcar ${count} versículo`, other: `Marcar ${count} versículos` }),
+      plural(count, { one: `Marcar ${num(count)} versículo`, other: `Marcar ${num(count)} versículos` }),
   },
 
   offer: {
@@ -452,7 +454,7 @@ export const esMX = {
       'Este navegador todavía no admite herramientas para asistentes: WebMCP es un borrador inicial, disponible en Chrome detrás de una opción experimental. El interruptor se recuerda para cuando lo admita.',
     assistantReadOnly:
       '**Puede leer, no escribir.** Un asistente puede leer tus notas, marcas y pasajes, pero no puede cambiar nada. Todo lo que quiera agregar se te muestra completo primero, y solo se guarda cuando lo aceptas.',
-    assistantTools: (count: number) => `Lo que podría hacer un asistente (${count} herramientas)`,
+    assistantTools: (count: number) => `Lo que podría hacer un asistente (${num(count)} herramientas)`,
     toolReads: 'lee',
     toolNeedsApproval: 'necesita tu aprobación',
     toolsInEnglish: 'Las descripciones están en inglés, tal como las lee el asistente.',
@@ -521,7 +523,7 @@ export const esMX = {
     addNoteNoNotes: 'Agregar nota: primero escribe una nota',
     toNote: 'Agregar a la nota',
     toNoteName: 'Agregar a la nota: pon este tablero en la nota que tienes abierta',
-    connections: (count: number) => `Conexiones (${count})`,
+    connections: (count: number) => `Conexiones (${num(count)})`,
     connectionsLabel: 'Conexiones',
     deleteBoard: 'Eliminar tablero',
     zoom: 'Zoom',
@@ -540,7 +542,7 @@ export const esMX = {
     missingCard: 'una tarjeta que ya no está',
     edge: (from: string, to: string) => `${from} → ${to}`,
     frame: (cards: number) =>
-      plural(cards, { one: `Área del tablero, ${cards} tarjeta`, other: `Área del tablero, ${cards} tarjetas` }),
+      plural(cards, { one: `Área del tablero, ${num(cards)} tarjeta`, other: `Área del tablero, ${num(cards)} tarjetas` }),
     frameHint:
       'Las flechas mueven la vista; más y menos hacen zoom. Cada tarjeta recibe el foco: las flechas la mueven, y Alt con una flecha cambia su tamaño.',
     verseCard: 'Tarjeta de versículo',

@@ -72,7 +72,7 @@ export function BiblePane({
   helpOpen = false,
   onToggleHelp,
 }: BiblePaneProps) {
-  const { t } = useI18n();
+  const { t, fmt } = useI18n();
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   /** Whether the actions were opened from the verse number, which moves focus into them. */
   const [fromNumber, setFromNumber] = useState(false);
@@ -226,7 +226,7 @@ export function BiblePane({
         >
           <span className="reader__chip-label">{t.reader.marks}</span>
           <span className="reader__chip-count" data-empty={markCount === 0 || undefined}>
-            {markCount}
+            {fmt.number(markCount)}
           </span>
         </button>
         <button

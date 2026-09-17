@@ -191,3 +191,21 @@ test.describe('in Japanese (Japan)', () => {
     expect(scripture).not.toMatch(/Mincho/);
   });
 });
+
+test.describe('counts are grouped as each language groups them', () => {
+  for (const [locale, pattern] of [
+    ['en-US', /^\d{1,3}(,\d{3})+ matches for “the”$/],
+    ['fr-FR', /^\d{1,3}( \d{3})+ résultats pour « the »$/],
+  ] as const) {
+    test(locale, async ({ page }) => {
+      await page.addInitScript((language) => {
+        localStorage.setItem('scriptura-display', JSON.stringify({ language }));
+      }, locale);
+      await open(page);
+      await page.getByTestId('search-input').fill('the');
+      await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'the');
+      await page.getByTestId('search-input').press('Enter');
+      await expect(page.getByTestId('search-results').getByRole('heading', { level: 1 })).toHaveText(pattern);
+    });
+  }
+});
