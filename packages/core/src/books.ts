@@ -91,14 +91,26 @@ export interface ParsedReference {
  *
  * The book part stays a raw string — resolving it needs a loaded translation,
  * since it may be a slug, a localized name, an abbreviation or a number.
+ *
+ * ⚠️ **The book's name is not matched by a pattern, it is what is left.** The
+ * grammar was one expression, `^(.+?)\s+(\d+)…$`, where `.+?` and `\s+` both
+ * matched a space: every arrangement of a long run of spaces was tried before
+ * the match could fail, so `"a" + " ".repeat(50_000)` took quadratic time
+ * (CodeQL js/polynomial-redos, and `/compare?ref=` takes a reference from the
+ * query string). Only the numeric tail is matched now, anchored at the end,
+ * and the name is the text before it. The tail is scanned left to right, which
+ * keeps the old lazy meaning: "Genesis 1 2" is still chapter 2 of "Genesis 1".
  */
-export function parseReference(reference: string): ParsedReference | null {
-  const match = reference
-    .trim()
-    .match(/^(.+?)\s+(\d+)(?::(\d+)(?:\s*-\s*(\d+))?)?$/);
-  if (!match) return null;
+const TAIL = /\s(\d+)(?::(\d+)(?:\s*-\s*(\d+))?)?$/;
 
-  const [, book, chapterStr, verseStr, endStr] = match;
+export function parseReference(reference: string): ParsedReference | null {
+  const text = reference.trim();
+  const match = TAIL.exec(text);
+  if (!match) return null;
+  const book = text.slice(0, match.index).trim();
+  if (!book) return null;
+
+  const [, chapterStr, verseStr, endStr] = match;
   const parsed: ParsedReference = { book: book.trim(), chapter: parseInt(chapterStr, 10) };
   if (verseStr !== undefined) {
     parsed.verse = parseInt(verseStr, 10);
