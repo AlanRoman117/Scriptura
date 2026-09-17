@@ -31,7 +31,18 @@ async function touchDrag(page: Page, from: { x: number; y: number }, to: { x: nu
   await cdp.detach();
 }
 
+/**
+ * Where the grip is, once it has stopped moving.
+ *
+ * The sheet animates for .22s after every change of size, and a drag has to
+ * start on the grip: measured mid-animation, the touch lands where the grip
+ * was a moment ago and grabs nothing. That is what failed on a macOS runner —
+ * the second drag did nothing and the sheet stayed at half.
+ */
 const gripCentre = async (page: Page) => {
+  await expect
+    .poll(() => page.getByTestId('pane-notes').evaluate((el) => el.getAnimations().length))
+    .toBe(0);
   const box = (await page.getByRole('button', { name: /(expand|collapse) notes/i }).boundingBox())!;
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 };
