@@ -9,6 +9,8 @@ interface SearchBarProps {
   query: string;
   /** The translation's language, for the verse text in the suggestions (3.1.2). */
   lang?: string;
+  /** A reference the open translation resolves, for the placeholder: "Juan 3:16" in RV1909. */
+  example?: string;
   results: SearchResult[];
   reference: ResolvedReference | null;
   total: number;
@@ -45,6 +47,7 @@ interface SearchBarProps {
 export function SearchBar({
   query,
   lang,
+  example = 'John 3:16',
   results,
   reference,
   total,
@@ -104,7 +107,7 @@ export function SearchBar({
         type="search"
         aria-label={t.search.label}
         aria-describedby={hintId}
-        placeholder={t.search.placeholder('John 3:16')}
+        placeholder={t.search.placeholder(example)}
         value={query}
         onChange={(e) => {
           onQuery(e.target.value);

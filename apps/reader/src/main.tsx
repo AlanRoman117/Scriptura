@@ -4,7 +4,7 @@ import { App } from './App';
 import { Announcer } from './lib/announce';
 import { UpdateNotice } from './components/UpdateNotice';
 import { applyPrefs, loadPrefs } from './lib/prefs';
-import { I18nProvider } from './i18n';
+import { I18nRoot } from './i18n/root';
 import './styles.css';
 
 // The inline script in index.html has already set the theme; this applies the
@@ -16,10 +16,10 @@ applyPrefs(loadPrefs());
 // it boots, and a region that appears after load is not announced.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <I18nProvider locale="en-US">
+    <I18nRoot>
       <Announcer />
       <App />
       <UpdateNotice />
-    </I18nProvider>
+    </I18nRoot>
   </StrictMode>
 );

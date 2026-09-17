@@ -4,13 +4,16 @@ import { useDismissable, useReturnFocus } from '../lib/focus';
 import { TOOLS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
+import { LOCALE_LABELS } from '../i18n/locales';
 import {
+  LANGUAGES,
   MEASURES,
   MOTIONS,
   SPACINGS,
   TEXT_SIZES,
   THEMES,
   type DisplayPrefs,
+  type LanguagePref,
   type Measure,
   type Motion,
   type Spacing,
@@ -54,7 +57,7 @@ export function SettingsPanel({
   prefs,
   onPrefs,
 }: SettingsPanelProps) {
-  const { t, fmt } = useI18n();
+  const { t, fmt, locale } = useI18n();
   const words = t.settings;
   const root = useRef<HTMLElement>(null);
   // Only mounted while open: Escape closes it, and focus returns to the chip
@@ -76,6 +79,36 @@ export function SettingsPanel({
           ✕
         </button>
       </header>
+
+      {/* First, because everything below is in it. Each language is named in
+          itself and carries its own lang, so a reader looking for their own
+          language finds it whatever the interface is in now, and a screen
+          reader says it in that language's voice (3.1.2). */}
+      <section className="settings__group">
+        <h2 className="settings__heading">{words.language}</h2>
+        <div className="settings__field">
+          <label htmlFor="pref-language">{words.languageLabel}</label>
+          <select
+            id="pref-language"
+            data-testid="pref-language"
+            value={prefs.language}
+            onChange={(e) => onPrefs({ language: e.target.value as LanguagePref })}
+          >
+            {LANGUAGES.map((value) =>
+              value === 'system' ? (
+                <option key={value} value={value}>
+                  {words.languageSystem}
+                </option>
+              ) : (
+                <option key={value} value={value} lang={value}>
+                  {LOCALE_LABELS[value]}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+        <p className="settings__note">{words.languageNote}</p>
+      </section>
 
       {/* Reading is the whole point, so how it reads comes first. Every choice
           here is a real <label> on a real <select>: a visible name, a native
@@ -222,6 +255,7 @@ export function SettingsPanel({
 
         <details className="settings__tools">
           <summary>{words.assistantTools(TOOLS.length)}</summary>
+          {locale !== 'en-US' && <p className="settings__note">{words.toolsInEnglish}</p>}
           <ul role="list">
             {TOOLS.map((tool) => (
               <li key={tool.name}>
@@ -229,7 +263,10 @@ export function SettingsPanel({
                 <span className={tool.annotations.readOnlyHint ? 'settings__tag' : 'settings__tag settings__tag--write'}>
                   {tool.annotations.readOnlyHint ? words.toolReads : words.toolNeedsApproval}
                 </span>
-                <span className="settings__tool-desc">{tool.description}</span>
+                {/* The assistant reads these in English, so they stay English (3.1.2). */}
+                <span className="settings__tool-desc" lang={locale === 'en-US' ? undefined : 'en'}>
+                  {tool.description}
+                </span>
               </li>
             ))}
           </ul>

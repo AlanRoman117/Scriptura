@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { DEFAULT_LOCALE, LANGUAGE_TO_LOCALE, LOCALES } from '../../apps/reader/src/i18n/locales';
 import {
   DEFAULT_PREFS,
   MEASURE_VALUES,
@@ -8,6 +9,7 @@ import {
   THEME_PAPER,
   loadPrefs,
   normalizePrefs,
+  resolveLocale,
   savePrefs,
 } from '../../apps/reader/src/lib/prefs';
 
@@ -38,9 +40,29 @@ describe('normalizePrefs', () => {
     expect(normalizePrefs({ textSize: 130 }).textSize).toBe(100);
   });
 
+  test('the language is one of ours, or the device’s', () => {
+    expect(normalizePrefs({}).language).toBe('system');
+    expect(normalizePrefs({ language: 'es-MX' }).language).toBe('es-MX');
+    // Canonical case only: this is the value that becomes the page's lang.
+    expect(normalizePrefs({ language: 'es-mx' }).language).toBe('system');
+    expect(normalizePrefs({ language: 'de-DE' }).language).toBe('system');
+  });
+
   test('markers is only ever a real boolean true', () => {
     expect(normalizePrefs({ markers: 'true' }).markers).toBe(false);
     expect(normalizePrefs({ markers: 1 }).markers).toBe(false);
+  });
+});
+
+describe('resolveLocale', () => {
+  test('a chosen language wins over the device', () => {
+    expect(resolveLocale('ja-JP', ['es-MX'])).toBe('ja-JP');
+  });
+
+  test('otherwise the device decides, and nothing we have means English', () => {
+    expect(resolveLocale('system', ['es-AR', 'en-US'])).toBe('es-MX');
+    expect(resolveLocale('system', ['de-DE'])).toBe('en-US');
+    expect(resolveLocale('system', [])).toBe('en-US');
   });
 });
 
@@ -99,6 +121,19 @@ describe('the inline script in index.html agrees with the module', () => {
       expect(script).toContain(`'${gap}'`);
     }
     for (const m of Object.values(MEASURE_VALUES)) expect(script).toContain(`'${m}'`);
+  });
+
+  test('same languages, resolved the same way', () => {
+    expect(script).toContain("setAttribute('lang'");
+    expect(script).toContain('p.language');
+    expect(script).toContain('navigator.languages');
+    for (const locale of LOCALES) expect(script).toContain(`'${locale}'`);
+    for (const [language, locale] of Object.entries(LANGUAGE_TO_LOCALE)) {
+      expect(script).toContain(`${language}: '${locale}'`);
+    }
+    expect(script).toContain(`lang || '${DEFAULT_LOCALE}'`);
+    // The page carries a real tag even if the script never runs.
+    expect(html).toContain(`<html lang="${DEFAULT_LOCALE}">`);
   });
 
   test('the metas the script updates exist, one per scheme', () => {

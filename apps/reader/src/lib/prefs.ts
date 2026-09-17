@@ -15,7 +15,8 @@
  * ⚠️ No `import.meta` here: jest reaches this module, and `import.meta` is
  * exactly what it cannot evaluate under the test config (see lib/units.ts).
  */
-import { useCallback, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+import { LOCALES, deviceLanguages, isLocale, matchLocale, type Locale } from '../i18n/locales';
 
 export const THEMES = ['system', 'light', 'dark', 'hc-light', 'hc-dark', 'sepia'] as const;
 export type Theme = (typeof THEMES)[number];
@@ -32,6 +33,10 @@ export type Measure = (typeof MEASURES)[number];
 export const MOTIONS = ['system', 'reduce'] as const;
 export type Motion = (typeof MOTIONS)[number];
 
+/** The interface language: one of ours, or whatever the device prefers. */
+export const LANGUAGES = ['system', ...LOCALES] as const;
+export type LanguagePref = (typeof LANGUAGES)[number];
+
 export interface DisplayPrefs {
   theme: Theme;
   textSize: TextSize;
@@ -40,6 +45,8 @@ export interface DisplayPrefs {
   motion: Motion;
   /** Draw a glyph as well as a colour on every highlight (1.4.1). */
   markers: boolean;
+  /** The interface language; `system` follows the device's languages. */
+  language: LanguagePref;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -49,6 +56,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   measure: 'normal',
   motion: 'system',
   markers: false,
+  language: 'system',
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */
@@ -101,7 +109,17 @@ export function normalizePrefs(raw: unknown): DisplayPrefs {
     measure: oneOf(MEASURES, r.measure, DEFAULT_PREFS.measure),
     motion: oneOf(MOTIONS, r.motion, DEFAULT_PREFS.motion),
     markers: r.markers === true,
+    language: oneOf(LANGUAGES, r.language, DEFAULT_PREFS.language),
   };
+}
+
+/**
+ * The interface language a preference means on this device right now: the
+ * chosen one, or the first of the device's languages we have, or English.
+ * Mirrored in index.html's inline script, which sets `lang` before first paint.
+ */
+export function resolveLocale(pref: LanguagePref, languages: readonly string[] = deviceLanguages()): Locale {
+  return pref !== 'system' && isLocale(pref) ? pref : matchLocale(languages);
 }
 
 export function loadPrefs(): DisplayPrefs {
@@ -137,6 +155,8 @@ export function applyPrefs(prefs: DisplayPrefs): void {
   set('data-theme', prefs.theme === 'system' ? null : prefs.theme);
   set('data-motion', prefs.motion === 'system' ? null : prefs.motion);
   set('data-markers', prefs.markers ? 'true' : null);
+  // Always present: the page's language is how a screen reader picks its voice (3.1.1).
+  set('lang', resolveLocale(prefs.language));
 
   root.style.setProperty('--text-scale', String(prefs.textSize / 100));
   root.style.setProperty('--reading-leading', SPACING_VALUES[prefs.spacing].leading);
@@ -167,16 +187,31 @@ export function prefersReducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-/** React state over the stored preferences; every change is applied and saved. */
+/*
+ * One copy of the preferences for the whole page. The app and the language
+ * provider around it both read them, so they are a small store rather than
+ * state inside one component: a change made in Settings reaches the provider
+ * in the same render.
+ */
+let current: DisplayPrefs | null = null;
+const listeners = new Set<() => void>();
+const snapshot = (): DisplayPrefs => (current ??= loadPrefs());
+const subscribe = (listener: () => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+/** Change some preferences: applied to the document first, then saved, then every reader told. */
+export function updatePrefs(patch: Partial<DisplayPrefs>): void {
+  current = normalizePrefs({ ...snapshot(), ...patch });
+  applyPrefs(current);
+  savePrefs(current);
+  for (const listener of listeners) listener();
+}
+
+/** The stored preferences, and the way to change them. */
 export function usePrefs(): [DisplayPrefs, (patch: Partial<DisplayPrefs>) => void] {
-  const [prefs, setPrefs] = useState<DisplayPrefs>(() => loadPrefs());
-  const update = useCallback((patch: Partial<DisplayPrefs>) => {
-    setPrefs((current) => {
-      const next = normalizePrefs({ ...current, ...patch });
-      applyPrefs(next);
-      savePrefs(next);
-      return next;
-    });
-  }, []);
-  return [prefs, update];
+  return [useSyncExternalStore(subscribe, snapshot, snapshot), updatePrefs];
 }

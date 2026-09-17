@@ -75,6 +75,7 @@ import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
 import { useI18n } from './i18n';
 import type { Messages } from './i18n/messages/en-US';
+import type { BookExample } from './i18n/types';
 
 interface Position {
   bookSlug: string;
@@ -104,6 +105,12 @@ function useAnnounceOpen(open: boolean, name: string, words: Messages['app']) {
     const now = latest.current;
     announce(open ? now.words.opened(now.name) : now.words.closed(now.name));
   }, [open]);
+}
+
+/** John, as the open translation names and abbreviates it: examples the reader can type and have resolve. */
+function johnIn(bible: Bible): BookExample {
+  const john = bible.book('john');
+  return { john: john?.name ?? 'John', abbr: john?.abbreviation ?? 'Jhn' };
 }
 
 export function App() {
@@ -1097,7 +1104,7 @@ export function App() {
               helpOpen ? (
                 <HelpPanel
                   catalog={catalog}
-                  book={{ john: bible.book('john')?.name ?? 'John', abbr: bible.book('john')?.abbreviation ?? 'Jhn' }}
+                  book={johnIn(bible)}
                   onClose={() => setHelpOpen(false)}
                 />
               ) : marksOpen ? (
@@ -1180,6 +1187,7 @@ export function App() {
               <SearchBar
                 query={query}
                 lang={bible.meta.language}
+                example={`${johnIn(bible).john} 3:16`}
                 results={hits.slice(0, 40)}
                 reference={reference}
                 total={hits.length}

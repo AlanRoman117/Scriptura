@@ -43,6 +43,9 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: `http://127.0.0.1:${READER_PORT}`,
+        // Pinned: the reader follows the browser's language, and these specs
+        // read English names. A spec about another language sets its own.
+        locale: 'en-US',
       },
     },
     {
@@ -57,6 +60,7 @@ export default defineConfig({
       use: {
         ...devices['Pixel 7'],
         baseURL: `http://127.0.0.1:${READER_PORT}`,
+        locale: 'en-US',
       },
     },
     {
@@ -70,6 +74,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: `http://127.0.0.1:${READER_DEV_PORT}`,
+        locale: 'en-US',
       },
     },
   ],
