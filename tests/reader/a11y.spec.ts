@@ -153,6 +153,13 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('search-see-all').click();
     await expect(page.getByTestId('search-results')).toBeVisible();
   },
+  'asked before deleting': async (page) => {
+    await page.getByTestId('note-new').click();
+    // A long name, so the question wraps.
+    await page.getByTestId('note-title').fill('Notes on the prologue of John, verse by verse, with the cross-references');
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+  },
 };
 
 /**
@@ -164,7 +171,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
 for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
   test.describe(`no axe violations, ${locale}`, () => {
     test.use({ locale });
-    for (const name of ['reading', 'verse actions', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed']) {
+    for (const name of ['reading', 'verse actions', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed', 'asked before deleting']) {
       test(name, async ({ page }) => {
         await open(page);
         await STATES[name](page);

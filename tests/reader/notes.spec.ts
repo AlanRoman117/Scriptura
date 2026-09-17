@@ -101,30 +101,40 @@ test.describe('notes', () => {
 
     await expect(page.getByTestId('note-select').locator('option')).toHaveCount(2);
 
-    // Delete asks before destroying work.
+    // Delete asks before destroying work, naming the note.
     await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
-    await page.getByTestId('note-delete').click();
+    const dialog = page.getByRole('alertdialog', { name: 'Delete the note “Second”?' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Delete note' }).click();
     await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+    await expect(page.getByTestId('note-title')).toHaveValue('First');
   });
 
-  test('an armed Delete can be backed out of, by Escape or by Cancel (3.3.6)', async ({ page }) => {
+  test('Delete asks in a dialog, and Escape, Cancel or the backdrop keeps the note (3.3.6)', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-new').click();
     await page.getByTestId('note-title').fill('Keep me');
     await persisted(page, 'Keep me');
 
+    const dialog = page.getByTestId('confirm-dialog');
     await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
-    // Announced, not just re-labelled: the change of name is a riddle otherwise.
-    await expect(page.getByTestId('announcer')).toContainText(/press again/i);
+    await expect(dialog).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+    await expect(dialog).toBeHidden();
+    await expect(page.getByTestId('note-delete')).toBeFocused();
 
     await page.getByTestId('note-delete').click();
-    await page.getByTestId('note-delete-cancel').click();
-    await expect(page.getByTestId('note-delete')).toContainText('Delete');
+    await page.getByTestId('confirm-cancel').click();
+    await expect(dialog).toBeHidden();
+
+    // A press outside the box is a Cancel too.
+    await page.getByTestId('note-delete').click();
+    await expect(dialog).toBeVisible();
+    await page.mouse.click(4, 4);
+    await expect(dialog).toBeHidden();
+
     await expect(page.getByTestId('note-title')).toHaveValue('Keep me');
+    await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
   });
 });
 
@@ -328,10 +338,10 @@ test.describe('colours as collections', () => {
     await expect(page.locator('.verse[data-verse="2"]')).toHaveAttribute('data-highlight', 'mint');
 
     await page.getByTestId('marks-open').click();
-    // Removal takes two presses and can be undone until the next change.
+    // Removal asks first and can be undone until the next change.
     await page.getByTestId('marks-remove-john-1-2').click();
-    await expect(page.getByTestId('marks-remove-john-1-2')).toContainText('Sure?');
-    await page.getByTestId('marks-remove-john-1-2').click();
+    await expect(page.getByRole('alertdialog', { name: 'Remove the mark on John 1:2?' })).toBeVisible();
+    await page.getByTestId('confirm-accept').click();
     await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
 
     await page.getByTestId('marks-undo').click();
@@ -339,7 +349,7 @@ test.describe('colours as collections', () => {
     await expect(page.getByTestId('marks-undo')).toHaveCount(0);
 
     await page.getByTestId('marks-remove-john-1-2').click();
-    await page.getByTestId('marks-remove-john-1-2').click();
+    await page.getByTestId('confirm-accept').click();
     await expect(page.getByTestId('marks-count-mint')).toHaveText('0');
     await page.getByTestId('marks-close').click();
     await expect(page.locator('.verse[data-verse="2"]')).not.toHaveAttribute('data-highlight', /./);

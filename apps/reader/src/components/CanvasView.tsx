@@ -22,9 +22,10 @@ import {
 } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
 import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type View } from '../lib/geometry';
-import { useDismissable, useReturnFocus } from '../lib/focus';
+import { settleFocus, useDismissable, useReturnFocus } from '../lib/focus';
 import { announce } from '../lib/announce';
 import { ConfirmButton } from './ConfirmButton';
+import { useConfirm, type ConfirmRequest } from './ConfirmDialog';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import type { Removed } from '../i18n/types';
@@ -98,6 +99,7 @@ export function CanvasView({
 }: CanvasViewProps) {
   const { t, fmt } = useI18n();
   const words = t.canvas;
+  const ask = useConfirm();
   const board = boards.find((b) => b.id === activeId) ?? null;
   // Zoom and pan are one state: every zoom moves the pan too (to keep what is
   // under the pointer, the fingers or the centre where it is), and two
@@ -237,13 +239,11 @@ export function CanvasView({
       connect(node.id);
       return;
     }
-    // Delete asks, it does not act: it moves to the card's remove button and
-    // arms it, so Enter confirms and Escape backs out (3.3.6).
+    // Delete asks, it does not act: the confirmation opens, and keeping the
+    // card brings focus back to it (3.3.4, 3.3.6).
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
-      const remove = e.currentTarget.querySelector<HTMLButtonElement>(`[data-testid="card-remove-${node.id}"]`);
-      remove?.focus();
-      remove?.click();
+      ask(removeCardRequest(node), e.currentTarget);
       return;
     }
     const step = e.shiftKey ? BIG_STEP : STEP;
@@ -459,6 +459,23 @@ export function CanvasView({
     });
   };
 
+  /** Taking a card off asks first, from its ✕ and from the Delete key alike. */
+  const removeCardRequest = (node: BoardNode): ConfirmRequest => {
+    const links = board?.edges.filter((e) => e.from === node.id || e.to === node.id).length ?? 0;
+    return {
+      title: t.confirm.card.title(label(node)),
+      body: [
+        ...(links > 0 ? [t.confirm.card.connections(links)] : []),
+        ...(node.kind === 'note' ? [t.confirm.card.noteKept] : []),
+        t.confirm.undoable,
+      ],
+      action: t.confirm.card.action,
+      onConfirm: () => removeCard(node.id),
+      // The next card takes focus, or the board itself after the last one.
+      focusAfter: { item: '.card', to: ['.canvas__frame'] },
+    };
+  };
+
   const edgeLabel = (edge: BoardEdge) => {
     const from = board?.nodes.find((n) => n.id === edge.from);
     const to = board?.nodes.find((n) => n.id === edge.to);
@@ -603,12 +620,22 @@ export function CanvasView({
             >
               {words.connections(board.edges.length)}
             </button>
+            {/* Asks first, saying what goes with it (3.3.4). Afterwards the
+                picker says which board is open now. */}
             <ConfirmButton
               label={words.deleteBoard}
               className="canvas__action canvas__action--danger"
               data-testid="board-delete"
-              resetKey={board.id}
-              onConfirm={() => onDelete(board.id)}
+              confirm={{
+                title: t.confirm.board.title(board.name || t.common.untitledBoard),
+                body: board.nodes.length
+                  ? [t.confirm.board.cards(board.nodes.length), t.confirm.board.kept, t.confirm.permanent]
+                  : [t.confirm.board.empty, t.confirm.permanent],
+                action: t.confirm.board.action,
+                onConfirm: () => onDelete(board.id),
+                focusAfter: { to: ['[data-testid="board-start"]', '[data-testid="board-select"]'] },
+                done: t.confirm.board.done(board.name || t.common.untitledBoard),
+              }}
             />
           </>
         )}
@@ -903,13 +930,13 @@ export function CanvasView({
                     >
                       ✥
                     </button>
-                    {/* Two presses, announced, with Cancel — and Undo after (3.3.6). */}
+                    {/* Asks first, and can be undone after (3.3.6). */}
                     <ConfirmButton
                       label="✕"
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
                       aria-label={words.takeOff(label(node))}
-                      onConfirm={() => removeCard(node.id)}
+                      confirm={removeCardRequest(node)}
                     />
                   </footer>
 
@@ -1008,9 +1035,23 @@ export function CanvasView({
           )}
         </div>
       ) : (
-        <div className="canvas__empty">
+        // In the page's flow, and pressable. It shared `.canvas__empty` with
+        // the hint drawn over an empty board, whose `pointer-events: none`
+        // lets a drag pan through it — and let every press on this button
+        // fall through to the page, so only the keyboard could start a board.
+        <div className="canvas__none">
           <p>{words.noneOpen}</p>
-          <button type="button" className="canvas__action" onClick={onCreate}>
+          <button
+            type="button"
+            className="canvas__action"
+            data-testid="board-start"
+            onClick={(e) => {
+              // This button goes with the empty state; the picker says which
+              // board is open now (2.4.3).
+              settleFocus(e.currentTarget, { to: ['[data-testid="board-select"]'] });
+              onCreate();
+            }}
+          >
             {words.startOne}
           </button>
         </div>

@@ -153,17 +153,65 @@ export const enUS = {
 
   common: {
     cancel: 'Cancel',
-    sure: 'Sure?',
-    /** An armed button's name: what it does, then the question it now asks. */
-    armed: (name: string, question: string) => `${name} — ${question}`,
-    confirmAnnounce: 'Press again to confirm, or Escape to cancel',
-    confirmHint: 'Press again to confirm, or Escape to cancel.',
     untitledNote: 'Untitled',
     untitledBoard: 'Untitled board',
     source: (name: string) => `${name} source`,
     undoRemove: 'Undo remove',
     remove: 'Remove',
     done: 'Done',
+  },
+
+  /**
+   * The question asked before anything is deleted (3.3.4, 3.3.6). A title
+   * names what goes; a body is short sentences, one per paragraph, saying what
+   * happens and whether it can be undone; an action is a verb and its object,
+   * so the button makes sense on its own.
+   */
+  confirm: {
+    permanent: 'You cannot undo this.',
+    undoable: 'You can undo this until your next change.',
+    note: {
+      title: (name: string) => `Delete the note “${name}”?`,
+      gone: 'It will be deleted from this device.',
+      keepCopy: 'To keep a copy, export your notes first.',
+      action: 'Delete note',
+      done: (name: string) => `Deleted the note “${name}”`,
+    },
+    board: {
+      title: (name: string) => `Delete the board “${name}”?`,
+      cards: (cards: number) =>
+        plural(cards, {
+          one: 'The board and its card will be deleted.',
+          other: `The board and its ${num(cards)} cards will be deleted.`,
+        }),
+      empty: 'The board is empty.',
+      kept: 'Your notes are not changed.',
+      action: 'Delete board',
+      done: (name: string) => `Deleted the board “${name}”`,
+    },
+    card: {
+      title: (card: string) => `Remove ${card} from the board?`,
+      connections: (count: number) =>
+        plural(count, {
+          one: 'Its connection is removed too.',
+          other: `Its ${num(count)} connections are removed too.`,
+        }),
+      noteKept: 'The note itself is not changed.',
+      action: 'Remove card',
+    },
+    mark: {
+      title: (ref: string) => `Remove the mark on ${ref}?`,
+      leaves: (collection: string) => `The verse leaves the collection “${collection}”.`,
+      action: 'Remove mark',
+    },
+    translation: {
+      title: (name: string) => `Remove ${name} from this device?`,
+      frees: (size: string) => `This frees about ${size}.`,
+      kept: 'Your notes and marks are not changed.',
+      again: 'You can download it again when you are online.',
+      action: 'Remove translation',
+      done: (name: string) => `Removed ${name} from this device`,
+    },
   },
 
   colours,

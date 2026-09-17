@@ -159,11 +159,12 @@ test.describe('in French (France)', () => {
     await page.getByTestId('settings-open').click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Paramètres');
     await expect(page.getByTestId('announcer')).toHaveText('Panneau Paramètres ouvert');
-    // "Confirmer ?" carries a narrow no-break space, not a plain one.
+    // The question carries no-break spaces inside « » and a narrow one before ?.
     await page.getByTestId('settings-close').click();
     await page.getByTestId('note-new').click();
     await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete')).toHaveText('Confirmer ?');
+    await expect(page.getByTestId('confirm-title')).toHaveText('Supprimer la note «\u00a0Sans titre\u00a0»\u202f?');
+    await expect(page.getByTestId('confirm-accept')).toHaveText('Supprimer la note');
   });
 });
 

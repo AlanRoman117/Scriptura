@@ -30,6 +30,7 @@ Open the LAN URL on the phone (same Wi-Fi). For standalone-mode checks, Add to H
 - [ ] The docked action bar is `position: fixed` inside `.reader`, a size container (`container-type: inline-size`). Chromium 153 keeps it viewport-relative; confirm Safari does too (an engine that applies layout containment to size containers would pin the bar inside the reading column instead).
 - [ ] Canvas: one finger pans; two fingers zoom about the fingers; drag a card by its header; the resize corner works; a card's Move/Size popover moves it without dragging.
 - [ ] Rotate the phone with the sheet open; nothing is clipped.
+- [ ] Delete a note, and remove a card on a board: the confirmation sits in the middle of the visible screen, both buttons are comfortably tappable, a tap outside the box cancels, and nothing behind it responds while it is open.
 
 ## Checklist — Android Chrome (Pixel or similar)
 

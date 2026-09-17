@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { Announcer } from './lib/announce';
 import { UpdateNotice } from './components/UpdateNotice';
+import { ConfirmProvider } from './components/ConfirmDialog';
 import { applyPrefs, loadPrefs } from './lib/prefs';
 import { I18nRoot } from './i18n/root';
 import './styles.css';
@@ -13,12 +14,15 @@ import './styles.css';
 applyPrefs(loadPrefs());
 
 // The live regions sit beside the app, not inside it: App returns early while
-// it boots, and a region that appears after load is not announced.
+// it boots, and a region that appears after load is not announced. The
+// confirmation dialog is one for the whole app, rendered after it.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nRoot>
       <Announcer />
-      <App />
+      <ConfirmProvider>
+        <App />
+      </ConfirmProvider>
       <UpdateNotice />
     </I18nRoot>
   </StrictMode>

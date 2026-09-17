@@ -8,6 +8,7 @@ import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
 import { ConfirmButton } from './ConfirmButton';
 import { MaximizeButton } from './PaneControl';
+import { settleFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
 
 interface NotesPaneProps {
@@ -174,17 +175,25 @@ export function NotesPane({
         >
           {t.notes.export}
         </button>
-        {/* The last two wrap together: armed, Delete grows a Cancel, and on
-            its own the maximize button would be left alone on a second line. */}
+        {/* The last two wrap together: on its own the maximize button would
+            be left alone on a second line. */}
         <span className="notes__bar-end">
           {active && (
-            // Two presses, announced, with a way back (3.3.6).
+            // Asks first, naming the note (3.3.4). Afterwards focus goes to
+            // the picker, which says which note is open now, or to "Start
+            // one" when that was the last.
             <ConfirmButton
               label={t.notes.delete}
               className="notes__action notes__action--danger"
               data-testid="note-delete"
-              resetKey={active.id}
-              onConfirm={() => onDelete(active.id)}
+              confirm={{
+                title: t.confirm.note.title(active.title || t.common.untitledNote),
+                body: [t.confirm.note.gone, t.confirm.permanent, t.confirm.note.keepCopy],
+                action: t.confirm.note.action,
+                onConfirm: () => onDelete(active.id),
+                focusAfter: { to: ['[data-testid="note-start"]', '[data-testid="note-select"]'] },
+                done: t.confirm.note.done(active.title || t.common.untitledNote),
+              }}
             />
           )}
           <MaximizeButton pane="notes" className="notes__action" />
@@ -269,7 +278,17 @@ export function NotesPane({
       ) : (
         <div className="notes__empty">
           <p>{t.notes.noneOpen}</p>
-          <button type="button" className="notes__action" onClick={onCreate}>
+          <button
+            type="button"
+            className="notes__action"
+            data-testid="note-start"
+            onClick={(e) => {
+              // This button goes with the empty state; the new note's title
+              // is where the reader was heading anyway (2.4.3).
+              settleFocus(e.currentTarget, { to: ['[data-testid="note-title"]'] });
+              onCreate();
+            }}
+          >
             {t.notes.startOne}
           </button>
         </div>

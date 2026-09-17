@@ -5,8 +5,10 @@
 | **ID** | `28-confirm-undo` |
 | **Size** | M |
 | **Depends on** | `05-announcer`, `03-focus` |
-| **Status** | done (48f8df4) |
+| **Status** | done (48f8df4); the in-place arming was replaced by a modal on 2026-09-17 (see below) |
 | **Criteria** | 3.3.4 Error Prevention (Legal, Financial, Data), 3.3.6 Error Prevention (All), 2.2.3 No Timing, 4.1.2 |
+
+> **Superseded in part (2026-09-17, branch `reader/confirm-dialog`).** A manual review found that a button turning into "Sure?" where it stood did not say clearly enough that something was about to be deleted, above all on a phone. `ConfirmButton` now opens one app-level modal, `ConfirmDialog`: an `alertdialog` named by its question, described by what happens, opening on Cancel. Undo is unchanged. The test lines cited below have moved; `tests/reader/confirm.spec.ts` is the dialog's own spec. The rest of this brief is kept as the record of what was asked at the time.
 
 ## Outcome
 

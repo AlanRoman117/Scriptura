@@ -117,9 +117,11 @@ test.describe('a board', () => {
     // The resize grip lives in this corner; the remove button must still be
     // reachable rather than sitting underneath it. Removing asks first.
     await page.getByTestId(`card-remove-${id}`).click();
-    await expect(page.getByTestId(`card-remove-${id}`)).toHaveText('Sure?');
-    await page.getByTestId(`card-remove-${id}`).click();
+    await expect(page.getByRole('alertdialog', { name: 'Remove Card from the board?' })).toBeVisible();
+    await page.getByTestId('confirm-accept').click();
     await expect(page.locator('.card')).toHaveCount(0);
+    // The last card is gone, so focus goes to the board itself.
+    await expect(page.locator('.canvas__frame')).toBeFocused();
   });
 
   test('removing a card takes its connections with it', async ({ page }) => {
@@ -134,7 +136,7 @@ test.describe('a board', () => {
 
     // An edge to a card that no longer exists would draw to nowhere.
     await page.getByTestId(`card-remove-${ids[0]}`).click();
-    await page.getByTestId(`card-remove-${ids[0]}`).click();
+    await page.getByTestId('confirm-accept').click();
     await expect(page.locator('.canvas__edges line')).toHaveCount(0);
   });
 
@@ -428,13 +430,20 @@ test.describe('connections in words, and removals that can be taken back (1.1.1,
   test('removing a card asks first, and puts back the card and its connections on undo', async ({ page }) => {
     const ids = await connected(page);
     await page.getByTestId(`card-remove-${ids[0]}`).click();
-    await expect(page.getByTestId(`card-remove-${ids[0]}`)).toHaveText('Sure?');
-    await page.getByTestId(`card-remove-${ids[0]}-cancel`).click();
+    const dialog = page.getByRole('alertdialog', { name: 'Remove John 1:1 (BSB) from the board?' });
+    // It says what goes with the card, and that it can come back.
+    await expect(page.getByTestId('confirm-body').locator('p')).toHaveText([
+      'Its connection is removed too.',
+      'You can undo this until your next change.',
+    ]);
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(page.locator('.card')).toHaveCount(2);
 
     await page.getByTestId(`card-remove-${ids[0]}`).click();
-    await page.getByTestId(`card-remove-${ids[0]}`).click();
+    await dialog.getByRole('button', { name: 'Remove card' }).click();
     await expect(page.locator('.card')).toHaveCount(1);
+    // Focus moves on to the card that is left.
+    await expect(page.getByTestId(`card-${ids[1]}`)).toBeFocused();
     await expect(page.locator('.canvas__edges line')).toHaveCount(0);
 
     await page.getByTestId('board-undo').click();
@@ -451,21 +460,32 @@ test.describe('connections in words, and removals that can be taken back (1.1.1,
     await expect(page.getByTestId('board-undo')).toHaveCount(0);
   });
 
-  test('Delete on a focused card arms its remove button; Escape backs out, Enter confirms', async ({ page }) => {
+  test('Delete on a focused card asks; Escape or Enter on Cancel keeps it, the action removes it', async ({ page }) => {
     await open(page);
     await boardWithTwoVerses(page);
     const ids = await cardIds(page);
-    await page.getByTestId(`card-${ids[0]}`).focus();
+    const card = page.getByTestId(`card-${ids[0]}`);
+    const dialog = page.getByTestId('confirm-dialog');
+    await card.focus();
     await page.keyboard.press('Delete');
-    const remove = page.getByTestId(`card-remove-${ids[0]}`);
-    await expect(remove).toBeFocused();
-    await expect(remove).toHaveText('Sure?');
-    await page.keyboard.press('Escape');
-    await expect(remove).toHaveText('✕');
+    await expect(dialog).toBeVisible();
+    // Cancel has focus: Enter out of habit keeps the card.
+    await expect(page.getByTestId('confirm-cancel')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(dialog).toBeHidden();
+    await expect(card).toBeFocused();
 
-    await page.getByTestId(`card-${ids[0]}`).focus();
     await page.keyboard.press('Delete');
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await expect(card).toBeFocused();
+    await expect(page.locator('.card')).toHaveCount(2);
+
+    await page.keyboard.press('Delete');
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('confirm-accept')).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('.card')).toHaveCount(1);
+    await expect(page.getByTestId(`card-${ids[1]}`)).toBeFocused();
   });
 });
