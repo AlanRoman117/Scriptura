@@ -25,6 +25,9 @@ import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type Vie
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import { announce } from '../lib/announce';
 import { ConfirmButton } from './ConfirmButton';
+import { useI18n } from '../i18n';
+import { rich } from '../i18n/rich';
+import type { Removed } from '../i18n/types';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -58,7 +61,7 @@ const PAN_BUTTON_STEP = 80;
 type Panel = { id: string; mode: 'adjust' | 'colour' };
 
 /** What the last removal took, so it can be put back until the next change. */
-type Undo = { boardId: string; what: string; nodes: BoardNode[]; edges: BoardEdge[] };
+type Undo = { boardId: string; what: Removed; nodes: BoardNode[]; edges: BoardEdge[] };
 
 /**
  * The board: verses and notes on a plane, with the connections drawn.
@@ -93,6 +96,8 @@ export function CanvasView({
   onAddToNote,
   onHelp,
 }: CanvasViewProps) {
+  const { t, fmt } = useI18n();
+  const words = t.canvas;
   const board = boards.find((b) => b.id === activeId) ?? null;
   // Zoom and pan are one state: every zoom moves the pan too (to keep what is
   // under the pointer, the fingers or the centre where it is), and two
@@ -169,18 +174,19 @@ export function CanvasView({
    * offer stands until the next change to the board — not until a timer runs
    * out (2.2.3).
    */
-  const removeWithUndo = (what: string, next: Pick<Board, 'nodes' | 'edges'>) => {
+  const removeWithUndo = (what: Removed, next: Pick<Board, 'nodes' | 'edges'>) => {
     if (!board) return;
     const snapshot: Undo = { boardId: board.id, what, nodes: board.nodes, edges: board.edges };
     onChange({ ...board, ...next, updated: Date.now() });
     setUndo(snapshot);
-    announce(`${what} removed. Undo is in the board's bar.`);
+    announce(words.removed(what));
   };
 
   /** What a card says. Verse text comes from the open translation, live. */
-  const describe = (node: BoardNode) => describeNode(node, { bible, notes });
-  const label = (node: BoardNode) => nodeLabel(node, { bible, notes });
-  const colourName = (color: HighlightColor) => `${colorLabel(color, labels)} (${color})`;
+  const describe = (node: BoardNode) => describeNode(node, { bible, notes }, t.cards);
+  const label = (node: BoardNode) => nodeLabel(node, { bible, notes }, t.cards);
+  const colourName = (color: HighlightColor) =>
+    words.colourName(colorLabel(color, labels, t.colours), t.colourWords[color]);
 
   /* ── moving and sizing, by key and by button ─────────────────────────── */
 
@@ -192,7 +198,7 @@ export function CanvasView({
     const x = Math.max(0, node.x + dx);
     const y = Math.max(0, node.y + dy);
     patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) });
-    announce(`${label(node)}: moved to ${Math.round(x)}, ${Math.round(y)}`);
+    announce(words.moved(label(node), Math.round(x), Math.round(y)));
   };
 
   const resizeCard = (id: string, dw: number, dh: number) => {
@@ -202,14 +208,14 @@ export function CanvasView({
     const w = Math.max(CARD_MIN_W, size.w + dw);
     const h = Math.max(CARD_MIN_H, size.h + dh);
     patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, w, h } : n)) });
-    announce(`${label(node)}: ${Math.round(w)} wide, ${Math.round(h)} tall`);
+    announce(words.resized(label(node), Math.round(w), Math.round(h)));
   };
 
   const colourCard = (id: string, color: HighlightColor | undefined) => {
     const node = board?.nodes.find((n) => n.id === id);
     if (!board || !node) return;
     patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, color } : n)) });
-    announce(color ? `${label(node)}: ${colourName(color)}` : `${label(node)}: no colour`);
+    announce(color ? words.coloured(label(node), colourName(color)) : words.uncoloured(label(node)));
   };
 
   /** Zoom by a step about the middle of the frame — what the buttons and keys do. */
@@ -447,7 +453,7 @@ export function CanvasView({
     const node = board?.nodes.find((n) => n.id === id);
     if (!board || !node) return;
     // Edges to a card that no longer exists would draw to nowhere.
-    removeWithUndo(label(node), {
+    removeWithUndo({ kind: 'card', label: label(node) }, {
       nodes: board.nodes.filter((n) => n.id !== id),
       edges: board.edges.filter((e) => e.from !== id && e.to !== id),
     });
@@ -456,13 +462,13 @@ export function CanvasView({
   const edgeLabel = (edge: BoardEdge) => {
     const from = board?.nodes.find((n) => n.id === edge.from);
     const to = board?.nodes.find((n) => n.id === edge.to);
-    return `${from ? label(from) : 'a missing card'} → ${to ? label(to) : 'a missing card'}`;
+    return words.edge(from ? label(from) : words.missingCard, to ? label(to) : words.missingCard);
   };
 
   const removeEdge = (id: string) => {
     const edge = board?.edges.find((e) => e.id === id);
     if (!board || !edge) return;
-    removeWithUndo(`The connection ${edgeLabel(edge)}`, {
+    removeWithUndo({ kind: 'connection', label: edgeLabel(edge) }, {
       nodes: board.nodes,
       edges: board.edges.filter((e) => e.id !== id),
     });
@@ -477,7 +483,7 @@ export function CanvasView({
       patch({ edges: [...board.edges, { id: crypto.randomUUID(), from: connecting, to }] });
       const from = board.nodes.find((n) => n.id === connecting);
       const target = board.nodes.find((n) => n.id === to);
-      if (from && target) announce(`Connected ${label(from)} to ${label(target)}`);
+      if (from && target) announce(words.connected(label(from), label(target)));
     }
     setConnecting(null);
   }
@@ -514,43 +520,43 @@ export function CanvasView({
   const panelNode = panel ? board?.nodes.find((n) => n.id === panel.id) ?? null : null;
 
   return (
-    <main className="canvas" data-testid="canvas" aria-label="Boards">
+    <main className="canvas" data-testid="canvas" aria-label={words.label}>
       {/* This view replaces the whole layout, so it carries the page's level-1
           heading; the board picker is what the reader sees (2.4.10). */}
       <h1 className="visually-hidden" id="canvas-heading">
-        Board: {board?.name || 'none open'}
+        {words.heading(board ? board.name || t.common.untitledBoard : words.noneOpenHeading)}
       </h1>
       <header className="canvas__bar">
         <select
           className="canvas__select"
-          aria-label="Board"
+          aria-label={words.picker}
           data-testid="board-select"
           value={activeId ?? ''}
           onChange={(e) => onSelect(e.target.value)}
         >
-          {boards.length === 0 && <option value="">No boards yet</option>}
+          {boards.length === 0 && <option value="">{words.none}</option>}
           {boards.map((b) => (
             <option key={b.id} value={b.id}>
-              {b.name || 'Untitled board'}
+              {b.name || t.common.untitledBoard}
             </option>
           ))}
         </select>
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
-          New
+          {t.common.newItem}
         </button>
         {board && undo && undo.boardId === board.id && (
           <button
             type="button"
             className="canvas__action canvas__action--undo"
             data-testid="board-undo"
-            aria-label={`Undo: put back ${undo.what}`}
+            aria-label={words.undo(undo.what)}
             onClick={() => {
               onChange({ ...board, nodes: undo.nodes, edges: undo.edges, updated: Date.now() });
               setUndo(null);
-              announce(`${undo.what} put back`);
+              announce(words.putBack(undo.what));
             }}
           >
-            Undo remove
+            {t.common.undoRemove}
           </button>
         )}
         {board && (
@@ -561,27 +567,27 @@ export function CanvasView({
               data-testid="board-add-text"
               onClick={() => addCard({ kind: 'text', text: '' })}
             >
-              Add card
+              {words.addCard}
             </button>
             <button
               type="button"
               className="canvas__action"
               data-testid="board-add-note"
               disabled={notes.length === 0}
-              aria-label={notes.length === 0 ? 'Add note — write a note first' : 'Add note — put the newest note on the board'}
+              aria-label={notes.length === 0 ? words.addNoteNoNotes : words.addNoteName}
               onClick={() => addCard({ kind: 'note', noteId: notes[0].id })}
             >
-              Add note
+              {words.addNote}
             </button>
             {onAddToNote && (
               <button
                 type="button"
                 className="canvas__action"
                 data-testid="board-to-note"
-                aria-label="Add to note — put this board into the note you have open"
+                aria-label={words.toNoteName}
                 onClick={() => onAddToNote(board.id)}
               >
-                Add to note
+                {words.toNote}
               </button>
             )}
             {/* The connections in words: the text alternative to the arrows,
@@ -595,10 +601,10 @@ export function CanvasView({
               aria-controls="board-connections-list"
               onClick={() => setShowConnections((open) => !open)}
             >
-              Connections ({board.edges.length})
+              {words.connections(board.edges.length)}
             </button>
             <ConfirmButton
-              label="Delete board"
+              label={words.deleteBoard}
               className="canvas__action canvas__action--danger"
               data-testid="board-delete"
               resetKey={board.id}
@@ -608,14 +614,14 @@ export function CanvasView({
         )}
 
         <span className="canvas__spacer" />
-        <div className="canvas__zoom" role="group" aria-label="Zoom">
-          <button type="button" data-testid="zoom-out" aria-label="Zoom out" onClick={() => zoomBy(-0.2)}>
+        <div className="canvas__zoom" role="group" aria-label={words.zoom}>
+          <button type="button" data-testid="zoom-out" aria-label={words.zoomOut} onClick={() => zoomBy(-0.2)}>
             −
           </button>
           <button
             type="button"
             data-testid="zoom-reset"
-            aria-label={`Zoom ${Math.round(zoom * 100)}%. Reset to full size, showing your cards`}
+            aria-label={words.zoomReset(Math.round(zoom * 100))}
             onClick={() => {
               // Panned to the content, not to the origin: a board whose cards
               // all sit at x=2000 would otherwise "reset" to empty space.
@@ -626,37 +632,37 @@ export function CanvasView({
               setView({ zoom: 1, pan: { x: 40 - left, y: 40 - top } });
             }}
           >
-            {Math.round(zoom * 100)}%
+            {fmt.percent(Math.round(zoom * 100))}
           </button>
-          <button type="button" data-testid="zoom-in" aria-label="Zoom in" onClick={() => zoomBy(0.2)}>
+          <button type="button" data-testid="zoom-in" aria-label={words.zoomIn} onClick={() => zoomBy(0.2)}>
             +
           </button>
         </div>
         {/* Moving the view without dragging it (2.5.7). Each says which way
             the view goes, so the plane moves the other way. */}
-        <div className="canvas__zoom canvas__pan" role="group" aria-label="Move the view">
-          <button type="button" data-testid="pan-left" aria-label="Move the view left" onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
+        <div className="canvas__zoom canvas__pan" role="group" aria-label={words.moveView}>
+          <button type="button" data-testid="pan-left" aria-label={words.viewLeft} onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
             ←
           </button>
-          <button type="button" data-testid="pan-up" aria-label="Move the view up" onClick={() => panBy(0, PAN_BUTTON_STEP)}>
+          <button type="button" data-testid="pan-up" aria-label={words.viewUp} onClick={() => panBy(0, PAN_BUTTON_STEP)}>
             ↑
           </button>
-          <button type="button" data-testid="pan-down" aria-label="Move the view down" onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
+          <button type="button" data-testid="pan-down" aria-label={words.viewDown} onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
             ↓
           </button>
-          <button type="button" data-testid="pan-right" aria-label="Move the view right" onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
+          <button type="button" data-testid="pan-right" aria-label={words.viewRight} onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
             →
           </button>
         </div>
         <button type="button" className="canvas__action" data-testid="canvas-close" onClick={onClose}>
-          Back to reading
+          {words.back}
         </button>
         {onHelp && (
           <button
             type="button"
             className="canvas__action canvas__action--icon"
             data-testid="canvas-help"
-            aria-label="Help — boards, keyboard, and what the abbreviations mean"
+            aria-label={words.help}
             onClick={onHelp}
           >
             ?
@@ -665,10 +671,10 @@ export function CanvasView({
       </header>
 
       {board && showConnections && (
-        <section className="canvas__connections" id="board-connections-list" aria-label="Connections">
+        <section className="canvas__connections" id="board-connections-list" aria-label={words.connectionsLabel}>
           {board.edges.length === 0 ? (
             <p className="canvas__connections-empty">
-              No connections yet. Press ⇢ on a card, then the card it leads to.
+              {words.noConnections}
             </p>
           ) : (
             <ul className="canvas__connections-list" role="list">
@@ -679,10 +685,10 @@ export function CanvasView({
                     type="button"
                     className="canvas__action"
                     data-testid={`edge-remove-${edge.id}`}
-                    aria-label={`Remove the connection ${edgeLabel(edge)}`}
+                    aria-label={words.removeConnection(edgeLabel(edge))}
                     onClick={() => removeEdge(edge.id)}
                   >
-                    Remove
+                    {t.common.remove}
                   </button>
                 </li>
               ))}
@@ -697,7 +703,7 @@ export function CanvasView({
           ref={frame}
           tabIndex={0}
           role="region"
-          aria-label={`Board canvas, ${board.nodes.length} ${board.nodes.length === 1 ? 'card' : 'cards'}`}
+          aria-label={words.frame(board.nodes.length)}
           aria-describedby="canvas-hint"
           data-connecting={connecting ? 'true' : undefined}
           onKeyDown={onFrameKey}
@@ -705,8 +711,7 @@ export function CanvasView({
           {...pinchHandlers}
         >
           <span id="canvas-hint" className="visually-hidden">
-            Arrow keys move the view; plus and minus zoom. Each card takes focus: arrow keys move it, and Alt with
-            an arrow resizes it.
+            {words.frameHint}
           </span>
           <div
             className="canvas__plane"
@@ -763,7 +768,7 @@ export function CanvasView({
             {board.nodes.map((node) => {
               const { title, body } = describe(node);
               const size = cardSize(node);
-              const kind = node.kind === 'verse' ? 'Verse card' : node.kind === 'note' ? 'Note card' : 'Card';
+              const kind = node.kind === 'verse' ? words.verseCard : node.kind === 'note' ? words.noteCard : words.card;
               return (
                 <div
                   className="card"
@@ -772,7 +777,7 @@ export function CanvasView({
                   tabIndex={0}
                   // What the card is, what it holds, and its colour in words —
                   // so the colour is never the only way to know it (1.4.1).
-                  aria-label={`${kind}: ${label(node)}${node.color ? `, ${colourName(node.color)}` : ''}`}
+                  aria-label={words.cardName(kind, label(node), node.color ? colourName(node.color) : null)}
                   aria-describedby="canvas-hint"
                   data-testid={`card-${node.id}`}
                   data-kind={node.kind}
@@ -794,8 +799,8 @@ export function CanvasView({
                       <input
                         className="card__title-input"
                         data-testid={`card-title-${node.id}`}
-                        aria-label="Card title"
-                        placeholder="Card"
+                        aria-label={words.cardTitle}
+                        placeholder={words.cardTitlePlaceholder}
                         value={node.title ?? ''}
                         onPointerDown={(e) => e.stopPropagation()}
                         onChange={(e) =>
@@ -815,8 +820,8 @@ export function CanvasView({
                     <textarea
                       className="card__editor"
                       data-testid={`card-text-${node.id}`}
-                      aria-label="Card text"
-                      placeholder="Write here…"
+                      aria-label={words.cardText}
+                      placeholder={words.cardTextPlaceholder}
                       value={node.text ?? ''}
                       onChange={(e) =>
                         patch({
@@ -835,7 +840,7 @@ export function CanvasView({
                       className="card__body"
                       tabIndex={0}
                       role="group"
-                      aria-label={`${title} — text`}
+                      aria-label={words.cardBody(title)}
                       lang={node.kind === 'verse' ? bible.meta.language : undefined}
                     >
                       {body}
@@ -848,12 +853,12 @@ export function CanvasView({
                       className="card__action"
                       data-testid={`card-connect-${node.id}`}
                       aria-pressed={connecting === node.id}
-                      aria-label={`Connect ${label(node)} to another card`}
+                      aria-label={words.connect(label(node))}
                       onClick={(e) => {
                         e.stopPropagation();
                         const next = connecting === node.id ? null : node.id;
                         setConnecting(next);
-                        if (next) announce('Choose the card to connect to: press it, or Enter on it. Escape cancels.');
+                        if (next) announce(words.connectPrompt);
                       }}
                     >
                       ⇢
@@ -863,7 +868,7 @@ export function CanvasView({
                         type="button"
                         className="card__action"
                         data-testid={`card-open-${node.id}`}
-                        aria-label={`Open ${label(node)} in the reader`}
+                        aria-label={words.open(label(node))}
                         onClick={(e) => {
                           e.stopPropagation();
                           onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
@@ -876,7 +881,7 @@ export function CanvasView({
                       type="button"
                       className="card__action"
                       data-testid={`card-colour-${node.id}`}
-                      aria-label={`Colour: ${node.color ? colourName(node.color) : 'none'}. Change the colour of ${label(node)}`}
+                      aria-label={words.colour(node.color ? colourName(node.color) : null, label(node))}
                       aria-expanded={panel?.id === node.id && panel.mode === 'colour'}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -889,7 +894,7 @@ export function CanvasView({
                       type="button"
                       className="card__action"
                       data-testid={`card-adjust-${node.id}`}
-                      aria-label={`Move or resize ${label(node)} without dragging`}
+                      aria-label={words.adjust(label(node))}
                       aria-expanded={panel?.id === node.id && panel.mode === 'adjust'}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -903,7 +908,7 @@ export function CanvasView({
                       label="✕"
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
-                      aria-label={`Take ${label(node)} off the board`}
+                      aria-label={words.takeOff(label(node))}
                       onConfirm={() => removeCard(node.id)}
                     />
                   </footer>
@@ -922,8 +927,7 @@ export function CanvasView({
 
           {board.nodes.length === 0 && (
             <p className="canvas__empty">
-              Nothing on this board yet. Add a card here, or use <strong>Canvas</strong> beside a
-              verse while reading.
+              {rich(words.empty)}
             </p>
           )}
 
@@ -932,45 +936,45 @@ export function CanvasView({
               className="canvas__panel"
               ref={panelEl}
               role="group"
-              aria-label={panel.mode === 'adjust' ? `Move and resize ${label(panelNode)}` : `Colour of ${label(panelNode)}`}
+              aria-label={panel.mode === 'adjust' ? words.adjustPanel(label(panelNode)) : words.colourPanel(label(panelNode))}
               data-testid="card-panel"
             >
               <p className="canvas__panel-title" aria-hidden="true">
-                {panel.mode === 'adjust' ? 'Move and resize' : 'Colour'}: {label(panelNode)}
+                {words.panelTitle(panel.mode === 'adjust' ? words.adjustTitle : words.colourTitle, label(panelNode))}
               </p>
               {panel.mode === 'adjust' ? (
                 <>
-                  <div className="canvas__panel-row" role="group" aria-label="Move">
-                    <button type="button" className="canvas__action" data-testid="adjust-left" aria-label="Move left" onClick={() => moveCard(panelNode.id, -BUTTON_STEP, 0)}>
+                  <div className="canvas__panel-row" role="group" aria-label={words.move}>
+                    <button type="button" className="canvas__action" data-testid="adjust-left" aria-label={words.moveLeft} onClick={() => moveCard(panelNode.id, -BUTTON_STEP, 0)}>
                       ←
                     </button>
-                    <button type="button" className="canvas__action" data-testid="adjust-up" aria-label="Move up" onClick={() => moveCard(panelNode.id, 0, -BUTTON_STEP)}>
+                    <button type="button" className="canvas__action" data-testid="adjust-up" aria-label={words.moveUp} onClick={() => moveCard(panelNode.id, 0, -BUTTON_STEP)}>
                       ↑
                     </button>
-                    <button type="button" className="canvas__action" data-testid="adjust-down" aria-label="Move down" onClick={() => moveCard(panelNode.id, 0, BUTTON_STEP)}>
+                    <button type="button" className="canvas__action" data-testid="adjust-down" aria-label={words.moveDown} onClick={() => moveCard(panelNode.id, 0, BUTTON_STEP)}>
                       ↓
                     </button>
-                    <button type="button" className="canvas__action" data-testid="adjust-right" aria-label="Move right" onClick={() => moveCard(panelNode.id, BUTTON_STEP, 0)}>
+                    <button type="button" className="canvas__action" data-testid="adjust-right" aria-label={words.moveRight} onClick={() => moveCard(panelNode.id, BUTTON_STEP, 0)}>
                       →
                     </button>
                   </div>
-                  <div className="canvas__panel-row" role="group" aria-label="Size">
+                  <div className="canvas__panel-row" role="group" aria-label={words.size}>
                     <button type="button" className="canvas__action" data-testid="adjust-narrower" onClick={() => resizeCard(panelNode.id, -BUTTON_STEP, 0)}>
-                      Narrower
+                      {words.narrower}
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-wider" onClick={() => resizeCard(panelNode.id, BUTTON_STEP, 0)}>
-                      Wider
+                      {words.wider}
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-shorter" onClick={() => resizeCard(panelNode.id, 0, -BUTTON_STEP)}>
-                      Shorter
+                      {words.shorter}
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-taller" onClick={() => resizeCard(panelNode.id, 0, BUTTON_STEP)}>
-                      Taller
+                      {words.taller}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="canvas__panel-row" role="group" aria-label="Colours">
+                <div className="canvas__panel-row" role="group" aria-label={words.colours}>
                   {HIGHLIGHT_COLORS.map((color) => (
                     <button
                       key={color}
@@ -993,21 +997,21 @@ export function CanvasView({
                     aria-pressed={!panelNode.color}
                     onClick={() => colourCard(panelNode.id, undefined)}
                   >
-                    No colour
+                    {words.noColour}
                   </button>
                 </div>
               )}
               <button type="button" className="canvas__action canvas__panel-done" data-testid="card-panel-close" onClick={() => setPanel(null)}>
-                Done
+                {t.common.done}
               </button>
             </div>
           )}
         </div>
       ) : (
         <div className="canvas__empty">
-          <p>No board open.</p>
+          <p>{words.noneOpen}</p>
           <button type="button" className="canvas__action" onClick={onCreate}>
-            Start one
+            {t.common.startOne}
           </button>
         </div>
       )}

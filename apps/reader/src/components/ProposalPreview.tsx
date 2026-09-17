@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import type { Proposal } from '../lib/webmcp';
 import { colorLabel, type ColorLabels } from '../lib/notes';
+import { useI18n } from '../i18n';
+import { withSlots } from '../i18n/rich';
 import { useReturnFocus } from '../lib/focus';
 
 interface ProposalPreviewProps {
@@ -37,6 +39,7 @@ export function ProposalPreview({
   onAccept,
   onDiscard,
 }: ProposalPreviewProps) {
+  const { t } = useI18n();
   const [title, setTitle] = useState(proposal.kind === 'note' ? proposal.title : '');
   const [body, setBody] = useState(proposal.kind === 'note' ? proposal.body : '');
   const [dropped, setDropped] = useState<Set<string>>(new Set());
@@ -78,14 +81,13 @@ export function ProposalPreview({
       <div className="proposal__box">
         <header className="proposal__bar">
           <h2 className="proposal__title" id="proposal-title">
-            {proposal.kind === 'note' ? 'A note has been drafted for you' : 'Verses suggested for marking'}
+            {proposal.kind === 'note' ? t.proposal.noteTitle : t.proposal.marksTitle}
           </h2>
         </header>
 
         {/* Said plainly and first: nothing here has happened yet. */}
         <p className="proposal__lede" id="proposal-lede" data-testid="proposal-lede">
-          An assistant proposed this. Nothing has been saved — review it, change anything you like,
-          and it only takes effect when you accept.
+          {t.proposal.lede}
         </p>
 
         {proposal.kind === 'note' ? (
@@ -93,14 +95,14 @@ export function ProposalPreview({
             <input
               className="proposal__field"
               data-testid="proposal-title-input"
-              aria-label="Proposed note title"
+              aria-label={t.proposal.titleInput}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
             <textarea
               className="proposal__text"
               data-testid="proposal-body-input"
-              aria-label="Proposed note body"
+              aria-label={t.proposal.bodyInput}
               value={body}
               onChange={(e) => setBody(e.target.value)}
             />
@@ -108,7 +110,9 @@ export function ProposalPreview({
         ) : (
           <div className="proposal__body">
             <p className="proposal__meta">
-              Into <strong>{colorLabel(proposal.color, labels)}</strong> ({proposal.color})
+              {withSlots(t.proposal.into(t.colourWords[proposal.color]), {
+                collection: <strong>{colorLabel(proposal.color, labels, t.colours)}</strong>,
+              })}
             </p>
             <ul className="proposal__list" data-testid="proposal-list">
               {proposal.refs.map((r) => {
@@ -140,7 +144,7 @@ export function ProposalPreview({
                     </label>
                     {/* The verse itself, because the reference alone is not
                         something a reader can check a claim against. */}
-                    <p className="proposal__verse">{text ?? 'Not in this translation.'}</p>
+                    <p className="proposal__verse">{text ?? t.proposal.missing}</p>
                   </li>
                 );
               })}
@@ -155,7 +159,7 @@ export function ProposalPreview({
             data-testid="proposal-discard"
             onClick={onDiscard}
           >
-            Discard
+            {t.proposal.discard}
           </button>
           <button
             type="button"
@@ -170,9 +174,7 @@ export function ProposalPreview({
               )
             }
           >
-            {proposal.kind === 'note'
-              ? 'Save this note'
-              : `Mark ${kept.length} verse${kept.length === 1 ? '' : 's'}`}
+            {proposal.kind === 'note' ? t.proposal.save : t.proposal.mark(kept.length)}
           </button>
         </footer>
       </div>

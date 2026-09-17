@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { usePointerDrag } from '../lib/viewport';
 import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
 import { PaneControlsContext, type Maximized, type Pane } from './PaneControl';
+import { useI18n } from '../i18n';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
 const NARROW = 850;
@@ -85,6 +86,7 @@ interface LayoutProps {
  * the context the layout exists to preserve.
  */
 export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutProps) {
+  const { t } = useI18n();
   const narrow = useIsNarrow();
   // 56%, not the 58% it was while the divider was an 11px line: the 52px bar
   // takes its width from both panes, rather than all of it from the notes,
@@ -265,7 +267,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
       <div className="layout layout--narrow" data-testid="layout" data-mode="narrow">
         {/* Covered by a full sheet, the text is out of reach: inert, so Tab and
             a screen reader do not land on a verse that cannot be seen (2.4.12). */}
-        <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture" inert={sheet === 'full'}>
+        <main className="pane pane--bible" data-testid="pane-bible" aria-label={t.layout.scripture} inert={sheet === 'full'}>
           {bible}
         </main>
         <section
@@ -274,7 +276,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
           data-testid="pane-notes"
           data-sheet={sheet}
           data-dragging={dragSize !== null || undefined}
-          aria-label="Notes"
+          aria-label={t.layout.notes}
           style={{
             ['--sheet-peek' as string]: `${peek}px`,
             ...(dragSize !== null ? { ['--sheet-drag' as string]: `${dragSize}px` } : {}),
@@ -287,7 +289,13 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             // The confirmation is visible text on the button, so it is part of
             // the button's name (2.5.3): "Quoted John 1:2" is what someone
             // using speech input will say to reach it.
-            aria-label={`${sheet === 'full' ? 'Collapse notes' : 'Expand notes'}${onGrip ? `, ${onGrip}` : ''}`}
+            aria-label={
+              onGrip
+                ? t.layout.gripWithNews(sheet === 'full' ? t.layout.collapseNotes : t.layout.expandNotes, onGrip)
+                : sheet === 'full'
+                  ? t.layout.collapseNotes
+                  : t.layout.expandNotes
+            }
             aria-expanded={sheet !== 'peek'}
             aria-describedby="sheet-hint"
             {...gripDrag}
@@ -307,7 +315,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
           >
             <span className="sheet__handle" aria-hidden="true" />
             <span className="sheet__label">
-              Notes
+              {t.layout.notes}
               {onGrip && (
                 <span className="done sheet__done" data-testid="sheet-done">
                   <span className="done__check" aria-hidden="true">
@@ -319,7 +327,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             </span>
           </button>
           <span id="sheet-hint" className="visually-hidden">
-            Drag, or use the up and down arrow keys, to make the notes taller or shorter.
+            {t.layout.sheetHint}
           </span>
           <div
             className="sheet__body"
@@ -361,7 +369,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
       ref={frame}
       style={{ ['--split' as string]: `${shown * 100}%` }}
     >
-      <main className="pane pane--bible" data-testid="pane-bible" aria-label="Scripture" hidden={maximized === 'notes'}>
+      <main className="pane pane--bible" data-testid="pane-bible" aria-label={t.layout.scripture} hidden={maximized === 'notes'}>
         {bible}
         {/* The notes are maximized away, so the confirmation waits where they
             come back from, with the way back beside it. It takes no focus and
@@ -386,7 +394,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
                 setMaximized('none');
               }}
             >
-              Show notes
+              {t.layout.showNotes}
             </button>
           </div>
         )}
@@ -399,7 +407,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             type="button"
             className="divider__nudge"
             data-testid="divider-narrower"
-            aria-label="Give the notes more room"
+            aria-label={t.layout.notesMoreRoom}
             onClick={() => nudge(-0.1)}
           >
             ◂
@@ -409,11 +417,11 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             data-testid="divider"
             role="separator"
             aria-orientation="vertical"
-            aria-label="Resize panes"
+            aria-label={t.layout.resize}
             aria-valuenow={Math.round(shown * 100)}
             aria-valuemin={Math.round(limits[0] * 100)}
             aria-valuemax={Math.round(limits[1] * 100)}
-            aria-valuetext={`${Math.round(shown * 100)}% Bible, ${Math.round((1 - shown) * 100)}% notes`}
+            aria-valuetext={t.layout.split(Math.round(shown * 100), Math.round((1 - shown) * 100))}
             tabIndex={0}
             {...divider}
             // Keyboard-resizable: a pointer-only divider is unusable without a mouse.
@@ -433,7 +441,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             type="button"
             className="divider__nudge"
             data-testid="divider-wider"
-            aria-label="Give the Bible more room"
+            aria-label={t.layout.bibleMoreRoom}
             onClick={() => nudge(0.1)}
           >
             ▸
@@ -441,7 +449,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
         </div>
       )}
 
-      <aside className="pane pane--notes" data-testid="pane-notes" aria-label="Notes" hidden={maximized === 'bible'}>
+      <aside className="pane pane--notes" data-testid="pane-notes" aria-label={t.layout.notes} hidden={maximized === 'bible'}>
         {notes}
       </aside>
     </div>

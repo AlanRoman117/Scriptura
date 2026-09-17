@@ -11,7 +11,8 @@
  */
 import { get, put, SETTINGS } from './db';
 import { markExported, type Note } from './notes';
-import { boardToMarkdown, type Board, type BoardNode } from './canvas';
+import { boardToMarkdown, type Board, type BoardNode, type CardWords } from './canvas';
+import { enUS } from '../i18n/messages/en-US';
 import { inlineBoardEmbeds } from './markdown';
 import { createZip, safeFilename } from './zip';
 
@@ -36,9 +37,11 @@ function toMarkdown(note: Note, renderBoard?: (id: string) => string | null): st
 export function exportNotes(
   notes: Note[],
   boards: Board[] = [],
-  describe: (node: BoardNode) => string = defaultDescribe,
-  renderBoard?: (id: string) => string | null
+  describe?: (node: BoardNode) => string,
+  renderBoard?: (id: string) => string | null,
+  words: CardWords = enUS.cards
 ): Blob {
+  const name = describe ?? ((node: BoardNode) => defaultDescribe(node, words));
   const seen = new Map<string, number>();
   const unique = (folder: string, title: string, id: string) => {
     const base = safeFilename(title, id);
@@ -55,24 +58,25 @@ export function exportNotes(
     })),
     ...boards.map((board) => ({
       name: unique('boards', board.name, board.id),
-      content: boardToMarkdown(board, describe),
+      content: boardToMarkdown(board, name, words),
     })),
   ]);
 }
 
 /** A card, when the caller has no translation loaded to name it from. */
-function defaultDescribe(node: BoardNode): string {
+function defaultDescribe(node: BoardNode, words: CardWords): string {
   if (node.kind === 'verse') return `${node.book_slug} ${node.chapter}:${node.verse}`;
-  return node.text?.split('\n')[0] || 'Card';
+  return node.text?.split('\n')[0] || words.card;
 }
 
 export async function downloadNotes(
   notes: Note[],
   boards: Board[] = [],
   describe?: (node: BoardNode) => string,
-  renderBoard?: (id: string) => string | null
+  renderBoard?: (id: string) => string | null,
+  words?: CardWords
 ): Promise<void> {
-  const blob = exportNotes(notes, boards, describe, renderBoard);
+  const blob = exportNotes(notes, boards, describe, renderBoard, words);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

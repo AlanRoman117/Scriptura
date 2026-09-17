@@ -2,6 +2,8 @@ import { useId, useRef, useMemo, useState } from 'react';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import type { Bible, SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions } from '../lib/search';
+import { useI18n } from '../i18n';
+import { withSlots } from '../i18n/rich';
 
 interface SearchResultsProps {
   bible: Bible;
@@ -42,6 +44,7 @@ export function SearchResults({
   onInsert,
   onClose,
 }: SearchResultsProps) {
+  const { t } = useI18n();
   const [book, setBook] = useState<string | null>(null);
   const [shown, setShown] = useState(PAGE);
   const wordHint = useId();
@@ -78,25 +81,26 @@ export function SearchResults({
   useReturnFocus(true, '[data-testid="search-input"]');
 
   return (
-    <section ref={root} className="results" id="search-results" data-testid="search-results" aria-label="Search results">
+    <section ref={root} className="results" id="search-results" data-testid="search-results" aria-label={t.results.label}>
       <header className="results__bar">
         <h1 className="results__title">
-          <span data-testid="results-total">{results.length}</span>{' '}
-          {results.length === 1 ? 'match' : 'matches'} for “{query}”
+          {withSlots(t.results.heading(results.length, query), {
+            count: <span data-testid="results-total">{results.length}</span>,
+          })}
         </h1>
         <button
           type="button"
           className="results__close"
           data-testid="results-close"
           onClick={onClose}
-          aria-label="Close search results"
+          aria-label={t.results.close}
         >
           ✕
         </button>
       </header>
 
       <fieldset className="results__options">
-        <legend className="visually-hidden">Matching</legend>
+        <legend className="visually-hidden">{t.search.matching}</legend>
         <label className="search__option">
           <input
             type="checkbox"
@@ -105,9 +109,9 @@ export function SearchResults({
             checked={options.mode === 'word'}
             onChange={(e) => onOptions({ ...options, mode: e.target.checked ? 'word' : 'substring' })}
           />
-          Whole words only
+          {t.search.wholeWords}
           <span id={wordHint} className="visually-hidden">
-            Finds love but not loveth. Off, the search also looks inside longer words.
+            {t.search.wholeWordsHint}
           </span>
         </label>
         <label className="search__option">
@@ -118,21 +122,21 @@ export function SearchResults({
             checked={!!options.caseSensitive}
             onChange={(e) => onOptions({ ...options, caseSensitive: e.target.checked })}
           />
-          Match case
+          {t.search.matchCase}
           <span id={caseHint} className="visually-hidden">
-            Capital letters matter: God and god are different.
+            {t.search.matchCaseHint}
           </span>
         </label>
       </fieldset>
 
-      <div className="results__books" data-testid="results-books" role="group" aria-label="Filter by book">
+      <div className="results__books" data-testid="results-books" role="group" aria-label={t.results.filter}>
         <button
           type="button"
           className="results__book"
           aria-pressed={book === null}
           onClick={() => choose(null)}
         >
-          All books <span className="results__book-count">{results.length}</span>
+          {t.results.allBooks} <span className="results__book-count">{results.length}</span>
         </button>
         {books.map((b) => (
           <button
@@ -156,7 +160,7 @@ export function SearchResults({
                 merely contain the query inside a longer word. */}
             {startsWeakMatches(visible[i - 1], r) && (
               <p className="results__divider" data-testid="results-divider">
-                Below: “{query.trim()}” inside a longer word
+                {t.results.weakBelow(query.trim())}
               </p>
             )}
             <button
@@ -174,8 +178,8 @@ export function SearchResults({
               type="button"
               className="results__insert"
               data-testid={`results-insert-${r.book_slug}-${r.chapter}-${r.verse}`}
-              title="Quote into the open note"
-              aria-label={`Quote ${r.ref} into the open note`}
+              title={t.results.insertTitle}
+              aria-label={t.results.insert(r.ref)}
               onClick={() => onInsert(r)}
             >
               +
@@ -187,8 +191,8 @@ export function SearchResults({
       <p className="results__footer">
         {/* Says what is on screen against what exists, so "showing 100" is
             never mistaken for "there are 100". */}
-        Showing {visible.length} of {filtered.length}
-        {book ? ` in ${books.find((b) => b.slug === book)?.name}` : ''}
+        {t.results.showing(visible.length, filtered.length)}
+        {book ? t.results.inBook(books.find((b) => b.slug === book)?.name ?? book) : ''}
         {visible.length < filtered.length && (
           <>
             {' · '}
@@ -198,7 +202,7 @@ export function SearchResults({
               data-testid="results-more"
               onClick={() => setShown((n) => n + PAGE)}
             >
-              Show {Math.min(PAGE, filtered.length - visible.length)} more
+              {t.results.more(Math.min(PAGE, filtered.length - visible.length))}
             </button>
           </>
         )}

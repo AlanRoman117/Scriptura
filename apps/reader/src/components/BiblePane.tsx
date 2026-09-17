@@ -13,6 +13,7 @@ import {
 } from '../lib/notes';
 import { VerseActions } from './VerseActions';
 import { MaximizeButton } from './PaneControl';
+import { useI18n } from '../i18n';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -68,6 +69,7 @@ export function BiblePane({
   helpOpen = false,
   onToggleHelp,
 }: BiblePaneProps) {
+  const { t } = useI18n();
   const [openVerse, setOpenVerse] = useState<number | null>(null);
   /** Whether the actions were opened from the verse number, which moves focus into them. */
   const [fromNumber, setFromNumber] = useState(false);
@@ -164,10 +166,10 @@ export function BiblePane({
       <header className="reader__bar" ref={bar}>
         {/* A landmark of its own: "where am I, and how do I move" is the first
             thing a screen reader user looks for (2.4.8). */}
-        <nav className="reader__nav" aria-label="Passage">
+        <nav className="reader__nav" aria-label={t.reader.passage}>
           <select
             className="reader__select"
-            aria-label="Book"
+            aria-label={t.reader.book}
             data-testid="book-select"
             value={book.slug}
             onChange={(e) => onNavigate(e.target.value, 1)}
@@ -180,7 +182,7 @@ export function BiblePane({
           </select>
           <select
             className="reader__select reader__select--chapter"
-            aria-label="Chapter"
+            aria-label={t.reader.chapter}
             data-testid="chapter-select"
             value={chapter}
             onChange={(e) => onNavigate(book.slug, Number(e.target.value))}
@@ -205,7 +207,7 @@ export function BiblePane({
           data-testid="library-open"
           aria-expanded={libraryOpen}
           aria-controls="library-panel"
-          aria-label={`${meta.id.toUpperCase()} — ${meta.name}. Choose or add a translation`}
+          aria-label={t.reader.translationChip(meta.id.toUpperCase(), meta.name)}
           onClick={onToggleLibrary}
         >
           {meta.id.toUpperCase()}
@@ -216,10 +218,10 @@ export function BiblePane({
           data-testid="marks-open"
           aria-expanded={marksOpen}
           aria-controls="marks-panel"
-          aria-label={`Marks (${markCount}) — verses you have marked, by colour`}
+          aria-label={t.reader.marksChip(markCount)}
           onClick={onToggleMarks}
         >
-          <span className="reader__chip-label">Marks</span>
+          <span className="reader__chip-label">{t.reader.marks}</span>
           <span className="reader__chip-count" data-empty={markCount === 0 || undefined}>
             {markCount}
           </span>
@@ -230,7 +232,7 @@ export function BiblePane({
           data-testid="settings-open"
           aria-expanded={settingsOpen}
           aria-controls="settings-panel"
-          aria-label="Settings — display, storage, export, and assistant access"
+          aria-label={t.reader.settingsChip}
           onClick={onToggleSettings}
         >
           ⚙
@@ -242,7 +244,7 @@ export function BiblePane({
           data-testid="help-open"
           aria-expanded={helpOpen}
           aria-controls="help-panel"
-          aria-label="Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean"
+          aria-label={t.reader.helpChip}
           onClick={onToggleHelp}
         >
           ?
@@ -316,8 +318,12 @@ export function BiblePane({
                     // is in does not depend on seeing the colour (1.4.1).
                     aria-label={
                       mark
-                        ? `Mark ${book.name} ${chapter}:${v.number} — in ${colorLabel(mark.color, labels)} (${mark.color})`
-                        : `Mark ${book.name} ${chapter}:${v.number}`
+                        ? t.reader.markVerseIn(
+                            `${book.name} ${chapter}:${v.number}`,
+                            colorLabel(mark.color, labels, t.colours),
+                            t.colourWords[mark.color]
+                          )
+                        : t.reader.markVerse(`${book.name} ${chapter}:${v.number}`)
                     }
                     aria-expanded={open}
                     onClick={(e) => {
@@ -365,7 +371,7 @@ export function BiblePane({
             })}
           </div>
         ) : (
-          <p className="empty">This chapter is not in {meta.name}.</p>
+          <p className="empty">{t.reader.chapterMissing(meta.name)}</p>
         )}
       </article>
 
@@ -376,7 +382,7 @@ export function BiblePane({
           {meta.attribution} ·{' '}
           {/* The link's own text says whose source (2.4.9). */}
           <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            {meta.name} source
+            {t.common.source(meta.name)}
           </a>
         </footer>
       )}

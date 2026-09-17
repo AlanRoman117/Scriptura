@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { LineStyle } from '../lib/mdedit';
 import { useRovingTabIndex } from '../lib/focus';
+import { useI18n } from '../i18n';
 
 interface EditorToolbarProps {
   onHeading: (level: number) => void;
@@ -30,6 +31,7 @@ interface EditorToolbarProps {
  * while blurred, and the edit puts focus back in the note.
  */
 export function EditorToolbar({ onHeading, onWrap, onLineStyle, onLink }: EditorToolbarProps) {
+  const { t } = useI18n();
   const bar = useRef<HTMLDivElement>(null);
   useRovingTabIndex(bar, { orientation: 'horizontal' });
 
@@ -38,7 +40,7 @@ export function EditorToolbar({ onHeading, onWrap, onLineStyle, onLink }: Editor
       className="tools"
       data-testid="editor-tools"
       role="toolbar"
-      aria-label="Formatting"
+      aria-label={t.tools.label}
       aria-controls="notes-surface"
       ref={bar}
       onMouseDown={(e) => e.preventDefault()}
@@ -49,34 +51,34 @@ export function EditorToolbar({ onHeading, onWrap, onLineStyle, onLink }: Editor
           type="button"
           className="tools__button"
           data-testid={`tool-h${level}`}
-          aria-label={`Heading ${level}`}
+          aria-label={t.tools.heading(level)}
           onClick={() => onHeading(level)}
         >
-          H{level}
+          {t.tools.headingGlyph(level)}
         </button>
       ))}
       <span className="tools__rule" aria-hidden="true" />
-      <button type="button" className="tools__button tools__button--bold" data-testid="tool-bold" aria-label="Bold" onClick={() => onWrap('**')}>
-        B
+      <button type="button" className="tools__button tools__button--bold" data-testid="tool-bold" aria-label={t.tools.bold} onClick={() => onWrap('**')}>
+        {t.tools.boldGlyph}
       </button>
-      <button type="button" className="tools__button tools__button--italic" data-testid="tool-italic" aria-label="Italic" onClick={() => onWrap('*')}>
-        I
+      <button type="button" className="tools__button tools__button--italic" data-testid="tool-italic" aria-label={t.tools.italic} onClick={() => onWrap('*')}>
+        {t.tools.italicGlyph}
       </button>
-      <button type="button" className="tools__button tools__button--code" data-testid="tool-code" aria-label="Code" onClick={() => onWrap('`')}>
+      <button type="button" className="tools__button tools__button--code" data-testid="tool-code" aria-label={t.tools.code} onClick={() => onWrap('`')}>
         {'</>'}
       </button>
       <span className="tools__rule" aria-hidden="true" />
-      <button type="button" className="tools__button" data-testid="tool-bullet" aria-label="Bulleted list" onClick={() => onLineStyle('bullet')}>
+      <button type="button" className="tools__button" data-testid="tool-bullet" aria-label={t.tools.bullets} onClick={() => onLineStyle('bullet')}>
         ••
       </button>
-      <button type="button" className="tools__button" data-testid="tool-number" aria-label="Numbered list" onClick={() => onLineStyle('number')}>
+      <button type="button" className="tools__button" data-testid="tool-number" aria-label={t.tools.numbers} onClick={() => onLineStyle('number')}>
         1.
       </button>
-      <button type="button" className="tools__button" data-testid="tool-quote" aria-label="Quote" onClick={() => onLineStyle('quote')}>
+      <button type="button" className="tools__button" data-testid="tool-quote" aria-label={t.tools.quote} onClick={() => onLineStyle('quote')}>
         ❝
       </button>
       <span className="tools__rule" aria-hidden="true" />
-      <button type="button" className="tools__button" data-testid="tool-link" aria-label="Link to a passage" onClick={onLink}>
+      <button type="button" className="tools__button" data-testid="tool-link" aria-label={t.tools.link} onClick={onLink}>
         [[ ]]
       </button>
     </div>

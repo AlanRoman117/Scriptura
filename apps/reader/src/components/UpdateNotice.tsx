@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { announce } from '../lib/announce';
 import { flushPending } from '../lib/pending';
+import { useI18n } from '../i18n';
 
 /**
  * A new version is ready — and the reader decides when to switch to it.
@@ -25,11 +26,16 @@ function reloadOnce() {
 }
 
 export function UpdateNotice() {
+  const { t } = useI18n();
+  // The service worker's callback is registered once; it reads the language
+  // current when it fires, not the one current at registration.
+  const words = useRef(t);
+  words.current = t;
   const {
     needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
-    onNeedRefresh: () => announce('A new version of Scriptura is ready. Reload when it suits you.'),
+    onNeedRefresh: () => announce(words.current.update.readyAnnounce),
     onRegisterError: (error) => console.warn('Could not register the service worker:', error),
   });
   const [later, setLater] = useState(false);
@@ -38,8 +44,8 @@ export function UpdateNotice() {
   if (!needRefresh || later) return null;
 
   return (
-    <aside className="update" data-testid="update-notice" aria-label="A new version is ready">
-      <p className="update__text">A new version of Scriptura is ready.</p>
+    <aside className="update" data-testid="update-notice" aria-label={t.update.label}>
+      <p className="update__text">{t.update.ready}</p>
       <div className="update__actions">
         <button
           type="button"
@@ -59,10 +65,10 @@ export function UpdateNotice() {
             await updateServiceWorker(true);
           }}
         >
-          {reloading ? 'Reloading…' : 'Reload'}
+          {reloading ? t.update.reloading : t.update.reload}
         </button>
         <button type="button" className="update__action" data-testid="update-later" onClick={() => setLater(true)}>
-          Later
+          {t.update.later}
         </button>
       </div>
     </aside>

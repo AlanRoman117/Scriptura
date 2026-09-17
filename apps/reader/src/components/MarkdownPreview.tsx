@@ -4,6 +4,8 @@ import { parseMarkdown } from '../lib/markdown';
 import type { Board } from '../lib/canvas';
 import type { Note } from '../lib/notes';
 import { BoardThumbnail } from './BoardThumbnail';
+import { useI18n } from '../i18n';
+import type { Messages } from '../i18n/messages/en-US';
 
 interface MarkdownPreviewProps {
   source: string;
@@ -46,12 +48,13 @@ export function MarkdownPreview({
   onOpenBoard,
   describeLink,
 }: MarkdownPreviewProps) {
+  const { t } = useI18n();
   const blocks = parseMarkdown(source);
 
   if (blocks.length === 0) {
     return (
       <button type="button" className="preview preview--empty" data-testid="notes-preview" onClick={() => onEditAt(0)}>
-        Nothing written yet.
+        {t.preview.empty}
       </button>
     );
   }
@@ -74,7 +77,7 @@ export function MarkdownPreview({
             type="button"
             className="preview__edit"
             data-testid={`preview-edit-${i}`}
-            aria-label={`Edit here (block ${i + 1})`}
+            aria-label={t.preview.editHere(i + 1)}
             onClick={(e) => {
               e.stopPropagation();
               onEditAt(block.offset);
@@ -82,7 +85,7 @@ export function MarkdownPreview({
           >
             ✎
           </button>
-          {renderBlock(block, { bible, notes, boards, onFollowLink, onOpenBoard, describeLink })}
+          {renderBlock(block, { t, bible, notes, boards, onFollowLink, onOpenBoard, describeLink })}
         </div>
       ))}
     </div>
@@ -90,6 +93,7 @@ export function MarkdownPreview({
 }
 
 interface Ctx {
+  t: Messages;
   bible: Bible | null;
   notes: Note[];
   boards: Board[];
@@ -169,7 +173,7 @@ function renderInline(nodes: Inline[], ctx: Ctx) {
             className="preview__link"
             data-testid={`preview-link-${node.target.replace(/[^a-z0-9]+/gi, '-')}`}
             // "Go to Psalms 23:1 (KJV)" rather than the raw target (2.4.9).
-            aria-label={ctx.describeLink?.(node.target) ? `Go to ${ctx.describeLink(node.target)}` : undefined}
+            aria-label={ctx.describeLink?.(node.target) ? ctx.t.preview.goTo(ctx.describeLink(node.target)!) : undefined}
             onClick={() => ctx.onFollowLink(node.target)}
           >
             {node.target}

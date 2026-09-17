@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import { cardSize, describeNode, type Board } from '../lib/canvas';
 import type { Note } from '../lib/notes';
+import { useI18n } from '../i18n';
 
 interface BoardThumbnailProps {
   board: Board | undefined;
@@ -62,6 +63,7 @@ function measure(text: string): number {
 }
 
 export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailProps) {
+  const { t } = useI18n();
   const layout = useMemo(() => {
     if (!board || board.nodes.length === 0) return null;
 
@@ -80,7 +82,7 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
   if (!board) {
     return (
       <p className="embed embed--missing" data-testid="board-embed-missing">
-        A board was embedded here, but it no longer exists.
+        {t.embed.missing}
       </p>
     );
   }
@@ -121,14 +123,14 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
       {layout ? (
         // Focusable, because a wide board scrolls sideways here and a
         // scrolling region the keyboard cannot reach cannot be read (2.1.1).
-        <div className="embed__scroll" tabIndex={0} role="group" aria-label={`Board: ${board.name || 'Untitled board'}, scrolls sideways`}>
+        <div className="embed__scroll" tabIndex={0} role="group" aria-label={t.embed.scrolls(board.name || t.common.untitledBoard)}>
         <svg
           className="embed__canvas"
           viewBox={`0 0 ${layout.w * layout.scale} ${layout.h * layout.scale}`}
           width={layout.w * layout.scale}
           height={layout.h * layout.scale}
           role="img"
-          aria-label={`Board: ${board.name}, ${board.nodes.length} cards`}
+          aria-label={t.embed.picture(board.name, board.nodes.length)}
         >
           <defs>
             <marker id={arrow} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
@@ -142,7 +144,7 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
             return <line key={edge.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} markerEnd={`url(#${arrow})`} />;
           })}
           {board.nodes.map((n) => {
-            const { title } = describeNode(n, { bible, notes });
+            const { title } = describeNode(n, { bible, notes }, t.cards);
             const w = cardSize(n).w * layout.scale;
             const h = cardSize(n).h * layout.scale;
             const clip = `embed-clip-${board.id}-${n.id}`;
@@ -168,11 +170,11 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
         </svg>
         </div>
       ) : (
-        <p className="embed__empty">This board is empty.</p>
+        <p className="embed__empty">{t.embed.empty}</p>
       )}
 
       <figcaption className="embed__caption">
-        {board.name || 'Untitled board'}
+        {board.name || t.common.untitledBoard}
         {onOpen && (
           <>
             {' · '}
@@ -182,7 +184,7 @@ export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailPr
               data-testid={`board-embed-open-${board.id}`}
               onClick={() => onOpen(board.id)}
             >
-              Open board
+              {t.embed.open}
             </button>
           </>
         )}
