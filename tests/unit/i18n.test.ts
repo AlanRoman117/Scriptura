@@ -11,6 +11,7 @@ import {
 } from '../../apps/reader/src/i18n/locales';
 import { bytesFor, formattersFor, numberFor, percentFor, pluralFor } from '../../apps/reader/src/i18n/format';
 import { CATALOGS } from '../../apps/reader/src/i18n/catalogs';
+import { frenchSpacing } from '../../apps/reader/src/i18n/typography';
 
 /**
  * Language tags, formatting and the catalogs.
@@ -140,6 +141,74 @@ function shape(value: unknown, path = ''): string[] {
   if (Array.isArray(value) || typeof value !== 'object' || value === null) return [path];
   return Object.entries(value).flatMap(([k, v]) => shape(v, path ? `${path}.${k}` : k));
 }
+
+/**
+ * Every text a catalog can produce: its strings, and what its functions return
+ * when called with placeholder values. Code spans are dropped; they are
+ * examples to be typed, not prose.
+ */
+function producedText(catalog: unknown): string[] {
+  const out: string[] = [];
+  for (const [, value] of leaves(catalog)) {
+    let produced: unknown = value;
+    if (typeof value === 'function') {
+      try {
+        produced = value('Jean 3:16', 'Tableau', 'X', 'Y');
+      } catch {
+        produced = value({ kind: 'card', label: 'Jean 3:16' }, 'X');
+      }
+    }
+    for (const [, text] of leaves(produced)) {
+      if (typeof text === 'string') out.push(text.replace(/`[^`]*`/g, '``'));
+    }
+  }
+  return out;
+}
+
+/** Where French text lacks the no-break space its punctuation needs. */
+function frenchSpacingProblems(texts: string[]): string[] {
+  const wrong: string[] = [];
+  for (const text of texts) {
+    for (const m of text.matchAll(/([\s\S])([:;!?»])/g)) {
+      const [, before, mark] = m;
+      const at = m.index ?? 0;
+      // A reference or a ratio: 3:16, 7:1.
+      if (mark === ':' && /\d/.test(before) && /\d/.test(text[at + 2] ?? '')) continue;
+      const expected = mark === ':' || mark === '»' ? '\u00a0' : '\u202f';
+      if (before !== expected) wrong.push(`${JSON.stringify(before)} before ${mark} in: ${text}`);
+    }
+    for (const m of text.matchAll(/«([\s\S])/g)) {
+      if (m[1] !== '\u00a0') wrong.push(`${JSON.stringify(m[1])} after « in: ${text}`);
+    }
+  }
+  return wrong;
+}
+
+describe('punctuation follows each language', () => {
+  test('French puts a no-break space before : ; ! ? and inside « »', () => {
+    const texts = producedText(CATALOGS['fr-FR']);
+    expect(texts.length).toBeGreaterThan(300);
+    expect(frenchSpacingProblems(texts)).toEqual([]);
+  });
+
+  test('the French check catches what the spacing step would have fixed', () => {
+    const typed = ['Aide : trouver', 'Confirmer ?', 'Tableau « Étude »', 'Aide:trouver'];
+    expect(frenchSpacingProblems(typed)).toHaveLength(5);
+    expect(frenchSpacingProblems(['Jean 3:16', 'un contraste de 7:1'])).toEqual([]);
+    expect(frenchSpacingProblems(typed.map(frenchSpacing))).toHaveLength(1);
+  });
+
+  test('Japanese uses Japanese punctuation after Japanese text', () => {
+    const japanese = /[\u3040-\u30ff\u3400-\u9fff]/u;
+    const wrong: string[] = [];
+    for (const text of producedText(CATALOGS['ja-JP'])) {
+      for (const m of text.matchAll(/([\s\S])([.,?!:;()])/g)) {
+        if (japanese.test(m[1])) wrong.push(`${m[2]} after ${m[1]} in: ${text}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+});
 
 describe('the catalogs', () => {
   const english = CATALOGS['en-US'];

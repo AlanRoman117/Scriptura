@@ -8,11 +8,12 @@
 import type { Locale } from './locales';
 import { enUS, type Messages } from './messages/en-US';
 import { esMX } from './messages/es-MX';
+import { frFR } from './messages/fr-FR';
+import { jaJP } from './messages/ja-JP';
 
 export const CATALOGS: Record<Locale, Messages> = {
   'en-US': enUS,
-  // Until each catalog lands, its language falls back to English.
   'es-MX': esMX,
-  'fr-FR': enUS,
-  'ja-JP': enUS,
+  'fr-FR': frFR,
+  'ja-JP': jaJP,
 };

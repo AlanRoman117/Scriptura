@@ -148,3 +148,46 @@ test.describe('in Spanish (Mexico)', () => {
     await expect(page.getByTestId('note-title')).toHaveAttribute('placeholder', 'Sin título');
   });
 });
+
+test.describe('in French (France)', () => {
+  test.use({ locale: 'fr-FR' });
+
+  test('a French browser opens in French, with French spacing', async ({ page }) => {
+    await open(page);
+    expect(await lang(page)).toBe('fr-FR');
+    await expect(page.getByTestId('marks-open')).toContainText('Marques');
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Paramètres');
+    await expect(page.getByTestId('announcer')).toHaveText('Panneau Paramètres ouvert');
+    // "Confirmer ?" carries a narrow no-break space, not a plain one.
+    await page.getByTestId('settings-close').click();
+    await page.getByTestId('note-new').click();
+    await page.getByTestId('note-delete').click();
+    await expect(page.getByTestId('note-delete')).toHaveText('Confirmer ?');
+  });
+});
+
+test.describe('in Japanese (Japan)', () => {
+  test.use({ locale: 'ja-JP' });
+
+  test('a Japanese browser opens in Japanese, in Japanese type', async ({ page }) => {
+    await open(page);
+    expect(await lang(page)).toBe('ja-JP');
+    await expect(page.getByTestId('marks-open')).toContainText('マーク');
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('設定');
+    await expect(page.getByTestId('announcer')).toHaveText('設定を開きました');
+
+    const fonts = await page.evaluate(() => ({
+      interface: getComputedStyle(document.body).fontFamily,
+    }));
+    expect(fonts.interface).toMatch(/Hiragino Sans/);
+  });
+
+  test('English scripture inside a Japanese page keeps its Latin type', async ({ page }) => {
+    await open(page);
+    const scripture = await page.locator('[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
+    expect(scripture).toMatch(/Iowan Old Style/);
+    expect(scripture).not.toMatch(/Mincho/);
+  });
+});
