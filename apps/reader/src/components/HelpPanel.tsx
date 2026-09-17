@@ -1,6 +1,8 @@
 import { useRef } from 'react';
 import type { CatalogEntry } from '../lib/library';
 import { useDismissable, useReturnFocus } from '../lib/focus';
+import { feedbackUrl } from '../lib/feedback';
+import { PREVIEW, VERSION } from '../lib/preview';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import type { BookExample } from '../i18n/types';
@@ -25,7 +27,7 @@ interface HelpPanelProps {
  * example never suggests something the open Bible cannot find.
  */
 export function HelpPanel({ catalog, book, onClose }: HelpPanelProps) {
-  const { t, fmt } = useI18n();
+  const { t, fmt, locale } = useI18n();
   const words = t.help;
   const root = useRef<HTMLElement>(null);
   useDismissable(true, onClose, root, { outside: false });
@@ -41,6 +43,27 @@ export function HelpPanel({ catalog, book, onClose }: HelpPanelProps) {
           ✕
         </button>
       </header>
+
+      {/* A preview says first what it is, and keeps the way to report a
+          correction here even after its notice has been hidden. */}
+      {PREVIEW && (
+        <section className="help__section" data-section="preview" data-testid="help-preview">
+          <h2>{t.previewBuild.heading}</h2>
+          <p>{t.previewBuild.about}</p>
+          {VERSION && <p>{t.previewBuild.version(VERSION)}</p>}
+          <p>
+            <a
+              className="preview-notice__link"
+              data-testid="help-feedback"
+              href={feedbackUrl(locale, VERSION)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="preview-notice__words">{t.previewBuild.report}</span>
+            </a>
+          </p>
+        </section>
+      )}
 
       {words.sections(book).map((section) => (
         <section className="help__section" key={section.id} data-section={section.id}>

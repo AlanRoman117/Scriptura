@@ -45,6 +45,7 @@ npx playwright install chromium          # once
 npm run test:reader                      # desktop, emulated phone, and dev server projects
 npx playwright test --project=reader tests/reader/notes.spec.ts   # one spec
 npx playwright test --project=reader-touch                         # just the phone
+npm run test:site                        # the published site, under /Scriptura/, from files alone
 ```
 
 `reader` is Desktop Chrome against a production build; `reader-touch` is the same build under Chromium's Pixel 7 emulation, with touch events and no hover; `reader-dev` checks the dev server boots. Select elements by `data-testid`, never rename an existing one, and wait for the content that proves a change landed rather than for an element to be visible — see *Architecture → Apps* in `CLAUDE.md` for why.
@@ -71,7 +72,7 @@ The reader is held to WCAG 2.2 Level AAA for its interface. The record is [`docs
 
 1. Fork the repo and create a feature branch
 2. Make your changes (Node 24 — see `.nvmrc`)
-3. Run `npm run lint`, `npm test`, and `python3 scripts/validate.py --strict` — and `npm run test:reader` if you touched the reader
+3. Run `npm run lint`, `npm test`, and `python3 scripts/validate.py --strict` — and `npm run test:reader` and `npm run test:site` if you touched the reader
 4. Open a PR with a clear description of what you changed and why
 
 > CI runs all three on every PR. `validate.py --strict` is stricter than CI

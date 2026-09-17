@@ -58,6 +58,13 @@ describe('GET /translations', () => {
     expect(body.length).toBeGreaterThanOrEqual(10);
     expect(body.map((t) => t.id)).toEqual(expect.arrayContaining(['kjv', 'rv1909', 'bungo']));
   });
+
+  test('answers as translations.json too, the name the static tree gives it', async () => {
+    const bare = await get('/translations');
+    const suffixed = await get('/translations.json');
+    expect(suffixed.status).toBe(200);
+    expect(suffixed.body).toEqual(bare.body);
+  });
 });
 
 describe('GET /translations/:id', () => {

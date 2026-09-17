@@ -15,6 +15,7 @@ npm run lint                # also tsc --build — this *is* the type-check
 npm test                    # jest, running as ESM
 npm run test:contract       # HTTP contract tests (Playwright in API mode, no browser)
 npm run test:reader         # the reader PWA in Chromium: projects reader, reader-dev, reader-touch (and every interface language)
+npm run test:site           # the published site, built for /Scriptura/ and served as GitHub Pages serves it
 npm run dev:reader          # reader dev server on :5173
 npm run dev:api             # REST API on :3000
 ```
@@ -42,6 +43,7 @@ Node 24 (`.nvmrc`); use `mise exec node@24 -- <command>` if your default differs
 mise exec node@24 -- npm run lint && mise exec node@24 -- npm test
 mise exec node@24 -- npm run test:contract
 mise exec node@24 -- npm run test:reader
+mise exec node@24 -- npm run test:site
 ```
 
 All three, from a clean checkout. `python3 scripts/validate.py --strict` must also stay at zero warnings, but nothing in a reader brief should touch what it checks.

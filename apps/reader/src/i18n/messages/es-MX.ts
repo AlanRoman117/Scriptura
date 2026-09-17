@@ -440,6 +440,19 @@ export const esMX = {
     later: 'Más tarde',
   },
 
+  previewBuild: {
+    label: 'Versión preliminar',
+    intro: '**Versión preliminar.** Una versión temprana para quienes revisan sus traducciones.',
+    report: 'Reportar una corrección de traducción en GitHub (se abre en una pestaña nueva)',
+    reportShort: 'Reportar una corrección',
+    newTab: '(en GitHub, se abre en una pestaña nueva)',
+    hide: 'Ocultar',
+    heading: 'Acerca de esta versión preliminar',
+    about:
+      'Esta versión es para quienes revisan la interfaz en español, francés y japonés. Nada de lo que hagas aquí se envía a ningún lado: tus notas y marcas se quedan en este navegador. Para reportar una palabra incorrecta o poco clara, usa el enlace de abajo. Abre un formulario breve en GitHub, que requiere una cuenta gratuita.',
+    version: (version: string) => `Versión: ${version}`,
+  },
+
   durability: {
     label: 'Dónde se guardan tus notas',
     denied: 'Este navegador podría borrar tus notas para liberar espacio. Guarda una copia.',

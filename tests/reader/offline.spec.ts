@@ -1,9 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { createServer, type Server } from 'node:http';
-import type { AddressInfo } from 'node:net';
-import { readFile } from 'node:fs/promises';
-import { extname, join } from 'node:path';
+import { join } from 'node:path';
+import { serveStatic, type StaticServer } from '../helpers/static-server';
 
 /**
  * The offline promise.
@@ -63,52 +61,26 @@ test.describe('a new version waits for the reader (2.2.4, 3.2.5)', () => {
    * worker, installs it, and — because the app no longer lets a new worker
    * take the page by itself — leaves it waiting for the reader.
    */
-  // Resolved from the project's test directory: these specs are compiled as
-  // CommonJS, where import.meta does not exist, and __dirname would break the
-  // day the root package becomes ESM.
-  let DIST = '';
-  const TYPES: Record<string, string> = {
-    '.html': 'text/html; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8',
-    '.css': 'text/css; charset=utf-8',
-    '.json': 'application/json',
-    '.webmanifest': 'application/manifest+json',
-    '.svg': 'image/svg+xml',
-    '.png': 'image/png',
-  };
-  let server: Server;
+  let server: StaticServer;
   let origin = '';
   let swSuffix = '';
 
   test.beforeAll(async ({}, testInfo) => {
-    DIST = join(testInfo.project.testDir, '..', '..', 'apps', 'reader', 'dist') + '/';
-    server = createServer(async (req, res) => {
-      const path = decodeURIComponent((req.url ?? '/').split('?')[0]);
-      const file = join(DIST, path === '/' ? 'index.html' : path);
-      try {
-        if (!file.startsWith(DIST)) throw new Error('outside');
-        let body: Buffer | string = await readFile(file);
-        if (path === '/sw.js') body = `${body.toString('utf8')}${swSuffix}`;
-        res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream', 'cache-control': 'no-cache' });
-        res.end(body);
-      } catch {
-        // The app is a single page; anything that is not a file is the app.
-        // /api is not served here, and the reader reads its bundled text.
-        if (path.startsWith('/api/')) {
-          res.writeHead(404).end();
-          return;
-        }
-        res.writeHead(200, { 'content-type': TYPES['.html'], 'cache-control': 'no-cache' });
-        res.end(await readFile(join(DIST, 'index.html')));
-      }
+    server = await serveStatic({
+      // Resolved from the project's test directory: these specs are compiled as
+      // CommonJS, where import.meta does not exist, and __dirname would break
+      // the day the root package becomes ESM.
+      root: join(testInfo.project.testDir, '..', '..', 'apps', 'reader', 'dist'),
+      // The app is a single page; anything that is not a file is the app.
+      // /api is not served here, and the reader reads its bundled text.
+      fallback: 'index',
+      alwaysMissing: (path) => path.startsWith('/api/'),
+      transform: (path, body) => (path === '/sw.js' ? `${body.toString('utf8')}${swSuffix}` : body),
     });
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-    origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+    origin = server.origin;
   });
 
-  test.afterAll(async () => {
-    await new Promise((resolve) => server.close(resolve));
-  });
+  test.afterAll(() => server.close());
 
   test.beforeEach(() => {
     swSuffix = '';

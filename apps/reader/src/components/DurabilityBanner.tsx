@@ -1,4 +1,5 @@
 import { fileSystemAccessSupported } from '../lib/export';
+import { settleFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
 
 export type Persistence = 'persisted' | 'denied' | 'unsupported' | 'unknown';
@@ -71,7 +72,11 @@ export function DurabilityBanner({
         <button
           type="button"
           className="durability__dismiss"
-          onClick={onDismiss}
+          onClick={(e) => {
+            // The notice goes, and would take focus with it (2.4.3).
+            settleFocus(e.currentTarget, { to: ['[data-testid="book-select"]'] });
+            onDismiss();
+          }}
           aria-label={t.durability.dismiss}
         >
           ×

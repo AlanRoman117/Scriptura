@@ -26,6 +26,9 @@ packages/*/lib/
 # ─── Translation review screenshots (npm run review:screens) ───
 review-screenshots/
 
+# ─── The publishable site (npm run build:site) ───
+/site/
+
 # ─── Ingestion download cache (scripts/ingest.py) ───
 # Raw USFX/JSON fetched from eBible, aruljohn, etc. Regenerable — never commit.
 .cache/

@@ -150,7 +150,10 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
     },
   },
   {
-    pattern: /^\/translations$/,
+    // `.json` optional, for the same reason as `full` below: the reader
+    // fetches this list directly, and a static host can only serve it as
+    // `translations.json` — `translations/` is a directory there.
+    pattern: /^\/translations(?:\.json)?$/,
     handler: async () => ok(await listTranslations()),
   },
   {
@@ -165,10 +168,11 @@ const routes: Array<{ pattern: RegExp; handler: RouteHandler }> = [
     // Must precede the book route, which would otherwise read "full.json" as a
     // book name and 404 with a list of valid slugs.
     //
-    // The `.json` suffix is optional, and this is the one route where that
-    // matters: the static tree appends `.json` to every endpoint, and this is
-    // the single URL a browser client fetches directly. Accepting both means
-    // the reader points at a local server or at the CDN with the same string.
+    // The `.json` suffix is optional, and this and the list above are the
+    // routes where that matters: the static tree appends `.json` to every
+    // endpoint, and these are the URLs a browser client fetches directly.
+    // Accepting both means the reader points at a local server or at the CDN
+    // with the same string.
     pattern: /^\/translations\/([^/]+)\/full(?:\.json)?$/,
     handler: async ([id]) => {
       const loaded = await withTranslation(id);

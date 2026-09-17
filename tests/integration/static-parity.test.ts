@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,8 @@ import { clearCache, setDataDir } from '@scriptura/core';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
 const ROUTES = [
+  // The list the reader fetches as translations.json.
+  'translations',
   'translations/tkjv',
   // The offline bundle. It is the payload the reader downloads, so a drift
   // here breaks every installed translation rather than one endpoint.
@@ -37,11 +39,13 @@ const ROUTES = [
 ];
 
 let work: string;
+let dataDir: string;
 let outDir: string;
+const BUILDER = join(REPO, 'scripts', 'build-static-api.mjs');
 
 beforeAll(() => {
   work = mkdtempSync(join(tmpdir(), 'scriptura-parity-'));
-  const dataDir = join(work, 'data');
+  dataDir = join(work, 'data');
   outDir = join(work, 'dist');
 
   // Two tiny books, one English and one Japanese — enough to cover the
@@ -57,15 +61,7 @@ beforeAll(() => {
     }
   }
 
-  execFileSync(
-    process.execPath,
-    [
-      join(REPO, 'scripts', 'build-static-api.mjs'),
-      '--data-dir', dataDir,
-      '--out-dir', outDir,
-    ],
-    { stdio: 'pipe' }
-  );
+  execFileSync(process.execPath, [BUILDER, '--data-dir', dataDir, '--out-dir', outDir], { stdio: 'pipe' });
 
   setDataDir(dataDir);
 });
@@ -83,5 +79,26 @@ describe('static build vs dynamic router', () => {
 
     expect(dynamic.status).toBe(200);
     expect(dynamic.body).toEqual(staticBody);
+  });
+});
+
+/** Every file under `dir`, as a path relative to it. */
+const filesUnder = (dir: string): string[] =>
+  (readdirSync(dir, { recursive: true }) as string[]).filter((f) => statSync(join(dir, f)).isFile()).sort();
+
+describe('--full-only, the files a published reader downloads', () => {
+  test('writes the list and each full.json, byte for byte as the full build does, and nothing else', () => {
+    const lean = join(work, 'lean');
+    execFileSync(process.execPath, [BUILDER, '--data-dir', dataDir, '--out-dir', lean, '--full-only'], { stdio: 'pipe' });
+
+    const files = filesUnder(lean);
+    expect(files).toEqual([
+      'translations.json',
+      join('translations', 'tja', 'full.json'),
+      join('translations', 'tkjv', 'full.json'),
+    ]);
+    for (const file of files) {
+      expect(readFileSync(join(lean, file), 'utf-8')).toBe(readFileSync(join(outDir, file), 'utf-8'));
+    }
   });
 });

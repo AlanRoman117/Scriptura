@@ -72,10 +72,13 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
 - **`tests/reader/bible-offer.spec.ts`:** the offer, download-and-read, "Not now", offline failure, and none in English.
 - **`tests/reader/confirm.spec.ts`:** the delete confirmation asks, names its buttons and reports the deletion in each language.
 - **In the other three languages:** axe in twelve desktop states (`a11y.spec.ts`), and the phone's target, reflow and text-spacing gates in nine states (`gates.spec.ts`), the delete confirmation among them.
+- **`tests/site/preview.spec.ts`:** on the published site, the preview notice and Help's "About this preview" in all four languages. It checks their words, the correction form each links to, axe, 44px targets, and a phone at 320px.
 
 ## Review
 
-Generate the screenshots, then send each reviewer their folder and their catalog file:
+**Reviewers use the preview site: <https://alanroman117.github.io/Scriptura/>.** The site follows the browser's language, or Settings → Language. A notice on every page, and the first section of Help, link to a correction form in the reviewer's language (`.github/ISSUE_TEMPLATE/translation-*.yml`). The form fills in the language and the build. It needs a free GitHub account. A reviewer without one can send notes by any other route, and the corrections are applied the same way.
+
+Screenshots help a reviewer who cannot use the site. Generate them, then send each reviewer their folder and their catalog file:
 
 ```bash
 npm run review:screens     # writes review-screenshots/<language>/<device>-<screen>.png

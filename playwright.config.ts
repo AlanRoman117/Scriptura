@@ -12,6 +12,12 @@ import { defineConfig, devices } from '@playwright/test';
 const PORT = Number(process.env.SCRIPTURA_TEST_PORT ?? 3333);
 const READER_PORT = Number(process.env.SCRIPTURA_READER_PORT ?? 4173);
 const READER_DEV_PORT = Number(process.env.SCRIPTURA_READER_DEV_PORT ?? 5174);
+/**
+ * Set by `npm run test:site`: the `site` project serves its own folder and
+ * needs none of the servers below, which would otherwise be built and started
+ * for nothing.
+ */
+const SITE_ONLY = process.env.SCRIPTURA_SITE_ONLY === '1';
 
 export default defineConfig({
   fullyParallel: true,
@@ -78,6 +84,19 @@ export default defineConfig({
       },
     },
     {
+      // The published site, as GitHub Pages serves it: under /Scriptura/, from
+      // the folder `npm run build:site` assembles, with no API server behind it
+      // — every download is a file. Not part of test:reader; `npm run
+      // test:site` builds the site first, and SITE_URL points the same checks
+      // at the live site instead.
+      name: 'site',
+      testDir: './tests/site',
+      use: {
+        ...devices['Desktop Chrome'],
+        locale: 'en-US',
+      },
+    },
+    {
       // Not a test: screenshots of every main screen in every interface
       // language, desktop and phone, for the people reviewing the
       // translations. Written to review-screenshots/ (gitignored). Run with
@@ -91,7 +110,7 @@ export default defineConfig({
     },
   ],
 
-  webServer: [
+  webServer: SITE_ONLY ? [] : [
     {
       // The compiled server, not tsx — the contract we ship is the built one.
       command: 'npm run build && node examples/node-server/dist/index.js',

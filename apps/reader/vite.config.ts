@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -20,7 +20,32 @@ const proxy = {
   },
 };
 
+/**
+ * Where the app is served from: `/`, except for a site published under a path
+ * — GitHub Pages serves this repository at `/Scriptura/`, and
+ * scripts/build-site.mjs sets it. The bundled Bible, the catalog and the API
+ * all resolve against it (`import.meta.env.BASE_URL`), and so must the
+ * manifest: a `start_url` of `/` would open the account's root site instead.
+ */
+const trimmedBase = (process.env.SCRIPTURA_BASE ?? '').replace(/^\/+|\/+$/g, '');
+const BASE = trimmedBase ? `/${trimmedBase}/` : '/';
+
+/**
+ * A build for the translation reviewers (scripts/build-site.mjs --preview).
+ *
+ * GitHub Pages cannot put a site behind a password, so a preview asks search
+ * engines to leave it out. A meta tag rather than robots.txt: a crawler reads
+ * robots.txt only at the root of the host, and this site lives under a path.
+ */
+const PREVIEW = process.env.VITE_SCRIPTURA_PREVIEW === '1';
+const noindex: Plugin = {
+  name: 'scriptura-preview-noindex',
+  transformIndexHtml: () =>
+    PREVIEW ? [{ tag: 'meta', attrs: { name: 'robots', content: 'noindex, nofollow' }, injectTo: 'head' }] : [],
+};
+
 export default defineConfig({
+  base: BASE,
   // No `optimizeDeps.include` here, and that is the point.
   //
   // The @scriptura/* packages used to emit CommonJS, which `vite build`
@@ -34,6 +59,7 @@ export default defineConfig({
   // production resolve them the same way. `tests/reader-dev/` still guards it.
   plugins: [
     react(),
+    noindex,
     VitePWA({
       // A new build waits until the reader says so (components/UpdateNotice).
       // `autoUpdate` skipped waiting and took the open page the moment a build
@@ -55,6 +81,9 @@ export default defineConfig({
       },
       manifest: {
         name: 'Scriptura Reader',
+        // The manifest's own text is English; tagged the way the app tags it.
+        lang: 'en-US',
+        dir: 'ltr',
         short_name: 'Scriptura',
         description: 'Local-first Bible reading and note-taking.',
         theme_color: '#1a1a1a',
@@ -62,7 +91,8 @@ export default defineConfig({
         display: 'standalone',
         // Stated rather than assumed (1.3.4): nothing here needs a fixed orientation.
         orientation: 'any',
-        start_url: '/',
+        start_url: BASE,
+        scope: BASE,
         icons: [
           { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
           { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },

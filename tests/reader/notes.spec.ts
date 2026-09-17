@@ -442,4 +442,14 @@ test.describe('durability', () => {
       await expect(page.getByTestId('durability-export')).toBeVisible();
     }
   });
+
+  test('putting the notice away moves focus on, not back to the top of the page (2.4.3)', async ({ page }) => {
+    await open(page);
+    const banner = page.getByTestId('durability');
+    test.skip(!(await banner.isVisible()), 'this browser has nothing to warn about');
+    await banner.getByRole('button', { name: 'Dismiss' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(banner).toHaveCount(0);
+    await expect(page.getByTestId('book-select')).toBeFocused();
+  });
 });

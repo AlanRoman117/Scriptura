@@ -50,7 +50,8 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
     merged.set(t.id, { ...t, approxBytes: sizes[t.id] });
   }
 
-  const live = await fetch(`${API_BASE}/translations`)
+  // `.json`, which the live API accepts too: a static host has only the file.
+  const live = await fetch(`${API_BASE}/translations.json`)
     .then((r) => (r.ok ? (r.json() as Promise<TranslationMeta[]>) : null))
     .catch(() => null);
 

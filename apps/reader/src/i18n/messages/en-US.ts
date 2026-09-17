@@ -454,6 +454,21 @@ export const enUS = {
     later: 'Later',
   },
 
+  /** Only in a build for the translation reviewers (scripts/build-site.mjs --preview). */
+  previewBuild: {
+    label: 'Preview',
+    intro: '**Preview.** An early build for the people reviewing its translations.',
+    report: 'Report a translation correction on GitHub (opens in a new tab)',
+    /** The notice's short link; `newTab` completes its name for a screen reader. */
+    reportShort: 'Report a correction',
+    newTab: '(on GitHub, opens in a new tab)',
+    hide: 'Hide',
+    heading: 'About this preview',
+    about:
+      'This build is for the people checking the interface in Spanish, French and Japanese. Nothing you do here is sent anywhere: your notes and marks stay in this browser. To report a word that is wrong or unclear, use the link below. It opens a short form on GitHub, which needs a free account.',
+    version: (version: string) => `Version: ${version}`,
+  },
+
   durability: {
     label: 'Where your notes are kept',
     denied: 'This browser may delete your notes to free up space. Save a copy.',

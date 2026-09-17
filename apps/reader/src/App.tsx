@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { BiblePane } from './components/BiblePane';
 import { NotesPane } from './components/NotesPane';
 import { DurabilityBanner, type Persistence } from './components/DurabilityBanner';
+import { PreviewNotice } from './components/PreviewNotice';
 import { DEFAULT_TRANSLATION, loadTranslation, type LoadStage } from './lib/translation';
 import { requestPersistence, storageEstimate } from './lib/db';
 import {
@@ -1050,6 +1051,7 @@ export function App() {
       <a className="skip" href="#notes" data-testid="skip-notes">
         {words.app.skipToNotes}
       </a>
+      <PreviewNotice />
       {!bannerDismissed && (
         <DurabilityBanner
           persistence={persistence}
