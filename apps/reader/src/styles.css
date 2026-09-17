@@ -293,7 +293,7 @@ summary:focus-visible,
 .results__ref, .results__insert, .library__close, .library__action, .notes__select,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
-.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action {
+.card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -977,6 +977,16 @@ summary:focus-visible,
   border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
 }
 .canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
+/* The board's name, beside the menu that picks it. It gives way before the
+   buttons do, down to a width that still shows a word or two. */
+.canvas__name {
+  flex: 0 1 12rem; min-width: 6rem;
+  font: inherit; font-size: .85rem; color: var(--ink);
+  background-color: var(--paper-raised); border: 1px solid var(--edge);
+  border-radius: 6px; padding: .3rem .5rem;
+}
+.canvas__name::placeholder { color: var(--ink-soft); opacity: 1; }
+.canvas__name:hover { border-color: var(--ink-soft); }
 .canvas__action {
   font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
   background-color: var(--paper-raised); border: 1px solid var(--edge);

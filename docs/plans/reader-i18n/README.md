@@ -28,7 +28,7 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
 | Catalogs | `apps/reader/src/i18n/messages/*.ts` | Every string the interface shows or speaks. English is the source; the other three `satisfies Messages`, so a missing key fails the build. Numbers and names go in through functions, so each language keeps its own word order. |
 | Formatting | `apps/reader/src/i18n/format.ts` | Plurals, numbers, percentages, sizes, lists and language names, through `Intl` and bound to the locale. |
 | Markup | `apps/reader/src/i18n/rich.tsx` | `` `code` ``, `**bold**`, `*italic*` and `{{Key}}` inside catalog text, turned into elements, never HTML. `withSlots` places an element, such as a count, where each language wants it. |
-| French spacing | `apps/reader/src/i18n/typography.ts` | The French catalog is written with ordinary spaces. This step adds the no-break space before `:` and inside « », and the narrow one before `; ! ?`. |
+| French spacing | `apps/reader/src/i18n/typography.ts` | The French catalog is written with ordinary spaces. This step adds the no-break space before `:` and inside « », and the narrow one before `; ! ?`. It leaves alone what a message quotes: a note or board name keeps the spacing its author typed. |
 | Preference | `apps/reader/src/lib/prefs.ts`, `index.html` | `language` is `system` or a tag. The inline script sets `lang` before first paint; `I18nRoot` keeps it current and announces a change in the new language. |
 | The offer | `apps/reader/src/lib/offer.ts`, `components/BibleOffer.tsx` | Bibles in the interface language, with size, "Download and read", "All translations" and "Not now". "Not now" is remembered per language in `localStorage`. |
 | Type | `apps/reader/src/styles.css` | `:lang(ja)` switches to the system's Japanese faces; text in another language inside it goes back to the Latin stacks. |
@@ -54,7 +54,7 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
   - matching;
   - plurals and grouping per language;
   - catalog parity and no empty strings;
-  - French spacing, checked on everything the catalog can produce, with planted slips;
+  - French spacing, checked on everything the catalog can produce, with planted slips, and shown to leave quoted names as they were;
   - Japanese punctuation;
   - help examples.
 - **`tests/unit/i18n-strings.test.ts`:** no English written into a component, with planted slips.

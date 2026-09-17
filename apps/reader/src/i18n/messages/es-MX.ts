@@ -86,7 +86,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Tableros',
     blocks: [
       {
-        p: 'Un tablero acomoda versículos y notas como tarjetas que puedes mover y unir con flechas. **Al tablero**, junto a un versículo, lo pone en el tablero actual. Las tarjetas guardan una referencia, no una copia del texto, así que muestran la traducción que estás leyendo.',
+        p: 'Un tablero acomoda versículos y notas como tarjetas que puedes mover y unir con flechas. **Al tablero**, junto a un versículo, lo pone en el tablero actual. Las tarjetas guardan una referencia, no una copia del texto, así que muestran la traducción que estás leyendo. Ponle nombre a un tablero en el cuadro junto al menú de tableros.',
       },
       {
         p: 'Para mover o cambiar el tamaño de una tarjeta sin arrastrar, usa su botón **✥**; para darle color, su botón de color. Los botones de flecha junto al zoom mueven la vista. **Conexiones**, en la barra del tablero, describe cada flecha con palabras y permite quitarla. Quitar una tarjeta pide confirmación, y puedes deshacer la eliminación de una tarjeta o una conexión hasta que cambies otra cosa.',
@@ -553,6 +553,7 @@ export const esMX = {
     heading: (board: string) => `Tablero: ${board}`,
     noneOpenHeading: 'ninguno abierto',
     picker: 'Tablero',
+    name: 'Nombre del tablero',
     none: 'Todavía no hay tableros',
     undo: (what: Removed) =>
       `Deshacer: volver a poner ${what.kind === 'card' ? what.label : `la conexión ${what.label}`}`,
