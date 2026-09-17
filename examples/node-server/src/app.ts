@@ -2,6 +2,9 @@ import express from 'express';
 import type { Express, Request, Response } from 'express';
 import { createRouter } from '@scriptura/api';
 
+/** Anything from a request that is written to a log, made safe to print. */
+const sanitize = (value: string): string => value.replace(/[\p{Cc}\p{Cf}]/gu, ' ').slice(0, 200);
+
 /** Methods a read-only scripture API answers. */
 const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS'] as const;
 const ALLOW_HEADER = ALLOWED_METHODS.join(', ');
@@ -11,10 +14,18 @@ const ALLOW_HEADER = ALLOWED_METHODS.join(', ');
  * router's `Record<string, string>` is a lie unless we actually flatten it.
  * Repeated params (`?q=a&q=b`) collapse to the last value; anything nested is
  * dropped rather than stringified into "[object Object]".
+ *
+ * ⚠️ **The names are the client's**, so the object they are written to has no
+ * prototype: `?__proto__[x]=1` on a plain `{}` writes through to every object
+ * in the process (CodeQL js/remote-property-injection). A null-prototype
+ * object has nothing to write through to, and the router only ever reads
+ * known keys from it.
  */
 function flattenQuery(req: Request): Record<string, string> {
-  const out: Record<string, string> = {};
+  const out: Record<string, string> = Object.create(null);
   for (const [key, value] of Object.entries(req.query)) {
+    // Belt and braces, and clearer than trusting the prototype alone.
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
     if (typeof value === 'string') {
       out[key] = value;
     } else if (Array.isArray(value)) {
@@ -91,7 +102,11 @@ export function createApp(): Express {
     } catch (err) {
       // Without this an unexpected throw inside a handler leaves the socket open
       // until the client times out.
-      console.error(`${req.method} ${req.path} failed:`, err);
+      // The method and path are the client's: they go in as arguments, not as
+      // the format itself, and control characters are stripped. A "%s" in a
+      // request path must not consume the error, and a newline must not write
+      // a line of its own (CodeQL js/tainted-format-string, js/log-injection).
+      console.error('%s %s failed:', sanitize(req.method), sanitize(req.path), err);
       res.setHeader('Cache-Control', 'no-store');
       res.status(500).json({ error: 'Internal server error' });
     }

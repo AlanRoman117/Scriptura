@@ -1,4 +1,4 @@
-import { foldText, normalizeBookKey, slugFromFilename } from '@scriptura/core';
+import { foldText, normalizeBookKey, parseReference, slugFromFilename } from '@scriptura/core';
 
 describe('slugFromFilename', () => {
   test('strips the numeric prefix and extension', () => {
@@ -83,5 +83,52 @@ describe('foldText', () => {
   test('handles empty and whitespace input', () => {
     expect(foldText('')).toBe('');
     expect(foldText('   ')).toBe('   ');
+  });
+});
+
+describe('parseReference', () => {
+  test('reads a chapter, a verse and a range', () => {
+    expect(parseReference('John 3')).toEqual({ book: 'John', chapter: 3 });
+    expect(parseReference('John 3:16')).toEqual({ book: 'John', chapter: 3, verse: 16 });
+    expect(parseReference('John 3:16-18')).toEqual({ book: 'John', chapter: 3, verse: 16, endVerse: 18 });
+    expect(parseReference('John 3:16 - 18')).toEqual({ book: 'John', chapter: 3, verse: 16, endVerse: 18 });
+  });
+
+  test('keeps the whole name, including numbers and spaces inside it', () => {
+    expect(parseReference('1 Samuel 2:3')).toEqual({ book: '1 Samuel', chapter: 2, verse: 3 });
+    expect(parseReference('  Song of Solomon   2:1  ')).toEqual({ book: 'Song of Solomon', chapter: 2, verse: 1 });
+    // Localized names and slugs are resolved later, against a translation.
+    expect(parseReference('ヨハネによる福音書 3:16')).toEqual({ book: 'ヨハネによる福音書', chapter: 3, verse: 16 });
+    expect(parseReference('1-samuel 2')).toEqual({ book: '1-samuel', chapter: 2 });
+  });
+
+  test('takes the last number as the chapter, as it always did', () => {
+    expect(parseReference('Genesis 1 2')).toEqual({ book: 'Genesis 1', chapter: 2 });
+  });
+
+  test('refuses what is not a reference', () => {
+    for (const input of ['', '   ', 'John', '3:16', 'John3:16', '3', ':16']) {
+      expect(parseReference(input)).toBeNull();
+    }
+  });
+
+  test('leaves a name it cannot judge to the translation, as it always did', () => {
+    // Whether "John chapter" is a book is not a question of grammar: only a
+    // loaded translation knows its names, slugs and abbreviations.
+    expect(parseReference('John chapter 3')).toEqual({ book: 'John chapter', chapter: 3 });
+  });
+
+  /**
+   * The grammar used to be one expression where the name and the space before
+   * the chapter could both match a space, so a long run of them was quadratic:
+   * "a" and 50,000 spaces took 1.85s here, and `/compare?ref=` takes this
+   * string straight from a query. It is now two steps, and the same input is
+   * immediate.
+   */
+  test('fails immediately on a long run of spaces (js/polynomial-redos)', () => {
+    const started = performance.now();
+    expect(parseReference(`a${' '.repeat(50_000)}`)).toBeNull();
+    expect(parseReference(`${'a '.repeat(20_000)}3:16`)).not.toBeNull();
+    expect(performance.now() - started).toBeLessThan(100);
   });
 });
