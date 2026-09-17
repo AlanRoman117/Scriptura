@@ -2,35 +2,59 @@ import express from 'express';
 import type { Express, Request, Response } from 'express';
 import { createRouter } from '@scriptura/api';
 
-/** Anything from a request that is written to a log, made safe to print. */
-const sanitize = (value: string): string => value.replace(/[\p{Cc}\p{Cf}]/gu, ' ').slice(0, 200);
+/**
+ * Anything from a request that is written to a log, made safe to print.
+ *
+ * Line breaks first and by name: a newline in a request path would otherwise
+ * write a log line of its own, one that looks as trustworthy as ours
+ * (CodeQL js/log-injection). The rest of the control and format characters go
+ * too, and the result is cut short.
+ */
+const sanitize = (value: string): string =>
+  value.replace(/[\r\n]/g, ' ').replace(/[\p{Cc}\p{Cf}]/gu, ' ').slice(0, 200);
 
 /** Methods a read-only scripture API answers. */
 const ALLOWED_METHODS = ['GET', 'HEAD', 'OPTIONS'] as const;
 const ALLOW_HEADER = ALLOWED_METHODS.join(', ');
 
 /**
+ * Every query parameter the API defines (packages/api/src/router.ts).
+ *
+ * ⚠️ **The names in a query string are the client's**, and a name is what
+ * this adapter writes a property under: `?__proto__[x]=1` written to a plain
+ * object reaches every object in the process (CodeQL
+ * js/remote-property-injection). Express's parser drops those particular
+ * names, but the adapter should not depend on that, and the router reads
+ * nothing else anyway. A route that takes a new parameter adds it here.
+ */
+const QUERY_PARAMS = [
+  'q',
+  'translation',
+  'translations',
+  'limit',
+  'offset',
+  'mode',
+  'match_case',
+  'ref',
+  'book',
+  'chapter',
+] as const;
+
+/**
  * Express types `req.query` values as `string | string[] | ParsedQs`, so the
  * router's `Record<string, string>` is a lie unless we actually flatten it.
  * Repeated params (`?q=a&q=b`) collapse to the last value; anything nested is
  * dropped rather than stringified into "[object Object]".
- *
- * ⚠️ **The names are the client's**, so the object they are written to has no
- * prototype: `?__proto__[x]=1` on a plain `{}` writes through to every object
- * in the process (CodeQL js/remote-property-injection). A null-prototype
- * object has nothing to write through to, and the router only ever reads
- * known keys from it.
  */
 function flattenQuery(req: Request): Record<string, string> {
-  const out: Record<string, string> = Object.create(null);
-  for (const [key, value] of Object.entries(req.query)) {
-    // Belt and braces, and clearer than trusting the prototype alone.
-    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
+  const out: Record<string, string> = {};
+  for (const name of QUERY_PARAMS) {
+    const value = req.query[name];
     if (typeof value === 'string') {
-      out[key] = value;
+      out[name] = value;
     } else if (Array.isArray(value)) {
       const last = value[value.length - 1];
-      if (typeof last === 'string') out[key] = last;
+      if (typeof last === 'string') out[name] = last;
     }
   }
   return out;
