@@ -115,11 +115,22 @@ test('the grip is a full-width, finger-sized target clear of the bottom edge, an
   // The published height is the sheet's real height, and the pane leaves that
   // much room below the last verse.
   await page.getByRole('button', { name: /expand notes/i }).tap();
-  const sheetBox = (await page.getByTestId('pane-notes').boundingBox())!;
-  const published = await page.evaluate(() =>
-    parseFloat(document.documentElement.style.getPropertyValue('--sheet-h'))
-  );
-  expect(Math.abs(published - sheetBox.height)).toBeLessThan(2);
+  const sheet = page.getByTestId('pane-notes');
+  await expect(sheet).toHaveAttribute('data-sheet', 'half');
+  // The sheet animates open (.22s) and the published height follows it frame
+  // by frame, so the two are compared in one read, until it settles. Read in
+  // two round trips mid-transition, they were a frame apart: 23px on a busy
+  // CI runner.
+  await expect
+    .poll(() =>
+      sheet.evaluate((el) =>
+        Math.abs(
+          parseFloat(document.documentElement.style.getPropertyValue('--sheet-h')) - el.getBoundingClientRect().height
+        )
+      )
+    )
+    .toBeLessThan(2);
+  const sheetBox = (await sheet.boundingBox())!;
 
   const pane = page.getByTestId('pane-bible');
   await pane.evaluate((el) => el.scrollTo(0, el.scrollHeight));
