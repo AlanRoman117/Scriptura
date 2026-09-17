@@ -19,7 +19,8 @@ async function open(page: Page) {
 }
 
 const expandSheet = async (page: Page) => {
-  await page.getByRole('button', { name: /expand notes/i }).tap();
+  // By test id: the grip's name is in the interface language.
+  await page.getByTestId('sheet-grip').tap();
   await expect(page.getByTestId('pane-notes')).toHaveAttribute('data-sheet', 'half');
 };
 
@@ -153,46 +154,47 @@ test.describe('reflow at 320 CSS px (1.4.10)', () => {
   }
 });
 
+/**
+ * The criterion's own numbers, applied the way a reader's stylesheet or a
+ * bookmarklet would: line height 1.5, paragraph spacing 2, letter spacing
+ * 0.12 and word spacing 0.16 — all times the font size, and all important.
+ */
+const SPACING = `
+  * { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }
+  p, li, dd, blockquote { margin-bottom: 2em !important; }
+`;
+
+/**
+ * Text cut off by its own box: an element that clips (overflow hidden or
+ * clip) whose content is now larger than it. Truncation that is part of the
+ * design and whose full text is one action away is listed with its reason.
+ */
+const TRUNCATES_BY_DESIGN = [
+  '.search__result-text', // two-line preview; the result opens the whole verse
+  '.marks__ref-text', // two-line preview; the mark opens the whole verse
+  '.notes__heading', // one-line reminder of the heading the caret is under
+  '.reader__select', // native select; its options list shows the full name
+  '.notes__select', // native select; its options list shows the full title
+];
+
+const clipped = (page: Page) =>
+  page.evaluate((exempt) => {
+    const out: string[] = [];
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
+      if (!el.checkVisibility()) continue;
+      if (exempt.some((s) => el.matches(s))) continue;
+      const style = getComputedStyle(el);
+      const clips = /hidden|clip/.test(style.overflowX + style.overflowY);
+      if (!clips || !el.textContent?.trim()) continue;
+      if (el.matches('.visually-hidden, .pane, .sheet, .sheet__body, .canvas__frame, html, body, #root')) continue;
+      const over = Math.max(el.scrollWidth - el.clientWidth, el.scrollHeight - el.clientHeight);
+      if (over > 2) out.push(`${el.tagName.toLowerCase()}.${el.className} clips ${over}px: ${el.textContent.trim().slice(0, 40)}`);
+    }
+    return out;
+  }, TRUNCATES_BY_DESIGN);
+
+
 test.describe('text spacing (1.4.12)', () => {
-  /**
-   * The criterion's own numbers, applied the way a reader's stylesheet or a
-   * bookmarklet would: line height 1.5, paragraph spacing 2, letter spacing
-   * 0.12 and word spacing 0.16 — all times the font size, and all important.
-   */
-  const SPACING = `
-    * { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }
-    p, li, dd, blockquote { margin-bottom: 2em !important; }
-  `;
-
-  /**
-   * Text cut off by its own box: an element that clips (overflow hidden or
-   * clip) whose content is now larger than it. Truncation that is part of the
-   * design and whose full text is one action away is listed with its reason.
-   */
-  const TRUNCATES_BY_DESIGN = [
-    '.search__result-text', // two-line preview; the result opens the whole verse
-    '.marks__ref-text', // two-line preview; the mark opens the whole verse
-    '.notes__heading', // one-line reminder of the heading the caret is under
-    '.reader__select', // native select; its options list shows the full name
-    '.notes__select', // native select; its options list shows the full title
-  ];
-
-  const clipped = (page: Page) =>
-    page.evaluate((exempt) => {
-      const out: string[] = [];
-      for (const el of Array.from(document.querySelectorAll<HTMLElement>('body *'))) {
-        if (!el.checkVisibility()) continue;
-        if (exempt.some((s) => el.matches(s))) continue;
-        const style = getComputedStyle(el);
-        const clips = /hidden|clip/.test(style.overflowX + style.overflowY);
-        if (!clips || !el.textContent?.trim()) continue;
-        if (el.matches('.visually-hidden, .pane, .sheet, .sheet__body, .canvas__frame, html, body, #root')) continue;
-        const over = Math.max(el.scrollWidth - el.clientWidth, el.scrollHeight - el.clientHeight);
-        if (over > 2) out.push(`${el.tagName.toLowerCase()}.${el.className} clips ${over}px: ${el.textContent.trim().slice(0, 40)}`);
-      }
-      return out;
-    }, TRUNCATES_BY_DESIGN);
-
   test('a box that clips its text is caught', async ({ page }) => {
     await open(page);
     expect(await clipped(page)).toEqual([]);
@@ -215,3 +217,43 @@ test.describe('text spacing (1.4.12)', () => {
     });
   }
 });
+
+/**
+ * The same gates in the other interface languages. Spanish and French run
+ * longer than English and Japanese sets differently, so a control that fits
+ * in English can wrap, clip or shrink in another language. In these states
+ * the reading view also carries the offer of Bibles in the language.
+ */
+const TEXT_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'help', 'library', 'board', 'results'];
+
+for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
+  test.describe(`in ${locale}`, () => {
+    test.use({ locale });
+
+    for (const name of TEXT_HEAVY) {
+      const arrange = STATES[name];
+
+      test(`${name}: 44px targets`, async ({ page }) => {
+        await open(page);
+        await arrange(page);
+        const small = await tooSmall(page);
+        expect(small, describeSmall(small)).toEqual([]);
+      });
+
+      test(`${name}: reflow at 320px`, async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 640 });
+        await open(page);
+        await arrange(page);
+        expect(await sidewaysOverflow(page)).toEqual([]);
+      });
+
+      test(`${name}: text spacing`, async ({ page }) => {
+        await open(page);
+        await arrange(page);
+        await page.addStyleTag({ content: SPACING });
+        expect(await sidewaysOverflow(page)).toEqual([]);
+        expect(await clipped(page)).toEqual([]);
+      });
+    }
+  });
+}

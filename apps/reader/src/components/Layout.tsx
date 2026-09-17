@@ -286,6 +286,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             ref={gripEl}
             type="button"
             className="sheet__grip"
+            data-testid="sheet-grip"
             // The confirmation is visible text on the button, so it is part of
             // the button's name (2.5.3): "Quoted John 1:2" is what someone
             // using speech input will say to reach it.

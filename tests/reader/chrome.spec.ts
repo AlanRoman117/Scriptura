@@ -260,7 +260,11 @@ test.describe('the divider, and each pane\'s own controls', () => {
     }
   });
 
-  test('the notes bar wraps whole buttons rather than squeezing one past its label', async ({ page }) => {
+  for (const locale of ['en-US', 'es-MX', 'fr-FR', 'ja-JP'] as const) {
+  test(`the notes bar wraps whole buttons rather than squeezing one past its label (${locale})`, async ({ page }) => {
+    await page.addInitScript((language) => {
+      localStorage.setItem('scriptura-display', JSON.stringify({ language }));
+    }, locale);
     await open(page);
     await page.getByTestId('note-new').click();
     const check = async (when: string) => {
@@ -284,7 +288,8 @@ test.describe('the divider, and each pane\'s own controls', () => {
     // Armed, Delete grows a Cancel beside it.
     await page.setViewportSize({ width: 1280, height: 720 });
     await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('note-delete')).toContainText('Sure?');
+    await expect(page.getByTestId('note-delete-cancel')).toBeVisible();
     await check('with Delete armed');
   });
+  }
 });
