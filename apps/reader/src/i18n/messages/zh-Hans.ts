@@ -350,7 +350,7 @@ export const zhHans = {
     compared: '对照中的译本',
     stop: (id: string) => `停止对照${id}`,
     verse: '节',
-    verseBefore: '第 ',
+    verseBefore: '节 ',
     missing: (id: string) => `${id}中没有`,
     quote: (id: string, verse: number) => `引用${id}第${verse}节`,
   },

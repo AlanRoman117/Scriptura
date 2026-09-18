@@ -348,7 +348,7 @@ export const zhHant = {
     compared: '對照中的譯本',
     stop: (id: string) => `停止對照${id}`,
     verse: '節',
-    verseBefore: '第 ',
+    verseBefore: '節 ',
     missing: (id: string) => `${id}中沒有`,
     quote: (id: string, verse: number) => `引用${id}第${verse}節`,
   },
