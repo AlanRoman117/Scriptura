@@ -334,6 +334,7 @@ export const enUS = {
     about: (size: string) => `about ${size}`,
     licences: {
       'public-domain': 'Public domain',
+      'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
       'custom-free': 'Free licence',
@@ -465,7 +466,7 @@ export const enUS = {
     hide: 'Hide',
     heading: 'About this preview',
     about:
-      'This build is for the people checking the interface in Spanish, French and Japanese. Nothing you do here is sent anywhere: your notes and marks stay in this browser. To report a word that is wrong or unclear, use the link below. It opens a short form on GitHub, which needs a free account.',
+      'This build is for the people checking the interface in Spanish, French, Japanese, Chinese and Portuguese. Nothing you do here is sent anywhere: your notes and marks stay in this browser. To report a word that is wrong or unclear, use the link below. It opens a short form on GitHub, which needs a free account.',
     version: (version: string) => `Version: ${version}`,
   },
 

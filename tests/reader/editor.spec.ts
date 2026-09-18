@@ -280,10 +280,14 @@ test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
 
     await expect(surface).toHaveValue('the **Word**');
     await expect(surface).toBeFocused();
-    const picked = await surface.evaluate((el: HTMLTextAreaElement) =>
-      el.value.slice(el.selectionStart, el.selectionEnd)
-    );
-    expect(picked).toBe('Word');
+    // Polled, not sampled once: the selection is restored on the render that
+    // carries the edited text, which is not always the render that shows it —
+    // an unrelated update can commit in between (see NotesPane's caret effect).
+    await expect
+      .poll(() =>
+        surface.evaluate((el: HTMLTextAreaElement) => el.value.slice(el.selectionStart, el.selectionEnd))
+      )
+      .toBe('Word');
   });
 
   test('the tools stay while focus moves between them, the note and beyond', async ({ page }) => {

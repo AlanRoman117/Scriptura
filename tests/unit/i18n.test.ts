@@ -24,11 +24,31 @@ import { frenchSpacing, withFrenchSpacing } from '../../apps/reader/src/i18n/typ
  * rather than refusing it.
  */
 
-/** Registry records, File-Date 2025-08-25: Type, Subtag, Description. */
+/** Registry records, File-Date 2026-09-17: Type, Subtag, Description. */
 const REGISTRY = {
-  language: { en: 'English', es: 'Spanish; Castilian', fr: 'French', ja: 'Japanese' },
-  region: { US: 'United States', MX: 'Mexico', FR: 'France', JP: 'Japan' },
+  language: {
+    en: 'English',
+    es: 'Spanish; Castilian',
+    fr: 'French',
+    ja: 'Japanese',
+    pt: 'Portuguese',
+    zh: 'Chinese',
+  },
+  // A Bible's tag says which script it is written in where that is the whole
+  // difference: one Chinese translation, two character sets.
+  script: { Hans: 'Han (Simplified variant)', Hant: 'Han (Traditional variant)' },
+  region: { US: 'United States', MX: 'Mexico', FR: 'France', JP: 'Japan', BR: 'Brazil' },
 } as const;
+
+/**
+ * Bible languages with no interface yet, named rather than assumed.
+ *
+ * The rule is that the two sets match, so neither can drift unnoticed. A
+ * language arrives here when its Bible lands and its catalog has not been
+ * written; it leaves when the catalog does. A stale entry fails the test
+ * below, so the list cannot be forgotten.
+ */
+const INTERFACE_PENDING = new Set<string>();
 
 const DATA = fileURLToPath(new URL('../../data/', import.meta.url));
 const metadataLanguages = readdirSync(DATA, { withFileTypes: true })
@@ -40,18 +60,39 @@ describe('language tags', () => {
     expect(Intl.getCanonicalLocales(tag)).toEqual([tag]);
     const locale = new Intl.Locale(tag);
     expect(Object.keys(REGISTRY.language)).toContain(locale.language);
-    expect(Object.keys(REGISTRY.region)).toContain(locale.region);
+    // Every interface tag carries the subtag that decides its words: a region,
+    // or for Chinese a script, since Simplified and Traditional each span
+    // several regions.
+    expect(locale.script ?? locale.region).toBeDefined();
+    if (locale.script) expect(Object.keys(REGISTRY.script)).toContain(locale.script);
+    if (locale.region) expect(Object.keys(REGISTRY.region)).toContain(locale.region);
   });
 
-  test.each(metadataLanguages)('%s is tagged %s, a canonical registry language', (_id, tag) => {
+  test.each(metadataLanguages)('%s is tagged %s, built from registry subtags', (_id, tag) => {
     expect(Intl.getCanonicalLocales(tag)).toEqual([tag]);
-    expect(Object.keys(REGISTRY.language)).toContain(tag);
+    // A Bible's tag may carry a script (zh-Hans) or a region (pt-BR): both are
+    // what the text is, and both are what a screen reader reads it as.
+    const locale = new Intl.Locale(tag);
+    expect(Object.keys(REGISTRY.language)).toContain(locale.language);
+    if (locale.script) expect(Object.keys(REGISTRY.script)).toContain(locale.script);
+    if (locale.region) expect(Object.keys(REGISTRY.region)).toContain(locale.region);
   });
 
-  test('every Bible language has an interface, and every interface a Bible', () => {
-    const bibles = new Set(metadataLanguages.map(([, tag]) => tag));
-    expect(new Set(Object.keys(LANGUAGE_TO_LOCALE))).toEqual(bibles);
-    expect(new Set(LOCALES.map(primaryLanguage))).toEqual(bibles);
+  test('every interface has a Bible, and every Bible an interface or a place in the pending list', () => {
+    const bibles = new Set(metadataLanguages.map(([, tag]) => primaryLanguage(tag)));
+    const interfaces = new Set(LOCALES.map(primaryLanguage));
+
+    expect(new Set(Object.keys(LANGUAGE_TO_LOCALE))).toEqual(interfaces);
+    for (const language of interfaces) expect(bibles).toContain(language);
+    for (const language of bibles) {
+      expect(interfaces.has(language) || INTERFACE_PENDING.has(language)).toBe(true);
+    }
+    // Nothing waits for an interface it already has, or for a Bible that is
+    // not here.
+    for (const language of INTERFACE_PENDING) {
+      expect(interfaces).not.toContain(language);
+      expect(bibles).toContain(language);
+    }
   });
 
   test('every language has its own label', () => {
@@ -70,7 +111,22 @@ describe('matchLocale', () => {
     [['de-DE', 'fr-CA'], 'fr-FR'],
     [['de-DE', 'en-GB', 'es-MX'], 'en-US'],
     [['de-DE'], 'en-US'],
-    [['PT_br'], 'en-US'],
+    [['PT_br'], 'pt-BR'],
+    [['pt-PT'], 'pt-BR'],
+    // Chinese by script: named, implied by a region, or neither.
+    [['zh'], 'zh-Hans'],
+    [['zh-CN'], 'zh-Hans'],
+    [['zh-SG'], 'zh-Hans'],
+    [['zh-Hans-CN'], 'zh-Hans'],
+    [['zh-TW'], 'zh-Hant'],
+    [['zh-HK'], 'zh-Hant'],
+    [['zh-MO'], 'zh-Hant'],
+    [['zh-Hant'], 'zh-Hant'],
+    [['ZH-hant-tw'], 'zh-Hant'],
+    // What Internet Explorer taught Windows to send.
+    [['zh-CHT'], 'zh-Hant'],
+    [['zh-CHS'], 'zh-Hans'],
+    [['de-DE', 'zh-TW'], 'zh-Hant'],
     [[], 'en-US'],
   ] as [string[], string][])('%j → %s', (languages, expected) => {
     expect(matchLocale(languages)).toBe(expected);
@@ -90,6 +146,11 @@ describe('formatting follows the language', () => {
     ['es-MX', ['other', 'one', 'other', 'many']],
     ['fr-FR', ['one', 'one', 'other', 'many']],
     ['ja-JP', ['other', 'other', 'other', 'other']],
+    // Portuguese counts 0 as singular, as French does: «0 nota».
+    ['pt-BR', ['one', 'one', 'other', 'many']],
+    // Chinese counts with measure words and has one form, like Japanese.
+    ['zh-Hans', ['other', 'other', 'other', 'other']],
+    ['zh-Hant', ['other', 'other', 'other', 'other']],
   ] as const)('%s plurals for 0, 1, 2 and 1,000,000', (locale, expected) => {
     const plural = pluralFor(locale);
     expect([0, 1, 2, 1_000_000].map((n) => plural(n, forms))).toEqual(expected);
@@ -104,6 +165,9 @@ describe('formatting follows the language', () => {
     ['es-MX', '28,123'],
     ['fr-FR', '28\u202f123'],
     ['ja-JP', '28,123'],
+    ['pt-BR', '28.123'],
+    ['zh-Hans', '28,123'],
+    ['zh-Hant', '28,123'],
   ] as const)('%s groups thousands as %s', (locale, expected) => {
     expect(numberFor(locale)(28123)).toBe(expected);
   });
@@ -123,6 +187,9 @@ describe('formatting follows the language', () => {
     expect(formattersFor('es-MX').languageName('es')).toBe('Español');
     expect(formattersFor('fr-FR').languageName('ja')).toBe('Japonais');
     expect(formattersFor('ja-JP').languageName('fr')).toBe('フランス語');
+    expect(formattersFor('pt-BR').languageName('ja')).toBe('Japonês');
+    expect(formattersFor('zh-Hans').languageName('fr')).toBe('法语');
+    expect(formattersFor('zh-Hant').languageName('fr')).toBe('法文');
   });
 });
 
@@ -230,6 +297,57 @@ describe('punctuation follows each language', () => {
       }
     }
     expect(wrong).toEqual([]);
+  });
+
+  test.each(['zh-Hans', 'zh-Hant'] as const)('%s uses full-width punctuation after Chinese text', (locale) => {
+    const han = /[\u3400-\u9fff]/u;
+    const wrong: string[] = [];
+    for (const text of producedText(CATALOGS[locale])) {
+      for (const m of text.matchAll(/([\s\S])([.,?!:;()])/g)) {
+        if (han.test(m[1])) wrong.push(`${m[2]} after ${m[1]} in: ${text}`);
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
+
+  /**
+   * The mainland quotes with “ ”, Taiwan with 「 」. Either looks wrong to the
+   * other, and a mechanical character conversion would carry the wrong pair
+   * straight across.
+   */
+  test('each Chinese script quotes the way it is written', () => {
+    const hans = producedText(CATALOGS['zh-Hans']).join('\n');
+    const hant = producedText(CATALOGS['zh-Hant']).join('\n');
+    expect(hans).toContain('\u201c');
+    expect(hans).not.toMatch(/[\u300c\u300d]/u);
+    expect(hant).toContain('\u300c');
+    expect(hant).not.toMatch(/[\u201c\u201d]/u);
+  });
+
+  /**
+   * Traditional Chinese is its own text, not a transliteration: Taiwan and the
+   * mainland choose different words for the same thing, and a converter that
+   * only maps characters leaves the mainland word in traditional strokes.
+   */
+  test('Traditional Chinese uses Taiwan words, not converted mainland ones', () => {
+    const hans = producedText(CATALOGS['zh-Hans']).join('\n');
+    const hant = producedText(CATALOGS['zh-Hant']).join('\n');
+    // Mainland word, the traditional characters a converter would give it, and
+    // the word Taiwan actually uses. Three of these change no characters at
+    // all, which is exactly why converting is not translating.
+    for (const [mainland, converted, taiwan] of [
+      ['搜索', '搜索', '搜尋'],
+      ['设置', '設置', '設定'],
+      ['保存', '保存', '儲存'],
+      ['导出', '導出', '匯出'],
+      ['文件夹', '文件夾', '資料夾'],
+      ['帮助', '幫助', '說明'],
+      ['助手', '助手', '助理'],
+    ]) {
+      expect(hans).toContain(mainland);
+      expect(hant).toContain(taiwan);
+      expect(hant).not.toContain(converted);
+    }
   });
 });
 

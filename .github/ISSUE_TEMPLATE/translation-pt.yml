@@ -1,0 +1,49 @@
+name: Correção de tradução (português do Brasil)
+description: Relate uma palavra ou frase da interface em português que esteja errada ou confusa.
+title: "[pt-BR] "
+labels: ["translation", "preview", "lang: pt"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por revisar o texto do aplicativo. Uma correção por relato é o mais fácil de resolver.
+  - type: input
+    id: screen
+    attributes:
+      label: Onde fica?
+      description: A tela ou o painel, por exemplo «Configurações», «Ajuda → Quadros» ou «a pergunta ao excluir uma nota».
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: O que aparece hoje
+      description: Copie o texto como está, se puder.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: O que deveria aparecer
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Por quê (opcional)
+      description: Por exemplo, uma palavra mais clara, uma regra de gramática ou como soa em um leitor de tela.
+  - type: input
+    id: version
+    attributes:
+      label: Versão
+      description: O link do aplicativo preenche este campo.
+  - type: input
+    id: language
+    attributes:
+      label: Idioma da interface
+      description: O link do aplicativo preenche este campo.
+  - type: input
+    id: device
+    attributes:
+      label: Aparelho e navegador (opcional)
+      description: Por exemplo, «iPhone 15, Safari» ou «Windows 11, Chrome».

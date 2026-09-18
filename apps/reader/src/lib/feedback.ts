@@ -18,6 +18,9 @@ export const FEEDBACK_FORMS: Record<Locale, string> = {
   'es-MX': 'translation-es.yml',
   'fr-FR': 'translation-fr.yml',
   'ja-JP': 'translation-ja.yml',
+  'pt-BR': 'translation-pt.yml',
+  'zh-Hans': 'translation-zh-hans.yml',
+  'zh-Hant': 'translation-zh-hant.yml',
 };
 
 /** The correction form for `locale`, with the language and `version` filled in. */

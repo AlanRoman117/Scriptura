@@ -28,14 +28,17 @@ test.describe('the library', () => {
     await page.getByTestId('library-open').click();
 
     const panel = page.getByTestId('library-panel');
-    await expect(panel.locator('.library__item')).toHaveCount(11);
+    await expect(panel.locator('.library__item')).toHaveCount(14);
     // Grouped by language, and headed by its *name*: metadata.json stores an
     // ISO code, and "en / es / fr / ja" is correct data but a useless heading.
     await expect(panel.locator('.library__language')).toHaveText([
+      'Brazilian Portuguese',
       'English',
       'French',
       'Japanese',
+      'Simplified Chinese',
       'Spanish',
+      'Traditional Chinese',
     ]);
 
     // The bundled one is already here and is what we are reading.
@@ -113,7 +116,7 @@ test.describe('the library', () => {
 
     await page.getByTestId('library-open').click();
     // The catalogue ships with the app, so the shelf is never blank.
-    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(11);
+    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(14);
 
     await page.getByTestId('library-get-kjv').click();
     await expect(page.getByTestId('library-error-kjv')).toContainText(/connection/i);
@@ -173,6 +176,19 @@ test.describe('reading two translations at once', () => {
     await expect(body).toContainText('[[john 1:1@rv1909]]');
     // Which column it came from is the point of quoting from a comparison.
     await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Juan 1:1 (RV1909)');
+  });
+
+  test('a CC BY 4.0 translation shows its notice beside the text', async ({ page }) => {
+    // Bíblia Livre is the first text here under CC BY rather than CC BY-SA.
+    // The duty is read from the licence, not from a list of ids, so a new
+    // licence inherits it — this is what proves that.
+    await open(page);
+    await install(page, 'blivre');
+    await page.getByTestId('library-read-blivre').click();
+
+    await expect(page.getByTestId('chapter-title')).toContainText('João 1');
+    await expect(page.getByTestId('attribution')).toContainText(/CC BY 4\.0/i);
+    await expect(page.getByTestId('attribution')).toContainText('Bíblia Livre');
   });
 
   test('a CC BY-SA translation carries its notice into the comparison', async ({ page }) => {

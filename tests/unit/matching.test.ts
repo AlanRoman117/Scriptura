@@ -61,10 +61,30 @@ describe('scripts without word separators', () => {
     expect(hasWordBoundaries('ヨハネ')).toBe(false);
   });
 
+  test('nor does a Chinese one — the same rule, reached through Han', () => {
+    // The Union Version is written without spaces too, so the exclusion that
+    // was added for Japanese is what keeps Chinese word mode honest.
+    expect(hasWordBoundaries('神')).toBe(false);
+    expect(hasWordBoundaries('耶穌')).toBe(false);
+    expect(hasWordBoundaries('约翰')).toBe(false);
+  });
+
   test('Latin, Greek and Cyrillic queries do', () => {
     expect(hasWordBoundaries('Tito')).toBe(true);
     expect(hasWordBoundaries('amó')).toBe(true);
     expect(hasWordBoundaries('θεός')).toBe(true);
+    expect(hasWordBoundaries('João')).toBe(true);
+  });
+
+  /**
+   * ⚠️ Korean is the case in between, and the reason this is decided per
+   * script rather than per writing system. Hangul is written *with* spaces, so
+   * word mode applies — but a particle attaches to the noun (하나님 → 하나님이),
+   * so whole words are narrower there than a reader may expect. Substring is
+   * the default, and finds both.
+   */
+  test('a Korean query has boundaries, even though particles attach to the noun', () => {
+    expect(hasWordBoundaries('하나님')).toBe(true);
   });
 
   test('a query of only punctuation has none either', () => {

@@ -227,14 +227,15 @@ test.describe('text spacing (1.4.12)', () => {
 });
 
 /**
- * The same gates in the other interface languages. Spanish and French run
- * longer than English and Japanese sets differently, so a control that fits
- * in English can wrap, clip or shrink in another language. In these states
- * the reading view also carries the offer of Bibles in the language.
+ * The same gates in the other interface languages. Spanish, French and
+ * Portuguese run longer than English, while Japanese and Chinese set
+ * differently, so a control that fits in English can wrap, clip or shrink in
+ * another language. In these states the reading view also carries the offer of
+ * Bibles in the language.
  */
 const TEXT_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'help', 'library', 'board', 'results', 'asked before deleting'];
 
-for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
+for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const) {
   test.describe(`in ${locale}`, () => {
     test.use({ locale });
 

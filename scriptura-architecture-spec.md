@@ -389,7 +389,9 @@ The reader is the local-first reading and note-taking app built on these package
 
 ### The reader's interface languages
 
-The interface speaks the four languages of the Bibles the library offers: English (United States), Español (México), Français (France) and 日本語 (日本). The page's `lang` is always one of those BCP 47 tags, built from the IANA registry and set by an inline script before the app runs, so a screen reader starts in the right voice (3.1.1). The first of the browser's languages the app has decides, a setting overrides it, and nothing detected means English. A reader in another language whose Bible is not yet installed is offered every Bible in that language, and nothing downloads without a press.
+The interface speaks the seven languages of the Bibles the library offers: English (United States), Español (México), Français (France), 日本語 (日本), Português (Brasil), 中文（简体） and 中文（繁體）. The page's `lang` is always one of those BCP 47 tags, built from the IANA registry and set by an inline script before the app runs, so a screen reader starts in the right voice (3.1.1). The first of the browser's languages the app has decides, a setting overrides it, and nothing detected means English. A reader in another language whose Bible is not yet installed is offered every Bible in that language, and nothing downloads without a press.
+
+Chinese is tagged by script rather than by region, because the script is the difference: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau, and the Bible behind both is one translation in two character sets. A browser reporting `zh-TW`, `zh-HK` or `zh-MO` therefore gets Traditional, and one reporting `zh` alone gets Simplified. The two catalogs are written separately: Taiwan and the mainland choose different words for the same thing, so a conversion of characters alone would leave mainland vocabulary in traditional strokes. A reader in Chinese is offered both Bibles, with the one matching their own script first.
 
 | Concern | Where | What it does |
 |---|---|---|
@@ -662,7 +664,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 
 | Phase | Feature |
 |---|---|
-| v1 | Core loader + search + REST API + translation data ✅ (all 11 ingested) |
+| v1 | Core loader + search + REST API + translation data ✅ (all 14 ingested, in 6 languages) |
 | v1.1 | GraphQL layer + additional translations |
 | v2 | `compare` package — side-by-side diff for study Bible UI ✅ |
 | v2.1 | Cross-reference data (Open Scriptures) |
@@ -670,7 +672,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 | v3.1 | Commentary integration (public domain commentaries via CCEL) |
 | v4 | Study Bible UI (React) consuming all packages ✅ (`apps/reader`, five stages) |
 | v4.1 | Reader usable by touch and conformant with WCAG 2.2 AAA ✅ — real-device and screen-reader checks ⏳ planned ([plan](docs/plans/reader-touch-and-aaa/README.md)) |
-| v4.2 | Reader interface in English, Spanish, French and Japanese ✅ — native review of the non-English copy ⏳ planned ([plan](docs/plans/reader-i18n/README.md)) |
+| v4.2 | Reader interface in English, Spanish, French, Japanese, Brazilian Portuguese and Chinese in both scripts ✅ — native review of the non-English copy ⏳ planned ([plan](docs/plans/reader-i18n/README.md)) |
 
 ---
 

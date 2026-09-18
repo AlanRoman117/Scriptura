@@ -325,6 +325,7 @@ const catalog = {
     about: (size: string) => `environ ${size}`,
     licences: {
       'public-domain': 'Domaine public',
+      'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
       'custom-free': 'Licence libre',
@@ -453,7 +454,7 @@ const catalog = {
     hide: 'Masquer',
     heading: 'À propos de cette préversion',
     about:
-      'Cette version est destinée aux personnes qui relisent l’interface en espagnol, en français et en japonais. Rien de ce que vous faites ici n’est envoyé : vos notes et vos marques restent dans ce navigateur. Pour signaler un mot incorrect ou peu clair, utilisez le lien ci-dessous. Il ouvre un court formulaire sur GitHub, qui demande un compte gratuit.',
+      'Cette version est destinée aux personnes qui relisent l’interface en espagnol, en français, en japonais, en chinois et en portugais. Rien de ce que vous faites ici n’est envoyé : vos notes et vos marques restent dans ce navigateur. Pour signaler un mot incorrect ou peu clair, utilisez le lien ci-dessous. Il ouvre un court formulaire sur GitHub, qui demande un compte gratuit.',
     version: (version: string) => `Version : ${version}`,
   },
 

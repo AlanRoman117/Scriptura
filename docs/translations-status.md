@@ -19,6 +19,9 @@ license before its data may be committed.**
 | `ostervald` | Bible Ostervald (1867) | fr | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | Complete |
 | `bungo` | 文語訳聖書 (Classical) | ja | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | Complete |
 | `martin1744` | Bible Martin 1744 | fr | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | Complete |
+| `cuvs` | 新标点和合本 (Union Version, 1919) | zh-Hans | Public domain | [eBible `cmn-cu89s`](https://ebible.org/cmn-cu89s/) | `usfx` | Complete |
+| `cuvt` | 新標點和合本 (Union Version, 1919) | zh-Hant | Public domain | [eBible `cmn-cu89t`](https://ebible.org/cmn-cu89t/) | `usfx` | Complete |
+| `blivre` | Bíblia Livre | pt-BR | CC BY 4.0 | [eBible `porbr2018`](https://ebible.org/porbr2018/) | `usfx` | Complete |
 
 **Status key:**
 - **Complete** — all 66 books ingested; passes `scripts/validate.py --strict` with zero warnings
@@ -86,6 +89,34 @@ marker — and fails the build if either appears.
 |---|---|
 | **Reina Valera 1960 (RV1960)** | Copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain, despite the common misconception. |
 | **口語訳聖書 / Kougo (1954/55)** | US copyright until 2049–2050 via URAA restoration. |
+| **개역한글판 / Korean Revised Version (1952/1961)** | Public domain in Korea since 2012; US copyright restored by the URAA until 2056. The same trap as Kougo — see below. |
+| **개역개정판 / NKRV (1998)** | Under copyright, Korean Bible Society. |
+| **和合本修訂版 / RCUV (2010), 新譯本 / CNV** | Revisions still under copyright. The 1919 和合本 itself is in the library as `cuvs`/`cuvt`. |
+| **ARA, ARC 1995/2009, ACF, NVI, NTLH (Brazilian Portuguese)** | All under copyright — Sociedade Bíblica do Brasil and Sociedade Bíblica Trinitária. The library carries Bíblia Livre instead. |
+
+### The Korean trap: the same shape, a different label
+eBible publishes [`kor`](https://ebible.org/kor/) as "The Holy Bible in Korean,
+1910 translation", marked **Public Domain**, and CrossWire's `korrv` carries the
+same text with the same label. Neither is the 1910/11 구역.
+
+Checked against Korean Wikisource on 2026-09-17:
+
+| | Genesis 1:1 |
+|---|---|
+| eBible `kor` | 태초에 하나님이 천지를 창조하시니라 |
+| [개역한글판 (1961)](https://ko.wikisource.org/wiki/개역한글판/창세기) | 태초에 하나님이 천지를 창조하시니라 |
+| [셩경젼셔 (1911)](https://ko.wikisource.org/wiki/셩경젼셔/창셰긔) | 태초에 하ᄂᆞ님이 텬디를 창조ᄒᆞ시다 |
+
+It is the 개역한글판, word for word, and the 1911 text it claims to be reads
+quite differently in archaic Hangul. The 개역's Korean term (50 years from 1961)
+ran out at the end of 2011, so it was still protected on 1996-01-01 — and the
+URAA therefore restored its **US** copyright, 95 years from publication: **2056**.
+Korea-PD does not imply US-PD, exactly as with Kougo.
+
+So there is no Korean Bible in the library yet. `korhkjv` is copyrighted
+outright. The genuinely public-domain 1911 구역 survives on Korean Wikisource in
+archaic Hangul (arae-a ㆍ, no word spacing), which no parser here reads; adding
+it is a piece of work, not a download.
 
 ### The Kougo trap
 Japan Bible Society [now states](https://www.bible.or.jp/read/bible_copyright.html)

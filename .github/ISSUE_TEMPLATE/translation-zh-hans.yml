@@ -1,0 +1,49 @@
+name: 翻译修正（简体中文）
+description: 报告简体中文界面上用错的或者看不明白的词句。
+title: "[zh-Hans] "
+labels: ["translation", "preview", "lang: zh-Hans"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢你帮忙审阅应用的文字。每次只报告一处，最容易处理。
+  - type: input
+    id: screen
+    attributes:
+      label: 在哪里？
+      description: 屏幕或面板的名称，例如“设置”“帮助 → 看板”“删除笔记时的询问”。
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 现在显示的是
+      description: 如果可以，请原样复制这段文字。
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: 应该显示的是
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 原因（可选）
+      description: 例如更清楚的说法、语法上的理由，或者屏幕阅读器读出来的效果。
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 由应用中的链接自动填写。
+  - type: input
+    id: language
+    attributes:
+      label: 界面语言
+      description: 由应用中的链接自动填写。
+  - type: input
+    id: device
+    attributes:
+      label: 设备与浏览器（可选）
+      description: 例如“iPhone 15，Safari”或“Windows 11，Chrome”。

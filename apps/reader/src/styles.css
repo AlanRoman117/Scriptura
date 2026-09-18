@@ -104,9 +104,30 @@
   --serif: var(--serif-latin);
   --sans: var(--sans-latin);
 }
+/* Chinese, by script. Han characters are shared with Japanese and drawn
+   differently in each, so a page that only declares Japanese faces renders
+   Chinese scripture in Japanese forms wherever both are installed. Simplified
+   and Traditional get their own stacks for the same reason: the faces differ,
+   and so do the glyphs. Still system stacks, never a web font. */
+:lang(zh-Hans) {
+  --serif: 'Songti SC', 'Noto Serif CJK SC', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
+  --sans: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'Noto Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+:lang(zh-Hant) {
+  --serif: 'Songti TC', 'Noto Serif CJK TC', 'Noto Serif TC', 'Source Han Serif TC', PMingLiU, serif;
+  --sans: 'PingFang TC', 'Noto Sans CJK TC', 'Noto Sans TC', 'Microsoft JhengHei', system-ui, sans-serif;
+}
+:lang(zh-Hans) :not(:lang(zh-Hans)),
+:lang(zh-Hant) :not(:lang(zh-Hant)) {
+  --serif: var(--serif-latin);
+  --sans: var(--sans-latin);
+}
+
 /* Japanese has no italic; slanting kanji is a typographic error. Emphasis
-   in the interface keeps its weight and loses the slant. */
-:lang(ja) em { font-style: normal; font-weight: 600; }
+   in the interface keeps its weight and loses the slant. Chinese is the same. */
+:lang(ja) em,
+:lang(zh-Hans) em,
+:lang(zh-Hant) em { font-style: normal; font-weight: 600; }
 
 /* The reader's choice pins the scheme; `light-dark()` follows it. */
 :root[data-theme='light'] { color-scheme: light; }
