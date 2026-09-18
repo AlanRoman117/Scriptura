@@ -262,7 +262,7 @@ test.describe('the divider, and each pane\'s own controls', () => {
     }
   });
 
-  for (const locale of ['en-US', 'es-MX', 'fr-FR', 'ja-JP'] as const) {
+  for (const locale of ['en-US', 'es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const) {
   test(`the notes bar wraps whole buttons rather than squeezing one past its label (${locale})`, async ({ page }) => {
     await page.addInitScript((language) => {
       localStorage.setItem('scriptura-display', JSON.stringify({ language }));

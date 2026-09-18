@@ -1,6 +1,6 @@
 {
   "name": "scriptura",
-  "version": "0.1.0-preview.1",
+  "version": "0.1.0-preview.2",
   "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
   "private": true,
   "workspaces": [

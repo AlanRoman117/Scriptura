@@ -44,6 +44,25 @@ async function persisted(page: import('@playwright/test').Page, title: string) {
     .toBe(true);
 }
 
+/**
+ * The colour names, read straight from the settings store. They are written
+ * asynchronously like everything else, and the field on screen shows what was
+ * typed whether or not it has been saved.
+ */
+const storedColorLabels = (page: import('@playwright/test').Page): Promise<Record<string, string>> =>
+  page.evaluate(
+    () =>
+      new Promise<Record<string, string>>((resolve) => {
+        const open = indexedDB.open('scriptura');
+        open.onsuccess = () => {
+          const req = open.result.transaction('settings').objectStore('settings').get('colorLabels');
+          req.onsuccess = () => resolve((req.result as Record<string, string>) ?? {});
+          req.onerror = () => resolve({});
+        };
+        open.onerror = () => resolve({});
+      })
+  );
+
 test.describe('notes', () => {
   test('a note survives a reload', async ({ page }) => {
     await open(page);
@@ -320,6 +339,12 @@ test.describe('colours as collections', () => {
     await mark(page, 1, 'rose');
     await page.getByTestId('marks-open').click();
     await page.getByTestId('marks-label-rose').fill('Covenant promises');
+
+    // The name is written asynchronously and nothing on screen says when that
+    // has finished, so a reload can outrun the write — which is what failed on
+    // a macOS runner: the field came back empty. Same wait as `persisted()`
+    // above, and as `storedBoards` in canvas.spec.ts.
+    await expect.poll(() => storedColorLabels(page).then((l) => l.rose)).toBe('Covenant promises');
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });

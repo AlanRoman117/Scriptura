@@ -11,7 +11,7 @@ import { join } from 'node:path';
  * and line breaks matter as much as the words. `npm run review:screens`.
  */
 
-const LOCALES = ['en-US', 'es-MX', 'fr-FR', 'ja-JP'] as const;
+const LOCALES = ['en-US', 'es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const;
 
 type Shot = (page: Page, save: (name: string, target?: 'page' | string) => Promise<void>) => Promise<void>;
 

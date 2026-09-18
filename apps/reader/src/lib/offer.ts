@@ -19,6 +19,17 @@ import { primaryLanguage, type Locale } from '../i18n/locales';
 
 export const DISMISSED_KEY = 'scriptura-offer-dismissed';
 
+/**
+ * The script a tag names, lower-cased, or '' for a tag that names none:
+ * `zh-Hant` → `hant`, `pt-BR` and `ja` → ''.
+ *
+ * Read with a regex rather than `Intl.Locale`, which throws on a tag it does
+ * not like — a catalog is data from the network, and an offer is not worth a
+ * blank screen.
+ */
+const scriptOf = (tag: string): string =>
+  (/^[a-z]{2,3}[-_]([a-z]{4})(?:[-_]|$)/i.exec(tag)?.[1] ?? '').toLowerCase();
+
 /** The Bibles to offer, in library order; empty when there is nothing to offer. */
 export function offerFor(
   locale: Locale,
@@ -30,7 +41,15 @@ export function offerFor(
   if (language === 'en' || dismissed.includes(language)) return [];
   const inLanguage = catalog.filter((entry) => primaryLanguage(entry.language) === language);
   if (inLanguage.some((entry) => installed.includes(entry.id))) return [];
-  return inLanguage;
+
+  // Chinese is one translation in two scripts, so both are offered — but the
+  // reader's own script goes first. `sort` is stable, so the rest keep library
+  // order, and a language whose interface names no script keeps it entirely.
+  const want = scriptOf(locale);
+  if (!want) return inLanguage;
+  return [...inLanguage].sort(
+    (a, b) => Number(scriptOf(b.language) === want) - Number(scriptOf(a.language) === want)
+  );
 }
 
 /** The languages whose offer was put away on this device. */

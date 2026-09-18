@@ -19,7 +19,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 ## ✨ Features
 
 - 📚 **Multi-translation** — 14 verified translations, all ingested
-- 🌍 **Multi-language** — Bibles in English, Spanish, French, Japanese, Chinese (both scripts) and Brazilian Portuguese; the reader's interface speaks the first four, with the rest to follow
+- 🌍 **Multi-language** — Bibles in English, Spanish, French, Japanese, Chinese (both scripts) and Brazilian Portuguese, and the reader's interface speaks every one of them
 - 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
@@ -447,7 +447,7 @@ data/{translation-id}/
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
 | Tests | 471 jest, and 519 Playwright: 48 HTTP contract, 301 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server, 19 on the published site |
-| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French and Japanese, chosen from the browser or Settings, and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
+| Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French, Japanese, Brazilian Portuguese and Chinese in both scripts, chosen from the browser or Settings — Chinese by script, so a Taiwanese browser gets Traditional — and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
@@ -474,7 +474,7 @@ preview publishes only the reader.
 | **v3.1** | Public domain commentary integration (via CCEL) |
 | **v4.0** | Study Bible UI — React app consuming all packages ✅ (`apps/reader`) |
 | **v4.1** | Reader usable by touch, conformant with WCAG 2.2 AAA ✅ — device and screen-reader checks planned |
-| **v4.2** | Reader interface in English, Spanish, French and Japanese ✅ — native review of the non-English copy pending ([plan](docs/plans/reader-i18n/README.md)) |
+| **v4.2** | Reader interface in English, Spanish, French, Japanese, Brazilian Portuguese and Chinese in both scripts ✅ — native review of the non-English copy pending ([plan](docs/plans/reader-i18n/README.md)) |
 
 ---
 

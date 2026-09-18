@@ -450,7 +450,7 @@ export const esMX = {
     hide: 'Ocultar',
     heading: 'Acerca de esta versión preliminar',
     about:
-      'Esta versión es para quienes revisan la interfaz en español, francés y japonés. Nada de lo que hagas aquí se envía a ningún lado: tus notas y marcas se quedan en este navegador. Para reportar una palabra incorrecta o poco clara, usa el enlace de abajo. Abre un formulario breve en GitHub, que requiere una cuenta gratuita.',
+      'Esta versión es para quienes revisan la interfaz en español, francés, japonés, chino y portugués. Nada de lo que hagas aquí se envía a ningún lado: tus notas y marcas se quedan en este navegador. Para reportar una palabra incorrecta o poco clara, usa el enlace de abajo. Abre un formulario breve en GitHub, que requiere una cuenta gratuita.',
     version: (version: string) => `Versión: ${version}`,
   },
 
