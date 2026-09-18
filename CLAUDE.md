@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Scriptura is an open-source monorepo for working with Bible data programmatically. It provides freely-licensed Bible translations in canonical JSON format with TypeScript packages for loading, searching, comparing, validating, and serving scripture data.
 
-**Current state.** **All 11 registered translations are ingested and committed** — 66 books each, `validate.py --strict` clean with zero errors and zero warnings.
+**Current state.** **All 14 registered translations are ingested and committed** — 66 books each, `validate.py --strict` clean with zero errors and zero warnings.
 
-The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. The reader PWA (`apps/reader`) is **complete through Stage 5**: offline reading, notes, colour collections, export, offline search and linking, a downloadable translation library, side-by-side comparison, canvas boards, and opt-in WebMCP tools. It is usable by touch and keyboard alone and conformant with **WCAG 2.2 Level AAA** for its interface (see Apps → *Touch and WCAG 2.2 AAA*); real-device and screen-reader checks are still open. Its interface speaks the four languages of the Bibles it offers — English, Spanish (Mexico), French and Japanese — chosen from the browser or from Settings (see Apps → *Interface languages*); the non-English copy awaits native review. 455 jest and 518 Playwright tests pass. CI exists, and a **preview of the reader is published to GitHub Pages** from `main` for the translation reviewers (see Deployment). The remaining gaps are GraphQL and the AWS deployment — both still design-only (see Docs → Specified but not built).
+The REST API runs (`npm run dev:api`), serves every translation in every language, and its responses are byte-identical to the static build. The reader PWA (`apps/reader`) is **complete through Stage 5**: offline reading, notes, colour collections, export, offline search and linking, a downloadable translation library, side-by-side comparison, canvas boards, and opt-in WebMCP tools. It is usable by touch and keyboard alone and conformant with **WCAG 2.2 Level AAA** for its interface (see Apps → *Touch and WCAG 2.2 AAA*); real-device and screen-reader checks are still open. Its interface speaks the four languages of the Bibles it offers — English, Spanish (Mexico), French and Japanese — chosen from the browser or from Settings (see Apps → *Interface languages*); the non-English copy awaits native review. 471 jest and 519 Playwright tests pass. CI exists, and a **preview of the reader is published to GitHub Pages** from `main` for the translation reviewers (see Deployment). The remaining gaps are GraphQL and the AWS deployment — both still design-only (see Docs → Specified but not built).
 
 Licensed under **Apache 2.0** (chosen over MIT for its explicit patent grant). Individual translations in `data/` carry their own licenses, recorded per-translation in each `metadata.json`.
 
@@ -102,7 +102,7 @@ Single-package builds: `cd packages/<name> && npm run build`
   - `mode: 'word'` and `caseSensitive` are **opt-in** (`/search?mode=word&match_case=1`, and two checkboxes in the reader). Diacritic folding is never optional — that is normalization, and `foldText` is now `foldDiacritics().toLowerCase()` so case can be separated from it without touching the dakuten guard.
   - ⚠️ **Word mode must be a no-op for scripts without word separators.** Japanese is written without spaces, so the CJK scripts are excluded from the word-character class *and* `hasWordBoundaries()` decides per **query**, not per occurrence. A per-occurrence rule still quietly dropped 52 of 3,945 matches for `神`; the per-query rule makes `mode=word` return *exactly* the substring results, and a test asserts equality for `神`, `イエス` and `ヨハネ`. Without it the toggle takes `神` from 3,945 verses to 3.
   - ⚠️ **`runQuery` in the reader must score every term through `matchScore`.** Terms 2..n used to re-fold and call `includes` directly, so under `mode: 'word'` the first term matched whole words and the rest matched anywhere. A result keeps its **worst** term's score. Exclusions stay substring even in word mode — asking to drop `love` should drop `loveth` too.
-  - **There is no index of biblical people, and none is planned.** Proper nouns are exactly the words that are always whole words (`Abraham` 230/230 and `ヨハネ` 146/146 are unchanged by word mode), so ranking already answers "search for a character" without a fourth canon-shaped table keyed across 11 translations in 4 languages.
+  - **There is no index of biblical people, and none is planned.** Proper nouns are exactly the words that are always whole words (`Abraham` 230/230 and `ヨハネ` 146/146 are unchanged by word mode), so ranking already answers "search for a character" without a fourth canon-shaped table keyed across 14 translations in 6 languages.
   - `lookup(translationId, reference)` — Reference parser supporting "Book Ch:V" and "Book Ch:V-V" ranges
 
 - **@scriptura/compare** (`packages/compare/`) — Depends on `@scriptura/core`.
@@ -179,7 +179,7 @@ The path-traversal regression lives in **both** suites on purpose: it is a secur
 
 ⚠️ **A raw socket is required to test encoded paths.** Every HTTP client normalises a URL before sending, so `/translations/%2e%2e` is collapsed to `/` client-side and never reaches the server. `tests/contract/errors.spec.ts` has a `rawGet()` helper that writes the request line verbatim.
 
-Jest with ts-jest. Config in root `jest.config.ts`. **455 jest tests, plus 518 Playwright** (48 contract, 300 reader, 149 reader-touch, 2 reader-dev, 19 site).
+Jest with ts-jest. Config in root `jest.config.ts`. **471 jest tests, plus 519 Playwright** (48 contract, 301 reader, 149 reader-touch, 2 reader-dev, 19 site).
 - `tests/unit/` — canon completeness (`validate`), type conformance (`core`), and book-key normalization (`books.test.ts`, including the Japanese-dakuten regression).
 - `tests/integration/api.test.ts` — drives `createRouter` directly. It is framework-agnostic, so there is no HTTP server, no supertest, no port. Covers every route, book resolution in five languages, error bodies, and pagination.
 - `tests/integration/static-parity.test.ts` — runs `build-static-api.mjs` over a two-book slice and asserts each emitted file deep-equals the router's body for the same path. **This is the anti-drift mechanism between the two serving paths.**
@@ -396,7 +396,7 @@ Book *addressing* (slug/name/abbreviation/number resolution in `packages/core/sr
 - Use scoped imports: `@scriptura/core`, `@scriptura/search`, etc.
 - Packages use project references (`tsconfig.json` `references` field) for build ordering
 
-## Supported Translations (11 — all ingested)
+## Supported Translations (14 — all ingested)
 
 | ID | Language | License |
 |---|---|---|
@@ -405,7 +405,15 @@ Book *addressing* (slug/name/abbreviation/number resolution in `packages/core/sr
 | `vbl` | Spanish | CC BY-SA 4.0 |
 | `lsg1910`, `ostervald`, `martin1744` | French | Public domain |
 | `bungo` | Japanese | Public domain |
+| `cuvs`, `cuvt` | Chinese (`zh-Hans`, `zh-Hant`) | Public domain |
+| `blivre` | Brazilian Portuguese (`pt-BR`) | CC BY 4.0 |
 
-Ingestion status (see `scripts/ingest.py`): **all 11 ingest cleanly** and pass `validate.py --strict` with zero errors and zero warnings.
+Ingestion status (see `scripts/ingest.py`): **all 14 ingest cleanly** and pass `validate.py --strict` with zero errors and zero warnings.
+
+⚠️ **A Bible's `language` may carry a script or a region** — `zh-Hans`, `zh-Hant`, `pt-BR` — where that is what the text is. It reaches `<html lang>`'s neighbour on the scripture element, the font stacks and `Intl.DisplayNames`, which is how the library heads them "Simplified Chinese" and "Brazilian Portuguese". `tests/unit/i18n.test.ts` holds the IANA records for every subtag used and refuses one that is not there.
+
+⚠️ **Bibles may outrun the interface.** The reader speaks four languages; the library holds six. `tests/unit/i18n.test.ts` keeps the two sets honest with `INTERFACE_PENDING`, which names each language whose Bible has landed and whose catalog has not. Removing a language from it is part of adding that catalog; leaving a stale entry fails the test.
+
+**Korean — read before adding one.** There is no Korean Bible here, and the reason is the Kougo trap wearing another label. eBible's `kor` is titled "Korean Bible 1910" and marked public domain, and CrossWire's `korrv` says "Public Domain" too, but both carry the **개역한글판 of 1952/1961**: its Genesis 1:1 is "태초에 하나님이 천지를 창조하시니라", word for word the 개역, where the real 1911 구역 reads "태초에 하ᄂᆞ님이 텬디를 창조ᄒᆞ시다". The 개역's Korean term (50 years) ran out at the end of 2011, so it was still protected on 1996-01-01 and the URAA restored its **US** copyright until **2056**. `korhkjv` is copyrighted outright. The free 1911 구역 lives on Korean Wikisource in archaic Hangul, which no parser here reads. `validate.py` blocks the 개역 by id and by marker.
 
 **Japanese sources — read before touching `bungo`.** The old planned source, `bible.salterrae.net`, no longer resolves in DNS; CrossWire's `JapBungo` module preserves that text and is what `ingest.py` now uses (`DistributionLicense=Public Domain`, KJV versification, all 66 books). The underlying translations are 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012). **Do not be talked into un-banning 口語訳 (Kougo).** Japan Bible Society now states its copyright has expired, and that is true *in Japan* (50-year term, lapsed ~2004/2005) — but because it was still protected there on 1996-01-01, the URAA restored its **US** copyright until 2049/2050. Japan-PD does not imply US-PD; the forbidden-translation rule stands.

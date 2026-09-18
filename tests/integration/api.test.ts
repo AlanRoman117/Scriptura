@@ -109,6 +109,11 @@ describe('book addressing', () => {
     ['slug against Spanish', '/translations/rv1909/genesis/1/1'],
     ['slug against French', '/translations/lsg1910/song-of-solomon/1/1'],
     ['slug against Japanese', '/translations/bungo/john/3/16'],
+    ['Chinese localized name', '/translations/cuvs/约翰福音/3/16'],
+    ['traditional Chinese localized name', '/translations/cuvt/約翰福音/3/16'],
+    ['slug against Chinese', '/translations/cuvs/john/3/16'],
+    ['Portuguese localized name', '/translations/blivre/João/3/16'],
+    ['accented Portuguese name', '/translations/blivre/Gênesis/1/1'],
   ])('resolves by %s', async (_label, path) => {
     const res = await get(path);
     expect(res.status).toBe(200);

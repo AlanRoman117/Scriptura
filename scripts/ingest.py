@@ -240,6 +240,73 @@ TRANSLATIONS = {
         "source": "usfx",
         "ebible_id": "engbsb",
     },
+    # --- Chinese: the Union Version of 1919, in both scripts ---
+    #
+    # One translation, two character sets: the text Chinese Protestantism has
+    # read for a century. eBible publishes each as public domain, and the 1919
+    # publication puts it there in the United States, on the mainland (50 years
+    # for a corporate work), in Hong Kong and in Taiwan alike.
+    #
+    # ⚠️ The revision — 和合本修訂版 (RCUV, 2010) — is a different, copyrighted
+    # work, as are 新譯本 (CNV) and 現代中文譯本. scripts/validate.py refuses them.
+    "cuvs": {
+        "name": "新标点和合本",
+        "language": "zh-Hans",
+        "license": "public-domain",
+        "attribution": "Chinese Union Version (1919), simplified script — Public Domain",
+        "source_url": "https://ebible.org/cmn-cu89s/",
+        "year": 1919,
+        "source": "usfx",
+        "ebible_id": "cmn-cu89s",
+    },
+    "cuvt": {
+        "name": "新標點和合本",
+        "language": "zh-Hant",
+        "license": "public-domain",
+        "attribution": "Chinese Union Version (1919), traditional script — Public Domain",
+        "source_url": "https://ebible.org/cmn-cu89t/",
+        "year": 1919,
+        "source": "usfx",
+        "ebible_id": "cmn-cu89t",
+    },
+    # --- Brazilian Portuguese ---
+    #
+    # A modern Brazilian text, updated from Almeida's 1819 translation. CC BY
+    # 4.0, so the attribution travels with every quotation — the same duty the
+    # Spanish VBL carries.
+    #
+    # ⚠️ The Bibles Brazilian churches read today — ARA, ARC 1995/2009, ACF,
+    # NVI, NTLH — are all under copyright and are refused by validate.py. The
+    # historic Almeida 1911 is public domain by age, but the CrossWire module
+    # of it declares GPL rather than public domain, so it is not a source this
+    # repo can cite.
+    "blivre": {
+        "name": "Bíblia Livre",
+        "language": "pt-BR",
+        "license": "cc-by-4.0",
+        "attribution": "Bíblia Livre © 2018 Diego Santos, Mario Sérgio, Marco Teles — CC BY 4.0",
+        "source_url": "https://ebible.org/porbr2018/",
+        "year": 2018,
+        "source": "usfx",
+        "ebible_id": "porbr2018",
+    },
+    # --- Korean: nothing usable yet, and the reason matters ---
+    #
+    # eBible's `kor` is titled "Korean Bible 1910" and marked public domain, but
+    # its text is the 개역한글판 of 1952/1961: Genesis 1:1 reads "태초에 하나님이
+    # 천지를 창조하시니라", word for word the 개역, where the real 1911 구역 reads
+    # "태초에 하ᄂᆞ님이 텬디를 창조ᄒᆞ시다". CrossWire's `korrv` is the same text,
+    # also labelled Public Domain.
+    #
+    # ⚠️ That text is public domain **in Korea** — its 50-year term ran out at
+    # the end of 2011 — and not in the United States: it was still protected in
+    # Korea on 1996-01-01, so the URAA restored the US copyright, which runs
+    # 95 years from 1961. This is the 口語訳 trap exactly (see `bungo` below and
+    # CLAUDE.md). `korhkjv` is copyrighted outright.
+    #
+    # The 1911 구역 is genuinely public domain and survives on Korean Wikisource
+    # in archaic Hangul, which no parser here reads yet. Until that is built,
+    # Korean is not in the library.
     # --- Configured but not yet automated (needs a dedicated parser/source) ---
     "martin1744": {
         "name": "Bible Martin",

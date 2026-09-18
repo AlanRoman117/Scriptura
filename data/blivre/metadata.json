@@ -1,0 +1,11 @@
+{
+  "id": "blivre",
+  "name": "Bíblia Livre",
+  "language": "pt-BR",
+  "license": "cc-by-4.0",
+  "attribution": "Bíblia Livre © 2018 Diego Santos, Mario Sérgio, Marco Teles — CC BY 4.0",
+  "source_url": "https://ebible.org/porbr2018/",
+  "year": 2018,
+  "testament": "both",
+  "book_count": 66
+}

@@ -5,6 +5,18 @@ All notable changes to Scriptura are recorded here. The format follows
 [Semantic Versioning](https://semver.org/). A preview carries a `-preview.N`
 suffix and is published as a GitHub pre-release.
 
+## [Unreleased]
+
+### Added
+
+- **Three more Bibles, in two new languages.** The Chinese Union Version of 1919 in both scripts (`cuvs` simplified, `cuvt` traditional) and the Brazilian **Bíblia Livre** (`blivre`), all from eBible. Chinese scripture gets its own font stacks, by script, so characters shared with Japanese are drawn the way Chinese readers write them.
+- **CC BY 4.0** joins the licences the project accepts. Bíblia Livre is the first text under it, and it shows its attribution beside the text, as the Spanish VBL does.
+
+### Notes
+
+- **No Korean Bible yet, and the reason is written down.** The texts offered as "Korean Bible 1910" by eBible and CrossWire are the 개역한글판 of 1952/1961: public domain in Korea since 2012, and restored in the United States by the URAA until 2056 — the same trap as the Japanese Kougo text. `docs/translations-status.md` shows the verse-by-verse check, and the validator now refuses it.
+- The reader's interface still speaks four languages while the library holds six. A test names the languages whose interface is still to be written, so the gap is declared rather than forgotten.
+
 ## [0.1.0-preview.1] - 2026-09-17
 
 The first release. It is a preview for the people reviewing the reader's

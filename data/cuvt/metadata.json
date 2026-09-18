@@ -1,0 +1,11 @@
+{
+  "id": "cuvt",
+  "name": "新標點和合本",
+  "language": "zh-Hant",
+  "license": "public-domain",
+  "attribution": "Chinese Union Version (1919), traditional script — Public Domain",
+  "source_url": "https://ebible.org/cmn-cu89t/",
+  "year": 1919,
+  "testament": "both",
+  "book_count": 66
+}

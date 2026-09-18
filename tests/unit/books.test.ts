@@ -43,6 +43,21 @@ describe('normalizeBookKey', () => {
     expect(normalizeBookKey('ヨハネによる福音書')).toBe('ヨハネによる福音書');
   });
 
+  test('keeps a Chinese name whole, in either script', () => {
+    // Nothing to fold and nothing to collapse: the key is the name. The two
+    // scripts are different words to a matcher, which is why each translation
+    // carries its own names and URLs use the slug.
+    expect(normalizeBookKey('约翰福音')).toBe('约翰福音');
+    expect(normalizeBookKey('約翰福音')).toBe('約翰福音');
+    expect(normalizeBookKey('约翰福音')).not.toBe(normalizeBookKey('約翰福音'));
+  });
+
+  test('folds a Portuguese name onto its slug', () => {
+    expect(normalizeBookKey('João')).toBe('joao');
+    expect(normalizeBookKey('Gênesis')).toBe('genesis');
+    expect(normalizeBookKey('1 Samuel')).toBe('1-samuel');
+  });
+
   test('trims stray separators rather than emitting empty segments', () => {
     expect(normalizeBookKey('  John  ')).toBe('john');
     expect(normalizeBookKey('--john--')).toBe('john');
@@ -78,6 +93,16 @@ describe('foldText', () => {
     expect(foldText('ガラテヤ人への手紙')).toBe('ガラテヤ人への手紙');
     expect(foldText('ガラテヤ')).not.toBe('カラテヤ');
     expect(foldText('それ神はその獨子を賜ふ')).toBe('それ神はその獨子を賜ふ');
+  });
+
+  test('leaves Chinese and Korean intact', () => {
+    // Hangul decomposes under NFD into conjoining jamo, and foldDiacritics
+    // recomposes with NFC, so a Korean word survives the round trip. Han has
+    // no combining marks to lose.
+    expect(foldText('太初有道')).toBe('太初有道');
+    expect(foldText('約翰福音')).toBe('約翰福音');
+    expect(foldText('요한복음')).toBe('요한복음');
+    expect(foldText('하나님이')).toBe('하나님이');
   });
 
   test('handles empty and whitespace input', () => {

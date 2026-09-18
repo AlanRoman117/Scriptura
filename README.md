@@ -3,8 +3,8 @@
 > **Open Bible data ecosystem — multi-translation, multi-language, developer-first.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Translations](https://img.shields.io/badge/translations-11-green.svg)](#verified-translations)
-[![Languages](https://img.shields.io/badge/languages-4-orange.svg)](#verified-translations)
+[![Translations](https://img.shields.io/badge/translations-14-green.svg)](#verified-translations)
+[![Languages](https://img.shields.io/badge/languages-6-orange.svg)](#verified-translations)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/contributing.md)
 [![Data: Open License Only](https://img.shields.io/badge/data-open--license--only-important.svg)](#verified-translations)
 
@@ -18,8 +18,8 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 ## ✨ Features
 
-- 📚 **Multi-translation** — 11 verified translations, all ingested
-- 🌍 **Multi-language** — Bibles in English, Spanish, French and Japanese, and a reader whose interface speaks all four
+- 📚 **Multi-translation** — 14 verified translations, all ingested
+- 🌍 **Multi-language** — Bibles in English, Spanish, French, Japanese, Chinese (both scripts) and Brazilian Portuguese; the reader's interface speaks the first four, with the rest to follow
 - 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
@@ -374,11 +374,17 @@ All translations in this repository are independently verified to be public doma
 | `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
 | `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
+| `cuvs` | 新标点和合本 (Union Version, 1919) | Chinese, simplified 🇨🇳 | Public domain | [eBible.org `cmn-cu89s`](https://ebible.org/cmn-cu89s/) | ✅ |
+| `cuvt` | 新標點和合本 (Union Version, 1919) | Chinese, traditional 🇹🇼 | Public domain | [eBible.org `cmn-cu89t`](https://ebible.org/cmn-cu89t/) | ✅ |
+| `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 4.0 | [eBible.org `porbr2018`](https://ebible.org/porbr2018/) | ✅ |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
 > - **口語訳聖書 / Kougo (1954/55)** — the one people get wrong. Japan Bible Society now states its copyright has expired, and that is true **in Japan** (50-year term, lapsed ~2004/2005). But because it was still protected there on 1996-01-01, the URAA **restored its US copyright until 2049–2050**. Japan-PD does not imply US-PD. Off-limits for any US-hosted project, and `validate.py` blocks it by id and by metadata marker.
 >   - By contrast, the 文語訳 (Bungo) text we *do* ship is 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012).
+> - **개역한글판 / Korean Revised Version (1952/1961)** — the same trap in another language, and the reason there is no Korean Bible here yet. It is public domain **in Korea** (the 50-year term ran out at the end of 2011), so the URAA restored its **US** copyright until **2056**. eBible's `kor`, titled "Korean Bible 1910", and CrossWire's `korrv` both carry this text marked "Public Domain"; [the log](docs/translations-status.md) shows the verse-by-verse check. The genuinely free 1911 구역 exists in archaic Hangul and needs a parser that does not exist yet.
+> - **和合本修訂版 (RCUV, 2010), 新譯本 (CNV)** — revisions still in copyright. The 1919 和合本 shipped here is not.
+> - **ARA, ARC 1995/2009, ACF, NVI, NTLH** — the Brazilian Bibles most churches read, all under copyright. Bíblia Livre is here instead.
 > - Any translation without a `license` field in its `metadata.json` will be rejected by CI.
 
 ---
@@ -440,7 +446,7 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 455 jest, and 518 Playwright: 48 HTTP contract, 300 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server, 19 on the published site |
+| Tests | 471 jest, and 519 Playwright: 48 HTTP contract, 301 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server, 19 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French and Japanese, chosen from the browser or Settings, and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |

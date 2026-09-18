@@ -24,11 +24,31 @@ import { frenchSpacing, withFrenchSpacing } from '../../apps/reader/src/i18n/typ
  * rather than refusing it.
  */
 
-/** Registry records, File-Date 2025-08-25: Type, Subtag, Description. */
+/** Registry records, File-Date 2026-09-17: Type, Subtag, Description. */
 const REGISTRY = {
-  language: { en: 'English', es: 'Spanish; Castilian', fr: 'French', ja: 'Japanese' },
-  region: { US: 'United States', MX: 'Mexico', FR: 'France', JP: 'Japan' },
+  language: {
+    en: 'English',
+    es: 'Spanish; Castilian',
+    fr: 'French',
+    ja: 'Japanese',
+    pt: 'Portuguese',
+    zh: 'Chinese',
+  },
+  // A Bible's tag says which script it is written in where that is the whole
+  // difference: one Chinese translation, two character sets.
+  script: { Hans: 'Han (Simplified variant)', Hant: 'Han (Traditional variant)' },
+  region: { US: 'United States', MX: 'Mexico', FR: 'France', JP: 'Japan', BR: 'Brazil' },
 } as const;
+
+/**
+ * Bible languages with no interface yet, named rather than assumed.
+ *
+ * The rule is that the two sets match, so neither can drift unnoticed. A
+ * language arrives here when its Bible lands and its catalog has not been
+ * written; it leaves when the catalog does. A stale entry fails the test
+ * below, so the list cannot be forgotten.
+ */
+const INTERFACE_PENDING = new Set(['zh', 'pt']);
 
 const DATA = fileURLToPath(new URL('../../data/', import.meta.url));
 const metadataLanguages = readdirSync(DATA, { withFileTypes: true })
@@ -43,15 +63,31 @@ describe('language tags', () => {
     expect(Object.keys(REGISTRY.region)).toContain(locale.region);
   });
 
-  test.each(metadataLanguages)('%s is tagged %s, a canonical registry language', (_id, tag) => {
+  test.each(metadataLanguages)('%s is tagged %s, built from registry subtags', (_id, tag) => {
     expect(Intl.getCanonicalLocales(tag)).toEqual([tag]);
-    expect(Object.keys(REGISTRY.language)).toContain(tag);
+    // A Bible's tag may carry a script (zh-Hans) or a region (pt-BR): both are
+    // what the text is, and both are what a screen reader reads it as.
+    const locale = new Intl.Locale(tag);
+    expect(Object.keys(REGISTRY.language)).toContain(locale.language);
+    if (locale.script) expect(Object.keys(REGISTRY.script)).toContain(locale.script);
+    if (locale.region) expect(Object.keys(REGISTRY.region)).toContain(locale.region);
   });
 
-  test('every Bible language has an interface, and every interface a Bible', () => {
-    const bibles = new Set(metadataLanguages.map(([, tag]) => tag));
-    expect(new Set(Object.keys(LANGUAGE_TO_LOCALE))).toEqual(bibles);
-    expect(new Set(LOCALES.map(primaryLanguage))).toEqual(bibles);
+  test('every interface has a Bible, and every Bible an interface or a place in the pending list', () => {
+    const bibles = new Set(metadataLanguages.map(([, tag]) => primaryLanguage(tag)));
+    const interfaces = new Set(LOCALES.map(primaryLanguage));
+
+    expect(new Set(Object.keys(LANGUAGE_TO_LOCALE))).toEqual(interfaces);
+    for (const language of interfaces) expect(bibles).toContain(language);
+    for (const language of bibles) {
+      expect(interfaces.has(language) || INTERFACE_PENDING.has(language)).toBe(true);
+    }
+    // Nothing waits for an interface it already has, or for a Bible that is
+    // not here.
+    for (const language of INTERFACE_PENDING) {
+      expect(interfaces).not.toContain(language);
+      expect(bibles).toContain(language);
+    }
   });
 
   test('every language has its own label', () => {

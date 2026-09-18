@@ -1,5 +1,5 @@
 /** Accepted license values for translation metadata. */
-export type License = 'public-domain' | 'cc-by-sa-4.0' | 'cc0' | 'custom-free';
+export type License = 'public-domain' | 'cc-by-4.0' | 'cc-by-sa-4.0' | 'cc0' | 'custom-free';
 
 /** Testament identifier. */
 export type Testament = 'OT' | 'NT';

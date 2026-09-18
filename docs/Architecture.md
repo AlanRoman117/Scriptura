@@ -656,7 +656,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 
 | Phase | Feature |
 |---|---|
-| v1 | Core loader + search + REST API + translation data ✅ (all 11 ingested) |
+| v1 | Core loader + search + REST API + translation data ✅ (all 14 ingested, in 6 languages) |
 | v1.1 | GraphQL layer + additional translations |
 | v2 | `compare` package — side-by-side diff for study Bible UI ✅ |
 | v2.1 | Cross-reference data (Open Scriptures) |

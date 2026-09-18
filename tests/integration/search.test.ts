@@ -143,6 +143,15 @@ describe('scripts without word separators', () => {
     expect(strict.map((r) => r.ref)).toEqual(loose.map((r) => r.ref));
   });
 
+  // Chinese is written without spaces too, and the Union Version is the text
+  // most of its readers will search.
+  test.each(['神', '耶穌', '約翰'])('word mode is a no-op for %s in Chinese', async (query) => {
+    const loose = await search('cuvt', query);
+    const strict = await search('cuvt', query, { mode: 'word' });
+    expect(loose.length).toBeGreaterThan(50);
+    expect(strict.map((r) => r.ref)).toEqual(loose.map((r) => r.ref));
+  });
+
   test('so a Japanese result set keeps canonical order', async () => {
     // Every match scores alike, so ranking cannot reorder it into something
     // arbitrary.

@@ -334,6 +334,7 @@ export const enUS = {
     about: (size: string) => `about ${size}`,
     licences: {
       'public-domain': 'Public domain',
+      'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
       'custom-free': 'Free licence',
