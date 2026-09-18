@@ -7,6 +7,14 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.2] - 2026-09-17
+
+The second preview. It adds three Bibles and the three interface languages
+that go with them, so the reader again speaks every language it holds a Bible
+in — and the reviewers for Portuguese and Chinese have something to review.
+
+**Try it:** <https://alanroman117.github.io/Scriptura/>
+
 ### Added
 
 - **Three more Bibles, in two new languages.** The Chinese Union Version of 1919 in both scripts (`cuvs` simplified, `cuvt` traditional) and the Brazilian **Bíblia Livre** (`blivre`), all from eBible. Chinese scripture gets its own font stacks, by script, so characters shared with Japanese are drawn the way Chinese readers write them.
@@ -60,4 +68,5 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.2]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.1
