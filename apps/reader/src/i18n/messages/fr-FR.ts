@@ -325,6 +325,7 @@ const catalog = {
     about: (size: string) => `environ ${size}`,
     licences: {
       'public-domain': 'Domaine public',
+      'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
       'custom-free': 'Licence libre',

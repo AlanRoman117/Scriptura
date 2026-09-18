@@ -318,6 +318,7 @@ export const jaJP = {
     about: (size: string) => `約${size}`,
     licences: {
       'public-domain': 'パブリックドメイン',
+      'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
       'custom-free': '自由なライセンス',

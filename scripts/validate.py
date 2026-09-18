@@ -52,7 +52,7 @@ import sys
 from pathlib import Path
 
 # Allowed license identifiers (must match the ingestion registry / schema enum).
-LICENSE_ENUM = {"public-domain", "cc-by-sa-4.0", "cc0", "custom-free"}
+LICENSE_ENUM = {"public-domain", "cc-by-4.0", "cc-by-sa-4.0", "cc0", "custom-free"}
 
 REQUIRED_META = ["id", "name", "language", "license", "attribution",
                  "source_url", "year", "testament", "book_count"]
@@ -108,8 +108,35 @@ NON_TRANSLATION_DIRS = {"schemas"}
 VERSE_BANDS = {"both": (30000, 32000), "OT": (22000, 24000), "NT": (7000, 8500)}
 
 # Forbidden-translation guard: high-precision id substrings and text markers.
-DENY_ID_SUBSTRINGS = {"rv1960", "rvr1960", "rvr60", "reinavalera1960", "kougo"}
-DENY_TEXT_MARKERS = ["reina valera 1960", "reina-valera 1960", "口語訳"]
+# Texts that must never be in this repo, whatever a source calls them. Each is
+# here because it is under copyright somewhere that matters, and each has been
+# offered to us by a source that labelled it free:
+#   rv1960     — Reina-Valera 1960, Sociedades Bíblicas Unidas.
+#   kougo      — 口語訳 1954/55: public domain in Japan, restored in the US by
+#                the URAA until 2049/2050.
+#   gaeyeok    — 개역한글판 (1952/1961) and 개역개정판 (1998), Korean Bible
+#                Society. The first is public domain in Korea since 2012 and
+#                restored in the US until 2056, for the same URAA reason as
+#                kougo; eBible's "Korean Bible 1910" and CrossWire's korrv both
+#                carry it under another name.
+#   rcuv       — 和合本修訂版 (2010) and 新譯本, revisions still in copyright;
+#                the 1919 和合本 itself is fine and is in the library.
+#   Brazilian  — ARA, ARC 1995/2009, ACF, NVI and NTLH, all in copyright; the
+#                library carries Bíblia Livre instead.
+DENY_ID_SUBSTRINGS = {
+    "rv1960", "rvr1960", "rvr60", "reinavalera1960",
+    "kougo",
+    "gaeyeok", "gaeyeokhangeul", "gaeyeokgaejeong", "korrv",
+    "rcuv", "hehebenxiudingban",
+    "almeidaara", "arc1995", "arc2009", "acf1994", "ntlh",
+}
+DENY_TEXT_MARKERS = [
+    "reina valera 1960", "reina-valera 1960", "口語訳",
+    "개역한글", "개역개정",
+    "和合本修訂版", "和合本修订版", "新譯本", "新译本",
+    "almeida revista e atualizada", "nova tradução na linguagem de hoje",
+    "almeida corrigida fiel", "nova versão internacional",
+]
 
 _NUM_PREFIX = re.compile(r"^(\d+)-")
 
