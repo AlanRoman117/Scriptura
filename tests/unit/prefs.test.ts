@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { DEFAULT_LOCALE, LANGUAGE_TO_LOCALE, LOCALES } from '../../apps/reader/src/i18n/locales';
+import { DEFAULT_LOCALE, LANGUAGE_TO_LOCALE, LOCALES, matchLocale } from '../../apps/reader/src/i18n/locales';
 import {
   DEFAULT_PREFS,
   MEASURE_VALUES,
@@ -134,6 +134,59 @@ describe('the inline script in index.html agrees with the module', () => {
     expect(script).toContain(`lang || '${DEFAULT_LOCALE}'`);
     // The page carries a real tag even if the script never runs.
     expect(html).toContain(`<html lang="${DEFAULT_LOCALE}">`);
+  });
+
+  /**
+   * The script, run against stubs: the two are compared by what they do, not
+   * by what they contain. Chinese is why this is worth the machinery — the
+   * script chooses a script subtag from a region, and no amount of reading the
+   * source as text says whether it chooses the same one.
+   */
+  function inlineLang(languages: string[], stored: Record<string, unknown> = {}): string {
+    const attrs = new Map<string, string>();
+    const root = {
+      setAttribute: (name: string, value: string) => void attrs.set(name, value),
+      style: { setProperty: () => {} },
+    };
+    const run = new Function(
+      'localStorage',
+      'document',
+      'navigator',
+      script.replace('<script>', '')
+    ) as (l: unknown, d: unknown, n: unknown) => void;
+    run(
+      { getItem: (key: string) => (key === STORAGE_KEY ? JSON.stringify(stored) : null) },
+      { documentElement: root, querySelectorAll: () => [] },
+      { languages, language: languages[0] ?? '' }
+    );
+    return attrs.get('lang') ?? '';
+  }
+
+  test.each([
+    [['en-US']],
+    [['pt-BR']],
+    [['pt-PT']],
+    [['zh']],
+    [['zh-CN']],
+    [['zh-SG']],
+    [['zh-TW']],
+    [['zh-HK']],
+    [['zh-MO']],
+    [['zh-Hant']],
+    [['zh-Hans-CN']],
+    [['ZH-hant-tw']],
+    [['zh-CHT']],
+    [['de-DE', 'zh-TW']],
+    [['de-DE']],
+    [[]],
+  ])('the script resolves %j to the same language as matchLocale', (languages) => {
+    expect(inlineLang(languages)).toBe(matchLocale(languages));
+  });
+
+  test('a chosen language still wins in the script', () => {
+    expect(inlineLang(['zh-TW'], { language: 'pt-BR' })).toBe(resolveLocale('pt-BR', ['zh-TW']));
+    // And one we do not have is ignored rather than written to the page.
+    expect(inlineLang(['zh-TW'], { language: 'ko-KR' })).toBe(matchLocale(['zh-TW']));
   });
 
   test('the metas the script updates exist, one per scheme', () => {

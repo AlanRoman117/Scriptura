@@ -1,0 +1,49 @@
+name: 翻譯修正（繁體中文）
+description: 回報繁體中文介面上用錯的或者看不明白的詞句。
+title: "[zh-Hant] "
+labels: ["translation", "preview", "lang: zh-Hant"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感謝你幫忙審閱應用程式的文字。每次只回報一處，最容易處理。
+  - type: input
+    id: screen
+    attributes:
+      label: 在哪裡？
+      description: 畫面或面板的名稱，例如「設定」「說明 → 看板」「刪除筆記時的詢問」。
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: 目前顯示的是
+      description: 如果可以，請原樣複製這段文字。
+    validations:
+      required: true
+  - type: textarea
+    id: suggested
+    attributes:
+      label: 應該顯示的是
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 原因（選填）
+      description: 例如更清楚的說法、文法上的理由，或者螢幕閱讀器唸出來的效果。
+  - type: input
+    id: version
+    attributes:
+      label: 版本
+      description: 由應用程式中的連結自動填寫。
+  - type: input
+    id: language
+    attributes:
+      label: 介面語言
+      description: 由應用程式中的連結自動填寫。
+  - type: input
+    id: device
+    attributes:
+      label: 裝置與瀏覽器（選填）
+      description: 例如「iPhone 15，Safari」或「Windows 11，Chrome」。

@@ -45,6 +45,30 @@ const WORDS = {
     heading: 'このプレビュー版について',
     form: 'translation-ja.yml',
   },
+  'pt-BR': {
+    label: 'Versão prévia',
+    report: 'Relatar uma correção de tradução no GitHub (abre em uma nova aba)',
+    short: 'Relatar uma correção',
+    name: 'Relatar uma correção (no GitHub, abre em uma nova aba)',
+    heading: 'Sobre esta versão prévia',
+    form: 'translation-pt.yml',
+  },
+  'zh-Hans': {
+    label: '预览版',
+    report: '在 GitHub 上报告翻译问题（在新标签页中打开）',
+    short: '报告翻译问题',
+    name: '报告翻译问题 （在 GitHub 上，会在新标签页中打开）',
+    heading: '关于这个预览版',
+    form: 'translation-zh-hans.yml',
+  },
+  'zh-Hant': {
+    label: '預覽版',
+    report: '在 GitHub 上回報翻譯問題（會在新分頁中開啟）',
+    short: '回報翻譯問題',
+    name: '回報翻譯問題 （在 GitHub 上，會在新分頁中開啟）',
+    heading: '關於這個預覽版',
+    form: 'translation-zh-hant.yml',
+  },
 } as const;
 
 /** The query a correction link carries. */

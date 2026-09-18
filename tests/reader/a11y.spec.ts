@@ -168,7 +168,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
  * Bibles in the language, so it is checked too. The label-in-name and lang
  * rules are the ones this is for.
  */
-for (const locale of ['es-MX', 'fr-FR', 'ja-JP'] as const) {
+for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const) {
   test.describe(`no axe violations, ${locale}`, () => {
     test.use({ locale });
     for (const name of ['reading', 'verse actions', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed', 'asked before deleting']) {

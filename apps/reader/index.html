@@ -21,7 +21,8 @@
 
       The page's language is set here too, so a screen reader starts in the
       right voice: the chosen language, else the first of the device's
-      languages the app has (src/i18n/locales.ts), else English.
+      languages the app has (src/i18n/locales.ts), else English. Chinese picks
+      its script the same way matchLocale does — the test runs both.
     -->
     <script>
       try {
@@ -37,11 +38,22 @@
         r.style.setProperty('--reading-leading', spacing[0]);
         r.style.setProperty('--verse-gap', spacing[1]);
         r.style.setProperty('--measure', measure);
-        var locales = ['en-US', 'es-MX', 'fr-FR', 'ja-JP'];
-        var byLanguage = { en: 'en-US', es: 'es-MX', fr: 'fr-FR', ja: 'ja-JP' };
+        var locales = ['en-US', 'es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'];
+        var byLanguage = { en: 'en-US', es: 'es-MX', fr: 'fr-FR', ja: 'ja-JP', pt: 'pt-BR', zh: 'zh-Hans' };
+        var traditional = /^(hant|cht|tw|hk|mo)$/;
+        var chinese = function (parts) {
+          for (var j = 1; j < parts.length; j++) {
+            if (traditional.test(parts[j])) return 'zh-Hant';
+            if (parts[j] === 'hans' || parts[j] === 'chs') return 'zh-Hans';
+          }
+          return byLanguage.zh;
+        };
         var lang = locales.indexOf(p.language) !== -1 ? p.language : '';
         var device = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
-        for (var i = 0; !lang && i < device.length; i++) lang = byLanguage[String(device[i]).split(/[-_]/)[0].toLowerCase()] || '';
+        for (var i = 0; !lang && i < device.length; i++) {
+          var parts = String(device[i]).toLowerCase().split(/[-_]/);
+          lang = (parts[0] === 'zh' ? chinese(parts) : byLanguage[parts[0]]) || '';
+        }
         r.setAttribute('lang', lang || 'en-US');
         if (themes[p.theme]) document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = themes[p.theme]; });
       } catch (e) {}

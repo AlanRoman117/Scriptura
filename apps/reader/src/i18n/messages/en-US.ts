@@ -466,7 +466,7 @@ export const enUS = {
     hide: 'Hide',
     heading: 'About this preview',
     about:
-      'This build is for the people checking the interface in Spanish, French and Japanese. Nothing you do here is sent anywhere: your notes and marks stay in this browser. To report a word that is wrong or unclear, use the link below. It opens a short form on GitHub, which needs a free account.',
+      'This build is for the people checking the interface in Spanish, French, Japanese, Chinese and Portuguese. Nothing you do here is sent anywhere: your notes and marks stay in this browser. To report a word that is wrong or unclear, use the link below. It opens a short form on GitHub, which needs a free account.',
     version: (version: string) => `Version: ${version}`,
   },
 

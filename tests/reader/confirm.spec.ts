@@ -247,6 +247,24 @@ const IN = {
     action: 'ノートを削除',
     done: 'ノート「無題」を削除しました',
   },
+  'pt-BR': {
+    title: 'Excluir a nota “Sem título”?',
+    cancel: 'Cancelar',
+    action: 'Excluir nota',
+    done: 'A nota “Sem título” foi excluída',
+  },
+  'zh-Hans': {
+    title: '删除笔记“无标题”吗？',
+    cancel: '取消',
+    action: '删除笔记',
+    done: '已删除笔记“无标题”',
+  },
+  'zh-Hant': {
+    title: '要刪除筆記「無標題」嗎？',
+    cancel: '取消',
+    action: '刪除筆記',
+    done: '已刪除筆記「無標題」',
+  },
 } as const;
 
 for (const [locale, words] of Object.entries(IN)) {

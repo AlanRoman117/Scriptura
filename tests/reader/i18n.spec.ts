@@ -6,9 +6,11 @@ import type { Page } from '@playwright/test';
  * told about it.
  *
  * The page's `lang` is a BCP 47 tag from the IANA registry (`en-US`, `es-MX`,
- * `fr-FR`, `ja-JP`) and is set before the app runs, so the first thing read
- * is read in the right voice (3.1.1). The reader's choice wins; otherwise the
- * first of the browser's languages the app has; otherwise English.
+ * `fr-FR`, `ja-JP`, `pt-BR`, `zh-Hans`, `zh-Hant`) and is set before the app
+ * runs, so the first thing read is read in the right voice (3.1.1). The
+ * reader's choice wins; otherwise the first of the browser's languages the app
+ * has; otherwise English. Chinese is chosen by script, so a Taiwanese browser
+ * gets Traditional rather than whichever Chinese is listed first.
  */
 
 async function open(page: Page) {
@@ -52,7 +54,11 @@ for (const [device, expected] of [
   ['fr-FR', 'fr-FR'],
   ['ja-JP', 'ja-JP'],
   ['de-DE', 'en-US'],
-  ['pt-BR', 'en-US'],
+  ['pt-BR', 'pt-BR'],
+  ['pt-PT', 'pt-BR'],
+  ['zh-CN', 'zh-Hans'],
+  ['zh-TW', 'zh-Hant'],
+  ['zh-HK', 'zh-Hant'],
 ] as const) {
   test.describe(`a ${device} browser`, () => {
     test.use({ locale: device });
@@ -79,6 +85,9 @@ test.describe('choosing a language', () => {
       ['es-MX', 'es-MX', 'Español (México)'],
       ['fr-FR', 'fr-FR', 'Français (France)'],
       ['ja-JP', 'ja-JP', '日本語 (日本)'],
+      ['pt-BR', 'pt-BR', 'Português (Brasil)'],
+      ['zh-Hans', 'zh-Hans', '中文（简体）'],
+      ['zh-Hant', 'zh-Hant', '中文（繁體）'],
     ]);
   });
 
@@ -192,6 +201,58 @@ test.describe('in Japanese (Japan)', () => {
     expect(scripture).not.toMatch(/Mincho/);
   });
 });
+
+test.describe('in Portuguese (Brazil)', () => {
+  test.use({ locale: 'pt-BR' });
+
+  test('a Brazilian browser opens in Portuguese, and counts as Brazil counts', async ({ page }) => {
+    await open(page);
+    expect(await lang(page)).toBe('pt-BR');
+    await expect(page.getByTestId('marks-open')).toContainText('Marcas');
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Configurações');
+    await expect(page.getByTestId('announcer')).toHaveText('Painel Configurações aberto');
+    await page.getByTestId('settings-close').click();
+    // Brazilian Portuguese groups thousands with a full stop, not a comma.
+    await page.getByTestId('search-input').fill('the');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'the');
+    // The count is followed by how many are shown, so this anchors at the start.
+    await expect(page.getByTestId('search-count')).toHaveText(/^\d{1,3}(\.\d{3})+ resultados/);
+  });
+});
+
+/**
+ * Chinese, in both scripts. They are separate texts, not a character
+ * conversion, so each is checked for a word the other does not use.
+ */
+for (const [locale, words] of [
+  ['zh-Hans', { marks: '标记', settings: '设置', opened: '已打开设置面板' }],
+  ['zh-Hant', { marks: '標記', settings: '設定', opened: '已開啟設定面板' }],
+] as const) {
+  test.describe(`in ${locale}`, () => {
+    test.use({ locale: locale === 'zh-Hans' ? 'zh-CN' : 'zh-TW' });
+
+    test('opens in its own script, in Chinese type', async ({ page }) => {
+      await open(page);
+      expect(await lang(page)).toBe(locale);
+      await expect(page.getByTestId('marks-open')).toContainText(words.marks);
+      await page.getByTestId('settings-open').click();
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(words.settings);
+      await expect(page.getByTestId('announcer')).toHaveText(words.opened);
+
+      // The :lang() stack, and no slanted emphasis for Han characters.
+      const face = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
+      expect(face).toMatch(locale === 'zh-Hans' ? /PingFang SC/ : /PingFang TC/);
+    });
+
+    test('English scripture inside a Chinese page keeps its Latin type', async ({ page }) => {
+      await open(page);
+      const scripture = await page.locator('[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
+      expect(scripture).toMatch(/Iowan Old Style/);
+      expect(scripture).not.toMatch(/PingFang/);
+    });
+  });
+}
 
 test.describe('counts are grouped as each language groups them', () => {
   for (const [locale, pattern] of [
