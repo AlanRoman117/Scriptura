@@ -1,0 +1,11 @@
+{
+  "id": "cuvs",
+  "name": "新标点和合本",
+  "language": "zh-Hans",
+  "license": "public-domain",
+  "attribution": "Chinese Union Version (1919), simplified script — Public Domain",
+  "source_url": "https://ebible.org/cmn-cu89s/",
+  "year": 1919,
+  "testament": "both",
+  "book_count": 66
+}
