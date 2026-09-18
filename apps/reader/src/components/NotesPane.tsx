@@ -77,8 +77,12 @@ export function NotesPane({
   const [heading, setHeading] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
-  /** Where to leave the caret after a toolbar edit, once React has repainted. */
-  const caret = useRef<{ start: number; end: number } | null>(null);
+  /**
+   * Where to leave the caret after a toolbar edit, once React has repainted,
+   * and the text that edit produces — see the effect below for why the text
+   * has to be part of it.
+   */
+  const caret = useRef<{ start: number; end: number; text?: string } | null>(null);
 
   useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
 
@@ -94,10 +98,19 @@ export function NotesPane({
   };
   useEffect(trackHeading, [active?.id, active?.body]);
 
+  // ⚠️ The selection is restored only on the render that carries the edited
+  // text. This effect runs after every render, and an unrelated update — the
+  // save state, a storage estimate, an announcement — can commit between the
+  // toolbar's edit and the new body arriving. Placing the selection against
+  // the old text then loses it the moment React writes the new value, since
+  // assigning a textarea's value collapses the selection to the end. On a
+  // macOS runner that showed up as the right text with nothing selected. The
+  // caret simply waits for its own render instead.
   useEffect(() => {
     const pending = caret.current;
     const el = surface.current;
     if (!pending || !el) return;
+    if (pending.text !== undefined && el.value !== pending.text) return;
     caret.current = null;
     el.focus();
     el.setSelectionRange(pending.start, pending.end);
@@ -111,7 +124,7 @@ export function NotesPane({
     const el = surface.current;
     if (!el || !active) return;
     const edit = operation(el.value, el.selectionStart, el.selectionEnd);
-    caret.current = { start: edit.selectionStart, end: edit.selectionEnd };
+    caret.current = { start: edit.selectionStart, end: edit.selectionEnd, text: edit.text };
     onChange(active.id, { body: edit.text });
   };
 
