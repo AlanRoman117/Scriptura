@@ -9,6 +9,10 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    # Work lands on develop and reaches main through a release, so that is
+    # where an update belongs too. Opened against main, every one of these
+    # would have to be merged into a released branch or carried by hand.
+    target-branch: develop
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
@@ -26,10 +30,16 @@ updates:
       # until ts-jest supports it.
       - dependency-name: typescript
         versions: ['>=6']
+      # @types/node's major follows Node's, and .nvmrc pins Node 24. Types for
+      # a newer Node describe APIs this runtime does not have: the code compiles
+      # and then fails where it runs. Raise this the day .nvmrc does.
+      - dependency-name: '@types/node'
+        versions: ['>=25']
 
   # The stale-actions problem this repo just hit (v4 actions pinned to a
   # deprecated Node 20 runtime) is exactly what this entry prevents recurring.
   - package-ecosystem: github-actions
     directory: /
+    target-branch: develop
     schedule:
       interval: weekly
