@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { ReactNode } from 'react';
 import { usePointerDrag } from '../lib/viewport';
 import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
-import { PaneControlsContext, type Maximized, type Pane } from './PaneControl';
+import { MaximizeButton, PaneControlsContext, type Maximized, type Pane } from './PaneControl';
 import { useI18n } from '../i18n';
 
 /** Below this the panes cannot sit side by side; notes become a sheet. */
@@ -42,10 +42,15 @@ const clampTo = ([min, max]: [number, number], value: number) => Math.min(max, M
 
 export type { Maximized, SheetPosition };
 
+/** What the side pane beside the Bible holds. */
+export type Side = 'notes' | 'board';
+const SIDES: readonly Side[] = ['notes', 'board'];
+
 /** The full sheet's share of the visible viewport; mirrored in styles.css. */
 const FULL_SHARE = 0.92;
 
-function useIsNarrow(): boolean {
+/** Whether the panes are too narrow to sit side by side, so the side pane is a sheet. */
+export function useIsNarrow(): boolean {
   const [narrow, setNarrow] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < NARROW
   );
@@ -62,6 +67,19 @@ function useIsNarrow(): boolean {
 interface LayoutProps {
   bible: ReactNode;
   notes: ReactNode;
+  /** The canvas, the side pane's other half. */
+  board: ReactNode;
+  side: Side;
+  onSide: (side: Side) => void;
+  /**
+   * Which pane fills the window, and where the phone's sheet rests. Held by
+   * the app, which needs them too: following a card's verse brings the Bible
+   * back, and the page title names the board when it fills the window.
+   */
+  maximized: Maximized;
+  onMaximized: (maximized: Maximized) => void;
+  sheet: SheetPosition;
+  onSheet: (sheet: SheetPosition) => void;
   /**
    * The last thing put into a note, in words ("Quoted John 1:2"), or null.
    *
@@ -85,15 +103,25 @@ interface LayoutProps {
  * were rejected: switching away from the text to write about it loses exactly
  * the context the layout exists to preserve.
  */
-export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutProps) {
+export function Layout({
+  bible,
+  notes,
+  board,
+  side,
+  onSide,
+  maximized,
+  onMaximized: setMaximized,
+  sheet,
+  onSheet: setSheet,
+  inserted = null,
+  onNotesShown,
+}: LayoutProps) {
   const { t, fmt } = useI18n();
   const narrow = useIsNarrow();
   // 56%, not the 58% it was while the divider was an 11px line: the 52px bar
   // takes its width from both panes, rather than all of it from the notes,
   // whose bar then no longer fits one row at 1280px.
   const [split, setSplit] = useState(0.56);
-  const [maximized, setMaximized] = useState<Maximized>('none');
-  const [sheet, setSheet] = useState<SheetPosition>('peek');
   const frame = useRef<HTMLDivElement>(null);
 
   // Opening the sheet, or restoring the notes beside the Bible, is looking at
@@ -114,8 +142,91 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
   useEffect(() => {
     if (!focusNotesNext.current || maximized === 'bible') return;
     focusNotesNext.current = false;
-    (document.getElementById('notes-surface') ?? document.getElementById('notes'))?.focus();
-  }, [maximized]);
+    const target =
+      side === 'notes'
+        ? (document.getElementById('notes-surface') ?? document.getElementById('notes'))
+        : document.getElementById('canvas');
+    target?.focus();
+  }, [maximized, side]);
+
+  const sideName = side === 'notes' ? t.layout.notes : t.notes.canvas;
+
+  /**
+   * Notes or canvas: two tabs over one pane, so a reader building a diagram
+   * swaps to the note and back without leaving the Bible or a maximized pane.
+   * Both halves stay mounted, so the caret, the undo history, the board's zoom
+   * and its scroll survive a switch.
+   */
+  const tabs = useRef<Partial<Record<Side, HTMLButtonElement | null>>>({});
+  const choose = (next: Side) => {
+    onSide(next);
+    // A board needs the room: on a phone it opens at full height.
+    if (narrow && next === 'board' && sheet !== 'full') setSheet('full');
+  };
+  const sidePane = (
+    <>
+      <div className="side-switch" data-testid="side-switch">
+        <div className="side-switch__tabs" role="tablist" aria-label={t.layout.sides}>
+          {SIDES.map((s, i) => (
+            <button
+              key={s}
+              ref={(el) => {
+                tabs.current[s] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`side-tab-${s}`}
+              className="side-switch__tab"
+              data-testid={`side-${s}`}
+              aria-selected={side === s}
+              aria-controls={`side-panel-${s}`}
+              // The selected tab is the one Tab stop; arrows move between them.
+              tabIndex={side === s ? 0 : -1}
+              onClick={() => choose(s)}
+              onKeyDown={(e) => {
+                const next =
+                  e.key === 'ArrowRight' || e.key === 'ArrowDown'
+                    ? SIDES[(i + 1) % SIDES.length]
+                    : e.key === 'ArrowLeft' || e.key === 'ArrowUp'
+                      ? SIDES[(i + SIDES.length - 1) % SIDES.length]
+                      : e.key === 'Home'
+                        ? SIDES[0]
+                        : e.key === 'End'
+                          ? SIDES[SIDES.length - 1]
+                          : null;
+                if (!next) return;
+                e.preventDefault();
+                choose(next);
+                tabs.current[next]?.focus();
+              }}
+            >
+              {s === 'notes' ? t.layout.notes : t.notes.canvas}
+            </button>
+          ))}
+        </div>
+        <MaximizeButton
+          pane="notes"
+          name={side === 'notes' ? t.layout.paneNotes : t.layout.paneBoard}
+          className="side-switch__maximize"
+        />
+      </div>
+      {/* <section>, not <div>: sectioning content keeps the note's and the
+          board's own <header> and <footer> from reading as the page's banner
+          and contentinfo, now that the pane itself is a plain element. */}
+      {SIDES.map((s) => (
+        <section
+          key={s}
+          role="tabpanel"
+          id={`side-panel-${s}`}
+          className="side-panel"
+          aria-labelledby={`side-tab-${s}`}
+          hidden={side !== s}
+        >
+          {s === 'notes' ? notes : board}
+        </section>
+      ))}
+    </>
+  );
 
   /* ── The notes sheet (narrow only) ──────────────────────────────────────
    *
@@ -255,14 +366,16 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
   const paneControls = useMemo(
     () => ({
       maximized,
-      toggle: (pane: Pane) => setMaximized((current) => (current === pane ? 'none' : pane)),
+      toggle: (pane: Pane) => setMaximized(maximized === pane ? 'none' : pane),
     }),
-    [maximized]
+    [maximized, setMaximized]
   );
 
   if (narrow) {
     // Only at peek: once the sheet is open the note's own status line says it.
     const onGrip = sheet === 'peek' ? inserted : null;
+    const expand = side === 'notes' ? t.layout.expandNotes : t.layout.expandBoard;
+    const collapse = side === 'notes' ? t.layout.collapseNotes : t.layout.collapseBoard;
     return (
       <div className="layout layout--narrow" data-testid="layout" data-mode="narrow">
         {/* Covered by a full sheet, the text is out of reach: inert, so Tab and
@@ -276,7 +389,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
           data-testid="pane-notes"
           data-sheet={sheet}
           data-dragging={dragSize !== null || undefined}
-          aria-label={t.layout.notes}
+          aria-label={sideName}
           style={{
             ['--sheet-peek' as string]: `${peek}px`,
             ...(dragSize !== null ? { ['--sheet-drag' as string]: `${dragSize}px` } : {}),
@@ -292,10 +405,10 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             // using speech input will say to reach it.
             aria-label={
               onGrip
-                ? t.layout.gripWithNews(sheet === 'full' ? t.layout.collapseNotes : t.layout.expandNotes, onGrip)
+                ? t.layout.gripWithNews(sheet === 'full' ? collapse : expand, onGrip)
                 : sheet === 'full'
-                  ? t.layout.collapseNotes
-                  : t.layout.expandNotes
+                  ? collapse
+                  : expand
             }
             aria-expanded={sheet !== 'peek'}
             aria-describedby="sheet-hint"
@@ -316,7 +429,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
           >
             <span className="sheet__handle" aria-hidden="true" />
             <span className="sheet__label">
-              {t.layout.notes}
+              {sideName}
               {onGrip && (
                 <span className="done sheet__done" data-testid="sheet-done">
                   <span className="done__check" aria-hidden="true">
@@ -336,12 +449,14 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             // would have no height left at all once the bar and tools are
             // drawn. The reader can pull it down again from the grip.
             onFocus={(e) => {
-              if (sheet !== 'full' && (e.target as HTMLElement).matches('textarea, input:not([type]), input[type="text"]')) {
+              // ⚠️ The live note editor is a contenteditable, not a textarea.
+              const target = e.target as HTMLElement;
+              if (sheet !== 'full' && (target.isContentEditable || target.matches('textarea, input:not([type]), input[type="text"]'))) {
                 setSheet('full');
               }
             }}
           >
-            {notes}
+            {sidePane}
           </div>
         </section>
       </div>
@@ -395,7 +510,7 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
                 setMaximized('none');
               }}
             >
-              {t.layout.showNotes}
+              {side === 'notes' ? t.layout.showNotes : t.layout.showBoard}
             </button>
           </div>
         )}
@@ -450,9 +565,24 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
         </div>
       )}
 
-      <aside className="pane pane--notes" data-testid="pane-notes" aria-label={t.layout.notes} hidden={maximized === 'bible'}>
-        {notes}
-      </aside>
+      {/* Complementary beside the Bible; the page's main landmark when it
+          fills the window, since the Bible's is hidden then. A div, not an
+          <aside>, because <aside> may not take the main role, and changing
+          the element would remount the note and the board and lose their
+          state. */}
+      <div
+        className="pane pane--notes"
+        data-testid="pane-notes"
+        role={maximized === 'notes' ? 'main' : 'complementary'}
+        aria-label={sideName}
+        hidden={maximized === 'bible'}
+      >
+        {/* Maximized, this pane is the page, and the chapter title — the h1 —
+            is hidden with the Bible. It carries the page's h1 instead, above
+            the pane's own h2, so there is always exactly one (2.4.10). */}
+        {maximized === 'notes' && <h1 className="visually-hidden">{sideName}</h1>}
+        {sidePane}
+      </div>
     </div>
     </PaneControlsContext.Provider>
   );

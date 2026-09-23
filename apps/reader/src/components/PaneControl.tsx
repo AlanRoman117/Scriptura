@@ -26,12 +26,13 @@ export const PaneControlsContext = createContext<PaneControls | null>(null);
  * bar now renders it last, so it is where it is drawn and the same size and
  * shape as the buttons beside it — `className` is theirs.
  */
-export function MaximizeButton({ pane, className }: { pane: Pane; className: string }) {
+export function MaximizeButton({ pane, className, name: named }: { pane: Pane; className: string; name?: string }) {
   const controls = useContext(PaneControlsContext);
   const { t } = useI18n();
   if (!controls) return null;
   const active = controls.maximized === pane;
-  const name = pane === 'bible' ? t.layout.paneBible : t.layout.paneNotes;
+  // The side pane says what it holds now: the notes or the canvas.
+  const name = named ?? (pane === 'bible' ? t.layout.paneBible : t.layout.paneNotes);
   const label = active ? t.layout.restore(name) : t.layout.maximize(name);
   return (
     <button

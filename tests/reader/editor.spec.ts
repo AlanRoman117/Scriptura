@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { noteValue, usePlainEditor } from '../helpers/note';
 
 /**
  * The writing surface: tools for people who do not write Markdown, and a way
@@ -31,7 +32,15 @@ test.describe('formatting tools', () => {
     await expect(tools).toBeVisible();
     await page.getByTestId('book-select').focus();
     await expect(tools).toBeVisible();
-    // Preview has nothing to format; writing brings them straight back.
+  });
+
+  // Preview is offered only with the plain textarea; the live editor
+  // already draws the note.
+  test('Preview, with Plain text, has nothing to format; writing brings them back', async ({ page }) => {
+    await usePlainEditor(page);
+    await open(page);
+    const tools = page.getByTestId('editor-tools');
+    await expect(tools).toBeVisible();
     await page.getByTestId('note-preview').click();
     await expect(tools).toHaveCount(0);
     await page.getByTestId('note-preview').click();
@@ -43,12 +52,12 @@ test.describe('formatting tools', () => {
     await page.getByTestId('notes-surface').fill('The prologue');
     await selectAll(page);
     await page.getByTestId('tool-h2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('## The prologue');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '## The prologue');
 
     // A tool that can only add syntax strands the reader it exists for.
     await selectAll(page);
     await page.getByTestId('tool-h2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('The prologue');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'The prologue');
   });
 
   test('bold wraps the selection and leaves the caret usable', async ({ page }) => {
@@ -58,7 +67,7 @@ test.describe('formatting tools', () => {
     await surface.click();
     await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 8));
     await page.getByTestId('tool-bold').click();
-    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toHaveJSProperty('value', 'the **Word**');
 
     // The word stays selected, not its markers — so focus came back to the
     // textarea and a second style can go on top of the first.
@@ -68,7 +77,7 @@ test.describe('formatting tools', () => {
     expect(picked).toBe('Word');
 
     await page.getByTestId('tool-italic').click();
-    await expect(surface).toHaveValue('the ***Word***');
+    await expect(surface).toHaveJSProperty('value', 'the ***Word***');
   });
 
   test('a list numbers every selected line', async ({ page }) => {
@@ -76,11 +85,14 @@ test.describe('formatting tools', () => {
     await page.getByTestId('notes-surface').fill('one\ntwo\nthree');
     await selectAll(page);
     await page.getByTestId('tool-number').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('1. one\n2. two\n3. three');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '1. one\n2. two\n3. three');
   });
 });
 
 test.describe('reading it back', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('renders the syntax, and a click returns to the right place', async ({ page }) => {
     await open(page);
     await page.getByTestId('notes-surface').fill(
@@ -103,7 +115,7 @@ test.describe('reading it back', () => {
     const surface = page.getByTestId('notes-surface');
     await expect(surface).toBeVisible();
     const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
-    const body = await surface.inputValue();
+    const body = await noteValue(surface);
     expect(body.slice(at)).toBe('> a quotation');
   });
 
@@ -139,6 +151,9 @@ test.describe('reading it back', () => {
 });
 
 test.describe('a board inside a note', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('embeds as a diagram, and opens from there', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-title').fill('Prologue study');
@@ -148,14 +163,14 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('verse-3').click();
     await page.getByTestId('canvas-3').click();
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-to-note').click();
     // The board closed behind the button, so the note says what arrived.
     await expect(page.getByTestId('note-done')).toHaveText('✓ Added the board “Study board”');
     await expect(page.getByTestId('announcer')).toHaveText('Added the board “Study board” in “Prologue study”');
 
     // Back in the note, the fence is plain text…
-    await expect(page.getByTestId('notes-surface')).toContainText('scriptura-board');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('scriptura-board');
     // …and renders as the board, the way a mermaid fence would.
     await page.getByTestId('note-preview').click();
     const embed = page.getByTestId('notes-preview').locator('.embed');
@@ -178,7 +193,7 @@ test.describe('a board inside a note', () => {
       await page.getByTestId(`verse-${v}`).click();
       await page.getByTestId(`canvas-${v}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-add-text').click();
     const cards = await page.locator('.card').evaluateAll((all) =>
       all.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''))
@@ -216,13 +231,13 @@ test.describe('a board inside a note', () => {
     await open(page);
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-to-note').click();
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-delete').click();
     await page.getByTestId('confirm-accept').click();
-    await page.getByTestId('canvas-close').click();
+    await page.getByTestId('side-notes').click();
 
     await page.getByTestId('note-preview').click();
     await expect(page.getByTestId('board-embed-missing')).toBeVisible();
@@ -230,6 +245,9 @@ test.describe('a board inside a note', () => {
 });
 
 test.describe('the preview from the keyboard', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('each block has an Edit control that puts the caret there', async ({ page }) => {
     await open(page);
     await page.getByTestId('notes-surface').fill('# Opening\n\nThe **Word** was with God.\n\n> a quotation');
@@ -244,7 +262,7 @@ test.describe('the preview from the keyboard', () => {
     const surface = page.getByTestId('notes-surface');
     await expect(surface).toBeVisible();
     const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
-    expect((await surface.inputValue()).slice(at)).toBe('> a quotation');
+    expect((await noteValue(surface)).slice(at)).toBe('> a quotation');
   });
 
   test('an empty preview is a button back to writing', async ({ page }) => {
@@ -278,7 +296,7 @@ test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
     await expect(page.getByTestId('tool-bold')).toBeFocused();
     await page.keyboard.press('Enter');
 
-    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toHaveJSProperty('value', 'the **Word**');
     await expect(surface).toBeFocused();
     // Polled, not sampled once: the selection is restored on the render that
     // carries the edited text, which is not always the render that shows it —

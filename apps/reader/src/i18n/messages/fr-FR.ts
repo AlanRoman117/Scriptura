@@ -65,7 +65,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notes',
     blocks: [
       {
-        p: 'Les notes sont du texte simple en Markdown. La barre au-dessus de la note ajoute des titres, du gras, de l’italique, des listes et des citations ; appuyez de nouveau sur un outil pour retirer la mise en forme. **Aperçu** montre la note telle qu’elle se lira.',
+        p: 'Les notes sont du texte simple en Markdown. La mise en forme apparaît pendant la saisie, et ses symboles reviennent sur la ligne en cours de modification ; pour ne voir que le Markdown, choisissez **Texte brut** dans Éditeur de notes, dans les Paramètres. La barre au-dessus de la note ajoute des titres, du gras, de l’italique, des listes et des citations ; appuyez de nouveau sur un outil pour retirer la mise en forme. En Texte brut, **Aperçu** montre la note telle qu’elle se lira.',
       },
       {
         p: 'Un lien vers un passage s’écrit `[[john 3:16]]`. Ajoutez `@lsg1910` pour préciser la traduction : `[[john 3:16@lsg1910]]`. Placez le curseur dans un lien et un bouton **Aller à** l’ouvre. **Citer**, à côté d’un verset, copie le verset dans votre note avec sa référence et un lien.',
@@ -132,6 +132,7 @@ const catalog = {
     bootFailed: 'Le texte biblique n’a pas pu être ouvert. Rechargez pour réessayer.',
     skipToScripture: 'Aller au texte biblique',
     skipToNotes: 'Aller aux notes',
+    skipToBoard: 'Aller aux tableaux',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Tableaux`,
@@ -223,6 +224,12 @@ const catalog = {
     showNotes: 'Afficher les notes',
     paneBible: 'la Bible',
     paneNotes: 'les notes',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notes ou tableaux',
+    paneBoard: 'les tableaux',
+    expandBoard: 'Agrandir les tableaux',
+    collapseBoard: 'Réduire les tableaux',
+    showBoard: 'Afficher les tableaux',
     maximize: (pane: string) => `Agrandir ${pane}`,
     restore: (pane: string) => `Rétablir ${pane}`,
   },
@@ -284,6 +291,8 @@ const catalog = {
     showing: (shown: number) => ` ; ${num(shown)} affichés`,
     seeAll: (total: number) => `Voir les ${num(total)}`,
     insert: (ref: string) => `Insérer ${ref} dans la note ouverte`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Au tableau : placer ${ref} sur le tableau`,
     weakBelow: 'Ci-dessous : à l’intérieur d’un mot plus long',
     announceNone: (query: string) => `Aucun résultat pour « ${query} »`,
     announceCount: (total: number, query: string) =>
@@ -487,6 +496,8 @@ const catalog = {
     spacings: { normal: 'Normal', relaxed: 'Aéré', loose: 'Très aéré' },
     measure: 'Largeur de colonne',
     measures: { narrow: 'Étroite', normal: 'Normale', wide: 'Large' },
+    editor: 'Éditeur de notes',
+    editors: { live: 'Afficher la mise en forme pendant la saisie', plain: 'Texte brut' },
     displayNote:
       'Les interlignes Aéré et Très aéré respectent les recommandations WCAG sur l’espacement des lignes et des paragraphes. Ces réglages ne s’appliquent qu’à cet appareil.',
     accessibility: 'Accessibilité',
@@ -597,7 +608,6 @@ const catalog = {
     viewUp: 'Déplacer la vue vers le haut',
     viewDown: 'Déplacer la vue vers le bas',
     viewRight: 'Déplacer la vue vers la droite',
-    back: 'Revenir à la lecture',
     help: 'Aide : tableaux, clavier et sens des abréviations',
     noConnections: 'Aucune connexion pour l’instant. Appuyez sur ⇢ sur une fiche, puis sur la fiche vers laquelle elle mène.',
     removeConnection: (edge: string) => `Retirer la connexion ${edge}`,

@@ -69,7 +69,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'ノート',
     blocks: [
       {
-        p: 'ノートは Markdown で書くテキストです。ノートの上のツールバーで、見出し、太字、斜体、リスト、引用を付けられます。同じツールをもう一度押すと書式が外れます。**プレビュー**で、仕上がりを確認できます。',
+        p: 'ノートは Markdown で書くテキストです。書式は書いているそばから反映され、編集中の行では記号が表示されます。Markdown をそのまま見たいときは、設定の「ノートの編集」で**プレーンテキスト**を選んでください。ノートの上のツールバーで、見出し、太字、斜体、リスト、引用を付けられます。同じツールをもう一度押すと書式が外れます。プレーンテキストのときは、**プレビュー**で仕上がりを確認できます。',
       },
       {
         p: '箇所へのリンクは `[[john 3:16]]` のように書きます。訳を指定するには `@bungo` を付けます：`[[john 3:16@bungo]]`。リンクの中にカーソルを置くと、**移動**ボタンで開けます。節の横の**引用**を押すと、その節が参照箇所とリンク付きでノートに入ります。',
@@ -136,6 +136,7 @@ export const jaJP = {
     bootFailed: '聖書本文を開けませんでした。再読み込みしてもう一度お試しください。',
     skipToScripture: '聖書本文へ移動',
     skipToNotes: 'ノートへ移動',
+    skipToBoard: 'ボードへ移動',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · ボード`,
@@ -219,6 +220,12 @@ export const jaJP = {
     showNotes: 'ノートを表示',
     paneBible: '聖書',
     paneNotes: 'ノート',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'ノートまたはボード',
+    paneBoard: 'ボード',
+    expandBoard: 'ボードを広げる',
+    collapseBoard: 'ボードを縮める',
+    showBoard: 'ボードを表示',
     maximize: (pane: string) => `${pane}を最大化`,
     restore: (pane: string) => `${pane}を元のサイズに戻す`,
   },
@@ -279,6 +286,8 @@ export const jaJP = {
     showing: (shown: number) => `（${num(shown)}件を表示）`,
     seeAll: (total: number) => `${num(total)}件をすべて表示`,
     insert: (ref: string) => `${ref}を開いているノートに挿入`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `ボードへ：${ref}をボードに加える`,
     weakBelow: 'ここから下：長い語の一部として一致',
     announceNone: (query: string) => `「${query}」は見つかりませんでした`,
     announceCount: (total: number, query: string) => `「${query}」の検索結果：${num(total)}件`,
@@ -479,6 +488,8 @@ export const jaJP = {
     spacings: { normal: '標準', relaxed: '広め', loose: 'かなり広め' },
     measure: '1行の長さ',
     measures: { narrow: '短め', normal: '標準', wide: '長め' },
+    editor: 'ノートの編集',
+    editors: { live: '書きながら書式を表示', plain: 'プレーンテキスト' },
     displayNote:
       '行間の「広め」と「かなり広め」は、行と段落の間隔に関する WCAG の基準を満たします。これらの設定はこの端末にだけ適用されます。',
     accessibility: 'アクセシビリティ',
@@ -589,7 +600,6 @@ export const jaJP = {
     viewUp: '表示位置を上へ',
     viewDown: '表示位置を下へ',
     viewRight: '表示位置を右へ',
-    back: '読むに戻る',
     help: 'ヘルプ：ボード、キーボード、略語の意味',
     noConnections: 'つながりはまだありません。カードの ⇢ を押してから、つなぐ先のカードを押してください。',
     removeConnection: (edge: string) => `つながり「${edge}」を削除`,

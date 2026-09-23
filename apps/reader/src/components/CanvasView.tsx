@@ -41,12 +41,13 @@ interface CanvasViewProps {
   onCreate: () => void;
   onDelete: (id: string) => void;
   onChange: (board: Board) => void;
-  onClose: () => void;
+  /** The last thing put on a board from elsewhere, in words, until the next action. */
+  inserted?: string | null;
   /** Open a card's passage in the reader. */
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
   /** Embed this board in the open note, where it renders as a diagram. */
   onAddToNote?: (boardId: string) => void;
-  /** Open the help panel (it lives in the reading layout, so this leaves the board). */
+  /** Open the help panel, in the Bible pane beside the board. */
   onHelp?: () => void;
 }
 
@@ -92,7 +93,7 @@ export function CanvasView({
   onCreate,
   onDelete,
   onChange,
-  onClose,
+  inserted = null,
   onGo,
   onAddToNote,
   onHelp,
@@ -537,12 +538,13 @@ export function CanvasView({
   const panelNode = panel ? board?.nodes.find((n) => n.id === panel.id) ?? null : null;
 
   return (
-    <main className="canvas" data-testid="canvas" aria-label={words.label}>
-      {/* This view replaces the whole layout, so it carries the page's level-1
-          heading; the board picker is what the reader sees (2.4.10). */}
-      <h1 className="visually-hidden" id="canvas-heading">
+    // The side pane's other half, beside the Bible: a level-2 heading under the
+    // chapter's h1, as the notes pane has (2.4.10). Focusable so "Show canvas"
+    // and the skip link can land on it.
+    <div className="canvas" id="canvas" tabIndex={-1} data-testid="canvas">
+      <h2 className="visually-hidden" id="canvas-heading">
         {words.heading(board ? board.name || t.common.untitledBoard : words.noneOpenHeading)}
-      </h1>
+      </h2>
       <header className="canvas__bar">
         <select
           className="canvas__select"
@@ -694,9 +696,6 @@ export function CanvasView({
             →
           </button>
         </div>
-        <button type="button" className="canvas__action" data-testid="canvas-close" onClick={onClose}>
-          {words.back}
-        </button>
         {onHelp && (
           <button
             type="button"
@@ -1069,6 +1068,16 @@ export function CanvasView({
           </button>
         </div>
       )}
-    </main>
+      {/* What just went onto the board from the Bible or a search, where the
+          reader is looking; announced when it happened, so not a live region. */}
+      {inserted && (
+        <p className="canvas__status done" data-testid="canvas-done">
+          <span className="done__check" aria-hidden="true">
+            ✓
+          </span>{' '}
+          {inserted}
+        </p>
+      )}
+    </div>
   );
 }

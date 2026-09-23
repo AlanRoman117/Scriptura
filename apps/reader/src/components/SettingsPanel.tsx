@@ -6,6 +6,7 @@ import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import { LOCALE_LABELS } from '../i18n/locales';
 import {
+  EDITORS,
   LANGUAGES,
   MEASURES,
   MOTIONS,
@@ -13,6 +14,7 @@ import {
   TEXT_SIZES,
   THEMES,
   type DisplayPrefs,
+  type EditorPref,
   type LanguagePref,
   type Measure,
   type Motion,
@@ -171,6 +173,21 @@ export function SettingsPanel({
             {MEASURES.map((m) => (
               <option key={m} value={m}>
                 {words.measures[m]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="settings__field">
+          <label htmlFor="pref-editor">{words.editor}</label>
+          <select
+            id="pref-editor"
+            data-testid="pref-editor"
+            value={prefs.editor}
+            onChange={(e) => onPrefs({ editor: e.target.value as EditorPref })}
+          >
+            {EDITORS.map((ed) => (
+              <option key={ed} value={ed}>
+                {words.editors[ed]}
               </option>
             ))}
           </select>

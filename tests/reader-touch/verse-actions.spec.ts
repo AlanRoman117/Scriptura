@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { noteValue } from '../helpers/note';
 
 /**
  * Marking a verse with a thumb.
@@ -57,7 +58,7 @@ test('a quote with the notes folded away is confirmed on the grip, until they ar
   // Opening the notes shows the quote itself; the stand-in goes.
   await grip.tap();
   await expect(sheet).toHaveAttribute('data-sheet', 'half');
-  await expect(page.getByTestId('notes-surface')).toContainText('He was with God in the beginning.');
+  await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('He was with God in the beginning.');
   await expect(page.getByTestId('sheet-done')).toHaveCount(0);
   await expect(grip).toHaveAccessibleName('Expand notes');
 });

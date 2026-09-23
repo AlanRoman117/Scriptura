@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
-import { Layout } from './components/Layout';
+import { Layout, useIsNarrow, type Maximized, type SheetPosition, type Side } from './components/Layout';
 import { BiblePane } from './components/BiblePane';
 import { NotesPane } from './components/NotesPane';
 import { DurabilityBanner, type Persistence } from './components/DurabilityBanner';
@@ -70,6 +70,7 @@ import {
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
+import type { NoteSurface } from './lib/surface';
 import { useVisualViewport } from './lib/viewport';
 import { announce } from './lib/announce';
 import { setPendingFlush } from './lib/pending';
@@ -159,7 +160,25 @@ export function App() {
 
   const [boards, setBoards] = useState<Board[]>([]);
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [canvasOpen, setCanvasOpen] = useState(false);
+  /** What the pane beside the Bible holds: the notes or the canvas. */
+  const [side, setSide] = useState<Side>('notes');
+  const [maximized, setMaximized] = useState<Maximized>('none');
+  const [sheet, setSheet] = useState<SheetPosition>('peek');
+  const narrow = useIsNarrow();
+  /** Bring the Bible into view: a card's verse was followed, or Help opened. */
+  const revealBible = () => {
+    if (maximized === 'notes') setMaximized('none');
+    if (narrow) setSheet('peek');
+  };
+  /** Bring the side pane into view, holding `next`. */
+  const showSide = (next: Side) => {
+    setSide(next);
+    if (maximized === 'bible') setMaximized('none');
+    // A board needs the room; a note opens at half, as the grip would.
+    if (narrow) setSheet(next === 'board' ? 'full' : sheet === 'peek' ? 'half' : sheet);
+  };
+  /** The board fills the view: the window, or the phone's full sheet. */
+  const boardInFront = side === 'board' && (narrow ? sheet === 'full' : maximized === 'notes');
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -209,14 +228,15 @@ export function App() {
   const pendingSaves = useRef(new Map<string, Note>());
   const notesNow = useRef<Note[]>([]);
   const mirroringNow = useRef(false);
-  const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
+  const surfaceRef = useRef<NoteSurface | null>(null);
   /** Where to leave the cursor after an insertion, applied once React repaints. */
   const caret = useRef<{ at: number; focus: boolean } | null>(null);
 
   useEffect(() => {
     const pending = caret.current;
     const el = surfaceRef.current;
-    if (!pending || !el) return;
+    // No editor on screen (the preview): the caret waits for one.
+    if (!pending || !el?.element()) return;
     caret.current = null;
     // Focus follows a quote from the Bible — you insert, then write. It does
     // not follow an insert from the search panel: that panel stays open on
@@ -376,7 +396,7 @@ export function App() {
       const current = notes.find((n) => n.id === activeId);
       if (!current) return;
       const el = surfaceRef.current;
-      const at = el && document.activeElement === el ? el.selectionStart : current.body.length;
+      const at = el?.isFocused() ? el.selectionStart : current.body.length;
       const before = current.body.slice(0, at);
       const after = current.body.slice(at);
       const spacer = before && !before.endsWith('\n') ? '\n\n' : '';
@@ -457,7 +477,7 @@ export function App() {
   // The title says where you are (2.4.2, 2.4.8): passage and translation while
   // reading, the panel's name while one covers the text, the board in canvas.
   useEffect(() => {
-    const where = canvasOpen
+    const where = boardInFront
       ? words.app.boardTitle(boards.find((b) => b.id === boardId)?.name || words.common.untitledBoard)
       : marksOpen
         ? words.panels.marks
@@ -477,7 +497,7 @@ export function App() {
                     )
                   : null;
     document.title = where ? words.app.title(where) : words.app.name;
-  }, [words, canvasOpen, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
+  }, [words, boardInFront, boards, boardId, marksOpen, libraryOpen, settingsOpen, helpOpen, resultsOpen, bible, position]);
 
   notesNow.current = notes;
   mirroringNow.current = isMirroring;
@@ -677,14 +697,18 @@ export function App() {
    * Creates the first board rather than refusing: "add to canvas" should not
    * answer "make a canvas first" the one time someone tries it.
    */
-  const sendToCanvas = useCallback(
-    (verse: number) => {
+  /**
+   * Put a verse on the open board, or on a new one when none is open. From
+   * the verse actions, and from a search hit anywhere in the Bible.
+   */
+  const addVerseToBoard = useCallback(
+    (bookSlug: string, chapter: number, verse: number) => {
       const target = boards.find((b) => b.id === boardId) ?? newBoard(wordsNow.current.insert.studyBoard);
       const node: BoardNode = {
         id: crypto.randomUUID(),
         kind: 'verse',
-        book_slug: position.bookSlug,
-        chapter: position.chapter,
+        book_slug: bookSlug,
+        chapter,
         verse,
         translation: translationId,
         ...freeSlot(target.nodes),
@@ -707,12 +731,16 @@ export function App() {
       void saveBoard(next);
 
       // The board is out of sight, so this is the only sign anything happened.
-      const what = `${bible?.book(position.bookSlug)?.name ?? position.bookSlug} ${position.chapter}:${verse}`;
+      const what = `${bible?.book(bookSlug)?.name ?? bookSlug} ${chapter}:${verse}`;
       const said = wordsNow.current;
       const where = next.name || said.common.untitledBoard;
       confirmInsert(already ? said.insert.alreadyOnBoard(what, where) : said.insert.addedToBoard(what, where));
     },
-    [bible, boards, boardId, position, translationId, confirmInsert]
+    [bible, boards, boardId, translationId, confirmInsert]
+  );
+  const sendToCanvas = useCallback(
+    (verse: number) => addVerseToBoard(position.bookSlug, position.chapter, verse),
+    [addVerseToBoard, position]
   );
 
   /** A card in one line, for the export. */
@@ -1006,38 +1034,43 @@ export function App() {
     />
   );
 
-  if (canvasOpen) {
-    return (
-      <>
-        {staged}
-        <CanvasView
-          bible={bible}
-          notes={notes}
-          labels={colorLabels}
-          boards={boards}
-          activeId={boardId}
-          onSelect={setBoardId}
-          onCreate={createBoard}
-          onDelete={deleteBoard}
-          onChange={changeBoard}
-          onClose={() => setCanvasOpen(false)}
-          onHelp={() => {
-            setCanvasOpen(false);
-            setHelpOpen(true);
-          }}
-          onGo={(bookSlug, chapter, verse) => {
-            goTo(bookSlug, chapter, verse);
-            setCanvasOpen(false);
-          }}
-          onAddToNote={(id) => {
-            const name = boards.find((b) => b.id === id)?.name || words.common.untitledBoard;
-            insertIntoNote(boardEmbed(id), words.insert.addedBoard(name));
-            setCanvasOpen(false);
-          }}
-        />
-      </>
-    );
-  }
+  // The canvas lives beside the Bible, as the notes do, in the same pane:
+  // a reader building a diagram swaps to the note and back without leaving it.
+  const boardView = (
+    <CanvasView
+      bible={bible}
+      notes={notes}
+      labels={colorLabels}
+      boards={boards}
+      activeId={boardId}
+      inserted={inserted}
+      onSelect={setBoardId}
+      onCreate={createBoard}
+      onDelete={deleteBoard}
+      onChange={(next) => {
+        // The reader's own edit: the confirmation has done its job.
+        setInserted(null);
+        changeBoard(next);
+      }}
+      onHelp={() => {
+        setMarksOpen(false);
+        setLibraryOpen(false);
+        setSettingsOpen(false);
+        setResultsOpen(false);
+        setHelpOpen(true);
+        revealBible();
+      }}
+      onGo={(bookSlug, chapter, verse) => {
+        goTo(bookSlug, chapter, verse);
+        revealBible();
+      }}
+      onAddToNote={(id) => {
+        const name = boards.find((b) => b.id === id)?.name || words.common.untitledBoard;
+        insertIntoNote(boardEmbed(id), words.insert.addedBoard(name));
+        showSide('notes');
+      }}
+    />
+  );
 
   return (
     <>
@@ -1048,8 +1081,8 @@ export function App() {
       <a className="skip" href="#scripture" data-testid="skip-scripture">
         {words.app.skipToScripture}
       </a>
-      <a className="skip" href="#notes" data-testid="skip-notes">
-        {words.app.skipToNotes}
+      <a className="skip" href={side === 'notes' ? '#notes' : '#canvas'} data-testid="skip-notes">
+        {side === 'notes' ? words.app.skipToNotes : words.app.skipToBoard}
       </a>
       <PreviewNotice />
       {!bannerDismissed && (
@@ -1063,6 +1096,16 @@ export function App() {
         />
       )}
       <Layout
+        side={side}
+        onSide={(next) => {
+          setInserted(null);
+          setSide(next);
+        }}
+        maximized={maximized}
+        onMaximized={setMaximized}
+        sheet={sheet}
+        onSheet={setSheet}
+        board={boardView}
         inserted={inserted}
         onNotesShown={clearInserted}
         bible={
@@ -1147,6 +1190,7 @@ export function App() {
                     setResultsOpen(false);
                   }}
                   onInsert={(r) => insertSearchResult(r)}
+                  onToCanvas={(r) => addVerseToBoard(r.book_slug, r.chapter, r.verse)}
                   onClose={() => setResultsOpen(false)}
                 />
               ) : settingsOpen ? (
@@ -1226,6 +1270,7 @@ export function App() {
                 onQuery={setQuery}
                 onGo={goTo}
                 onInsert={insertSearchResult}
+                onToCanvas={(r) => addVerseToBoard(r.book_slug, r.chapter, r.verse)}
                 onSeeAll={() => {
                   setMarksOpen(false);
                   setLibraryOpen(false);
@@ -1256,18 +1301,18 @@ export function App() {
               changeNote(id, patch);
             }}
             onExport={doExport}
-            onOpenCanvas={() => setCanvasOpen(true)}
             boardCount={boards.length}
             onSurfaceReady={(el) => {
               surfaceRef.current = el;
             }}
+            editor={prefs.editor}
             describeLink={describeLink}
             onFollowLink={followLink}
             bible={bible}
             boards={boards}
             onOpenBoard={(id) => {
               setBoardId(id);
-              setCanvasOpen(true);
+              showSide('board');
             }}
           />
         }

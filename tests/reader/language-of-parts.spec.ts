@@ -100,7 +100,7 @@ test.describe('an English Bible under a Japanese interface', () => {
 
     await page.getByTestId('verse-3').click();
     await page.getByTestId('canvas-3').click();
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(1);
     expect(await boundaryProblems(page, 'bsb')).toEqual([]);
   });
