@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { noteValue } from '../helpers/note';
+import { noteValue, usePlainEditor } from '../helpers/note';
 
 /**
  * The writing surface: tools for people who do not write Markdown, and a way
@@ -32,7 +32,15 @@ test.describe('formatting tools', () => {
     await expect(tools).toBeVisible();
     await page.getByTestId('book-select').focus();
     await expect(tools).toBeVisible();
-    // Preview has nothing to format; writing brings them straight back.
+  });
+
+  // Preview is offered only with the plain textarea; the live editor
+  // already draws the note.
+  test('Preview, with Plain text, has nothing to format; writing brings them back', async ({ page }) => {
+    await usePlainEditor(page);
+    await open(page);
+    const tools = page.getByTestId('editor-tools');
+    await expect(tools).toBeVisible();
     await page.getByTestId('note-preview').click();
     await expect(tools).toHaveCount(0);
     await page.getByTestId('note-preview').click();
@@ -82,6 +90,9 @@ test.describe('formatting tools', () => {
 });
 
 test.describe('reading it back', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('renders the syntax, and a click returns to the right place', async ({ page }) => {
     await open(page);
     await page.getByTestId('notes-surface').fill(
@@ -140,6 +151,9 @@ test.describe('reading it back', () => {
 });
 
 test.describe('a board inside a note', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('embeds as a diagram, and opens from there', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-title').fill('Prologue study');
@@ -231,6 +245,9 @@ test.describe('a board inside a note', () => {
 });
 
 test.describe('the preview from the keyboard', () => {
+  // Preview is offered only with Plain text.
+  test.beforeEach(({ page }) => usePlainEditor(page));
+
   test('each block has an Edit control that puts the caret there', async ({ page }) => {
     await open(page);
     await page.getByTestId('notes-surface').fill('# Opening\n\nThe **Word** was with God.\n\n> a quotation');

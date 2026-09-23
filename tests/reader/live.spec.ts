@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { storedBodies } from '../helpers/note';
+import { markerShown, storedBodies, switchEditor } from '../helpers/note';
 
 /**
  * The live editor: Markdown drawn as it is written, the way Obsidian's live
@@ -35,11 +35,11 @@ test.describe('the live editor', () => {
     const line = surface.locator('.live-line').first();
     await expect(line).toHaveClass(/live-line--h2/);
     // On the caret's line the marker is there to edit.
-    await expect(line.locator('.md-mark')).toBeVisible();
+    await expect.poll(() => markerShown(line.locator('.md-mark'))).toBe(true);
     await page.keyboard.press('Enter');
     await page.keyboard.type('In the beginning');
     // Off it, only the words.
-    await expect(line.locator('.md-mark')).toBeHidden();
+    await expect.poll(() => markerShown(line.locator('.md-mark'))).toBe(false);
     await expect(line).toHaveText('## The prologue');
     await expect.poll(() => noteText(page)).toBe('## The prologue\nIn the beginning');
     const size = (i: number) =>
@@ -170,7 +170,7 @@ test.describe('the live editor', () => {
     await expect.poll(() => noteText(page)).toMatch(/\[\[john 1:1@bsb\]\]\n\nThe claim\.$/);
     await expect(surface.locator('.live-line--quote').first()).toBeVisible();
     // Off the caret's line, a quote shows its words and not its `>`.
-    await expect(surface.locator('.live-line--quote').first().locator('.md-mark')).toBeHidden();
+    await expect.poll(() => markerShown(surface.locator('.live-line--quote').first().locator('.md-mark'))).toBe(false);
   });
 
   test('a board embed is drawn in place, and opens as text when the caret enters it', async ({ page }) => {
@@ -189,19 +189,112 @@ test.describe('the live editor', () => {
     expect(await noteText(page)).toBe('Intro\n```scriptura-board\nno-such-board\n```\nOutro');
   });
 
-  test('a screen reader hears the words, not the markers, off the caret line', async ({ page }) => {
+  /*
+   * ⚠️ Hidden from sight, never from a screen reader (1.3.1). The markers are
+   * how a line is known to be a heading or a word bold; with display: none they
+   * left the accessibility tree and a heading was read as plain words. They are
+   * clipped to a pixel instead, inline, so the line still reads as one line.
+   * Checked in Chromium's own accessibility tree, and the drawn bullet — which
+   * stands in for the dash — must not be read on top of it.
+   */
+  test('off the caret line, markers are out of sight but still read', async ({ page }) => {
     const surface = await open(page);
     await surface.click();
-    await page.keyboard.type('## Covenant\nThe **promise** kept');
+    await page.keyboard.type('## Covenant\nThe **promise** kept\n- item');
     await page.getByTestId('note-title').focus();
-    // innerText leaves out what is not rendered, as the accessibility tree does.
-    const spoken = await surface.evaluate((el) => (el as HTMLElement).innerText);
-    expect(spoken).not.toContain('#');
-    expect(spoken).not.toContain('*');
-    expect(spoken).toContain('Covenant');
-    expect(spoken).toContain('The promise kept');
-    await expect(surface).toHaveAttribute('role', 'textbox');
+    for (const marker of await surface.locator('.md-mark').all()) {
+      expect(await markerShown(marker)).toBe(false);
+    }
+    expect(await surface.evaluate((el) => (el as HTMLElement).innerText)).toBe('## Covenant\nThe **promise** kept\n- item');
+
+    const cdp = await page.context().newCDPSession(page);
+    const { root } = (await cdp.send('DOM.getDocument')) as { root: { nodeId: number } };
+    const { nodeId } = (await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: '#notes-surface' })) as { nodeId: number };
+    type AX = { nodeId: string; parentId?: string; role?: { value: string }; name?: { value: string } };
+    const [box] = ((await cdp.send('Accessibility.getPartialAXTree', { nodeId, fetchRelatives: false })) as { nodes: AX[] }).nodes;
+    const all = ((await cdp.send('Accessibility.getFullAXTree')) as { nodes: AX[] }).nodes;
+    const inside = new Set([box.nodeId]);
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (const n of all) if (n.parentId && inside.has(n.parentId) && !inside.has(n.nodeId)) grew = inside.add(n.nodeId) !== null;
+    }
+    const spoken = all.filter((n) => inside.has(n.nodeId) && n.role?.value === 'StaticText').map((n) => n.name?.value ?? '');
+    expect(box.role?.value).toBe('textbox');
+    expect(spoken).toEqual(expect.arrayContaining(['## ', '**', '- ']));
+    expect(spoken.join('')).not.toContain('•');
     await expect(surface).toHaveAttribute('aria-multiline', 'true');
+  });
+
+  test('offers no Preview, which Plain text brings back', async ({ page }) => {
+    await open(page);
+    await expect(page.getByTestId('note-preview')).toHaveCount(0);
+    await switchEditor(page, 'plain');
+    await expect(page.getByTestId('note-preview')).toBeVisible();
+    await page.getByTestId('note-preview').click();
+    await expect(page.getByTestId('notes-preview')).toBeVisible();
+    // Back to Live, writing — never a preview left open in the other editor.
+    await switchEditor(page, 'live');
+    await expect(page.getByTestId('notes-preview')).toHaveCount(0);
+    await expect(page.getByTestId('notes-surface')).toHaveAttribute('role', 'textbox');
+    await switchEditor(page, 'plain');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('tagName', 'TEXTAREA');
+  });
+
+  /*
+   * The focus ring is drawn inside the note (outline-offset -2px). With the
+   * text against the edge it sat over the caret at the start of every line.
+   */
+  for (const editor of ['live', 'plain'] as const) {
+    test(`the caret at the start of a line is clear of the focus ring (${editor})`, async ({ page }) => {
+      const surface = await open(page);
+      if (editor === 'plain') await switchEditor(page, 'plain');
+      await surface.click();
+      await page.keyboard.type('In the beginning');
+      const gap = await surface.evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        const style = getComputedStyle(el);
+        const ring = parseFloat(style.outlineWidth) + Math.max(0, -parseFloat(style.outlineOffset));
+        let textLeft: number;
+        if (el instanceof HTMLTextAreaElement) {
+          textLeft = box.left + parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft);
+        } else {
+          const range = document.createRange();
+          const text = el.querySelector('.live-line')!.firstChild!;
+          range.setStart(text, 0);
+          range.setEnd(text, 0);
+          textLeft = range.getBoundingClientRect().left;
+        }
+        return textLeft - box.left - ring;
+      });
+      expect(gap).toBeGreaterThanOrEqual(8);
+    });
+  }
+
+  /*
+   * Direction is per line, from the line's own text — not from the interface
+   * language, since a note's language is its writer's. A Hebrew word quoted in
+   * a study note runs right to left beside English.
+   */
+  test('a Hebrew line runs right to left, beside a left-to-right one', async ({ page }) => {
+    const surface = await open(page);
+    await surface.click();
+    await page.keyboard.type('Shalom:\n\n');
+    await page.keyboard.insertText('שלום עולם');
+    await expect.poll(() => noteText(page)).toBe('Shalom:\n\nשלום עולם');
+    const direction = (i: number) =>
+      surface.locator('.live-line').nth(i).evaluate((el) => getComputedStyle(el).direction);
+    expect(await direction(0)).toBe('ltr');
+    expect(await direction(2)).toBe('rtl');
+    // Typing in it keeps the note exact: offsets are logical, not visual.
+    await page.keyboard.insertText(' ברוך');
+    await expect.poll(() => noteText(page)).toBe('Shalom:\n\nשלום עולם ברוך');
+    // The preview, with Plain text, agrees paragraph by paragraph.
+    await switchEditor(page, 'plain');
+    await page.getByTestId('note-preview').click();
+    const paragraphs = page.getByTestId('notes-preview').locator('.preview__p');
+    await expect(paragraphs).toHaveCount(2);
+    expect(await paragraphs.nth(0).evaluate((el) => getComputedStyle(el).direction)).toBe('ltr');
+    expect(await paragraphs.nth(1).evaluate((el) => getComputedStyle(el).direction)).toBe('rtl');
   });
 
   test('a long note redraws one line per keystroke', async ({ page }) => {

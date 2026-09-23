@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { describeSmall, tooSmall } from '../helpers/targets';
+import { switchEditor } from '../helpers/note';
 
 /**
  * Target size, enhanced (2.5.5): every pointer target is at least 44 × 44 CSS
@@ -34,7 +35,9 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('note-new').click();
     await expect(page.getByTestId('notes-surface')).toBeVisible();
   },
+  // Preview is offered only with Plain text.
   'note preview': async (page) => {
+    await switchEditor(page, 'plain');
     await page.getByTestId('note-new').click();
     await page.getByTestId('notes-surface').fill('# Opening\n\nText.\n\n> quote');
     await page.getByTestId('note-preview').click();

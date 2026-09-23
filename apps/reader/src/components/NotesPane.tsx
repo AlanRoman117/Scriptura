@@ -116,6 +116,14 @@ export function NotesPane({
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
   /**
+   * Preview is offered only with Plain text. The live editor already draws
+   * the note, so a second rendered view there would only be a mode to leave;
+   * switching to Live while previewing simply returns to writing.
+   */
+  const reading = editor === 'plain' && mode === 'read';
+  // Coming back to Plain text starts in writing, not in a preview left open before.
+  useEffect(() => setMode('write'), [editor]);
+  /**
    * Where to leave the caret after a toolbar edit, once React has repainted,
    * and the text that edit produces — see the effect below for why the text
    * has to be part of it.
@@ -196,17 +204,19 @@ export function NotesPane({
         <button type="button" className="notes__action" data-testid="note-new" onClick={onCreate}>
           {t.notes.new}
         </button>
-        <button
-          type="button"
-          className="notes__action"
-          data-testid="note-preview"
-          aria-pressed={mode === 'read'}
-          onClick={() => setMode(mode === 'read' ? 'write' : 'read')}
-          disabled={!active}
-          title={mode === 'read' ? t.notes.writeTitle : t.notes.previewTitle}
-        >
-          {mode === 'read' ? t.notes.write : t.notes.preview}
-        </button>
+        {editor === 'plain' && (
+          <button
+            type="button"
+            className="notes__action"
+            data-testid="note-preview"
+            aria-pressed={reading}
+            onClick={() => setMode(reading ? 'write' : 'read')}
+            disabled={!active}
+            title={reading ? t.notes.writeTitle : t.notes.previewTitle}
+          >
+            {reading ? t.notes.write : t.notes.preview}
+          </button>
+        )}
         <button
           type="button"
           className="notes__action"
@@ -266,7 +276,7 @@ export function NotesPane({
               writing, wherever focus is — not only while it is inside this
               group. Preview has nothing to format, so it has no tools. */}
           <div className="notes__editor">
-          {mode === 'write' && (
+          {!reading && (
             <div className="tools__slot">
               <EditorToolbar
                 onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
@@ -280,12 +290,12 @@ export function NotesPane({
           {/* Both describe where the *cursor* is, so neither belongs in a
               rendered view — and the sticky heading would sit directly above
               the same heading, rendered. */}
-          {mode === 'write' && heading && (
+          {!reading && heading && (
             <div className="notes__heading" data-testid="notes-heading" aria-hidden="true">
               {heading}
             </div>
           )}
-          {mode === 'write' && link && linkLabel && (
+          {!reading && link && linkLabel && (
             <button
               type="button"
               className="notes__link"
@@ -295,7 +305,7 @@ export function NotesPane({
               {t.notes.goTo(linkLabel)}
             </button>
           )}
-          {mode === 'read' ? (
+          {reading ? (
             <MarkdownPreview
               source={active.body}
               bible={bible}
@@ -335,6 +345,9 @@ export function NotesPane({
                 id="notes-surface"
                 className="notes__surface"
                 data-testid="notes-surface"
+                // A textarea has one direction for the whole note, taken from
+                // its first strong character; the live editor sets it per line.
+                dir="auto"
                 aria-label={t.notes.body}
                 placeholder={t.notes.placeholder}
                 spellCheck

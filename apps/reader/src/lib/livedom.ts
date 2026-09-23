@@ -32,6 +32,10 @@ export function buildLine(line: LiveLine, { widget = false }: { widget?: boolean
   if (line.level) classes.push(`live-line--h${line.level}`);
   if (line.fence?.lang === 'scriptura-board') classes.push('live-line--in-board');
   el.className = classes.join(' ');
+  // Each line takes its direction from its own first strong character, so a
+  // Hebrew or Arabic line runs right to left beside English or Japanese ones.
+  // Not tied to the interface language: a note's language is its writer's.
+  el.dir = 'auto';
 
   for (const s of line.spans) {
     if (s.marks.length === 0) {

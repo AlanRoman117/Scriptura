@@ -61,7 +61,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notas',
     blocks: [
       {
-        p: 'Las notas son texto simple con Markdown. El formato se ve mientras escribes, y sus símbolos reaparecen en la línea que estás editando; para ver solo el Markdown, elige **Texto simple** en Editor de notas, en Configuración. La barra encima de la nota agrega títulos, negritas, cursivas, listas y citas; presiona otra vez una herramienta para quitar el formato. **Vista previa** muestra la nota como se leerá.',
+        p: 'Las notas son texto simple con Markdown. El formato se ve mientras escribes, y sus símbolos reaparecen en la línea que estás editando; para ver solo el Markdown, elige **Texto simple** en Editor de notas, en Configuración. La barra encima de la nota agrega títulos, negritas, cursivas, listas y citas; presiona otra vez una herramienta para quitar el formato. Con Texto simple, **Vista previa** muestra la nota como se leerá.',
       },
       {
         p: 'Un enlace a un pasaje se ve así: `[[john 3:16]]`. Agrega `@rv1909` para indicar la traducción: `[[john 3:16@rv1909]]`. Pon el cursor dentro de un enlace y un botón **Ir a** lo abre. **Citar**, junto a un versículo, copia el versículo en tu nota con su referencia y un enlace.',

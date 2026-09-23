@@ -1234,8 +1234,8 @@ summary:focus-visible,
 .preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: .98rem; }
 .preview__p { margin: .5rem 0; white-space: pre-wrap; }
 .preview__quote {
-  margin: .6rem 0; padding: .2rem 0 .2rem .8rem;
-  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  margin: .6rem 0; padding-block: .2rem; padding-inline: .8rem 0;
+  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
   color: var(--ink-soft); white-space: pre-wrap;
 }
 .preview__list { margin: .5rem 0; padding-left: 1.4rem; }
@@ -1531,6 +1531,11 @@ summary:focus-visible,
 .notes__title:focus { border-bottom-color: var(--edge); }
 
 .notes__surface {
+  /* Room between the edge and the text: the focus ring is drawn inside the
+     note (outline-offset -2px), and without this it sat over the caret at the
+     start of every line. Shared by both editors and the live placeholder. */
+  --surface-pad-y: .5rem; --surface-pad-x: .75rem;
+  padding: var(--surface-pad-y) var(--surface-pad-x);
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
   font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
@@ -1543,17 +1548,26 @@ summary:focus-visible,
    words and not the punctuation — and shown again, dimmed, for editing. */
 .live {
   overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere;
-  cursor: text; padding: 0 .1rem .5rem;
+  cursor: text;
 }
 /* A line holding only hidden markers still keeps its height and a place for the caret. */
 .live-line { min-height: 1lh; }
 /* The placeholder a textarea would show. Drawn by the root, never as text. */
 .live { position: relative; }
 .live[data-empty]::before {
-  content: attr(data-placeholder); position: absolute; inset: 0 .1rem auto;
+  content: attr(data-placeholder); position: absolute;
+  inset: var(--surface-pad-y) var(--surface-pad-x) auto;
   color: var(--ink-soft); pointer-events: none;
 }
-.live-line:not(.is-active) .md-mark { display: none; }
+/* ⚠️ Hidden from sight, never from assistive technology: the markers are how
+   a screen reader learns a line is a heading or a word is bold (1.3.1). With
+   display: none they left the accessibility tree, and a heading was read as
+   plain words. The same recipe as .visually-hidden; the caret never sits
+   among them, because every line the selection touches is active. */
+.live-line:not(.is-active) .md-mark {
+  display: inline-block; width: 1px; height: 1px; margin-inline-end: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; vertical-align: baseline;
+}
 .md-mark, .md-prefix { color: var(--ink-soft); font-weight: 400; font-style: normal; }
 .md-strong { font-weight: 700; }
 .md-em { font-style: italic; }
@@ -1575,25 +1589,32 @@ summary:focus-visible,
 .live-line--heading:not(:first-child) { padding-top: .5rem; }
 
 .live-line--quote {
-  padding-left: .8rem; color: var(--ink-soft);
-  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  padding-inline-start: .8rem; color: var(--ink-soft);
+  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
 }
-/* The dash is hidden off the caret's line and a bullet drawn in its place. */
-.live-line--bullet { padding-left: 1.4rem; position: relative; }
-.live-line--bullet:not(.is-active)::before { content: '•'; position: absolute; left: .45rem; color: var(--ink-soft); }
-.live-line--bullet.is-active { padding-left: 0; }
-.live-line--ordered { padding-left: .4rem; }
+/* The dash is hidden off the caret's line and a bullet drawn in its place —
+   drawn only: its alternative text is empty, since the dash is still read.
+   Logical properties, so a right-to-left line indents from the right. */
+.live-line--bullet { padding-inline-start: 1.4rem; position: relative; }
+.live-line--bullet:not(.is-active)::before {
+  content: '•' / ''; position: absolute; inset-inline-start: .45rem; color: var(--ink-soft);
+}
+.live-line--bullet.is-active { padding-inline-start: 0; }
+.live-line--ordered { padding-inline-start: .4rem; }
 /* A rule is drawn across its line while the caret is elsewhere. */
 .live-line--rule:not(.is-active) {
   background: linear-gradient(var(--rule), var(--rule)) center / 100% 1px no-repeat;
 }
 .live-line--code, .live-line--fence {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
-  background: var(--paper-raised); padding: 0 .6rem;
+  background: var(--paper-raised); padding-inline: .6rem;
 }
 .live-line--code .md-code { background: none; font-size: inherit; }
 .live-line--fence { color: var(--ink-soft); }
-.live-line--fence .md-mark { display: inline; }
+/* A code fence stays shown, caret or not: undo the visually-hidden rule. */
+.live-line--fence:not(.is-active) .md-mark {
+  display: inline; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none;
+}
 /* A board is drawn in place of its fence while the caret is elsewhere; with the
    caret inside, the fence is shown to edit and the drawing steps aside. */
 .live-line--in-board:not(.is-active):not(.live-line--fence),

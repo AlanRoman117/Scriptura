@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { contrastRatio } from '../helpers/contrast';
+import { usePlainEditor } from '../helpers/note';
 
 /**
  * The reading bar — contrast, and what happens when the pane gets small.
@@ -142,38 +143,44 @@ test.describe('a narrow Bible pane', () => {
 test.describe('a narrow notes pane', () => {
   test.use({ viewport: { width: 1000, height: 800 } });
 
-  test('keeps every action usable rather than squeezing them to slivers', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('note-new').click();
+  // Plain text has one more button in the bar, Preview; both must fit.
+  for (const editor of ['live', 'plain'] as const) {
+    test(`keeps every action usable rather than squeezing them to slivers (${editor})`, async ({ page }) => {
+      if (editor === 'plain') await usePlainEditor(page);
+      await page.goto('/');
+      await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+      await page.getByTestId('note-new').click();
 
-    // Drag the divider hard right, leaving the notes pane at its floor.
-    const divider = page.getByTestId('divider');
-    await divider.focus();
-    for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
+      // Drag the divider hard right, leaving the notes pane at its floor.
+      const divider = page.getByTestId('divider');
+      await divider.focus();
+      for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
 
-    const pane = (await page.getByTestId('pane-notes').boundingBox())!;
-    // The floor is the notes' as well as the Bible's: the divider's own width
-    // comes out of the split, not out of the notes.
-    expect.soft(pane.width, 'the notes pane keeps a readable floor').toBeGreaterThanOrEqual(319);
-    for (const id of ['note-new', 'note-preview', 'canvas-open', 'note-export', 'note-delete', 'maximize-notes']) {
-      const box = (await page.getByTestId(id).boundingBox())!;
-      expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(30);
-      expect
-        .soft(box.x + box.width, `${id} must not overflow the pane`)
-        .toBeLessThanOrEqual(pane.x + pane.width + 1);
-    }
+      const pane = (await page.getByTestId('pane-notes').boundingBox())!;
+      // The floor is the notes' as well as the Bible's: the divider's own width
+      // comes out of the split, not out of the notes.
+      expect.soft(pane.width, 'the notes pane keeps a readable floor').toBeGreaterThanOrEqual(319);
+      const actions = ['note-new', 'canvas-open', 'note-export', 'note-delete', 'maximize-notes'];
+      if (editor === 'plain') actions.splice(1, 0, 'note-preview');
+      for (const id of actions) {
+        const box = (await page.getByTestId(id).boundingBox())!;
+        expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(30);
+        expect
+          .soft(box.x + box.width, `${id} must not overflow the pane`)
+          .toBeLessThanOrEqual(pane.x + pane.width + 1);
+      }
 
-    // And the picker keeps enough width to read a note's name.
-    const picker = (await page.getByTestId('note-select').boundingBox())!;
-    expect.soft(picker.width, 'the note picker must not collapse').toBeGreaterThan(100);
+      // And the picker keeps enough width to read a note's name.
+      const picker = (await page.getByTestId('note-select').boundingBox())!;
+      expect.soft(picker.width, 'the note picker must not collapse').toBeGreaterThan(100);
 
-    // Still usable, not merely present.
-    await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
-    await page.getByTestId('confirm-cancel').click();
-    await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
-  });
+      // Still usable, not merely present.
+      await page.getByTestId('note-delete').click();
+      await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+      await page.getByTestId('confirm-cancel').click();
+      await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+    });
+  }
 });
 
 test.describe('the divider, and each pane\'s own controls', () => {

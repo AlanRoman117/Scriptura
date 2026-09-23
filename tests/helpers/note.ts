@@ -30,3 +30,33 @@ export const storedBodies = (page: Page): Promise<string[]> =>
         open.onerror = () => resolve([]);
       })
   );
+
+/**
+ * Write in the plain textarea rather than the live editor. Preview is offered
+ * only there, so every test of the preview starts with this. Call it before
+ * the page first loads.
+ */
+export const usePlainEditor = (page: Page): Promise<void> =>
+  page.addInitScript(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('scriptura-display') || '{}');
+      localStorage.setItem('scriptura-display', JSON.stringify({ ...stored, editor: 'plain' }));
+    } catch {
+      /* the test fails on its own if this did not take */
+    }
+  });
+
+/**
+ * Whether a live editor marker (`##`, `**`) is drawn. A hidden one is clipped
+ * to a pixel rather than removed — it stays in the accessibility tree — so
+ * Playwright still counts it visible, and `toBeHidden()` cannot tell.
+ */
+export const markerShown = (marker: Locator): Promise<boolean> =>
+  marker.evaluate((el) => el.getBoundingClientRect().width > 2);
+
+/** Change the note editor the way a reader does, from Settings, on a page already open. */
+export async function switchEditor(page: Page, editor: 'live' | 'plain'): Promise<void> {
+  await page.getByTestId('settings-open').click();
+  await page.getByTestId('pref-editor').selectOption(editor);
+  await page.getByTestId('settings-close').click();
+}

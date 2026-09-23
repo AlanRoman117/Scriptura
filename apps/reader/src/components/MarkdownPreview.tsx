@@ -107,26 +107,26 @@ function renderBlock(block: Block, ctx: Ctx) {
     case 'heading': {
       const Tag = `h${Math.min(6, block.level + HEADING_OFFSET)}` as 'h1';
       return (
-        <Tag className="preview__heading" data-level={block.level}>
+        <Tag className="preview__heading" data-level={block.level} dir="auto">
           {renderInline(block.children, ctx)}
         </Tag>
       );
     }
     case 'paragraph':
-      return <p className="preview__p">{renderInline(block.children, ctx)}</p>;
+      return <p className="preview__p" dir="auto">{renderInline(block.children, ctx)}</p>;
     case 'quote':
-      return <blockquote className="preview__quote">{renderInline(block.children, ctx)}</blockquote>;
+      return <blockquote className="preview__quote" dir="auto">{renderInline(block.children, ctx)}</blockquote>;
     case 'list':
       return block.ordered ? (
         <ol className="preview__list">
           {block.items.map((item, i) => (
-            <li key={i}>{renderInline(item, ctx)}</li>
+            <li key={i} dir="auto">{renderInline(item, ctx)}</li>
           ))}
         </ol>
       ) : (
         <ul className="preview__list">
           {block.items.map((item, i) => (
-            <li key={i}>{renderInline(item, ctx)}</li>
+            <li key={i} dir="auto">{renderInline(item, ctx)}</li>
           ))}
         </ul>
       );

@@ -65,7 +65,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notes',
     blocks: [
       {
-        p: 'Les notes sont du texte simple en Markdown. La mise en forme apparaît pendant la saisie, et ses symboles reviennent sur la ligne en cours de modification ; pour ne voir que le Markdown, choisissez **Texte brut** dans Éditeur de notes, dans les Paramètres. La barre au-dessus de la note ajoute des titres, du gras, de l’italique, des listes et des citations ; appuyez de nouveau sur un outil pour retirer la mise en forme. **Aperçu** montre la note telle qu’elle se lira.',
+        p: 'Les notes sont du texte simple en Markdown. La mise en forme apparaît pendant la saisie, et ses symboles reviennent sur la ligne en cours de modification ; pour ne voir que le Markdown, choisissez **Texte brut** dans Éditeur de notes, dans les Paramètres. La barre au-dessus de la note ajoute des titres, du gras, de l’italique, des listes et des citations ; appuyez de nouveau sur un outil pour retirer la mise en forme. En Texte brut, **Aperçu** montre la note telle qu’elle se lira.',
       },
       {
         p: 'Un lien vers un passage s’écrit `[[john 3:16]]`. Ajoutez `@lsg1910` pour préciser la traduction : `[[john 3:16@lsg1910]]`. Placez le curseur dans un lien et un bouton **Aller à** l’ouvre. **Citer**, à côté d’un verset, copie le verset dans votre note avec sa référence et un lien.',

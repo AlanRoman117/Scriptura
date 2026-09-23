@@ -1,6 +1,7 @@
 import { devices, expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { join } from 'node:path';
+import { switchEditor } from '../helpers/note';
 
 /**
  * Screenshots for the translation reviewers — not a test.
@@ -36,7 +37,9 @@ const SCREENS: Record<string, Shot> = {
     await expect(page.getByTestId('confirm-dialog')).toBeVisible();
     await save('delete-confirm');
   },
+  // Preview is offered only with Plain text.
   preview: async (page, save) => {
+    await switchEditor(page, 'plain');
     await page.getByTestId('note-new').click();
     await page.getByTestId('notes-surface').fill('# Heading\n\nA paragraph with **bold** text.\n\n- a list item');
     await page.getByTestId('note-preview').click();
