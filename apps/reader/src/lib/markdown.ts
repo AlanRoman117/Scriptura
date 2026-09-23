@@ -32,12 +32,17 @@ export type Block =
 /** The fence a board is embedded with. */
 export const BOARD_FENCE = 'scriptura-board';
 
-const HEADING = /^(#{1,6})\s+(.*)$/;
-const BULLET = /^\s*[-*+]\s+(.*)$/;
-const ORDERED = /^\s*\d+[.)]\s+(.*)$/;
-const QUOTE = /^\s*>\s?(.*)$/;
-const RULE = /^\s*(-{3,}|\*{3,}|_{3,})\s*$/;
-const FENCE = /^\s*```\s*(\S*)\s*$/;
+/*
+ * The line patterns. Exported because the live editor (livemd.ts) classifies
+ * lines with these same expressions — one grammar, so what a line looks like
+ * while it is written is what it becomes in the preview.
+ */
+export const HEADING = /^(#{1,6})\s+(.*)$/;
+export const BULLET = /^\s*[-*+]\s+(.*)$/;
+export const ORDERED = /^\s*\d+[.)]\s+(.*)$/;
+export const QUOTE = /^\s*>\s?(.*)$/;
+export const RULE = /^\s*(-{3,}|\*{3,}|_{3,})\s*$/;
+export const FENCE = /^\s*```\s*(\S*)\s*$/;
 
 export function parseMarkdown(source: string): Block[] {
   const lines = source.split('\n');
