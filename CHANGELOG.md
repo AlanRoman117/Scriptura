@@ -7,6 +7,15 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Added
+
+- **Notes take shape as they are written.** Markdown is drawn as it is typed, the way Obsidian's live preview works: a `## ` line becomes a heading, `**word**` turns bold, a quote gets its rule and an embedded board is drawn in place. A line's symbols come back while the cursor is on it, for editing. Ctrl or ⌘ + click follows a `[[link]]`. Built without an editor library.
+- **Settings → Note editor → Plain text** keeps the Markdown source in a plain text box, for anyone who prefers it or whose keyboard or screen reader copes badly with the live editor.
+
+### Fixed
+
+- Undo after a formatting button now undoes the formatting. The plain text box lost its undo history whenever a button changed the note; the live editor keeps its own.
+
 ## [0.1.0-preview.2] - 2026-09-17
 
 The second preview. It adds three Bibles and the three interface languages

@@ -109,6 +109,20 @@ test.describe('the live editor', () => {
     await expect.poll(() => storedBodies(page), { timeout: 10_000 }).toContain('- first\n- **second**\n\n1. one');
   });
 
+  test('a link is drawn as one, and Ctrl or ⌘ + click follows it', async ({ page }) => {
+    const surface = await open(page);
+    await surface.click();
+    await page.keyboard.type('a thought about [[psalms 23:1]] here\nnext line');
+    const link = surface.locator('.md-link:not(.md-mark)');
+    await expect(link).toHaveText('psalms 23:1');
+    // A plain click only places the caret, as in any text.
+    await link.click();
+    await expect(page.getByTestId('chapter-title')).not.toContainText('Psalms 23');
+    await expect(page.getByTestId('notes-follow-link')).toContainText('Psalms 23:1');
+    await link.click({ modifiers: ['ControlOrMeta'] });
+    await expect(page.getByTestId('chapter-title')).toContainText('Psalms 23');
+  });
+
   /*
    * Japanese and Chinese are typed through an input method: the text is
    * composed in place, and only committed when a candidate is chosen. Chromium

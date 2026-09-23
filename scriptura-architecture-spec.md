@@ -381,9 +381,25 @@ The reader is the local-first reading and note-taking app built on these package
 
 | Project | Device | Gates |
 |---|---|---|
-| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in twelve states and both colour schemes, and in eleven states in each of the other three interface languages, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
+| `reader` | Desktop Chrome | axe-core at the WCAG 2.0–2.2 A/AA/AAA tags in fourteen states and both colour schemes, and in eleven states in each of the other three interface languages, over the whole document, with a self-check that the two AAA rules and the page-level rules (`bypass`, `document-title`, `html-has-lang`, `region`) really ran; 44 px targets in thirteen states; keyboard traversal, focus visibility and focus return; reduced motion; a real service-worker update served from a private origin |
 | `reader-touch` | Pixel 7 (Chromium, touch, coarse pointer) | axe and 44 px targets in eleven phone states, and targets, reflow and text spacing in eight of them in each other interface language; reflow at 320 CSS px (1.4.10) and the text-spacing override (1.4.12), each with a planted-failure self-check; touch drags and pinches sent as real touch events through the DevTools protocol, since `page.touchscreen` can only tap |
 | `reader-dev` | Desktop Chrome, dev server | The app boots clean when modules are served unbundled |
+
+### Writing notes: the live editor
+
+A note is Markdown, and it takes shape as it is written, the way Obsidian's *live preview* works: `## ` makes the line a heading as it is typed, `**word**` is bold, a quote gets its rule and a board embedded in the note is drawn in place. A line's markers are hidden unless the caret is on it, where they come back, dimmed, to be edited. It needs no editor library.
+
+The design rests on one invariant: **the text in the page is the note, character for character.** Drawing only styles and hides characters, never replaces them, so reading the note back is a walk over text nodes and a caret position is a count of characters. The browser is left to insert and delete text itself, because phone keyboards and input methods send input no script can reliably intercept; the editor then reads the text back, redraws the lines that changed and puts the caret back by its offset.
+
+| Concern | Where | What it does |
+|---|---|---|
+| Tokenizing | `src/lib/livemd.ts` | Splits each line into styled runs without dropping a character, using the preview's own line patterns from `markdown.ts`. Jest checks the runs rejoin to the note over a corpus in every interface language, and that stripping the markers leaves the text the preview shows. |
+| The page | `src/lib/livedom.ts`, `components/LiveEditor.tsx` | One element per line, built with `textContent` and never `innerHTML`. Read-back tolerates whatever the browser left behind; lines are redrawn only where their tokens changed or the browser touched them; read-back runs once per burst of input events, not once per event. |
+| Input methods | `LiveEditor.tsx` | Nothing is redrawn between `compositionstart` and `compositionend`, so Japanese and Chinese are composed undisturbed. Tested with real compositions through the DevTools protocol. |
+| Undo | `src/lib/history.ts` | The editor's own history, since a redrawn DOM leaves the browser's meaningless. Typing is one step per word, deleting one per run, a paste, a toolbar edit or a quote one step each. |
+| One surface | `src/lib/surface.ts` | The toolbar, quoting from the Bible and the effects that restore the caret talk to either editor through the part of a textarea they use: `value`, the selection, `setSelectionRange`, `focus`. |
+
+A screen reader hears the words and not the punctuation on lines the caret is not on, since hidden markers are `display: none`. **Plain text** under *Note editor* in Settings brings back the Markdown source in a textarea, for a keyboard or an assistive technology that copes badly with an editable region. Preview is unchanged: the note rendered as a document, with real headings.
 
 ---
 
