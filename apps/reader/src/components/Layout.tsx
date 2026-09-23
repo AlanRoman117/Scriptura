@@ -336,7 +336,9 @@ export function Layout({ bible, notes, inserted = null, onNotesShown }: LayoutPr
             // would have no height left at all once the bar and tools are
             // drawn. The reader can pull it down again from the grip.
             onFocus={(e) => {
-              if (sheet !== 'full' && (e.target as HTMLElement).matches('textarea, input:not([type]), input[type="text"]')) {
+              // ⚠️ The live note editor is a contenteditable, not a textarea.
+              const target = e.target as HTMLElement;
+              if (sheet !== 'full' && (target.isContentEditable || target.matches('textarea, input:not([type]), input[type="text"]'))) {
                 setSheet('full');
               }
             }}

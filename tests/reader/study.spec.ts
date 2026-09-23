@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { noteValue } from '../helpers/note';
 
 /**
  * Stage 3: finding a passage, and getting it into a note.
@@ -154,12 +155,12 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('quote-1').click();
 
     const body = page.getByTestId('notes-surface');
-    await expect(body).toContainText('> In the beginning was the Word');
-    await expect(body).toContainText('— John 1:1 (BSB)');
+    await expect.poll(() => noteValue(body)).toContain('> In the beginning was the Word');
+    await expect.poll(() => noteValue(body)).toContain('— John 1:1 (BSB)');
     // The slug so it resolves in any translation, and the translation so a
     // quote from one version is distinguishable from a quote of the same verse
     // from another.
-    await expect(body).toContainText('[[john 1:1@bsb]]');
+    await expect.poll(() => noteValue(body)).toContain('[[john 1:1@bsb]]');
   });
 
   test('Link inserts just the reference, and leaves a line to write on', async ({ page }) => {
@@ -168,7 +169,7 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('verse-3').click();
     await page.getByTestId('link-3').click();
     // The trailing blank line is the point: you insert, then write about it.
-    await expect(page.getByTestId('notes-surface')).toHaveValue('[[john 1:3@bsb]]\n\n');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '[[john 1:3@bsb]]\n\n');
   });
 
   test('the cursor lands on the blank line after an insertion', async ({ page }) => {
@@ -184,7 +185,7 @@ test.describe('getting scripture into a note', () => {
 
     // So typing continues below the quote rather than inside it.
     await page.keyboard.type('This is the claim.');
-    await expect(surface).toContainText('[[john 1:1@bsb]]\n\nThis is the claim.');
+    await expect.poll(() => noteValue(surface)).toContain('[[john 1:1@bsb]]\n\nThis is the claim.');
   });
 
   test('two insertions do not run together', async ({ page }) => {
@@ -194,7 +195,7 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('link-1').click();
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue(
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 
       '[[john 1:1@bsb]]\n\n[[john 1:2@bsb]]\n\n'
     );
   });
@@ -204,14 +205,14 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('note-new').click();
     await page.getByTestId('search-input').fill('In the beginning God created');
     await page.getByTestId('search-panel').locator('.search__insert').first().click();
-    await expect(page.getByTestId('notes-surface')).toContainText('In the beginning God created');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('In the beginning God created');
   });
 
   test('quoting with no note open starts one, says so, and reports the save', async ({ page }) => {
     await open(page);
     await page.getByTestId('verse-1').click();
     await page.getByTestId('quote-1').click();
-    await expect(page.getByTestId('notes-surface')).toContainText('In the beginning was the Word');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('In the beginning was the Word');
     await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in a new note');
     // This path used to save without reporting it, leaving the status line
     // blank. Asserting "Saved" is safe here, and only here: nothing else has
@@ -264,7 +265,7 @@ test.describe('knowing that it worked', () => {
     for (let quotes = 1; quotes <= 2; quotes++) {
       await page.getByTestId('verse-1').click();
       await page.getByTestId('quote-1').click();
-      await expect.poll(async () => (await surface.inputValue()).split('[[john 1:1@bsb]]').length - 1).toBe(quotes);
+      await expect.poll(async () => (await noteValue(surface)).split('[[john 1:1@bsb]]').length - 1).toBe(quotes);
     }
     await expect
       .poll(() =>
@@ -315,7 +316,7 @@ test.describe('knowing that it worked', () => {
     await page.getByTestId('layout-done-show').click();
 
     await expect(page.getByTestId('layout')).toHaveAttribute('data-maximized', 'none');
-    await expect(page.getByTestId('notes-surface')).toContainText('In the beginning was the Word');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('In the beginning was the Word');
     // Focus goes to the note rather than to nothing, with the caret after the quote.
     await expect(page.getByTestId('notes-surface')).toBeFocused();
     // Seeing the note is what the confirmation stood in for.

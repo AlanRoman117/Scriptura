@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { noteValue } from '../helpers/note';
 
 /**
  * The writing surface: tools for people who do not write Markdown, and a way
@@ -43,12 +44,12 @@ test.describe('formatting tools', () => {
     await page.getByTestId('notes-surface').fill('The prologue');
     await selectAll(page);
     await page.getByTestId('tool-h2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('## The prologue');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '## The prologue');
 
     // A tool that can only add syntax strands the reader it exists for.
     await selectAll(page);
     await page.getByTestId('tool-h2').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('The prologue');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'The prologue');
   });
 
   test('bold wraps the selection and leaves the caret usable', async ({ page }) => {
@@ -58,7 +59,7 @@ test.describe('formatting tools', () => {
     await surface.click();
     await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(4, 8));
     await page.getByTestId('tool-bold').click();
-    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toHaveJSProperty('value', 'the **Word**');
 
     // The word stays selected, not its markers — so focus came back to the
     // textarea and a second style can go on top of the first.
@@ -68,7 +69,7 @@ test.describe('formatting tools', () => {
     expect(picked).toBe('Word');
 
     await page.getByTestId('tool-italic').click();
-    await expect(surface).toHaveValue('the ***Word***');
+    await expect(surface).toHaveJSProperty('value', 'the ***Word***');
   });
 
   test('a list numbers every selected line', async ({ page }) => {
@@ -76,7 +77,7 @@ test.describe('formatting tools', () => {
     await page.getByTestId('notes-surface').fill('one\ntwo\nthree');
     await selectAll(page);
     await page.getByTestId('tool-number').click();
-    await expect(page.getByTestId('notes-surface')).toHaveValue('1. one\n2. two\n3. three');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '1. one\n2. two\n3. three');
   });
 });
 
@@ -103,7 +104,7 @@ test.describe('reading it back', () => {
     const surface = page.getByTestId('notes-surface');
     await expect(surface).toBeVisible();
     const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
-    const body = await surface.inputValue();
+    const body = await noteValue(surface);
     expect(body.slice(at)).toBe('> a quotation');
   });
 
@@ -155,7 +156,7 @@ test.describe('a board inside a note', () => {
     await expect(page.getByTestId('announcer')).toHaveText('Added the board “Study board” in “Prologue study”');
 
     // Back in the note, the fence is plain text…
-    await expect(page.getByTestId('notes-surface')).toContainText('scriptura-board');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('scriptura-board');
     // …and renders as the board, the way a mermaid fence would.
     await page.getByTestId('note-preview').click();
     const embed = page.getByTestId('notes-preview').locator('.embed');
@@ -244,7 +245,7 @@ test.describe('the preview from the keyboard', () => {
     const surface = page.getByTestId('notes-surface');
     await expect(surface).toBeVisible();
     const at = await surface.evaluate((el: HTMLTextAreaElement) => el.selectionStart);
-    expect((await surface.inputValue()).slice(at)).toBe('> a quotation');
+    expect((await noteValue(surface)).slice(at)).toBe('> a quotation');
   });
 
   test('an empty preview is a button back to writing', async ({ page }) => {
@@ -278,7 +279,7 @@ test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
     await expect(page.getByTestId('tool-bold')).toBeFocused();
     await page.keyboard.press('Enter');
 
-    await expect(surface).toHaveValue('the **Word**');
+    await expect(surface).toHaveJSProperty('value', 'the **Word**');
     await expect(surface).toBeFocused();
     // Polled, not sampled once: the selection is restored on the render that
     // carries the edited text, which is not always the render that shows it —

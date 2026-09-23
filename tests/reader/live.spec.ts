@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { storedBodies } from '../helpers/note';
 
 /**
  * The live editor: Markdown drawn as it is written, the way Obsidian's live
@@ -25,26 +26,6 @@ async function open(page: Page) {
 
 const noteText = (page: Page) =>
   page.getByTestId('notes-surface').evaluate((el) => (el as HTMLTextAreaElement).value);
-
-/** The note as stored, read from IndexedDB — what survives a reload. */
-async function stored(page: Page): Promise<string> {
-  return page.evaluate(
-    () =>
-      new Promise<string>((resolve, reject) => {
-        const req = indexedDB.open('scriptura');
-        req.onerror = () => reject(req.error);
-        req.onsuccess = () => {
-          const tx = req.result.transaction('notes', 'readonly');
-          const all = tx.objectStore('notes').getAll();
-          all.onsuccess = () => {
-            const notes = all.result as { body: string; updatedAt?: number }[];
-            resolve(notes.map((n) => n.body).join('\u0000'));
-          };
-          all.onerror = () => reject(all.error);
-        };
-      })
-  );
-}
 
 test.describe('the live editor', () => {
   test('draws a heading while it is typed, and hides its marker off the line', async ({ page }) => {
@@ -125,7 +106,7 @@ test.describe('the live editor', () => {
     await surface.click();
     await page.keyboard.type('- first\n- **second**\n\n1. one');
     await expect.poll(() => noteText(page)).toBe('- first\n- **second**\n\n1. one');
-    await expect.poll(() => stored(page), { timeout: 10_000 }).toContain('- first\n- **second**\n\n1. one');
+    await expect.poll(() => storedBodies(page), { timeout: 10_000 }).toContain('- first\n- **second**\n\n1. one');
   });
 
   /*

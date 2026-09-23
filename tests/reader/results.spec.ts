@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { noteValue } from '../helpers/note';
 
 /**
  * Seeing *all* the matches.
@@ -87,7 +88,7 @@ test.describe('all the matches', () => {
     await page.getByTestId('results-book-jeremiah').click();
 
     await page.getByTestId('results-insert-jeremiah-2-13').click();
-    await expect(page.getByTestId('notes-surface')).toContainText('living water');
+    await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('living water');
     await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Jeremiah 2:13');
 
     await page.getByTestId('results-go-jeremiah-2-13').click();

@@ -1558,7 +1558,9 @@ summary:focus-visible,
 .md-strong { font-weight: 700; }
 .md-em { font-style: italic; }
 :lang(ja) .md-em, :lang(zh-Hans) .md-em, :lang(zh-Hant) .md-em { font-style: normal; font-weight: 600; }
+/* Full ink, not the quote's softer colour: on the code tint --ink-soft falls short of 7:1. */
 .md-code {
+  color: var(--ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
   background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px;
 }

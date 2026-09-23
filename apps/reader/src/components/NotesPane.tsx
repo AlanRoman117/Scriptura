@@ -76,7 +76,7 @@ export function NotesPane({
   bible = null,
   boards = [],
   onOpenBoard,
-  editor = 'plain',
+  editor = 'live',
 }: NotesPaneProps) {
   const { t } = useI18n();
   const active = notes.find((n) => n.id === activeId) ?? null;

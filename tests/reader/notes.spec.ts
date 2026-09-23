@@ -74,7 +74,7 @@ test.describe('notes', () => {
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('note-title')).toHaveValue('On John 1');
-    await expect(page.getByTestId('notes-surface')).toHaveValue('The Word was with God.');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'The Word was with God.');
   });
 
   test('an edit is saved even when another note is edited inside the autosave delay', async ({ page }) => {

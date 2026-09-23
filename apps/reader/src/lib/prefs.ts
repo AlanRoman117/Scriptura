@@ -67,7 +67,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   motion: 'system',
   markers: false,
   language: 'system',
-  editor: 'plain',
+  editor: 'live',
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */

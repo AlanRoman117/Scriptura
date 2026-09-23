@@ -126,7 +126,7 @@ test.describe('a new version waits for the reader (2.2.4, 3.2.5)', () => {
 
     await page.waitForFunction(() => !(window as unknown as { __before?: boolean }).__before, null, { timeout: 30_000 });
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId('notes-surface')).toHaveValue('Written just before the update.');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'Written just before the update.');
     await expect(page.getByTestId('update-notice')).toHaveCount(0);
   });
 });
