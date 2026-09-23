@@ -499,6 +499,8 @@ export const enUS = {
     spacings: { normal: 'Normal', relaxed: 'Relaxed', loose: 'Loose' },
     measure: 'Column width',
     measures: { narrow: 'Narrow', normal: 'Normal', wide: 'Wide' },
+    editor: 'Note editor',
+    editors: { live: 'Show formatting as you write', plain: 'Plain text' },
     displayNote:
       'Relaxed and Loose spacing meet the WCAG guidance for line and paragraph spacing. These settings apply to this device only.',
     accessibility: 'Accessibility',

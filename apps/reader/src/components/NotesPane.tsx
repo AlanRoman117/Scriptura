@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import type { Note } from '../lib/notes';
 import type { Board } from '../lib/canvas';
@@ -6,6 +6,10 @@ import { headingAt, linkAt } from '../lib/references';
 import { insertAt, toggleHeading, toggleLineStyle, toggleWrap, type Edit, type LineStyle } from '../lib/mdedit';
 import { EditorToolbar } from './EditorToolbar';
 import { MarkdownPreview } from './MarkdownPreview';
+import { LiveEditor } from './LiveEditor';
+import { BoardThumbnail } from './BoardThumbnail';
+import { textareaSurface, type NoteSurface } from '../lib/surface';
+import type { EditorPref } from '../lib/prefs';
 import { ConfirmButton } from './ConfirmButton';
 import { MaximizeButton } from './PaneControl';
 import { settleFocus } from '../lib/focus';
@@ -26,8 +30,10 @@ interface NotesPaneProps {
   onOpenCanvas?: () => void;
   /** Boards export alongside notes, so they count towards having something to export. */
   boardCount?: number;
-  /** Registers the textarea so quoted passages land at the cursor. */
-  onSurfaceReady?: (el: HTMLTextAreaElement | null) => void;
+  /** Registers the note editor so quoted passages land at the cursor. */
+  onSurfaceReady?: (surface: NoteSurface) => void;
+  /** Which editor to write in: drawn as typed, or plain Markdown. */
+  editor?: EditorPref;
   /** How a `[[…]]` link reads, or null when it resolves to nothing. */
   describeLink?: (inner: string) => string | null;
   onFollowLink?: (inner: string) => void;
@@ -70,10 +76,42 @@ export function NotesPane({
   bible = null,
   boards = [],
   onOpenBoard,
+  editor = 'plain',
 }: NotesPaneProps) {
   const { t } = useI18n();
   const active = notes.find((n) => n.id === activeId) ?? null;
-  const surface = useRef<HTMLTextAreaElement>(null);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const live = useRef<NoteSurface>(null);
+  const editorNow = useRef(editor);
+  editorNow.current = editor;
+  /**
+   * Whichever editor is showing, behind one object that never changes — so
+   * the app can hold on to it across a switch of editor, a switch of note, or
+   * the preview, when there is no editor at all and every call does nothing.
+   */
+  const surface = useMemo<NoteSurface>(() => {
+    const current = (): NoteSurface | null =>
+      editorNow.current === 'live'
+        ? live.current
+        : textarea.current
+          ? textareaSurface(textarea.current)
+          : null;
+    return {
+      get value() {
+        return current()?.value ?? '';
+      },
+      get selectionStart() {
+        return current()?.selectionStart ?? 0;
+      },
+      get selectionEnd() {
+        return current()?.selectionEnd ?? 0;
+      },
+      setSelectionRange: (start, end) => current()?.setSelectionRange(start, end),
+      focus: () => current()?.focus(),
+      isFocused: () => current()?.isFocused() ?? false,
+      element: () => current()?.element() ?? null,
+    };
+  }, []);
   const [heading, setHeading] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
   const [mode, setMode] = useState<'write' | 'read'>('write');
@@ -84,14 +122,14 @@ export function NotesPane({
    */
   const caret = useRef<{ start: number; end: number; text?: string } | null>(null);
 
-  useEffect(() => onSurfaceReady?.(surface.current), [onSurfaceReady, activeId]);
+  useEffect(() => onSurfaceReady?.(surface), [onSurfaceReady, surface]);
 
   // The heading the cursor sits under, kept in view the way a code editor keeps
   // the enclosing function visible. A long note's structure is otherwise
   // invisible from inside it.
   const trackHeading = () => {
-    const el = surface.current;
-    if (!el) return;
+    const el = surface;
+    if (!el.element()) return;
     setHeading(headingAt(el.value, el.selectionStart));
     // A textarea has nothing to click, so the cursor is how a link is picked.
     setLink(linkAt(el.value, el.selectionStart));
@@ -108,8 +146,8 @@ export function NotesPane({
   // caret simply waits for its own render instead.
   useEffect(() => {
     const pending = caret.current;
-    const el = surface.current;
-    if (!pending || !el) return;
+    const el = surface;
+    if (!pending || !el.element()) return;
     if (pending.text !== undefined && el.value !== pending.text) return;
     caret.current = null;
     el.focus();
@@ -121,8 +159,8 @@ export function NotesPane({
 
   /** Run a formatting operation over the current selection. */
   const apply = (operation: (text: string, start: number, end: number) => Edit) => {
-    const el = surface.current;
-    if (!el || !active) return;
+    const el = surface;
+    if (!el.element() || !active) return;
     const edit = operation(el.value, el.selectionStart, el.selectionEnd);
     caret.current = { start: edit.selectionStart, end: edit.selectionEnd, text: edit.text };
     onChange(active.id, { body: edit.text });
@@ -269,9 +307,31 @@ export function NotesPane({
               onOpenBoard={(id) => onOpenBoard?.(id)}
             />
           ) : (
-            <>
+            editor === 'live' ? (
+              <LiveEditor
+                ref={live}
+                value={active.body}
+                noteId={active.id}
+                label={t.notes.body}
+                placeholder={t.notes.placeholder}
+                onChange={(body) => onChange(active.id, { body })}
+                onCaret={trackHeading}
+                onFollowLink={(offset) => {
+                  const target = linkAt(active.body, offset);
+                  if (target) onFollowLink?.(target);
+                }}
+                renderBoard={(id) => (
+                  <BoardThumbnail
+                    board={boards.find((b) => b.id === id)}
+                    bible={bible}
+                    notes={notes}
+                    onOpen={(boardId) => onOpenBoard?.(boardId)}
+                  />
+                )}
+              />
+            ) : (
               <textarea
-                ref={surface}
+                ref={textarea}
                 id="notes-surface"
                 className="notes__surface"
                 data-testid="notes-surface"
@@ -284,7 +344,7 @@ export function NotesPane({
                 onClick={trackHeading}
                 onSelect={trackHeading}
               />
-            </>
+            )
           )}
           </div>
         </>

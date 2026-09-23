@@ -504,6 +504,8 @@ export const ptBR = {
     spacings: { normal: 'Normal', relaxed: 'Folgado', loose: 'Amplo' },
     measure: 'Largura da coluna',
     measures: { narrow: 'Estreita', normal: 'Normal', wide: 'Larga' },
+    editor: 'Editor de notas',
+    editors: { live: 'Mostrar a formatação ao escrever', plain: 'Texto simples' },
     displayNote:
       'Os espaçamentos Folgado e Amplo atendem à orientação da WCAG para espaçamento de linhas e parágrafos. Estas opções valem só para este dispositivo.',
     accessibility: 'Acessibilidade',

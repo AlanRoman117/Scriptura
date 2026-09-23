@@ -483,6 +483,8 @@ export const esMX = {
     spacings: { normal: 'Normal', relaxed: 'Amplio', loose: 'Muy amplio' },
     measure: 'Ancho de columna',
     measures: { narrow: 'Angosto', normal: 'Normal', wide: 'Ancho' },
+    editor: 'Editor de notas',
+    editors: { live: 'Mostrar el formato al escribir', plain: 'Texto simple' },
     displayNote:
       'El interlineado Amplio y Muy amplio cumple la guía WCAG sobre espacio entre líneas y párrafos. Esta configuración solo se aplica a este dispositivo.',
     accessibility: 'Accesibilidad',

@@ -70,6 +70,7 @@ import {
 import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
+import type { NoteSurface } from './lib/surface';
 import { useVisualViewport } from './lib/viewport';
 import { announce } from './lib/announce';
 import { setPendingFlush } from './lib/pending';
@@ -209,14 +210,15 @@ export function App() {
   const pendingSaves = useRef(new Map<string, Note>());
   const notesNow = useRef<Note[]>([]);
   const mirroringNow = useRef(false);
-  const surfaceRef = useRef<HTMLTextAreaElement | null>(null);
+  const surfaceRef = useRef<NoteSurface | null>(null);
   /** Where to leave the cursor after an insertion, applied once React repaints. */
   const caret = useRef<{ at: number; focus: boolean } | null>(null);
 
   useEffect(() => {
     const pending = caret.current;
     const el = surfaceRef.current;
-    if (!pending || !el) return;
+    // No editor on screen (the preview): the caret waits for one.
+    if (!pending || !el?.element()) return;
     caret.current = null;
     // Focus follows a quote from the Bible — you insert, then write. It does
     // not follow an insert from the search panel: that panel stays open on
@@ -376,7 +378,7 @@ export function App() {
       const current = notes.find((n) => n.id === activeId);
       if (!current) return;
       const el = surfaceRef.current;
-      const at = el && document.activeElement === el ? el.selectionStart : current.body.length;
+      const at = el?.isFocused() ? el.selectionStart : current.body.length;
       const before = current.body.slice(0, at);
       const after = current.body.slice(at);
       const spacer = before && !before.endsWith('\n') ? '\n\n' : '';
@@ -1261,6 +1263,7 @@ export function App() {
             onSurfaceReady={(el) => {
               surfaceRef.current = el;
             }}
+            editor={prefs.editor}
             describeLink={describeLink}
             onFollowLink={followLink}
             bible={bible}

@@ -1536,6 +1536,71 @@ summary:focus-visible,
   font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
 }
 
+/* ── The live editor (components/LiveEditor.tsx) ─────────────────────────────
+   The page's text is the note, character for character: these rules only
+   style and hide. A marker (`##`, `**`, `>`) is hidden unless the caret is on
+   its line — `display: none`, so a screen reader reading the note hears the
+   words and not the punctuation — and shown again, dimmed, for editing. */
+.live {
+  overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  cursor: text; padding: 0 .1rem .5rem;
+}
+/* A line holding only hidden markers still keeps its height and a place for the caret. */
+.live-line { min-height: 1lh; }
+/* The placeholder a textarea would show. Drawn by the root, never as text. */
+.live { position: relative; }
+.live[data-empty]::before {
+  content: attr(data-placeholder); position: absolute; inset: 0 .1rem auto;
+  color: var(--ink-soft); pointer-events: none;
+}
+.live-line:not(.is-active) .md-mark { display: none; }
+.md-mark, .md-prefix { color: var(--ink-soft); font-weight: 400; font-style: normal; }
+.md-strong { font-weight: 700; }
+.md-em { font-style: italic; }
+:lang(ja) .md-em, :lang(zh-Hans) .md-em, :lang(zh-Hant) .md-em { font-style: normal; font-weight: 600; }
+.md-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px;
+}
+.md-link { color: var(--accent); text-decoration: underline; text-underline-offset: .15em; }
+
+/* Headings on the preview's scale. */
+.live-line--heading { font-weight: 600; line-height: 1.3; }
+.live-line--h1 { font-size: 1.5rem; }
+.live-line--h2 { font-size: 1.25rem; }
+.live-line--h3 { font-size: 1.08rem; }
+.live-line--h4, .live-line--h5, .live-line--h6 { font-size: .98rem; }
+.live-line--heading:not(:first-child) { padding-top: .5rem; }
+
+.live-line--quote {
+  padding-left: .8rem; color: var(--ink-soft);
+  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+}
+/* The dash is hidden off the caret's line and a bullet drawn in its place. */
+.live-line--bullet { padding-left: 1.4rem; position: relative; }
+.live-line--bullet:not(.is-active)::before { content: '•'; position: absolute; left: .45rem; color: var(--ink-soft); }
+.live-line--bullet.is-active { padding-left: 0; }
+.live-line--ordered { padding-left: .4rem; }
+/* A rule is drawn across its line while the caret is elsewhere. */
+.live-line--rule:not(.is-active) {
+  background: linear-gradient(var(--rule), var(--rule)) center / 100% 1px no-repeat;
+}
+.live-line--code, .live-line--fence {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
+  background: var(--paper-raised); padding: 0 .6rem;
+}
+.live-line--code .md-code { background: none; font-size: inherit; }
+.live-line--fence { color: var(--ink-soft); }
+.live-line--fence .md-mark { display: inline; }
+/* A board is drawn in place of its fence while the caret is elsewhere; with the
+   caret inside, the fence is shown to edit and the drawing steps aside. */
+.live-line--in-board:not(.is-active):not(.live-line--fence),
+.live-line--in-board.live-line--fence:not(.is-active):not(:has(> [data-widget])) { display: none; }
+.live-line--in-board.live-line--fence:not(.is-active):has(> [data-widget]) { background: none; padding: 0; }
+.live-line--in-board.live-line--fence:not(.is-active) .md-mark { display: none; }
+.live-widget { display: block; white-space: normal; cursor: default; user-select: none; }
+.live-line.is-active > .live-widget { display: none; }
+
 .notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
 .notes__status {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .75rem;

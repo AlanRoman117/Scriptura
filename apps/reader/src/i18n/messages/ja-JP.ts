@@ -479,6 +479,8 @@ export const jaJP = {
     spacings: { normal: '標準', relaxed: '広め', loose: 'かなり広め' },
     measure: '1行の長さ',
     measures: { narrow: '短め', normal: '標準', wide: '長め' },
+    editor: 'ノートの編集',
+    editors: { live: '書きながら書式を表示', plain: 'プレーンテキスト' },
     displayNote:
       '行間の「広め」と「かなり広め」は、行と段落の間隔に関する WCAG の基準を満たします。これらの設定はこの端末にだけ適用されます。',
     accessibility: 'アクセシビリティ',

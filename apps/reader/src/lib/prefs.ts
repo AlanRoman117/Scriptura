@@ -33,6 +33,14 @@ export type Measure = (typeof MEASURES)[number];
 export const MOTIONS = ['system', 'reduce'] as const;
 export type Motion = (typeof MOTIONS)[number];
 
+/**
+ * How a note is written: drawn as it is typed (`live`), or as the Markdown
+ * source in a plain textarea — the fallback for a keyboard or a screen reader
+ * that copes badly with the live editor.
+ */
+export const EDITORS = ['live', 'plain'] as const;
+export type EditorPref = (typeof EDITORS)[number];
+
 /** The interface language: one of ours, or whatever the device prefers. */
 export const LANGUAGES = ['system', ...LOCALES] as const;
 export type LanguagePref = (typeof LANGUAGES)[number];
@@ -47,6 +55,8 @@ export interface DisplayPrefs {
   markers: boolean;
   /** The interface language; `system` follows the device's languages. */
   language: LanguagePref;
+  /** The note editor. */
+  editor: EditorPref;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -57,6 +67,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   motion: 'system',
   markers: false,
   language: 'system',
+  editor: 'plain',
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */
@@ -110,6 +121,7 @@ export function normalizePrefs(raw: unknown): DisplayPrefs {
     motion: oneOf(MOTIONS, r.motion, DEFAULT_PREFS.motion),
     markers: r.markers === true,
     language: oneOf(LANGUAGES, r.language, DEFAULT_PREFS.language),
+    editor: oneOf(EDITORS, r.editor, DEFAULT_PREFS.editor),
   };
 }
 

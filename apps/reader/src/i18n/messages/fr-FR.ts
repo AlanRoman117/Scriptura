@@ -487,6 +487,8 @@ const catalog = {
     spacings: { normal: 'Normal', relaxed: 'Aéré', loose: 'Très aéré' },
     measure: 'Largeur de colonne',
     measures: { narrow: 'Étroite', normal: 'Normale', wide: 'Large' },
+    editor: 'Éditeur de notes',
+    editors: { live: 'Afficher la mise en forme pendant la saisie', plain: 'Texte brut' },
     displayNote:
       'Les interlignes Aéré et Très aéré respectent les recommandations WCAG sur l’espacement des lignes et des paragraphes. Ces réglages ne s’appliquent qu’à cet appareil.',
     accessibility: 'Accessibilité',
