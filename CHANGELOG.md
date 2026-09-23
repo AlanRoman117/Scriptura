@@ -7,6 +7,15 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.3] - 2026-09-22
+
+The third preview. Notes take shape as they are written, and the canvas moves
+beside the Bible, sharing a pane with the notes. The interface gains a few new
+words in every language, for the reviewers to check: the note editor setting,
+the Notes and Canvas tabs, and the Canvas button on search results.
+
+**Try it:** <https://alanroman117.github.io/Scriptura/>
+
 ### Added
 
 - **Notes take shape as they are written.** Markdown is drawn as it is typed, the way Obsidian's live preview works: a `## ` line becomes a heading, `**word**` turns bold, a quote gets its rule and an embedded board is drawn in place. A line's symbols come back while the cursor is on it, for editing. Ctrl or ⌘ + click follows a `[[link]]`. Built without an editor library.
@@ -20,6 +29,10 @@ suffix and is published as a GitHub pre-release.
 - The focus ring around the note and its title no longer covers the cursor at the start of a line: both have room inside their edge.
 - With the notes or the board maximized, the page kept no main landmark and no level-1 heading; the maximized pane now carries both.
 - Undo after a formatting button now undoes the formatting. The plain text box lost its undo history whenever a button changed the note; the live editor keeps its own.
+
+### Changed
+
+- `@types/node` 24.13.3 → 24.13.4 (Dependabot, #12): type definitions only, still Node 24.
 
 ## [0.1.0-preview.2] - 2026-09-17
 
@@ -82,5 +95,6 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.3]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.1
