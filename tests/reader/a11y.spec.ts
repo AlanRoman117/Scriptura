@@ -154,8 +154,16 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
       await page.getByTestId(`verse-${verse}`).click();
       await page.getByTestId(`canvas-${verse}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(2);
+  },
+  // The canvas filling the window: the page's h1 moves to the side pane.
+  'board maximized': async (page) => {
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('side-board').click();
+    await page.getByTestId('maximize-notes').click();
+    await expect(page.getByTestId('pane-bible')).toBeHidden();
   },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');

@@ -74,7 +74,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
       await page.getByTestId(`canvas-${verse}`).tap();
     }
     await expandSheet(page);
-    await page.getByTestId('canvas-open').tap();
+    await page.getByTestId('side-board').tap();
     await expect(page.locator('.card')).toHaveCount(2);
   },
   results: async (page) => {

@@ -15,15 +15,20 @@ async function open(page: Page) {
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
 }
 
-/** John 1:1 and 1:3 on a board, opened from the notes sheet. */
+/** John 1:1 and 1:3 on a board, opened from the sheet's Canvas tab. */
 async function boardWithTwoVerses(page: Page) {
   for (const verse of [1, 3]) {
     await page.locator(`.verse[data-verse="${verse}"] .verse__text`).tap();
     await page.getByTestId(`canvas-${verse}`).tap();
   }
   await page.getByRole('button', { name: /expand notes/i }).tap();
-  await page.getByTestId('canvas-open').tap();
+  await page.getByTestId('side-board').tap();
   await expect(page.getByTestId('canvas')).toBeVisible();
+  // The canvas takes the sheet to full height; a drag that starts while the
+  // sheet is still growing measures a card that is still moving.
+  const sheet = page.getByTestId('pane-notes');
+  await expect(sheet).toHaveAttribute('data-sheet', 'full');
+  await expect.poll(() => sheet.evaluate((el) => el.getAnimations().length)).toBe(0);
   await expect(page.locator('.card')).toHaveCount(2);
 }
 

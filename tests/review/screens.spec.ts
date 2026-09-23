@@ -77,7 +77,7 @@ const SCREENS: Record<string, Shot> = {
       await page.getByTestId(`canvas-${verse}`).click();
     }
     await page.getByTestId('note-new').click();
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(2);
     await page.getByTestId('board-connections').click();
     await save('board');

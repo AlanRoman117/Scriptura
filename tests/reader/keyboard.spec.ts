@@ -256,10 +256,19 @@ test.describe('one level-1 heading, always (2.4.10)', () => {
       await page.getByTestId(chip).click();
     }
 
-    await page.getByTestId('canvas-open').click();
+    // Beside the Bible, the chapter keeps the h1; maximized, the side pane
+    // takes it, whichever half it holds.
+    await page.getByTestId('side-board').click();
     await expect(page.getByTestId('canvas')).toBeVisible();
     await expect(h1).toHaveCount(1);
-    await expect(h1).toContainText(/Board/);
+    await expect(h1).toContainText('John 1');
+    await page.getByTestId('maximize-notes').click();
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toContainText('Canvas');
+    await page.getByTestId('side-notes').click();
+    await expect(h1).toHaveCount(1);
+    await expect(h1).toContainText('Notes');
+    await page.getByTestId('maximize-notes').click();
   });
 });
 
@@ -281,7 +290,7 @@ test.describe('help is where you left it (3.2.6, 3.3.5)', () => {
     await expect(page.getByTestId('help-panel')).toBeVisible();
     await page.keyboard.press('Escape');
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('canvas-help').click();
     await expect(page.getByTestId('help-panel')).toBeVisible();
   });

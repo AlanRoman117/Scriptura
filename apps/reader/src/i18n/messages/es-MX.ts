@@ -128,6 +128,7 @@ export const esMX = {
     bootFailed: 'No se pudo abrir el texto bíblico. Recarga para intentarlo de nuevo.',
     skipToScripture: 'Saltar a las Escrituras',
     skipToNotes: 'Saltar a las notas',
+    skipToBoard: 'Saltar a los tableros',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Tableros`,
@@ -219,6 +220,12 @@ export const esMX = {
     showNotes: 'Mostrar notas',
     paneBible: 'la Biblia',
     paneNotes: 'las notas',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notas o tableros',
+    paneBoard: 'los tableros',
+    expandBoard: 'Expandir tableros',
+    collapseBoard: 'Contraer tableros',
+    showBoard: 'Mostrar tableros',
     maximize: (pane: string) => `Maximizar ${pane}`,
     restore: (pane: string) => `Restaurar ${pane}`,
   },
@@ -279,6 +286,8 @@ export const esMX = {
     showing: (shown: number) => `; se muestran ${num(shown)}`,
     seeAll: (total: number) => `Ver los ${num(total)}`,
     insert: (ref: string) => `Insertar ${ref} en la nota abierta`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Al tablero: pon ${ref} en el tablero`,
     weakBelow: 'Abajo: dentro de una palabra más larga',
     announceNone: (query: string) => `Sin resultados para “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -595,7 +604,6 @@ export const esMX = {
     viewUp: 'Mover la vista hacia arriba',
     viewDown: 'Mover la vista hacia abajo',
     viewRight: 'Mover la vista a la derecha',
-    back: 'Volver a la lectura',
     help: 'Ayuda: tableros, teclado y el significado de las abreviaturas',
     noConnections: 'Todavía no hay conexiones. Presiona ⇢ en una tarjeta y luego la tarjeta a la que lleva.',
     removeConnection: (edge: string) => `Quitar la conexión ${edge}`,

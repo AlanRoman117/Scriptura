@@ -73,7 +73,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
       await page.getByTestId(`verse-${verse}`).click();
       await page.getByTestId(`canvas-${verse}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(2);
   },
   results: async (page) => {

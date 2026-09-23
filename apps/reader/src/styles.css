@@ -315,7 +315,7 @@ summary:focus-visible,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
 .card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name,
-.preview-notice__hide, .preview-notice__link {
+.preview-notice__hide, .preview-notice__link, .side-switch__tab, .side-switch__maximize {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -325,7 +325,7 @@ summary:focus-visible,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
 .compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show,
-.confirm-dialog__action, .preview-notice__hide {
+.confirm-dialog__action, .preview-notice__hide, .side-switch__tab, .side-switch__maximize {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
@@ -382,7 +382,39 @@ summary:focus-visible,
   scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + .5rem);
   scroll-padding-bottom: calc(var(--sheet-h, 0px) + .5rem);
 }
-.pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); }
+.pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); display: flex; flex-direction: column; }
+/* ⚠️ The display above would otherwise beat the `hidden` attribute. */
+.pane--notes[hidden] { display: none; }
+
+/* ── The side pane: notes or canvas ─────────────────────────────────────────
+   Two tabs over one pane, and the maximize button that applies to both. The
+   panels are both mounted and the one not chosen is hidden, so a switch keeps
+   the note's caret and the board's view. */
+.side-switch {
+  display: flex; align-items: flex-start; gap: .5rem; flex: none;
+  padding: .6rem 1.25rem 0; border-bottom: 1px solid var(--rule);
+}
+.side-switch__tabs { display: flex; gap: .25rem; flex: 1; min-width: 0; }
+.side-switch__tab {
+  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px 6px 0 0; padding: .25rem .9rem; margin-bottom: -1px;
+}
+.side-switch__tab:hover { color: var(--ink); }
+/* Selected: the tab joins the panel below it, and is bold, so it is not told
+   by colour alone (1.4.1). */
+.side-switch__tab[aria-selected='true'] {
+  color: var(--ink); font-weight: 600;
+  background: var(--paper-raised); border-color: var(--edge); border-bottom: 1px solid var(--paper-raised);
+}
+.side-switch__maximize {
+  font: inherit; color: var(--ink-soft); cursor: pointer; margin-bottom: .35rem; flex: none;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+}
+.side-switch__maximize:hover { color: var(--ink); border-color: var(--ink-soft); }
+.side-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.side-panel[hidden] { display: none; }
+.side-panel > * { flex: 1; min-height: 0; }
 
 /* The divider is a bar a little wider than the two buttons it holds, so they
    sit inside it instead of hanging over the edges of both panes — they were
@@ -485,7 +517,7 @@ summary:focus-visible,
 .reader__chip-count[data-empty] { display: none; }
 /* The maximize button, last in each pane's bar, takes its neighbours' class;
    this only sizes the arrow so it reads the same in both bars. */
-.reader__chip.pane__maximize, .notes__action.pane__maximize { font-size: .95rem; line-height: 1; }
+.reader__chip.pane__maximize, .notes__action.pane__maximize, .side-switch__maximize { font-size: .95rem; line-height: 1; }
 .pane__maximize[aria-pressed='true'] {
   color: var(--ink); border-color: var(--ink-soft);
   background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
@@ -987,7 +1019,12 @@ summary:focus-visible,
 
 /* ── Canvas: verses and notes on a plane ──────────────────────────────────── */
 
-.canvas { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper); }
+.canvas {
+  display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper);
+  container: canvas / inline-size;
+}
+/* Where a verse sent from the Bible or a search is confirmed, on the board. */
+.canvas__status { margin: 0; padding: .35rem 1rem; font-size: .8rem; border-top: 1px solid var(--rule); flex: none; }
 .canvas__bar {
   display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
   padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
@@ -1331,6 +1368,12 @@ summary:focus-visible,
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .results__insert:hover { color: var(--ink); border-color: var(--rule); }
+/* A search hit onto the board: the verse actions' word, so it is the same
+   act by the same name. A word, not a glyph, so it takes its own width. */
+.search__canvas, .results__canvas {
+  width: auto; min-width: var(--control-h); padding-inline: .45rem;
+  font-family: var(--sans); font-size: .75rem; white-space: nowrap;
+}
 
 /* Ranked order needs to say why, or it reads as shuffled. */
 .results__divider {
@@ -1478,7 +1521,14 @@ summary:focus-visible,
 
 /* ── Notes ────────────────────────────────────────────────────────────────── */
 
-.notes { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size; }
+.notes {
+  display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size;
+  /* Room inside the title and the note, between their edge and their text.
+     Both draw their focus ring inside (outline-offset -2px), and with no
+     padding the ring sat over the caret at the start of a line. One pair of
+     tokens, so the title's words line up with the note's. */
+  --surface-pad-y: .5rem; --surface-pad-x: .75rem;
+}
 
 /* One row while every control fits at its own size, and never by squeezing
    one: a button that shrinks below its label draws the label across its
@@ -1526,7 +1576,7 @@ summary:focus-visible,
 .notes__title {
   font: inherit; font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
   color: var(--ink); background: transparent; border: none;
-  border-bottom: 1px solid transparent; padding: .2rem 0; margin-bottom: .5rem;
+  border-bottom: 1px solid transparent; padding: .2rem var(--surface-pad-x); margin-bottom: .5rem;
 }
 .notes__title:focus { border-bottom-color: var(--edge); }
 
@@ -1534,7 +1584,6 @@ summary:focus-visible,
   /* Room between the edge and the text: the focus ring is drawn inside the
      note (outline-offset -2px), and without this it sat over the caret at the
      start of every line. Shared by both editors and the live placeholder. */
-  --surface-pad-y: .5rem; --surface-pad-x: .75rem;
   padding: var(--surface-pad-y) var(--surface-pad-x);
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
@@ -1716,7 +1765,7 @@ summary:focus-visible,
    everywhere else, so this costs the desktop nothing. */
 .layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 .layout--narrow .notes { padding-top: .75rem; }
-.canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+
 
 /* Anchored to the bottom of the *visible* viewport, not the layout viewport:
    iOS does not move fixed elements when the keyboard opens, so a sheet with
@@ -1758,7 +1807,7 @@ summary:focus-visible,
    line raises the sheet instead of being cut off. */
 .sheet__label { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .6rem; text-align: center; }
 .sheet__done { font-size: .82rem; }
-.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; }
+.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; display: flex; flex-direction: column; }
 /* With a keyboard up, the sheet is what is left above it — about 330px on a
    phone — and the note bar, the title and two rows of tools took all but
    40px of that, leaving the one thing being typed into a line and a half
@@ -1767,7 +1816,8 @@ summary:focus-visible,
    keyboard path: Shift+Tab to the title leaves the editing group, and the bar
    comes back. */
 @container sheet-body (max-height: 28rem) {
-  .notes:has(.notes__editor:focus-within) .notes__bar { display: none; }
+  .notes:has(.notes__editor:focus-within) .notes__bar,
+  .sheet__body:has(.notes__editor:focus-within) .side-switch { display: none; }
   .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
 }

@@ -112,6 +112,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] The Help screen reads well, glossary and accessibility statement included.
 - [ ] The delete confirmation (`delete-confirm` screenshots) says plainly what will go and whether it can come back. The other confirmations (board, card, mark, translation) are the `confirm` section of the catalog.
 - [ ] The note editor choice in Settings (`settings.editor`, `settings.editors`, added 2026-09-22) and the two sentences about it in Help's notes section (the live editor, and Preview only with Plain text).
+- [ ] The Notes and Canvas tabs (`layout.sides`, `layout.paneBoard`, `layout.expandBoard`, `layout.collapseBoard`, `layout.showBoard`, `app.skipToBoard`) and the Canvas button on search results (`search.toCanvas`), added 2026-09-22.
 - [ ] With a screen reader: the interface is spoken in the language, and a Bible in another language switches voice (brief 92).
 
 Corrections come back as notes, a marked-up copy or edits to the catalog file. Apply them, rerun the tests, regenerate the screenshots, and mark the row above.

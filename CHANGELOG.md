@@ -11,11 +11,14 @@ suffix and is published as a GitHub pre-release.
 
 - **Notes take shape as they are written.** Markdown is drawn as it is typed, the way Obsidian's live preview works: a `## ` line becomes a heading, `**word**` turns bold, a quote gets its rule and an embedded board is drawn in place. A line's symbols come back while the cursor is on it, for editing. Ctrl or ⌘ + click follows a `[[link]]`. Built without an editor library.
 - **Settings → Note editor → Plain text** keeps the Markdown source in a plain text box, for anyone who prefers it or whose keyboard or screen reader copes badly with the live editor. **Preview** now appears only there; in the live editor the note is already drawn.
+- **The canvas beside the Bible.** The board now shares the pane beside the text with the notes: two tabs, Notes and Canvas, switch between them, and either can fill the window. Building a diagram no longer means leaving the Bible, and a note and a board are one click apart. Following a card's verse brings the Bible back beside the board. On a phone the tabs sit in the notes sheet.
+- **Search results onto the board.** Every search result has a Canvas button beside its `+`, in the suggestions and in the full results, which puts the verse on the open board.
 - **Right-to-left lines in notes.** Each line takes its direction from its own text, so a Hebrew or Arabic line (a quoted Hebrew word, say) runs right to left beside English.
 
 ### Fixed
 
-- The focus ring around the note no longer covers the cursor at the start of a line: the note has room inside its edge.
+- The focus ring around the note and its title no longer covers the cursor at the start of a line: both have room inside their edge.
+- With the notes or the board maximized, the page kept no main landmark and no level-1 heading; the maximized pane now carries both.
 - Undo after a formatting button now undoes the formatting. The plain text box lost its undo history whenever a button changed the note; the live editor keeps its own.
 
 ## [0.1.0-preview.2] - 2026-09-17

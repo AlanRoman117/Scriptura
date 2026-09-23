@@ -14,6 +14,8 @@ interface SearchResultsProps {
   onOptions: (next: MatchOptions) => void;
   onGo: (bookSlug: string, chapter: number, verse: number) => void;
   onInsert: (result: SearchResult) => void;
+  /** Put the verse on the open board, or a new one. */
+  onToCanvas: (result: SearchResult) => void;
   onClose: () => void;
 }
 
@@ -42,6 +44,7 @@ export function SearchResults({
   onOptions,
   onGo,
   onInsert,
+  onToCanvas,
   onClose,
 }: SearchResultsProps) {
   const { t, fmt } = useI18n();
@@ -183,6 +186,16 @@ export function SearchResults({
               onClick={() => onInsert(r)}
             >
               +
+            </button>
+            {/* The same word as the verse actions' button, and the same act. */}
+            <button
+              type="button"
+              className="results__insert results__canvas"
+              data-testid={`results-canvas-${r.book_slug}-${r.chapter}-${r.verse}`}
+              aria-label={t.search.toCanvas(r.ref)}
+              onClick={() => onToCanvas(r)}
+            >
+              {t.verseActions.canvas}
             </button>
           </li>
         ))}

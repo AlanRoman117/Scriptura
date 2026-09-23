@@ -130,6 +130,7 @@ export const ptBR = {
     bootFailed: 'Não foi possível abrir o texto bíblico. Recarregue para tentar de novo.',
     skipToScripture: 'Pular para o texto bíblico',
     skipToNotes: 'Pular para as notas',
+    skipToBoard: 'Pular para os quadros',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Quadros`,
@@ -223,6 +224,12 @@ export const ptBR = {
     showNotes: 'Mostrar as notas',
     paneBible: 'Bíblia',
     paneNotes: 'Notas',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notas ou quadros',
+    paneBoard: 'Quadros',
+    expandBoard: 'Abrir os quadros',
+    collapseBoard: 'Fechar os quadros',
+    showBoard: 'Mostrar os quadros',
     maximize: (pane: string) => `Maximizar ${pane}`,
     restore: (pane: string) => `Restaurar ${pane}`,
   },
@@ -288,6 +295,8 @@ export const ptBR = {
     showing: (shown: number) => ` — mostrando ${num(shown)}`,
     seeAll: (total: number) => `Ver todos os ${num(total)}`,
     insert: (ref: string) => `Inserir ${ref} na nota aberta`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Ao quadro — colocar ${ref} no quadro`,
     weakBelow: 'Abaixo: dentro de uma palavra maior',
     announceNone: (query: string) => `Nenhum resultado para “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -639,7 +648,6 @@ export const ptBR = {
     viewUp: 'Mover a vista para cima',
     viewDown: 'Mover a vista para baixo',
     viewRight: 'Mover a vista para a direita',
-    back: 'Voltar à leitura',
     help: 'Ajuda — quadros, teclado e o que significam as abreviações',
     noConnections: 'Ainda não há conexões. Pressione ⇢ em um cartão e depois o cartão aonde ele leva.',
     removeConnection: (edge: string) => `Remover a conexão ${edge}`,

@@ -163,7 +163,7 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('verse-3').click();
     await page.getByTestId('canvas-3').click();
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-to-note').click();
     // The board closed behind the button, so the note says what arrived.
     await expect(page.getByTestId('note-done')).toHaveText('✓ Added the board “Study board”');
@@ -193,7 +193,7 @@ test.describe('a board inside a note', () => {
       await page.getByTestId(`verse-${v}`).click();
       await page.getByTestId(`canvas-${v}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-add-text').click();
     const cards = await page.locator('.card').evaluateAll((all) =>
       all.map((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''))
@@ -231,13 +231,13 @@ test.describe('a board inside a note', () => {
     await open(page);
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-to-note').click();
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-delete').click();
     await page.getByTestId('confirm-accept').click();
-    await page.getByTestId('canvas-close').click();
+    await page.getByTestId('side-notes').click();
 
     await page.getByTestId('note-preview').click();
     await expect(page.getByTestId('board-embed-missing')).toBeVisible();

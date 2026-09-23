@@ -270,6 +270,24 @@ test.describe('the live editor', () => {
     });
   }
 
+  // The title draws its ring inside too, and had no padding at all.
+  test("the note title's text is clear of its focus ring", async ({ page }) => {
+    await open(page);
+    const title = page.getByTestId('note-title');
+    await title.focus();
+    await page.keyboard.type('Prologue');
+    const gap = await title.evaluate((el) => {
+      const style = getComputedStyle(el);
+      const ring = parseFloat(style.outlineWidth) + Math.max(0, -parseFloat(style.outlineOffset));
+      return parseFloat(style.borderLeftWidth) + parseFloat(style.paddingLeft) - ring;
+    });
+    expect(gap).toBeGreaterThanOrEqual(8);
+    // And its words line up with the note's.
+    const left = (id: string) =>
+      page.getByTestId(id).evaluate((el) => el.getBoundingClientRect().left + parseFloat(getComputedStyle(el).paddingLeft));
+    expect(Math.abs((await left('note-title')) - (await left('notes-surface')))).toBeLessThan(1);
+  });
+
   /*
    * Direction is per line, from the line's own text — not from the interface
    * language, since a note's language is its writer's. A Hebrew word quoted in

@@ -21,6 +21,8 @@ interface SearchBarProps {
   onQuery: (q: string) => void;
   onGo: (bookSlug: string, chapter: number, verse?: number) => void;
   onInsert: (result: SearchResult) => void;
+  /** Put the verse on the open board, or a new one. */
+  onToCanvas: (result: SearchResult) => void;
   /** Opens the full results view, which can walk the whole match set. */
   onSeeAll: () => void;
 }
@@ -57,6 +59,7 @@ export function SearchBar({
   onQuery,
   onGo,
   onInsert,
+  onToCanvas,
   onSeeAll,
 }: SearchBarProps) {
   const { t } = useI18n();
@@ -247,6 +250,16 @@ export function SearchBar({
                   onClick={() => onInsert(r)}
                 >
                   +
+                </button>
+                {/* The same word as the verse actions' button, and the same act. */}
+                <button
+                  type="button"
+                  className="search__insert search__canvas"
+                  data-testid={`search-canvas-${r.book_slug}-${r.chapter}-${r.verse}`}
+                  aria-label={t.search.toCanvas(r.ref)}
+                  onClick={() => onToCanvas(r)}
+                >
+                  {t.verseActions.canvas}
                 </button>
               </li>
             ))}

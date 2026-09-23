@@ -132,6 +132,7 @@ const catalog = {
     bootFailed: 'Le texte biblique n’a pas pu être ouvert. Rechargez pour réessayer.',
     skipToScripture: 'Aller au texte biblique',
     skipToNotes: 'Aller aux notes',
+    skipToBoard: 'Aller aux tableaux',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Tableaux`,
@@ -223,6 +224,12 @@ const catalog = {
     showNotes: 'Afficher les notes',
     paneBible: 'la Bible',
     paneNotes: 'les notes',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notes ou tableaux',
+    paneBoard: 'les tableaux',
+    expandBoard: 'Agrandir les tableaux',
+    collapseBoard: 'Réduire les tableaux',
+    showBoard: 'Afficher les tableaux',
     maximize: (pane: string) => `Agrandir ${pane}`,
     restore: (pane: string) => `Rétablir ${pane}`,
   },
@@ -284,6 +291,8 @@ const catalog = {
     showing: (shown: number) => ` ; ${num(shown)} affichés`,
     seeAll: (total: number) => `Voir les ${num(total)}`,
     insert: (ref: string) => `Insérer ${ref} dans la note ouverte`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Au tableau : placer ${ref} sur le tableau`,
     weakBelow: 'Ci-dessous : à l’intérieur d’un mot plus long',
     announceNone: (query: string) => `Aucun résultat pour « ${query} »`,
     announceCount: (total: number, query: string) =>
@@ -599,7 +608,6 @@ const catalog = {
     viewUp: 'Déplacer la vue vers le haut',
     viewDown: 'Déplacer la vue vers le bas',
     viewRight: 'Déplacer la vue vers la droite',
-    back: 'Revenir à la lecture',
     help: 'Aide : tableaux, clavier et sens des abréviations',
     noConnections: 'Aucune connexion pour l’instant. Appuyez sur ⇢ sur une fiche, puis sur la fiche vers laquelle elle mène.',
     removeConnection: (edge: string) => `Retirer la connexion ${edge}`,

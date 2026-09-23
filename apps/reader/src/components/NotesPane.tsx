@@ -11,7 +11,6 @@ import { BoardThumbnail } from './BoardThumbnail';
 import { textareaSurface, type NoteSurface } from '../lib/surface';
 import type { EditorPref } from '../lib/prefs';
 import { ConfirmButton } from './ConfirmButton';
-import { MaximizeButton } from './PaneControl';
 import { settleFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
 
@@ -26,8 +25,6 @@ interface NotesPaneProps {
   onDelete: (id: string) => void;
   onChange: (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => void;
   onExport: () => void;
-  /** Opens the board view — the spatial half of the same content. */
-  onOpenCanvas?: () => void;
   /** Boards export alongside notes, so they count towards having something to export. */
   boardCount?: number;
   /** Registers the note editor so quoted passages land at the cursor. */
@@ -68,7 +65,6 @@ export function NotesPane({
   onDelete,
   onChange,
   onExport,
-  onOpenCanvas,
   boardCount = 0,
   onSurfaceReady,
   describeLink,
@@ -220,15 +216,6 @@ export function NotesPane({
         <button
           type="button"
           className="notes__action"
-          data-testid="canvas-open"
-          onClick={onOpenCanvas}
-          title={t.notes.canvasTitle}
-        >
-          {t.notes.canvas}
-        </button>
-        <button
-          type="button"
-          className="notes__action"
           data-testid="note-export"
           onClick={onExport}
           disabled={notes.length === 0 && boardCount === 0}
@@ -236,8 +223,8 @@ export function NotesPane({
         >
           {t.notes.export}
         </button>
-        {/* The last two wrap together: on its own the maximize button would
-            be left alone on a second line. */}
+        {/* Maximize now sits beside the Notes and Canvas tabs, which it
+            applies to both. */}
         <span className="notes__bar-end">
           {active && (
             // Asks first, naming the note (3.3.4). Afterwards focus goes to
@@ -257,7 +244,6 @@ export function NotesPane({
               }}
             />
           )}
-          <MaximizeButton pane="notes" className="notes__action" />
         </span>
       </header>
 

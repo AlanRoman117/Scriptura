@@ -134,6 +134,7 @@ export const enUS = {
     bootFailed: 'The Bible text could not be opened. Reload to try again.',
     skipToScripture: 'Skip to scripture',
     skipToNotes: 'Skip to notes',
+    skipToBoard: 'Skip to the canvas',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Boards`,
@@ -232,6 +233,12 @@ export const enUS = {
     showNotes: 'Show notes',
     paneBible: 'Bible',
     paneNotes: 'Notes',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notes or canvas',
+    paneBoard: 'Canvas',
+    expandBoard: 'Expand canvas',
+    collapseBoard: 'Collapse canvas',
+    showBoard: 'Show canvas',
     maximize: (pane: string) => `Maximize ${pane}`,
     restore: (pane: string) => `Restore ${pane}`,
   },
@@ -292,6 +299,8 @@ export const enUS = {
     showing: (shown: number) => ` — showing ${num(shown)}`,
     seeAll: (total: number) => `See all ${num(total)}`,
     insert: (ref: string) => `Insert ${ref} into the open note`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Canvas — put ${ref} on the board`,
     weakBelow: 'Below: inside a longer word',
     announceNone: (query: string) => `No matches for “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -611,7 +620,6 @@ export const enUS = {
     viewUp: 'Move the view up',
     viewDown: 'Move the view down',
     viewRight: 'Move the view right',
-    back: 'Back to reading',
     help: 'Help — boards, keyboard, and what the abbreviations mean',
     noConnections: 'No connections yet. Press ⇢ on a card, then the card it leads to.',
     removeConnection: (edge: string) => `Remove the connection ${edge}`,
