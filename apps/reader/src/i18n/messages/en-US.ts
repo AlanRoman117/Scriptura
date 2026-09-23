@@ -67,7 +67,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notes',
     blocks: [
       {
-        p: 'Notes are plain text with Markdown. The toolbar above the note adds headings, bold, italic, lists and quotes; press a tool again to take the formatting off. **Preview** shows the note as it will read.',
+        p: 'Notes are plain text with Markdown. Formatting takes shape as you write, and its symbols come back on the line you are editing; to see only the Markdown, choose **Plain text** under Note editor in Settings. The toolbar above the note adds headings, bold, italic, lists and quotes; press a tool again to take the formatting off. With Plain text, **Preview** shows the note as it will read.',
       },
       {
         p: 'A link to a passage looks like `[[john 3:16]]`. Add `@kjv` to say which translation: `[[john 3:16@kjv]]`. Put the cursor inside a link and a **Go to** button opens it. **Quote** beside a verse copies the verse into your note with its reference and a link.',
@@ -134,6 +134,7 @@ export const enUS = {
     bootFailed: 'The Bible text could not be opened. Reload to try again.',
     skipToScripture: 'Skip to scripture',
     skipToNotes: 'Skip to notes',
+    skipToBoard: 'Skip to the canvas',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Boards`,
@@ -232,6 +233,12 @@ export const enUS = {
     showNotes: 'Show notes',
     paneBible: 'Bible',
     paneNotes: 'Notes',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notes or canvas',
+    paneBoard: 'Canvas',
+    expandBoard: 'Expand canvas',
+    collapseBoard: 'Collapse canvas',
+    showBoard: 'Show canvas',
     maximize: (pane: string) => `Maximize ${pane}`,
     restore: (pane: string) => `Restore ${pane}`,
   },
@@ -292,6 +299,8 @@ export const enUS = {
     showing: (shown: number) => ` — showing ${num(shown)}`,
     seeAll: (total: number) => `See all ${num(total)}`,
     insert: (ref: string) => `Insert ${ref} into the open note`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Canvas — put ${ref} on the board`,
     weakBelow: 'Below: inside a longer word',
     announceNone: (query: string) => `No matches for “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -499,6 +508,8 @@ export const enUS = {
     spacings: { normal: 'Normal', relaxed: 'Relaxed', loose: 'Loose' },
     measure: 'Column width',
     measures: { narrow: 'Narrow', normal: 'Normal', wide: 'Wide' },
+    editor: 'Note editor',
+    editors: { live: 'Show formatting as you write', plain: 'Plain text' },
     displayNote:
       'Relaxed and Loose spacing meet the WCAG guidance for line and paragraph spacing. These settings apply to this device only.',
     accessibility: 'Accessibility',
@@ -609,7 +620,6 @@ export const enUS = {
     viewUp: 'Move the view up',
     viewDown: 'Move the view down',
     viewRight: 'Move the view right',
-    back: 'Back to reading',
     help: 'Help — boards, keyboard, and what the abbreviations mean',
     noConnections: 'No connections yet. Press ⇢ on a card, then the card it leads to.',
     removeConnection: (edge: string) => `Remove the connection ${edge}`,

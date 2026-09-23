@@ -71,7 +71,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: '筆記',
     blocks: [
       {
-        p: '筆記是帶 Markdown 的純文字。筆記上方的工具列可以加入標題、粗體、斜體、清單和引用；再按一次同一個工具就會取消格式。**預覽**會顯示筆記最後的樣子。',
+        p: '筆記是帶 Markdown 的純文字。格式會在輸入時顯示，正在編輯的那一行會重新顯示符號；如果只想看 Markdown，請在設定的「筆記編輯器」中選擇**純文字**。筆記上方的工具列可以加入標題、粗體、斜體、清單和引用；再按一次同一個工具就會取消格式。使用純文字時，**預覽**會顯示筆記最後的樣子。',
       },
       {
         p: '指向經文的連結寫作 `[[john 3:16]]`。加上 `@kjv` 可以指明譯本：`[[john 3:16@kjv]]`。把游標放在連結裡，**前往**按鈕就會開啟它。經文旁邊的**引用**會把該節連同出處和連結一起複製到筆記中。',
@@ -138,6 +138,7 @@ export const zhHant = {
     bootFailed: '無法開啟經文。請重新載入後再試。',
     skipToScripture: '跳到經文',
     skipToNotes: '跳到筆記',
+    skipToBoard: '跳到看板',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book}${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · 看板`,
@@ -221,6 +222,12 @@ export const zhHant = {
     showNotes: '顯示筆記',
     paneBible: '聖經',
     paneNotes: '筆記',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: '筆記或看板',
+    paneBoard: '看板',
+    expandBoard: '展開看板',
+    collapseBoard: '收合看板',
+    showBoard: '顯示看板',
     maximize: (pane: string) => `最大化${pane}`,
     restore: (pane: string) => `還原${pane}`,
   },
@@ -281,6 +288,8 @@ export const zhHant = {
     showing: (shown: number) => `（顯示${num(shown)}筆）`,
     seeAll: (total: number) => `檢視全部${num(total)}筆`,
     insert: (ref: string) => `把${ref}插入開啟中的筆記`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `加入看板 — 把${ref}放到看板上`,
     weakBelow: '以下：出現在較長的詞語中',
     announceNone: (query: string) => `沒有「${query}」的結果`,
     announceCount: (total: number, query: string) => `「${query}」有${num(total)}筆結果`,
@@ -482,6 +491,8 @@ export const zhHant = {
     spacings: { normal: '標準', relaxed: '寬鬆', loose: '更寬鬆' },
     measure: '欄寬',
     measures: { narrow: '窄', normal: '標準', wide: '寬' },
+    editor: '筆記編輯器',
+    editors: { live: '輸入時顯示格式', plain: '純文字' },
     displayNote: '「寬鬆」和「更寬鬆」的行距符合 WCAG 對行距和段距的建議。這些設定只對本裝置生效。',
     accessibility: '無障礙',
     motion: '動態效果',
@@ -590,7 +601,6 @@ export const zhHant = {
     viewUp: '檢視上移',
     viewDown: '檢視下移',
     viewRight: '檢視右移',
-    back: '返回閱讀',
     help: '說明 — 看板、鍵盤，以及各種縮寫的意思',
     noConnections: '還沒有連接。先在一張卡片上按 ⇢，再按它指向的卡片。',
     removeConnection: (edge: string) => `移除連接${edge}`,

@@ -100,6 +100,16 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('notes-surface').click();
     await expect(page.getByTestId('editor-tools')).toBeVisible();
   },
+  // Every construct the live editor draws, with the caret on the quote so
+  // that line's dimmed markers are measured too.
+  'a note drawn as it is written': async (page) => {
+    await page.getByTestId('note-new').click();
+    const surface = page.getByTestId('notes-surface');
+    await surface.click();
+    await page.keyboard.type('## Heading\n- a **bold** _item_\n> a quote with `code` and [[john 1:1]]\n1. first\n---\n```\ncode\n```\nlast');
+    await surface.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(35, 35));
+    await expect(page.locator('.live-line--quote.is-active .md-mark').first()).toBeVisible();
+  },
   'verse actions': async (page) => {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
@@ -144,8 +154,16 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
       await page.getByTestId(`verse-${verse}`).click();
       await page.getByTestId(`canvas-${verse}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(2);
+  },
+  // The canvas filling the window: the page's h1 moves to the side pane.
+  'board maximized': async (page) => {
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('side-board').click();
+    await page.getByTestId('maximize-notes').click();
+    await expect(page.getByTestId('pane-bible')).toBeHidden();
   },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');

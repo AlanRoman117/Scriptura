@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { contrastRatio } from '../helpers/contrast';
+import { usePlainEditor } from '../helpers/note';
 
 /**
  * The reading bar — contrast, and what happens when the pane gets small.
@@ -142,38 +143,44 @@ test.describe('a narrow Bible pane', () => {
 test.describe('a narrow notes pane', () => {
   test.use({ viewport: { width: 1000, height: 800 } });
 
-  test('keeps every action usable rather than squeezing them to slivers', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('note-new').click();
+  // Plain text has one more button in the bar, Preview; both must fit.
+  for (const editor of ['live', 'plain'] as const) {
+    test(`keeps every action usable rather than squeezing them to slivers (${editor})`, async ({ page }) => {
+      if (editor === 'plain') await usePlainEditor(page);
+      await page.goto('/');
+      await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+      await page.getByTestId('note-new').click();
 
-    // Drag the divider hard right, leaving the notes pane at its floor.
-    const divider = page.getByTestId('divider');
-    await divider.focus();
-    for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
+      // Drag the divider hard right, leaving the notes pane at its floor.
+      const divider = page.getByTestId('divider');
+      await divider.focus();
+      for (let i = 0; i < 40; i++) await page.keyboard.press('ArrowRight');
 
-    const pane = (await page.getByTestId('pane-notes').boundingBox())!;
-    // The floor is the notes' as well as the Bible's: the divider's own width
-    // comes out of the split, not out of the notes.
-    expect.soft(pane.width, 'the notes pane keeps a readable floor').toBeGreaterThanOrEqual(319);
-    for (const id of ['note-new', 'note-preview', 'canvas-open', 'note-export', 'note-delete', 'maximize-notes']) {
-      const box = (await page.getByTestId(id).boundingBox())!;
-      expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(30);
-      expect
-        .soft(box.x + box.width, `${id} must not overflow the pane`)
-        .toBeLessThanOrEqual(pane.x + pane.width + 1);
-    }
+      const pane = (await page.getByTestId('pane-notes').boundingBox())!;
+      // The floor is the notes' as well as the Bible's: the divider's own width
+      // comes out of the split, not out of the notes.
+      expect.soft(pane.width, 'the notes pane keeps a readable floor').toBeGreaterThanOrEqual(319);
+      const actions = ['note-new', 'side-board', 'note-export', 'note-delete', 'maximize-notes'];
+      if (editor === 'plain') actions.splice(1, 0, 'note-preview');
+      for (const id of actions) {
+        const box = (await page.getByTestId(id).boundingBox())!;
+        expect.soft(box.width, `${id} must stay usable`).toBeGreaterThan(30);
+        expect
+          .soft(box.x + box.width, `${id} must not overflow the pane`)
+          .toBeLessThanOrEqual(pane.x + pane.width + 1);
+      }
 
-    // And the picker keeps enough width to read a note's name.
-    const picker = (await page.getByTestId('note-select').boundingBox())!;
-    expect.soft(picker.width, 'the note picker must not collapse').toBeGreaterThan(100);
+      // And the picker keeps enough width to read a note's name.
+      const picker = (await page.getByTestId('note-select').boundingBox())!;
+      expect.soft(picker.width, 'the note picker must not collapse').toBeGreaterThan(100);
 
-    // Still usable, not merely present.
-    await page.getByTestId('note-delete').click();
-    await expect(page.getByTestId('confirm-dialog')).toBeVisible();
-    await page.getByTestId('confirm-cancel').click();
-    await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
-  });
+      // Still usable, not merely present.
+      await page.getByTestId('note-delete').click();
+      await expect(page.getByTestId('confirm-dialog')).toBeVisible();
+      await page.getByTestId('confirm-cancel').click();
+      await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+    });
+  }
 });
 
 test.describe('the divider, and each pane\'s own controls', () => {
@@ -216,12 +223,14 @@ test.describe('the divider, and each pane\'s own controls', () => {
     expect(Math.abs(after.x - (before.x - 60))).toBeLessThanOrEqual(2);
   });
 
+  // The side pane's maximize button sits in the row of its Notes and Canvas
+  // tabs, since it applies to either; it comes after the selected tab.
   test('each maximize button comes last in its pane\'s bar, in line with the rest', async ({ page }) => {
     await open(page);
     await page.getByTestId('note-new').click();
     for (const [before, id] of [
       ['help-open', 'maximize-bible'],
-      ['note-delete', 'maximize-notes'],
+      ['side-notes', 'maximize-notes'],
     ] as const) {
       const prev = (await page.getByTestId(before).boundingBox())!;
       const self = (await page.getByTestId(id).boundingBox())!;
@@ -234,9 +243,9 @@ test.describe('the divider, and each pane\'s own controls', () => {
       await page.keyboard.press('Tab');
       await expect(page.getByTestId(id)).toBeFocused();
     }
-    // Both bars' first rows, and the divider's first button, sit level.
+    // Both panes' first rows, and the divider's first button, sit level.
     const tops = await Promise.all(
-      ['book-select', 'divider-narrower', 'note-select'].map(async (id) => (await page.getByTestId(id).boundingBox())!.y)
+      ['book-select', 'divider-narrower', 'side-notes', 'maximize-notes'].map(async (id) => (await page.getByTestId(id).boundingBox())!.y)
     );
     expect(Math.max(...tops) - Math.min(...tops)).toBeLessThanOrEqual(1);
   });
@@ -275,13 +284,9 @@ test.describe('the divider, and each pane\'s own controls', () => {
         const squeezed = controls
           .filter((c) => c.scrollWidth > c.clientWidth + 1)
           .map((c) => c.dataset.testid ?? c.className);
-        // A row holding only the maximize button is a row it was left on.
-        const maximize = bar.querySelector<HTMLElement>('[data-testid="maximize-notes"]')!;
-        const top = Math.round(maximize.getBoundingClientRect().top);
-        const alone = controls.filter((c) => Math.round(c.getBoundingClientRect().top) === top).length === 1;
-        return { squeezed, alone };
+        return { squeezed };
       });
-      expect.soft(found, when).toEqual({ squeezed: [], alone: false });
+      expect.soft(found, when).toEqual({ squeezed: [] });
     };
     for (const width of [1280, 1240, 1100, 1000, 900]) {
       await page.setViewportSize({ width, height: 720 });

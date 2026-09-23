@@ -97,7 +97,7 @@ test.describe('the confirmation dialog', () => {
       await page.getByTestId(`verse-${verse}`).click();
       await page.getByTestId(`canvas-${verse}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.locator('.card').first().focus();
     for (let round = 0; round < 3; round++) {
       await page.keyboard.press('Delete');
@@ -165,7 +165,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
 
   test('a board: on the picker, then on "Start one" once none are left', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-start').click();
     await page.getByTestId('board-new').click();
     await expect(page.getByTestId('board-select').locator('option')).toHaveCount(2);
@@ -189,7 +189,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
       await page.getByTestId(`verse-${verse}`).click();
       await page.getByTestId(`canvas-${verse}`).click();
     }
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-delete').click();
     await expect(page.getByTestId('confirm-body').locator('p')).toHaveText([
       'The board and its 2 cards will be deleted.',
@@ -202,7 +202,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
 test.describe('"Start one" works with a pointer, in a fresh browser', () => {
   test('on the board screen, and focus goes to the new board', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.getByTestId('board-select').locator('option')).toHaveText(['No boards yet']);
     // A real pointer press, hit-tested: Playwright refuses to click an
     // element that a press would pass through.
@@ -214,7 +214,7 @@ test.describe('"Start one" works with a pointer, in a fresh browser', () => {
 
   test('the check fails if presses pass through the button again', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.addStyleTag({ content: '.canvas__none { pointer-events: none; }' });
     await expect(page.getByTestId('board-start').click({ trial: true, timeout: 1_000 })).rejects.toThrow();
   });

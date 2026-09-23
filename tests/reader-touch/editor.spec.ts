@@ -32,5 +32,5 @@ test('a tapped tool formats the selection, and every tool is finger-sized', asyn
   }
 
   await page.getByTestId('tool-h2').tap();
-  await expect(surface).toHaveValue('## The prologue');
+  await expect(surface).toHaveJSProperty('value', '## The prologue');
 });

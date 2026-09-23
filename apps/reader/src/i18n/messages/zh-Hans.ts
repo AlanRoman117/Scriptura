@@ -73,7 +73,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: '笔记',
     blocks: [
       {
-        p: '笔记是带 Markdown 的纯文本。笔记上方的工具栏可以添加标题、粗体、斜体、列表和引用；再按一次同一个工具就会取消格式。**预览**显示笔记最终的样子。',
+        p: '笔记是带 Markdown 的纯文本。格式会在输入时显示，正在编辑的那一行会重新显示符号；如果只想看 Markdown，请在设置的“笔记编辑器”中选择**纯文本**。笔记上方的工具栏可以添加标题、粗体、斜体、列表和引用；再按一次同一个工具就会取消格式。使用纯文本时，**预览**显示笔记最终的样子。',
       },
       {
         p: '指向经文的链接写作 `[[john 3:16]]`。加上 `@kjv` 可以指明译本：`[[john 3:16@kjv]]`。把光标放在链接里，**前往**按钮就会打开它。经文旁边的**引用**会把该节连同出处和链接一起复制到笔记中。',
@@ -140,6 +140,7 @@ export const zhHans = {
     bootFailed: '无法打开经文。请重新加载后再试。',
     skipToScripture: '跳到经文',
     skipToNotes: '跳到笔记',
+    skipToBoard: '跳到看板',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book}${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · 看板`,
@@ -223,6 +224,12 @@ export const zhHans = {
     showNotes: '显示笔记',
     paneBible: '圣经',
     paneNotes: '笔记',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: '笔记或看板',
+    paneBoard: '看板',
+    expandBoard: '展开看板',
+    collapseBoard: '收起看板',
+    showBoard: '显示看板',
     maximize: (pane: string) => `最大化${pane}`,
     restore: (pane: string) => `还原${pane}`,
   },
@@ -283,6 +290,8 @@ export const zhHans = {
     showing: (shown: number) => `（显示${num(shown)}条）`,
     seeAll: (total: number) => `查看全部${num(total)}条`,
     insert: (ref: string) => `把${ref}插入打开的笔记`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `加入看板 — 把${ref}放到看板上`,
     weakBelow: '以下：出现在更长的词语中',
     announceNone: (query: string) => `没有“${query}”的结果`,
     announceCount: (total: number, query: string) => `“${query}”有${num(total)}条结果`,
@@ -484,6 +493,8 @@ export const zhHans = {
     spacings: { normal: '标准', relaxed: '宽松', loose: '更宽松' },
     measure: '栏宽',
     measures: { narrow: '窄', normal: '标准', wide: '宽' },
+    editor: '笔记编辑器',
+    editors: { live: '输入时显示格式', plain: '纯文本' },
     displayNote: '“宽松”和“更宽松”的行距符合 WCAG 对行距和段距的建议。这些设置只对本设备生效。',
     accessibility: '无障碍',
     motion: '动效',
@@ -592,7 +603,6 @@ export const zhHans = {
     viewUp: '视图上移',
     viewDown: '视图下移',
     viewRight: '视图右移',
-    back: '返回阅读',
     help: '帮助 — 看板、键盘，以及各种缩写的含义',
     noConnections: '还没有连接。先在一张卡片上按 ⇢，再按它指向的卡片。',
     removeConnection: (edge: string) => `移除连接${edge}`,

@@ -61,7 +61,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notas',
     blocks: [
       {
-        p: 'Las notas son texto simple con Markdown. La barra encima de la nota agrega títulos, negritas, cursivas, listas y citas; presiona otra vez una herramienta para quitar el formato. **Vista previa** muestra la nota como se leerá.',
+        p: 'Las notas son texto simple con Markdown. El formato se ve mientras escribes, y sus símbolos reaparecen en la línea que estás editando; para ver solo el Markdown, elige **Texto simple** en Editor de notas, en Configuración. La barra encima de la nota agrega títulos, negritas, cursivas, listas y citas; presiona otra vez una herramienta para quitar el formato. Con Texto simple, **Vista previa** muestra la nota como se leerá.',
       },
       {
         p: 'Un enlace a un pasaje se ve así: `[[john 3:16]]`. Agrega `@rv1909` para indicar la traducción: `[[john 3:16@rv1909]]`. Pon el cursor dentro de un enlace y un botón **Ir a** lo abre. **Citar**, junto a un versículo, copia el versículo en tu nota con su referencia y un enlace.',
@@ -128,6 +128,7 @@ export const esMX = {
     bootFailed: 'No se pudo abrir el texto bíblico. Recarga para intentarlo de nuevo.',
     skipToScripture: 'Saltar a las Escrituras',
     skipToNotes: 'Saltar a las notas',
+    skipToBoard: 'Saltar a los tableros',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Tableros`,
@@ -219,6 +220,12 @@ export const esMX = {
     showNotes: 'Mostrar notas',
     paneBible: 'la Biblia',
     paneNotes: 'las notas',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notas o tableros',
+    paneBoard: 'los tableros',
+    expandBoard: 'Expandir tableros',
+    collapseBoard: 'Contraer tableros',
+    showBoard: 'Mostrar tableros',
     maximize: (pane: string) => `Maximizar ${pane}`,
     restore: (pane: string) => `Restaurar ${pane}`,
   },
@@ -279,6 +286,8 @@ export const esMX = {
     showing: (shown: number) => `; se muestran ${num(shown)}`,
     seeAll: (total: number) => `Ver los ${num(total)}`,
     insert: (ref: string) => `Insertar ${ref} en la nota abierta`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Al tablero: pon ${ref} en el tablero`,
     weakBelow: 'Abajo: dentro de una palabra más larga',
     announceNone: (query: string) => `Sin resultados para “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -483,6 +492,8 @@ export const esMX = {
     spacings: { normal: 'Normal', relaxed: 'Amplio', loose: 'Muy amplio' },
     measure: 'Ancho de columna',
     measures: { narrow: 'Angosto', normal: 'Normal', wide: 'Ancho' },
+    editor: 'Editor de notas',
+    editors: { live: 'Mostrar el formato al escribir', plain: 'Texto simple' },
     displayNote:
       'El interlineado Amplio y Muy amplio cumple la guía WCAG sobre espacio entre líneas y párrafos. Esta configuración solo se aplica a este dispositivo.',
     accessibility: 'Accesibilidad',
@@ -593,7 +604,6 @@ export const esMX = {
     viewUp: 'Mover la vista hacia arriba',
     viewDown: 'Mover la vista hacia abajo',
     viewRight: 'Mover la vista a la derecha',
-    back: 'Volver a la lectura',
     help: 'Ayuda: tableros, teclado y el significado de las abreviaturas',
     noConnections: 'Todavía no hay conexiones. Presiona ⇢ en una tarjeta y luego la tarjeta a la que lleva.',
     removeConnection: (edge: string) => `Quitar la conexión ${edge}`,

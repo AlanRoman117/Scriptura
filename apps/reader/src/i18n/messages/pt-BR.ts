@@ -63,7 +63,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
     heading: 'Notas',
     blocks: [
       {
-        p: 'As notas são texto simples com Markdown. A barra acima da nota adiciona títulos, negrito, itálico, listas e citações; pressione a mesma ferramenta de novo para tirar a formatação. **Visualizar** mostra a nota como ela vai ficar.',
+        p: 'As notas são texto simples com Markdown. A formatação aparece enquanto você escreve, e os símbolos voltam na linha que você está editando; para ver só o Markdown, escolha **Texto simples** em Editor de notas, nas Configurações. A barra acima da nota adiciona títulos, negrito, itálico, listas e citações; pressione a mesma ferramenta de novo para tirar a formatação. Com Texto simples, **Visualizar** mostra a nota como ela vai ficar.',
       },
       {
         p: 'Um link para uma passagem se escreve `[[john 3:16]]`. Acrescente `@kjv` para dizer a tradução: `[[john 3:16@kjv]]`. Coloque o cursor dentro de um link e o botão **Ir para** o abre. **Citar**, ao lado de um versículo, copia o versículo para a sua nota com a referência e um link.',
@@ -130,6 +130,7 @@ export const ptBR = {
     bootFailed: 'Não foi possível abrir o texto bíblico. Recarregue para tentar de novo.',
     skipToScripture: 'Pular para o texto bíblico',
     skipToNotes: 'Pular para as notas',
+    skipToBoard: 'Pular para os quadros',
     title: (where: string) => `${where} · Scriptura`,
     passageTitle: (book: string, chapter: number, id: string) => `${book} ${chapter} · ${id}`,
     boardTitle: (name: string) => `${name} · Quadros`,
@@ -223,6 +224,12 @@ export const ptBR = {
     showNotes: 'Mostrar as notas',
     paneBible: 'Bíblia',
     paneNotes: 'Notas',
+    /** The side pane holds the notes or the canvas; these name the switch and the canvas side. */
+    sides: 'Notas ou quadros',
+    paneBoard: 'Quadros',
+    expandBoard: 'Abrir os quadros',
+    collapseBoard: 'Fechar os quadros',
+    showBoard: 'Mostrar os quadros',
     maximize: (pane: string) => `Maximizar ${pane}`,
     restore: (pane: string) => `Restaurar ${pane}`,
   },
@@ -288,6 +295,8 @@ export const ptBR = {
     showing: (shown: number) => ` — mostrando ${num(shown)}`,
     seeAll: (total: number) => `Ver todos os ${num(total)}`,
     insert: (ref: string) => `Inserir ${ref} na nota aberta`,
+    /** The name of a result's Canvas button: its visible word first (2.5.3). */
+    toCanvas: (ref: string) => `Ao quadro — colocar ${ref} no quadro`,
     weakBelow: 'Abaixo: dentro de uma palavra maior',
     announceNone: (query: string) => `Nenhum resultado para “${query}”`,
     announceCount: (total: number, query: string) =>
@@ -504,6 +513,8 @@ export const ptBR = {
     spacings: { normal: 'Normal', relaxed: 'Folgado', loose: 'Amplo' },
     measure: 'Largura da coluna',
     measures: { narrow: 'Estreita', normal: 'Normal', wide: 'Larga' },
+    editor: 'Editor de notas',
+    editors: { live: 'Mostrar a formatação ao escrever', plain: 'Texto simples' },
     displayNote:
       'Os espaçamentos Folgado e Amplo atendem à orientação da WCAG para espaçamento de linhas e parágrafos. Estas opções valem só para este dispositivo.',
     accessibility: 'Acessibilidade',
@@ -637,7 +648,6 @@ export const ptBR = {
     viewUp: 'Mover a vista para cima',
     viewDown: 'Mover a vista para baixo',
     viewRight: 'Mover a vista para a direita',
-    back: 'Voltar à leitura',
     help: 'Ajuda — quadros, teclado e o que significam as abreviações',
     noConnections: 'Ainda não há conexões. Pressione ⇢ em um cartão e depois o cartão aonde ele leva.',
     removeConnection: (edge: string) => `Remover a conexão ${edge}`,

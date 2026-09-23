@@ -47,7 +47,7 @@ async function boardWithTwoVerses(page: import('@playwright/test').Page) {
   await page.getByTestId('canvas-1').click();
   await page.getByTestId('verse-3').click();
   await page.getByTestId('canvas-3').click();
-  await page.getByTestId('canvas-open').click();
+  await page.getByTestId('side-board').click();
   await expect(page.getByTestId('canvas')).toBeVisible();
   await expect(page.locator('.card')).toHaveCount(2);
 }
@@ -63,7 +63,7 @@ test.describe('a board', () => {
 
   test('a board can be named, and the name is kept and shown wherever the board is', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-start').click();
     const name = page.getByTestId('board-name');
     await expect(name).toHaveAccessibleName('Board name');
@@ -72,12 +72,13 @@ test.describe('a board', () => {
 
     await name.fill('Signs in John');
     await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText('Signs in John');
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Board: Signs in John');
+    // Beside the Bible the board is a level-2 heading under the chapter's h1.
+    await expect(page.getByRole('heading', { level: 2, name: 'Board: Signs in John' })).toHaveCount(1);
     await expect.poll(() => storedBoards(page).then((boards) => boards.map((b) => b.name))).toEqual(['Signs in John']);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.getByTestId('board-name')).toHaveValue('Signs in John');
 
     // Emptied, it is untitled again: the placeholder is shown, never stored.
@@ -118,7 +119,7 @@ test.describe('a board', () => {
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     const restored = (await page.locator('.card').first().boundingBox())!;
     expect(Math.abs(restored.x - after.x)).toBeLessThan(4);
     expect(Math.abs(restored.y - after.y)).toBeLessThan(4);
@@ -152,7 +153,7 @@ test.describe('a board', () => {
     await expect(page.getByTestId('library-read-rv1909')).toBeVisible({ timeout: 60_000 });
     await page.getByTestId('library-read-rv1909').click();
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     const card = page.locator('.card').first();
     await expect(card).toContainText('Juan 1:1');
     await expect(card).toContainText('el principio era el Verbo');
@@ -160,7 +161,7 @@ test.describe('a board', () => {
 
   test('a text card can be written on, and removed', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-new').click();
     await page.getByTestId('board-add-text').click();
 
@@ -216,7 +217,7 @@ test.describe('a board', () => {
   test('the board leaves with the notes, in the export', async ({ page }) => {
     await open(page);
     await boardWithTwoVerses(page);
-    await page.getByTestId('canvas-close').click();
+    await page.getByTestId('side-notes').click();
 
     const download = await Promise.all([
       page.waitForEvent('download'),
@@ -254,7 +255,9 @@ test.describe('getting around the board', () => {
     const card = page.locator('.card').first();
     const before = (await card.boundingBox())!;
 
-    await page.mouse.move(700, 500);
+    // Over the board, which now sits beside the Bible.
+    const frame = (await page.locator('.canvas__frame').boundingBox())!;
+    await page.mouse.move(frame.x + frame.width / 2, frame.y + frame.height * 0.75);
     await page.mouse.wheel(0, 200);
     const panned = (await card.boundingBox())!;
     expect(panned.y).toBeLessThan(before.y - 100);
@@ -273,7 +276,7 @@ test.describe('getting around the board', () => {
     await page.getByTestId('note-title').fill('Long');
     await page.getByTestId('notes-surface').fill('word '.repeat(200));
 
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-new').click();
     await page.getByTestId('board-add-note').click();
 
@@ -303,7 +306,7 @@ test.describe('getting around the board', () => {
 
   test('a card the reader wrote can be named', async ({ page }) => {
     await open(page);
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await page.getByTestId('board-new').click();
     await page.getByTestId('board-add-text').click();
 
@@ -317,15 +320,15 @@ test.describe('getting around the board', () => {
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     await expect(page.getByTestId(`card-title-${id}`)).toHaveValue('The argument');
 
     // Verse cards derive their title from what they point at, so there is
     // nothing to edit — and nothing to drift.
-    await page.getByTestId('canvas-close').click();
+    await page.getByTestId('side-notes').click();
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
-    await page.getByTestId('canvas-open').click();
+    await page.getByTestId('side-board').click();
     const verseCard = page.locator('.card[data-kind="verse"]').first();
     const verseId = await verseCard.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
     await expect(page.getByTestId(`card-title-${verseId}`)).toHaveCount(0);
@@ -545,5 +548,95 @@ test.describe('connections in words, and removals that can be taken back (1.1.1,
     await page.keyboard.press('Enter');
     await expect(page.locator('.card')).toHaveCount(1);
     await expect(page.getByTestId(`card-${ids[1]}`)).toBeFocused();
+  });
+});
+
+/*
+ * The canvas sits beside the Bible, as the notes do, in the same pane — one
+ * tab or the other. A reader building a diagram swaps to the note and back,
+ * and maximizes either, without leaving the text.
+ */
+test.describe('beside the Bible', () => {
+  test('a search hit goes onto the board, from the suggestions and from all results', async ({ page }) => {
+    await open(page);
+    // Enough hits that the suggestions offer "see all".
+    await page.getByTestId('search-input').fill('light');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'light');
+    const hit = page.locator('[data-testid^="search-canvas-"]').first();
+    const id = (await hit.getAttribute('data-testid'))!.replace('search-canvas-', '');
+    await expect(hit).toHaveAccessibleName(/^Canvas — put .+ on the board$/);
+    await hit.click();
+    await expect(page.getByTestId('note-done')).toContainText('Added');
+
+    await page.getByTestId('search-see-all').click();
+    const second = page.locator('[data-testid^="results-canvas-"]').nth(1);
+    await second.click();
+
+    await page.getByTestId('side-board').click();
+    await expect(page.locator('.card')).toHaveCount(2);
+    const [book, chapter, verse] = [id.slice(0, id.lastIndexOf('-', id.lastIndexOf('-') - 1)), ...id.split('-').slice(-2)];
+    await expect(page.locator('.card').first()).toContainText(`${chapter}:${verse}`);
+    expect(book).not.toBe('');
+    // Sending the same verse twice says so rather than stacking a copy.
+    // The full results are still open in the Bible pane, beside the board.
+    await page.getByTestId(`results-canvas-${id}`).click();
+    await expect(page.getByTestId('canvas-done')).toContainText('already');
+    await expect(page.locator('.card')).toHaveCount(2);
+  });
+
+  test('Notes and Canvas are tabs over one pane, and a switch keeps each as it was', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('note-new').click();
+    const surface = page.getByTestId('notes-surface');
+    await surface.click();
+    await page.keyboard.type('Draft thought');
+
+    const notesTab = page.getByTestId('side-notes');
+    const boardTab = page.getByTestId('side-board');
+    await expect(notesTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('tablist')).toHaveAccessibleName('Notes or canvas');
+    // One Tab stop; the arrows move between them (2.1.1).
+    await notesTab.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(boardTab).toBeFocused();
+    await expect(boardTab).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByTestId('canvas')).toBeVisible();
+    await expect(surface).toBeHidden();
+    await expect(page.getByTestId('pane-notes')).toHaveAttribute('aria-label', 'Canvas');
+    // The Bible is still beside it.
+    await expect(page.getByTestId('pane-bible')).toBeVisible();
+
+    await page.getByTestId('board-start').click();
+    await page.getByTestId('zoom-in').click();
+    await boardTab.focus();
+    await page.keyboard.press('Home');
+    await expect(notesTab).toHaveAttribute('aria-selected', 'true');
+    // The note is as it was left: never unmounted.
+    await expect(surface).toHaveJSProperty('value', 'Draft thought');
+    await boardTab.click();
+    await expect(page.getByTestId('zoom-reset')).toHaveText('120%');
+  });
+
+  test('the canvas maximizes like the notes, and a card’s verse brings the Bible back', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    await page.getByTestId('maximize-notes').click();
+    await expect(page.getByTestId('pane-bible')).toBeHidden();
+    await expect(page.getByTestId('maximize-notes')).toHaveAccessibleName('Restore Canvas');
+    await expect(page).toHaveTitle(/Boards/);
+
+    // Straight to the note and back, still maximized.
+    await page.getByTestId('side-notes').click();
+    await expect(page.getByTestId('pane-bible')).toBeHidden();
+    await expect(page.getByTestId('note-start')).toBeVisible();
+    await page.getByTestId('side-board').click();
+
+    // Following a card's verse shows it: the Bible comes back beside the board.
+    const card = page.locator('.card').nth(1);
+    const id = (await card.getAttribute('data-testid'))!.replace('card-', '');
+    await page.getByTestId(`card-open-${id}`).click();
+    await expect(page.getByTestId('pane-bible')).toBeVisible();
+    await expect(page.getByTestId('canvas')).toBeVisible();
+    await expect(page.locator('.verse[data-verse="3"]')).toBeInViewport();
   });
 });

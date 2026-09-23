@@ -223,7 +223,7 @@ test.describe('writes are staged, never applied', () => {
     await page.getByTestId('proposal-accept').click();
 
     await expect(page.getByTestId('note-title')).toHaveValue('My title');
-    await expect(page.getByTestId('notes-surface')).toHaveValue('My wording.');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'My wording.');
   });
 
   test('proposed marks show each verse, and only the kept ones are applied', async ({ page }) => {

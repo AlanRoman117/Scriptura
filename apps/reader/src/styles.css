@@ -315,7 +315,7 @@ summary:focus-visible,
 .notes__action, .notes__title, .durability__action, .durability__dismiss, .sheet__grip,
 .compare__drop, .compare__quote, .preview__edit, .divider__nudge, .card__action,
 .card__title-input, .canvas__panel .swatch, .layout__done-show, .confirm-dialog__action, .canvas__name,
-.preview-notice__hide, .preview-notice__link {
+.preview-notice__hide, .preview-notice__link, .side-switch__tab, .side-switch__maximize {
   min-height: var(--control-h);
 }
 /* Icon-only controls, and text buttons whose label can be shorter than 44px
@@ -325,7 +325,7 @@ summary:focus-visible,
 .results__close, .results__insert, .results__book, .library__close, .library__action,
 .notes__action, .proposal__action, .durability__action, .durability__dismiss, .compare__drop,
 .compare__quote, .preview__edit, .divider__nudge, .card__action, .layout__done-show,
-.confirm-dialog__action, .preview-notice__hide {
+.confirm-dialog__action, .preview-notice__hide, .side-switch__tab, .side-switch__maximize {
   min-width: var(--control-h);
 }
 /* Checkbox labels are the target; lay them out so the whole row is it. */
@@ -382,7 +382,39 @@ summary:focus-visible,
   scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + .5rem);
   scroll-padding-bottom: calc(var(--sheet-h, 0px) + .5rem);
 }
-.pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); }
+.pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); display: flex; flex-direction: column; }
+/* ⚠️ The display above would otherwise beat the `hidden` attribute. */
+.pane--notes[hidden] { display: none; }
+
+/* ── The side pane: notes or canvas ─────────────────────────────────────────
+   Two tabs over one pane, and the maximize button that applies to both. The
+   panels are both mounted and the one not chosen is hidden, so a switch keeps
+   the note's caret and the board's view. */
+.side-switch {
+  display: flex; align-items: flex-start; gap: .5rem; flex: none;
+  padding: .6rem 1.25rem 0; border-bottom: 1px solid var(--rule);
+}
+.side-switch__tabs { display: flex; gap: .25rem; flex: 1; min-width: 0; }
+.side-switch__tab {
+  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-bottom: none;
+  border-radius: 6px 6px 0 0; padding: .25rem .9rem; margin-bottom: -1px;
+}
+.side-switch__tab:hover { color: var(--ink); }
+/* Selected: the tab joins the panel below it, and is bold, so it is not told
+   by colour alone (1.4.1). */
+.side-switch__tab[aria-selected='true'] {
+  color: var(--ink); font-weight: 600;
+  background: var(--paper-raised); border-color: var(--edge); border-bottom: 1px solid var(--paper-raised);
+}
+.side-switch__maximize {
+  font: inherit; color: var(--ink-soft); cursor: pointer; margin-bottom: .35rem; flex: none;
+  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+}
+.side-switch__maximize:hover { color: var(--ink); border-color: var(--ink-soft); }
+.side-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.side-panel[hidden] { display: none; }
+.side-panel > * { flex: 1; min-height: 0; }
 
 /* The divider is a bar a little wider than the two buttons it holds, so they
    sit inside it instead of hanging over the edges of both panes — they were
@@ -485,7 +517,7 @@ summary:focus-visible,
 .reader__chip-count[data-empty] { display: none; }
 /* The maximize button, last in each pane's bar, takes its neighbours' class;
    this only sizes the arrow so it reads the same in both bars. */
-.reader__chip.pane__maximize, .notes__action.pane__maximize { font-size: .95rem; line-height: 1; }
+.reader__chip.pane__maximize, .notes__action.pane__maximize, .side-switch__maximize { font-size: .95rem; line-height: 1; }
 .pane__maximize[aria-pressed='true'] {
   color: var(--ink); border-color: var(--ink-soft);
   background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
@@ -987,7 +1019,12 @@ summary:focus-visible,
 
 /* ── Canvas: verses and notes on a plane ──────────────────────────────────── */
 
-.canvas { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper); }
+.canvas {
+  display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--paper);
+  container: canvas / inline-size;
+}
+/* Where a verse sent from the Bible or a search is confirmed, on the board. */
+.canvas__status { margin: 0; padding: .35rem 1rem; font-size: .8rem; border-top: 1px solid var(--rule); flex: none; }
 .canvas__bar {
   display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
   padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
@@ -1234,8 +1271,8 @@ summary:focus-visible,
 .preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: .98rem; }
 .preview__p { margin: .5rem 0; white-space: pre-wrap; }
 .preview__quote {
-  margin: .6rem 0; padding: .2rem 0 .2rem .8rem;
-  border-left: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  margin: .6rem 0; padding-block: .2rem; padding-inline: .8rem 0;
+  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
   color: var(--ink-soft); white-space: pre-wrap;
 }
 .preview__list { margin: .5rem 0; padding-left: 1.4rem; }
@@ -1331,6 +1368,12 @@ summary:focus-visible,
   background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
 }
 .results__insert:hover { color: var(--ink); border-color: var(--rule); }
+/* A search hit onto the board: the verse actions' word, so it is the same
+   act by the same name. A word, not a glyph, so it takes its own width. */
+.search__canvas, .results__canvas {
+  width: auto; min-width: var(--control-h); padding-inline: .45rem;
+  font-family: var(--sans); font-size: .75rem; white-space: nowrap;
+}
 
 /* Ranked order needs to say why, or it reads as shuffled. */
 .results__divider {
@@ -1478,7 +1521,14 @@ summary:focus-visible,
 
 /* ── Notes ────────────────────────────────────────────────────────────────── */
 
-.notes { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size; }
+.notes {
+  display: flex; flex-direction: column; height: 100%; min-height: 0; padding: .6rem 1.25rem .5rem; container-type: inline-size;
+  /* Room inside the title and the note, between their edge and their text.
+     Both draw their focus ring inside (outline-offset -2px), and with no
+     padding the ring sat over the caret at the start of a line. One pair of
+     tokens, so the title's words line up with the note's. */
+  --surface-pad-y: .5rem; --surface-pad-x: .75rem;
+}
 
 /* One row while every control fits at its own size, and never by squeezing
    one: a button that shrinks below its label draws the label across its
@@ -1526,15 +1576,102 @@ summary:focus-visible,
 .notes__title {
   font: inherit; font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
   color: var(--ink); background: transparent; border: none;
-  border-bottom: 1px solid transparent; padding: .2rem 0; margin-bottom: .5rem;
+  border-bottom: 1px solid transparent; padding: .2rem var(--surface-pad-x); margin-bottom: .5rem;
 }
 .notes__title:focus { border-bottom-color: var(--edge); }
 
 .notes__surface {
+  /* Room between the edge and the text: the focus ring is drawn inside the
+     note (outline-offset -2px), and without this it sat over the caret at the
+     start of every line. Shared by both editors and the live placeholder. */
+  padding: var(--surface-pad-y) var(--surface-pad-x);
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
   font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
 }
+
+/* ── The live editor (components/LiveEditor.tsx) ─────────────────────────────
+   The page's text is the note, character for character: these rules only
+   style and hide. A marker (`##`, `**`, `>`) is hidden unless the caret is on
+   its line — `display: none`, so a screen reader reading the note hears the
+   words and not the punctuation — and shown again, dimmed, for editing. */
+.live {
+  overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+  cursor: text;
+}
+/* A line holding only hidden markers still keeps its height and a place for the caret. */
+.live-line { min-height: 1lh; }
+/* The placeholder a textarea would show. Drawn by the root, never as text. */
+.live { position: relative; }
+.live[data-empty]::before {
+  content: attr(data-placeholder); position: absolute;
+  inset: var(--surface-pad-y) var(--surface-pad-x) auto;
+  color: var(--ink-soft); pointer-events: none;
+}
+/* ⚠️ Hidden from sight, never from assistive technology: the markers are how
+   a screen reader learns a line is a heading or a word is bold (1.3.1). With
+   display: none they left the accessibility tree, and a heading was read as
+   plain words. The same recipe as .visually-hidden; the caret never sits
+   among them, because every line the selection touches is active. */
+.live-line:not(.is-active) .md-mark {
+  display: inline-block; width: 1px; height: 1px; margin-inline-end: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; vertical-align: baseline;
+}
+.md-mark, .md-prefix { color: var(--ink-soft); font-weight: 400; font-style: normal; }
+.md-strong { font-weight: 700; }
+.md-em { font-style: italic; }
+:lang(ja) .md-em, :lang(zh-Hans) .md-em, :lang(zh-Hant) .md-em { font-style: normal; font-weight: 600; }
+/* Full ink, not the quote's softer colour: on the code tint --ink-soft falls short of 7:1. */
+.md-code {
+  color: var(--ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
+  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px;
+}
+.md-link { color: var(--accent); text-decoration: underline; text-underline-offset: .15em; }
+
+/* Headings on the preview's scale. */
+.live-line--heading { font-weight: 600; line-height: 1.3; }
+.live-line--h1 { font-size: 1.5rem; }
+.live-line--h2 { font-size: 1.25rem; }
+.live-line--h3 { font-size: 1.08rem; }
+.live-line--h4, .live-line--h5, .live-line--h6 { font-size: .98rem; }
+.live-line--heading:not(:first-child) { padding-top: .5rem; }
+
+.live-line--quote {
+  padding-inline-start: .8rem; color: var(--ink-soft);
+  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+}
+/* The dash is hidden off the caret's line and a bullet drawn in its place —
+   drawn only: its alternative text is empty, since the dash is still read.
+   Logical properties, so a right-to-left line indents from the right. */
+.live-line--bullet { padding-inline-start: 1.4rem; position: relative; }
+.live-line--bullet:not(.is-active)::before {
+  content: '•' / ''; position: absolute; inset-inline-start: .45rem; color: var(--ink-soft);
+}
+.live-line--bullet.is-active { padding-inline-start: 0; }
+.live-line--ordered { padding-inline-start: .4rem; }
+/* A rule is drawn across its line while the caret is elsewhere. */
+.live-line--rule:not(.is-active) {
+  background: linear-gradient(var(--rule), var(--rule)) center / 100% 1px no-repeat;
+}
+.live-line--code, .live-line--fence {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
+  background: var(--paper-raised); padding-inline: .6rem;
+}
+.live-line--code .md-code { background: none; font-size: inherit; }
+.live-line--fence { color: var(--ink-soft); }
+/* A code fence stays shown, caret or not: undo the visually-hidden rule. */
+.live-line--fence:not(.is-active) .md-mark {
+  display: inline; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none;
+}
+/* A board is drawn in place of its fence while the caret is elsewhere; with the
+   caret inside, the fence is shown to edit and the drawing steps aside. */
+.live-line--in-board:not(.is-active):not(.live-line--fence),
+.live-line--in-board.live-line--fence:not(.is-active):not(:has(> [data-widget])) { display: none; }
+.live-line--in-board.live-line--fence:not(.is-active):has(> [data-widget]) { background: none; padding: 0; }
+.live-line--in-board.live-line--fence:not(.is-active) .md-mark { display: none; }
+.live-widget { display: block; white-space: normal; cursor: default; user-select: none; }
+.live-line.is-active > .live-widget { display: none; }
 
 .notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
 .notes__status {
@@ -1628,7 +1765,7 @@ summary:focus-visible,
    everywhere else, so this costs the desktop nothing. */
 .layout--narrow .reader__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
 .layout--narrow .notes { padding-top: .75rem; }
-.canvas__bar { padding-top: calc(.6rem + env(safe-area-inset-top)); }
+
 
 /* Anchored to the bottom of the *visible* viewport, not the layout viewport:
    iOS does not move fixed elements when the keyboard opens, so a sheet with
@@ -1670,7 +1807,7 @@ summary:focus-visible,
    line raises the sheet instead of being cut off. */
 .sheet__label { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .6rem; text-align: center; }
 .sheet__done { font-size: .82rem; }
-.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; }
+.sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; display: flex; flex-direction: column; }
 /* With a keyboard up, the sheet is what is left above it — about 330px on a
    phone — and the note bar, the title and two rows of tools took all but
    40px of that, leaving the one thing being typed into a line and a half
@@ -1679,7 +1816,8 @@ summary:focus-visible,
    keyboard path: Shift+Tab to the title leaves the editing group, and the bar
    comes back. */
 @container sheet-body (max-height: 28rem) {
-  .notes:has(.notes__editor:focus-within) .notes__bar { display: none; }
+  .notes:has(.notes__editor:focus-within) .notes__bar,
+  .sheet__body:has(.notes__editor:focus-within) .side-switch { display: none; }
   .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
 }
