@@ -66,7 +66,9 @@ test.describe('the live editor', () => {
     await page.keyboard.press('Enter');
     await page.keyboard.type('two');
     await expect.poll(() => noteText(page)).toBe('one\ntwo');
-    await page.keyboard.press('Home');
+    // ⚠️ Not Home: macOS binds no "start of line" to it in a text field, so the
+    // caret stayed at the end there and Backspace took the "o" (see CLAUDE.md).
+    await surface.evaluate((el) => (el as HTMLTextAreaElement).setSelectionRange(4, 4));
     await page.keyboard.press('Backspace');
     await expect.poll(() => noteText(page)).toBe('onetwo');
     await expect(surface.locator('.live-line')).toHaveCount(1);

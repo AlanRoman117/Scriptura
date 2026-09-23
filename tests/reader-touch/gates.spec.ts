@@ -76,6 +76,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await expandSheet(page);
     await page.getByTestId('side-board').tap();
     await expect(page.locator('.card')).toHaveCount(2);
+    // The canvas takes the sheet to full, and the Bible under it goes inert at
+    // once; axe counts the sheet as a modal over it only when it has finished
+    // growing, as in "writing a note". Measured mid-way, the page has no main.
+    const sheet = page.getByTestId('pane-notes');
+    await expect(sheet).toHaveAttribute('data-sheet', 'full');
+    await expect.poll(() => sheet.evaluate((el) => el.getAnimations().length)).toBe(0);
   },
   results: async (page) => {
     await page.getByTestId('search-input').fill('love');

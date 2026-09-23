@@ -608,7 +608,6 @@ test.describe('beside the Bible', () => {
 
     await page.getByTestId('board-start').click();
     await page.getByTestId('zoom-in').click();
-    await page.keyboard.press('Home');
     await boardTab.focus();
     await page.keyboard.press('Home');
     await expect(notesTab).toHaveAttribute('aria-selected', 'true');
