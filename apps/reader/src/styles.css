@@ -7,16 +7,31 @@
  * reading column, a UI sans for chrome.
  */
 /*
- * Colours are tokens, and the tokens are measured.
+ * Everything a theme can change is a token, and the colour tokens are measured.
  *
- * `light-dark()` holds the light and dark value of each token in one place;
- * `color-scheme` decides which is used — `light dark` follows the operating
- * system, and `[data-theme]` (written by lib/prefs.ts) pins it. The
- * high-contrast and sepia themes override the whole set. Every value below is
- * checked by tests/unit/contrast.test.ts against WCAG 2.2 AAA: 7:1 for text,
- * 3:1 for control boundaries, focus rings and highlight rules. Change a value
- * and the test tells you what it now fails against; do not round to a nicer
- * hex without running it.
+ * Three tiers, each in its own marked block, so tests/unit/contrast.test.ts can
+ * read them straight out of this file:
+ *
+ * 1. Palettes (`@tokens <name>`): the colours a theme chooses. `light-dark()`
+ *    holds the light and dark value of each in one place; `color-scheme`
+ *    decides which is used — `light dark` follows the operating system, and
+ *    `[data-theme]` (written by lib/prefs.ts) pins it.
+ * 2. Derived (`@derived`): every other colour, written as a formula over the
+ *    palette — the hover fill, the selected chip, the highlight tints. A
+ *    palette gets them for free and may override any of them. They are opaque
+ *    wherever text sits on them, so the test can evaluate the formula and
+ *    measure the result instead of leaving it to axe, which reports mixed and
+ *    blurred surfaces as "incomplete".
+ * 3. Style (`@style`): what is not colour — corner radii, depth, the type
+ *    scale, the reading faces, how a chapter title and a verse number are set.
+ *
+ * Component rules below use only these tokens: no hex, no `rgb()`, no radius
+ * in pixels, no font size in rem outside these blocks. The test fails on any.
+ *
+ * Every palette is checked against WCAG 2.2 AAA: 7:1 for text, 3:1 for
+ * control boundaries, focus rings and highlight rules. Change a value and the
+ * test tells you what it now fails against; do not round to a nicer hex
+ * without running it.
  *
  * `--rule` is decorative (separators, dividers between list items) and is
  * allowed to be faint. `--edge` is the boundary of a control — input, select,
@@ -30,15 +45,71 @@
  * 3:1 against white as hues, which is why a highlight also has a rule and,
  * when the reader asks, a glyph — colour is never the only signal.
  */
+
+/* The five collection hues, the same in every theme: a colour is a
+   collection, and a collection should not change colour with the paper. */
+/* @hues */
+:root {
+  --sw-amber: #f0b429;
+  --sw-rose: #e0607e;
+  --sw-sky: #4c9be8;
+  --sw-mint: #3fb984;
+  --sw-violet: #9b7bd4;
+  /* The glyph drawn on a swatch, when Settings asks for one. */
+  --sw-glyph: #1f1d1a;
+}
+/* @hues end */
+
+/* @derived */
+:root {
+  /* Surfaces: a step below the paper (bars, code, a card's grip), a row
+     under the pointer, and a control being pressed. */
+  --paper-sunken: color-mix(in srgb, var(--rule) 50%, var(--paper-raised));
+  --hover: color-mix(in srgb, var(--rule) 50%, var(--paper));
+  --press: color-mix(in srgb, var(--rule) 75%, var(--paper-raised));
+  /* The accent as a fill: a link's quiet ground, a selected control, a count. */
+  --accent-tint: color-mix(in srgb, var(--accent) 12%, var(--paper-raised));
+  --accent-wash: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  --accent-pill: color-mix(in srgb, var(--accent) 24%, var(--paper-raised));
+  /* The verse being acted on, and a verse just jumped to. */
+  --selection-wash: color-mix(in srgb, var(--focus) 12%, var(--paper));
+  --selection-edge: color-mix(in srgb, var(--focus) 55%, var(--paper));
+  --flash: color-mix(in srgb, var(--accent) 34%, var(--paper));
+  /* Decoration only: carries no text and is not a boundary. */
+  --quote-rule: color-mix(in srgb, var(--accent) 60%, var(--paper));
+  --grid-dot: color-mix(in srgb, var(--ink) 14%, var(--paper));
+  --ink-veil: color-mix(in srgb, var(--ink) 16%, transparent);
+  --bar-bg: color-mix(in srgb, var(--paper) var(--bar-opacity), transparent);
+  --bar-bg-raised: color-mix(in srgb, var(--paper-raised) var(--bar-opacity), transparent);
+  --backdrop: color-mix(in srgb, #000000 50%, transparent);
+  /* Verse numbers and the chapter title. A palette may give them their own
+     colour — a rubric — as long as it reads at 7:1. */
+  --rubric: var(--accent);
+  --heading: var(--ink);
+  /* A collection's tint and rule, from its hue and the paper. The classic,
+     high-contrast and sepia palettes carry hand-tuned values instead. */
+  --hl-amber: color-mix(in srgb, var(--sw-amber) 24%, var(--paper));
+  --hl-rose: color-mix(in srgb, var(--sw-rose) 24%, var(--paper));
+  --hl-sky: color-mix(in srgb, var(--sw-sky) 24%, var(--paper));
+  --hl-mint: color-mix(in srgb, var(--sw-mint) 24%, var(--paper));
+  --hl-violet: color-mix(in srgb, var(--sw-violet) 24%, var(--paper));
+  --hl-amber-strong: color-mix(in srgb, var(--sw-amber) 68%, var(--ink));
+  --hl-rose-strong: color-mix(in srgb, var(--sw-rose) 68%, var(--ink));
+  --hl-sky-strong: color-mix(in srgb, var(--sw-sky) 68%, var(--ink));
+  --hl-mint-strong: color-mix(in srgb, var(--sw-mint) 68%, var(--ink));
+  --hl-violet-strong: color-mix(in srgb, var(--sw-violet) 68%, var(--ink));
+}
+/* @derived end */
+
 /* @tokens light-dark */
 :root {
   --ink: light-dark(#1f1d1a, #ece8e1);
-  --ink-soft: light-dark(#57534e, #b3ada5);
+  --ink-soft: light-dark(#4d4944, #c2bcb4);
   --paper: light-dark(#faf9f7, #171614);
   --paper-raised: light-dark(#ffffff, #1f1e1b);
   --rule: light-dark(#e5e1da, #33302b);
   --edge: light-dark(#8f8a82, #8a857d);
-  --accent: light-dark(#5f4a0e, #d4b355);
+  --accent: light-dark(#5f4a0e, #e0c371);
   --danger: light-dark(#9a1f18, #f2b8b5);
   --focus: light-dark(#3b6ea5, #7aa7d9);
   --hl-amber: light-dark(#f7e7c1, #58451a);
@@ -54,15 +125,60 @@
 }
 /* @tokens end */
 
+/* @style */
 :root {
-  --sw-amber: #f0b429;
-  --sw-rose: #e0607e;
-  --sw-sky: #4c9be8;
-  --sw-mint: #3fb984;
-  --sw-violet: #9b7bd4;
-
   --serif-latin: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
   --sans-latin: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Corners, from a focus ring's to a dialog's, and a pill. */
+  --radius-xs: 3px;
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 8px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+  /* The width of a control's boundary. */
+  --edge-w: 1px;
+
+  /* Depth: a card, a floating panel, a dialog, and the sheet (which lifts
+     upwards). Shadows are decoration — every surface they lift also has a
+     boundary — so a flat style can set them to none. */
+  --shadow-rgb: 0 0 0;
+  --elev-1: 0 2px 10px rgb(var(--shadow-rgb) / .12);
+  --elev-2: 0 8px 28px rgb(var(--shadow-rgb) / .16);
+  --elev-3: 0 20px 60px rgb(var(--shadow-rgb) / .35);
+  --elev-up: 0 -8px 28px rgb(var(--shadow-rgb) / .12);
+
+  /* The sticky bars over the scrolling text: how much of the paper they keep,
+     and the blur behind them. */
+  --bar-opacity: 88%;
+  --bar-blur: blur(8px);
+
+  /* The interface's type scale. Prose (the chapter, the notes, a comparison)
+     is sized from --reading-size and --text-scale instead. */
+  --fs-2xs: .7rem;
+  --fs-xs: .75rem;
+  --fs-sm: .8rem;
+  --fs-md: .875rem;
+  --fs-base: .95rem;
+  --fs-body: 1rem;
+  --fs-lg: 1.15rem;
+  --fs-xl: 1.3rem;
+  --fs-2xl: 1.5rem;
+  /* Board labels are SVG text, sized in the drawing's own units. */
+  --fs-embed: 10px;
+
+  /* How the chapter title and the verse numbers are set. */
+  --title-caps: normal;
+  --title-tracking: normal;
+  --title-weight: 600;
+  --num-figures: normal;
+  --num-weight: 400;
+}
+/* @style end */
+
+:root {
   --serif: var(--serif-latin);
   --sans: var(--sans-latin);
 
@@ -197,12 +313,12 @@
 :root[data-theme='sepia'] {
   color-scheme: light;
   --ink: #2b2418;
-  --ink-soft: #54482f;
+  --ink-soft: #4a3f28;
   --paper: #f4ecd8;
   --paper-raised: #fbf6ea;
   --rule: #d8cdb2;
-  --edge: #8a857d;
-  --accent: #5a4410;
+  --edge: #7d776e;
+  --accent: #4f3b0c;
   --danger: #8f1c15;
   --focus: #2c5a88;
   --hl-amber: #f3ddab;
@@ -246,10 +362,10 @@ body.dragging { cursor: col-resize; user-select: none; }
 html { -webkit-tap-highlight-color: transparent; }
 button, select, [role='button'], .sheet__grip { touch-action: manipulation; }
 .divider, .sheet__grip, .canvas__frame, .card__grip, .card__resize { touch-action: none; }
-.verse:active { background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.verse:active { background: var(--press); }
 .reader__chip:active, .notes__action:active, .canvas__action:active, .library__action:active,
 .settings__action:active, .results__book:active, .tools__button:active, .search__ref:active,
-.results__ref:active, .marks__ref:active { background-color: color-mix(in srgb, var(--rule) 60%, var(--paper-raised)); }
+.results__ref:active, .marks__ref:active { background-color: var(--press); }
 
 .visually-hidden {
   position: absolute; width: 1px; height: 1px;
@@ -262,9 +378,9 @@ button, select, [role='button'], .sheet__grip { touch-action: manipulation; }
 .skip {
   position: absolute; top: .5rem; left: .5rem; z-index: 30;
   display: inline-flex; align-items: center; min-height: var(--control-h);
-  padding: .5rem 1rem; border-radius: 999px;
-  background: var(--paper-raised); color: var(--ink); border: 1px solid var(--edge);
-  font: inherit; font-size: .9rem; text-decoration: none;
+  padding: .5rem 1rem; border-radius: var(--radius-pill);
+  background: var(--paper-raised); color: var(--ink); border: var(--edge-w) solid var(--edge);
+  font: inherit; font-size: var(--fs-md); text-decoration: none;
   transform: translateY(-200%);
 }
 .skip:focus-visible { transform: none; }
@@ -285,7 +401,7 @@ summary:focus-visible,
 [contenteditable]:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
 }
 .notes__title:focus-visible,
 .notes__surface:focus-visible,
@@ -359,13 +475,13 @@ summary:focus-visible,
   max-width: calc(100% - 2.5rem);
   display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem;
   padding: .3rem .3rem .3rem .85rem;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 12px;
-  box-shadow: 0 8px 28px rgb(0 0 0 / .14);
-  font-size: .9rem;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
+  box-shadow: var(--elev-2);
+  font-size: var(--fs-md);
 }
 .layout__done-show {
   padding: 0 .9rem; font: inherit; color: var(--ink); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l);
 }
 /* A verse number focused near the bottom scrolls clear of the bar (2.4.12). */
 .pane--bible:has(> .layout__done) { scroll-padding-bottom: calc(var(--control-h) + 3rem); }
@@ -396,9 +512,9 @@ summary:focus-visible,
 }
 .side-switch__tabs { display: flex; gap: .25rem; flex: 1; min-width: 0; }
 .side-switch__tab {
-  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
   background: transparent; border: 1px solid transparent; border-bottom: none;
-  border-radius: 6px 6px 0 0; padding: .25rem .9rem; margin-bottom: -1px;
+  border-radius: var(--radius-m) var(--radius-m) 0 0; padding: .25rem .9rem; margin-bottom: -1px;
 }
 .side-switch__tab:hover { color: var(--ink); }
 /* Selected: the tab joins the panel below it, and is bold, so it is not told
@@ -409,7 +525,7 @@ summary:focus-visible,
 }
 .side-switch__maximize {
   font: inherit; color: var(--ink-soft); cursor: pointer; margin-bottom: .35rem; flex: none;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
 }
 .side-switch__maximize:hover { color: var(--ink); border-color: var(--ink-soft); }
 .side-panel { flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -438,7 +554,7 @@ summary:focus-visible,
    20px tall the box cut the third dot in half. */
 .divider::before {
   content: ''; position: absolute; left: calc(50% - 2px); top: calc(50% - 12px);
-  width: 4px; height: 24px; border-radius: 2px;
+  width: 4px; height: 24px; border-radius: var(--radius-pill);
   background: radial-gradient(circle, var(--grip) 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y;
 }
 .divider:hover, .divider:focus-visible { --grip: var(--accent); }
@@ -446,8 +562,8 @@ summary:focus-visible,
 .divider:focus-visible { outline-offset: -4px; }
 .divider__nudge {
   flex: 0 0 auto; width: var(--control-h);
-  font: inherit; font-size: 1.35rem; line-height: 1; color: var(--ink-soft); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--ink-soft); border-radius: 6px;
+  font: inherit; font-size: var(--fs-xl); line-height: 1; color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: 1px solid var(--ink-soft); border-radius: var(--radius-m);
 }
 .divider__nudge:hover { color: var(--ink); border-color: var(--ink); }
 /* Level with the first row of controls in both panes' bars. */
@@ -465,21 +581,21 @@ summary:focus-visible,
   display: flex; gap: .5rem; align-items: center;
   padding: .6rem 1rem;
   min-height: var(--bar-h);
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--bar-bg);
+  backdrop-filter: var(--bar-blur);
   border-bottom: 1px solid var(--rule);
 }
 
 .reader__select {
-  font: inherit; font-size: .9rem;
+  font: inherit; font-size: var(--fs-md);
   color: var(--ink);
   /* Explicit, not transparent. A transparent <select> leaves the browser to
      paint the open dropdown from an unresolved background, which is how the
      list ended up unreadable — and the options need their own colours because
      they are rendered outside the page's stacking context. */
   background-color: var(--paper-raised);
-  border: 1px solid var(--edge);
-  border-radius: 6px;
+  border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m);
   padding: .3rem .5rem;
   max-width: 14rem;
   /* Let it shrink rather than overflow when the pane is narrowed. */
@@ -498,29 +614,29 @@ summary:focus-visible,
      packs its content to the start, which drew the settings gear 5px and the
      question mark 10px left of centre. */
   flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: .35rem;
-  font: inherit; font-size: .78rem; color: var(--ink-soft);
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .5rem; cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink-soft);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .5rem; cursor: pointer;
 }
 .reader__chip:hover { color: var(--ink); border-color: var(--ink-soft); }
 .reader__nav { display: contents; }
 .reader__chip[aria-expanded='true'] {
   color: var(--ink); border-color: var(--ink-soft);
-  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  background-color: var(--accent-wash);
 }
 .reader__chip--translation { margin-left: auto; letter-spacing: .06em; }
 .reader__chip-count {
-  font-size: .7rem; line-height: 1; padding: .15rem .3rem; border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink);
+  font-size: var(--fs-2xs); line-height: 1; padding: .15rem .3rem; border-radius: var(--radius-pill);
+  background: var(--accent-pill); color: var(--ink);
 }
 /* A zero count is noise beside a word that already says what the button is. */
 .reader__chip-count[data-empty] { display: none; }
 /* The maximize button, last in each pane's bar, takes its neighbours' class;
    this only sizes the arrow so it reads the same in both bars. */
-.reader__chip.pane__maximize, .notes__action.pane__maximize, .side-switch__maximize { font-size: .95rem; line-height: 1; }
+.reader__chip.pane__maximize, .notes__action.pane__maximize, .side-switch__maximize { font-size: var(--fs-base); line-height: 1; }
 .pane__maximize[aria-pressed='true'] {
   color: var(--ink); border-color: var(--ink-soft);
-  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  background-color: var(--accent-wash);
 }
 
 /* Below this the bar cannot hold every label. Drop the word, not the control:
@@ -557,15 +673,19 @@ summary:focus-visible,
  */
 .chapter__title {
   position: sticky; top: var(--bar-h); z-index: 1;
-  font-family: var(--serif); font-size: 1.5rem; font-weight: 600;
+  font-family: var(--serif); font-size: var(--fs-2xl); font-weight: var(--title-weight);
+  font-variant-caps: var(--title-caps); letter-spacing: var(--title-tracking); color: var(--heading);
   margin: 0 0 1.5rem; padding: .4rem 0 .5rem;
-  background: color-mix(in srgb, var(--paper) 92%, transparent);
-  backdrop-filter: blur(8px);
+  background: var(--bar-bg);
+  backdrop-filter: var(--bar-blur);
   border-bottom: 1px solid transparent;
 }
 /* Only draw the rule once it is actually pinned, so the resting state stays
    quiet. */
 .chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
+/* Tracking and small capitals are Latin devices: a Japanese or Chinese title
+   keeps its own spacing. */
+.chapter__title:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)) { letter-spacing: normal; }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
 /* Scripture carries its translation's lang on the text itself, not on the
    containers around it (3.1.2), so the family is declared again right there:
@@ -580,7 +700,7 @@ summary:focus-visible,
 .attribution {
   margin-top: auto; padding: .75rem 1.25rem;
   border-top: 1px solid var(--rule);
-  font-size: .75rem; color: var(--ink-soft);
+  font-size: var(--fs-xs); color: var(--ink-soft);
 }
 .attribution a { color: inherit; }
 
@@ -590,9 +710,9 @@ summary:focus-visible,
 
 .search { position: sticky; top: var(--bar-h); z-index: 2; padding: .5rem 1rem; background: var(--paper); border-bottom: 1px solid var(--rule); }
 .search__input {
-  width: 100%; font: inherit; font-size: .88rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 8px; padding: .4rem .6rem;
+  width: 100%; font: inherit; font-size: var(--fs-md); color: var(--ink);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-l); padding: .4rem .6rem;
 }
 /* Never taller than the part of the screen the reader can see. `--vvh` and
    `--vv-top` are the visual viewport, which shrinks for the software keyboard
@@ -607,50 +727,50 @@ summary:focus-visible,
   );
   overflow-y: auto;
   background: var(--paper-raised); border: 1px solid var(--rule);
-  border-radius: 10px; box-shadow: 0 10px 30px rgb(0 0 0 / .16); padding: .35rem;
+  border-radius: var(--radius-xl); box-shadow: var(--elev-2); padding: .35rem;
 }
 .search__panel-bar { display: flex; align-items: stretch; gap: .25rem; margin-bottom: .25rem; }
 .search__jump {
-  flex: 1; text-align: left; font: inherit; font-size: .88rem;
-  color: var(--ink); background: color-mix(in srgb, var(--accent) 18%, transparent);
-  border: none; border-radius: 6px; padding: .5rem .6rem; cursor: pointer;
+  flex: 1; text-align: left; font: inherit; font-size: var(--fs-md);
+  color: var(--ink); background: var(--accent-wash);
+  border: none; border-radius: var(--radius-m); padding: .5rem .6rem; cursor: pointer;
 }
 .search__close {
   flex: 0 0 auto; margin-left: auto; min-width: var(--control-h); min-height: var(--control-h);
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
 }
 .search__close:hover { color: var(--ink); }
 .search__options, .results__options {
   display: flex; flex-wrap: wrap; gap: .75rem;
-  padding: .35rem .6rem; font-size: .74rem; color: var(--ink-soft);
+  padding: .35rem .6rem; font-size: var(--fs-xs); color: var(--ink-soft);
 }
 .results__options { padding: .5rem 0 0; }
 .search__option { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
 .search__option input { margin: 0; }
 
-.search__count { margin: .25rem .6rem .4rem; font-size: .72rem; color: var(--ink-soft); }
+.search__count { margin: .25rem .6rem .4rem; font-size: var(--fs-xs); color: var(--ink-soft); }
 .search__results { list-style: none; margin: 0; padding: 0; }
 .search__result { display: flex; align-items: stretch; gap: .25rem; flex-wrap: wrap; }
 .search__divider {
   flex: 1 1 100%; margin: .5rem 0 .1rem; padding-top: .35rem;
   border-top: 1px solid var(--rule);
-  font-size: .68rem; color: var(--ink-soft); font-style: italic;
+  font-size: var(--fs-2xs); color: var(--ink-soft); font-style: italic;
 }
 .search__ref {
   flex: 1; min-width: 0; text-align: left; font: inherit;
-  background: transparent; border: none; border-radius: 6px;
+  background: transparent; border: none; border-radius: var(--radius-m);
   padding: .4rem .6rem; cursor: pointer; color: var(--ink);
 }
-.search__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
-.search__result-ref { display: block; font-size: .72rem; color: var(--accent); }
+.search__ref:hover { background: var(--hover); }
+.search__result-ref { display: block; font-size: var(--fs-xs); color: var(--accent); }
 .search__result-text {
-  display: block; font-family: var(--serif); font-size: .85rem; line-height: 1.45;
+  display: block; font-family: var(--serif); font-size: var(--fs-md); line-height: 1.45;
   overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .search__insert {
-  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
-  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: var(--fs-body); color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-m); cursor: pointer;
 }
 .search__insert:hover { color: var(--ink); border-color: var(--rule); }
 
@@ -666,7 +786,7 @@ summary:focus-visible,
    strong hue — 3:1 against the paper, where the tint behind the text is too
    pale to be a boundary on its own (1.4.11). */
 .verse {
-  position: relative; border-radius: 4px; margin: 0 -.2rem var(--verse-gap);
+  position: relative; border-radius: var(--radius-s); margin: 0 -.2rem var(--verse-gap);
   padding: .1rem .2rem .1rem calc(.2rem - 3px); border-left: 3px solid transparent;
 }
 .verse[data-highlight='amber']  { background: var(--hl-amber);  border-left-color: var(--hl-amber-strong); }
@@ -680,9 +800,10 @@ summary:focus-visible,
   margin-right: .3em; position: relative; top: -.3em;
 }
 :root[data-markers='true'] .verse__marker { display: inline; }
-/* The accent is 7:1 on paper but not over a tint, so a highlighted verse's
-   number reads in ink. Measured: #5f4a0e over the amber tint is 6.9:1. */
-.verse[data-highlight] .verse__num { color: var(--ink); }
+/* The rubric is 7:1 on paper but not over a tint, so a highlighted verse's
+   number reads in ink — and so does the number of the verse being acted on,
+   whose wash the rubric fell short on too. */
+.verse[data-highlight] .verse__num, .verse[data-open] .verse__num { color: var(--ink); }
 
 /* The whole verse is the target.
  *
@@ -694,13 +815,13 @@ summary:focus-visible,
  * A drag that selects text is excluded in the handler, so reading and copying
  * still work: the click only counts when the selection is collapsed. */
 .verse { cursor: pointer; transition: background-color .12s ease, box-shadow .12s ease; }
-.verse:not([data-highlight]):hover { background: color-mix(in srgb, var(--rule) 42%, transparent); }
-.verse[data-highlight]:hover { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 16%, transparent); }
+.verse:not([data-highlight]):hover { background: var(--hover); }
+.verse[data-highlight]:hover { box-shadow: inset 0 0 0 2px var(--ink-veil); }
 /* The verse you are acting on, held visibly while the swatches are open. */
 .verse[data-open],
 .verse[data-open]:hover {
-  background: color-mix(in srgb, var(--focus) 12%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--focus) 55%, transparent);
+  background: var(--selection-wash);
+  box-shadow: inset 0 0 0 1px var(--selection-edge);
 }
 /* Touch has no hover, so the number stays the visible affordance there. */
 @media (hover: none) { .verse:hover { background: none; } }
@@ -711,20 +832,21 @@ summary:focus-visible,
  * needs `line-height: 0` to keep from stretching the line box — and a zero line
  * height collapses a button to no height at all, leaving it unclickable. */
 .verse__num {
-  font-family: var(--sans); font-size: .68em; color: var(--accent);
+  font-family: var(--sans); font-size: .68em; color: var(--rubric);
+  font-variant-numeric: var(--num-figures); font-weight: var(--num-weight);
   margin-right: .35em; padding: .05em .15em; line-height: 1;
   position: relative; top: -.35em;
-  background: none; border: none; cursor: pointer; border-radius: 3px;
+  background: none; border: none; cursor: pointer; border-radius: var(--radius-xs);
 }
-.verse__num:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.verse__num:hover { color: var(--ink); background: var(--accent-pill); }
 
 /* Centred under the verse it belongs to: short travel from anywhere in it. */
 .swatches {
   display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .15rem .3rem;
   width: fit-content; max-width: 100%; margin: .5rem auto 0; padding: .25rem .45rem;
   cursor: default;
-  background: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 24px; box-shadow: 0 2px 10px rgb(0 0 0 / .12);
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-pill); box-shadow: var(--elev-1);
 }
 .swatches__set { display: inline-flex; align-items: center; gap: .1rem; }
 /* The button is the 44px target; the coloured disc inside it is what shows. */
@@ -737,9 +859,9 @@ summary:focus-visible,
   display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
   width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 2px solid var(--edge);
   /* The glyph sits on the hue, which is the same in every theme. */
-  font-family: var(--sans); font-size: .8rem; line-height: 1; color: #1f1d1a;
+  font-family: var(--sans); font-size: var(--fs-sm); line-height: 1; color: var(--sw-glyph);
 }
-.swatch__disc--static { width: 1.2rem; height: 1.2rem; font-size: .65rem; }
+.swatch__disc--static { width: 1.2rem; height: 1.2rem; font-size: var(--fs-2xs); }
 .swatch__disc[data-color='amber']  { background: var(--sw-amber); }
 .swatch__disc[data-color='rose']   { background: var(--sw-rose); }
 .swatch__disc[data-color='sky']    { background: var(--sw-sky); }
@@ -752,11 +874,11 @@ summary:focus-visible,
 .swatches__action {
   display: inline-flex; align-items: center; justify-content: center;
   min-height: var(--control-h); min-width: var(--control-h);
-  font: inherit; font-size: .85rem; color: var(--ink-soft);
-  background: transparent; border: none; border-radius: 8px;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft);
+  background: transparent; border: none; border-radius: var(--radius-l);
   padding: 0 .55rem; cursor: pointer;
 }
-.swatches__action:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 50%, transparent); }
+.swatches__action:hover { color: var(--ink); background: var(--hover); }
 
 /* On a phone the row docks above the notes sheet: in reach of a thumb, and it
    no longer pushes the rest of the chapter down the screen when it opens. It
@@ -766,7 +888,7 @@ summary:focus-visible,
 .layout--narrow .swatches {
   position: fixed; z-index: 4; left: .5rem; right: .5rem; width: auto; margin: 0;
   bottom: calc(var(--sheet-h, 3.25rem) + .5rem + env(safe-area-inset-bottom));
-  border-radius: 14px; padding: .3rem;
+  border-radius: var(--radius-xl); padding: .3rem;
 }
 .layout--narrow .pane--bible { scroll-padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
 .layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
@@ -774,7 +896,7 @@ summary:focus-visible,
 /* A jumped-to verse announces itself, then settles. Under reduced motion the
    same class draws a still outline for the same 1.6s instead — the verse is
    still pointed out, nothing moves (2.3.3). */
-@keyframes verse-flash { from { background: color-mix(in srgb, var(--accent) 34%, transparent); } }
+@keyframes verse-flash { from { background: var(--flash); } }
 .verse--flash { animation: verse-flash 1.6s ease-out; }
 :root[data-motion='reduce'] .verse--flash { animation: none; box-shadow: inset 0 0 0 2px var(--accent); }
 @media (prefers-reduced-motion: reduce) {
@@ -785,19 +907,19 @@ summary:focus-visible,
 
 .marks { padding: 1rem 1.25rem 2rem; overflow-y: auto; }
 .marks__bar { display: flex; align-items: center; gap: .5rem; }
-.marks__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.marks__title { font-family: var(--serif); font-size: var(--fs-xl); margin: 0; flex: 1; }
 .marks__close {
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .2rem .45rem;
 }
 .marks__close:hover { color: var(--ink); border-color: var(--ink-soft); }
-.marks__hint { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+.marks__hint { font-size: var(--fs-sm); color: var(--ink-soft); margin: .35rem 0 1.1rem; }
 
 .marks__group { margin-bottom: 1.4rem; }
 .marks__group-bar { display: flex; align-items: center; gap: .5rem; margin-bottom: .35rem; }
 .marks__label {
-  flex: 1; min-width: 0; font: inherit; font-size: .88rem; font-weight: 600; color: var(--ink);
-  background-color: transparent; border: 1px solid var(--edge); border-radius: 6px;
+  flex: 1; min-width: 0; font: inherit; font-size: var(--fs-md); font-weight: 600; color: var(--ink);
+  background-color: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
   padding: .25rem .35rem;
 }
 /* The border shows that the label can be edited. It used to appear on hover
@@ -805,24 +927,24 @@ summary:focus-visible,
 .marks__label:hover { border-color: var(--ink-soft); }
 .marks__label:focus { border-color: var(--edge); background-color: var(--paper-raised); }
 .marks__label::placeholder { color: var(--ink-soft); font-weight: 500; }
-.marks__count { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.marks__count { font-size: var(--fs-xs); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 
-.marks__empty { font-size: .78rem; color: var(--ink-soft); font-style: italic; margin: 0 0 0 1.55rem; }
+.marks__empty { font-size: var(--fs-sm); color: var(--ink-soft); font-style: italic; margin: 0 0 0 1.55rem; }
 .marks__list { list-style: none; margin: 0; padding: 0 0 0 1.55rem; }
 .marks__item { display: flex; align-items: stretch; gap: .25rem; }
 .marks__ref {
   flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
-  background: transparent; border: none; border-radius: 6px; padding: .35rem .45rem; cursor: pointer;
+  background: transparent; border: none; border-radius: var(--radius-m); padding: .35rem .45rem; cursor: pointer;
 }
-.marks__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
-.marks__ref-label { display: block; font-size: .74rem; color: var(--accent); }
+.marks__ref:hover { background: var(--hover); }
+.marks__ref-label { display: block; font-size: var(--fs-xs); color: var(--accent); }
 .marks__ref-text {
-  display: -webkit-box; font-family: var(--serif); font-size: .85rem; line-height: 1.45;
+  display: -webkit-box; font-family: var(--serif); font-size: var(--fs-md); line-height: 1.45;
   overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
 }
 .marks__remove {
-  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: .8rem; color: var(--ink-soft);
-  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: var(--fs-sm); color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-m); cursor: pointer;
 }
 .marks__remove:hover { color: var(--ink); border-color: var(--rule); }
 
@@ -830,9 +952,9 @@ summary:focus-visible,
    heading rather than on the link itself. */
 .notes__link {
   align-self: flex-start; margin-bottom: .35rem;
-  font: inherit; font-size: .74rem; color: var(--ink);
-  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
-  border: 1px solid var(--edge); border-radius: 6px;
+  font: inherit; font-size: var(--fs-xs); color: var(--ink);
+  background-color: var(--accent-wash);
+  border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
   padding: .2rem .45rem; cursor: pointer;
 }
 .notes__link:hover { border-color: var(--ink-soft); }
@@ -840,83 +962,83 @@ summary:focus-visible,
 /* The heading the cursor is under, pinned like an editor's sticky scroll. */
 .notes__heading {
   position: sticky; top: 0; z-index: 1;
-  font-size: .72rem; letter-spacing: .04em; color: var(--ink-soft);
+  font-size: var(--fs-xs); letter-spacing: .04em; color: var(--ink-soft);
   padding: .2rem 0 .35rem; margin-bottom: .2rem;
   border-bottom: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--paper-raised) 92%, transparent);
+  background: var(--bar-bg-raised);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 
 /* ── Settings, and what an assistant may do ───────────────────────────────── */
 
-.reader__chip--icon { padding: .3rem .45rem; font-size: .9rem; line-height: 1; }
+.reader__chip--icon { padding: .3rem .45rem; font-size: var(--fs-md); line-height: 1; }
 
 .settings { padding: 1rem 1.25rem 2rem; max-width: 40rem; }
 .settings__bar { display: flex; align-items: center; gap: .5rem; }
-.settings__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.settings__title { font-family: var(--serif); font-size: var(--fs-xl); margin: 0; flex: 1; }
 .settings__close {
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .2rem .45rem;
 }
 .settings__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 .settings__group { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); }
-.settings__heading { font-size: .95rem; margin: 0 0 .5rem; }
-.settings__body { font-size: .82rem; line-height: 1.6; color: var(--ink-soft); margin: 0 0 .6rem; }
+.settings__heading { font-size: var(--fs-base); margin: 0 0 .5rem; }
+.settings__body { font-size: var(--fs-sm); line-height: 1.6; color: var(--ink-soft); margin: 0 0 .6rem; }
 .settings__body strong { color: var(--ink); }
-.settings__note { font-size: .76rem; color: var(--ink-soft); font-style: italic; margin: 0 0 .8rem; }
+.settings__note { font-size: var(--fs-xs); color: var(--ink-soft); font-style: italic; margin: 0 0 .8rem; }
 .settings__actions { display: flex; gap: .4rem; flex-wrap: wrap; }
 .settings__action {
-  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .55rem;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .55rem;
 }
 .settings__action:hover { color: var(--ink); border-color: var(--ink-soft); }
-.settings__toggle { display: flex; align-items: center; gap: .5rem; font-size: .85rem; margin: .5rem 0 .6rem; cursor: pointer; }
+.settings__toggle { display: flex; align-items: center; gap: .5rem; font-size: var(--fs-md); margin: .5rem 0 .6rem; cursor: pointer; }
 /* A labelled native select per preference: nothing custom to learn or to
    make accessible, and the label is the target when it wraps. */
 .settings__field {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: .5rem .75rem; margin: .45rem 0; font-size: .85rem;
+  gap: .5rem .75rem; margin: .45rem 0; font-size: var(--fs-md);
 }
 .settings__field select {
-  font: inherit; font-size: .85rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .5rem; min-width: 12rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .5rem; min-width: 12rem;
 }
 .settings__field select option { background-color: var(--paper-raised); color: var(--ink); }
-.settings__tools { font-size: .78rem; color: var(--ink-soft); margin-top: .6rem; }
+.settings__tools { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: .6rem; }
 .settings__tools summary { cursor: pointer; }
 .settings__tools ul { list-style: none; margin: .6rem 0 0; padding: 0; }
 .settings__tools li { padding: .4rem 0; border-top: 1px solid var(--rule); }
-.settings__tools code { font-size: .76rem; color: var(--ink); }
+.settings__tools code { font-size: var(--fs-xs); color: var(--ink); }
 .settings__tag {
-  font-size: .65rem; text-transform: uppercase; letter-spacing: .04em;
-  padding: .1rem .3rem; border-radius: 4px; margin-left: .3rem;
-  background: color-mix(in srgb, var(--rule) 70%, transparent); color: var(--ink-soft);
+  font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .04em;
+  padding: .1rem .3rem; border-radius: var(--radius-s); margin-left: .3rem;
+  background: var(--paper-sunken); color: var(--ink-soft);
 }
-.settings__tag--write { background: color-mix(in srgb, var(--accent) 30%, transparent); color: var(--ink); }
+.settings__tag--write { background: var(--accent-pill); color: var(--ink); }
 .settings__tool-desc { display: block; margin-top: .2rem; line-height: 1.5; }
 
 /* ── Help ─────────────────────────────────────────────────────────────────── */
 
 .help { padding: 1rem 1.25rem 2rem; max-width: 44rem; }
 .help__bar { display: flex; align-items: center; gap: .5rem; }
-.help__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.help__title { font-family: var(--serif); font-size: var(--fs-xl); margin: 0; flex: 1; }
 .help__close {
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .2rem .45rem;
   min-height: var(--control-h); min-width: var(--control-h);
 }
 .help__close:hover { color: var(--ink); border-color: var(--ink-soft); }
-.help__section { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: .88rem; line-height: 1.65; }
-.help__section h2 { font-size: 1rem; margin: 0 0 .5rem; }
+.help__section { margin-top: 1.5rem; padding-top: 1.1rem; border-top: 1px solid var(--rule); font-size: var(--fs-md); line-height: 1.65; }
+.help__section h2 { font-size: var(--fs-body); margin: 0 0 .5rem; }
 .help__section p, .help__section ul { margin: 0 0 .6rem; }
 .help__section li { margin: .2rem 0; }
 .help__section code, .help__section kbd {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
-  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px; padding: .05em .3em;
+  font-family: var(--mono); font-size: .85em;
+  background: var(--paper-sunken); border-radius: var(--radius-s); padding: .05em .3em;
 }
-.help__section kbd { border: 1px solid var(--edge); }
+.help__section kbd { border: var(--edge-w) solid var(--edge); }
 .help__table { border-collapse: collapse; width: 100%; }
 .help__table th, .help__table td { text-align: left; vertical-align: top; padding: .35rem .5rem .35rem 0; border-bottom: 1px solid var(--rule); }
 .help__table th[scope='row'] { font-weight: 600; white-space: nowrap; }
@@ -925,7 +1047,7 @@ summary:focus-visible,
 .help__term { margin: 0 0 .6rem; }
 .help__term dt { font-weight: 600; }
 .help__term dd { margin: .1rem 0 0; }
-.canvas__action--icon { font-size: 1rem; }
+.canvas__action--icon { font-size: var(--fs-body); }
 
 /* ── A staged proposal: contents, not counts ──────────────────────────────── */
 
@@ -937,45 +1059,45 @@ summary:focus-visible,
   margin: 0; padding: 1.5rem; border: 0; background: transparent; color: inherit;
 }
 .proposal[open] { display: flex; align-items: center; justify-content: center; }
-.proposal::backdrop { background: color-mix(in srgb, #000 45%, transparent); }
+.proposal::backdrop { background: var(--backdrop); }
 .proposal__box {
   display: flex; flex-direction: column; width: min(42rem, 100%); max-height: 85vh;
-  background: var(--paper); border: 1px solid var(--rule); border-radius: 12px;
-  box-shadow: 0 20px 60px rgb(0 0 0 / .35); overflow: hidden;
+  background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius-xl);
+  box-shadow: var(--elev-3); overflow: hidden;
 }
 .proposal__bar { padding: 1rem 1.25rem .25rem; }
-.proposal__title { font-family: var(--serif); font-size: 1.2rem; margin: 0; }
+.proposal__title { font-family: var(--serif); font-size: var(--fs-lg); margin: 0; }
 .proposal__lede {
-  margin: 0; padding: .5rem 1.25rem 1rem; font-size: .8rem; line-height: 1.6; color: var(--ink-soft);
+  margin: 0; padding: .5rem 1.25rem 1rem; font-size: var(--fs-sm); line-height: 1.6; color: var(--ink-soft);
 }
 .proposal__body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 1.25rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
-.proposal__meta { font-size: .82rem; margin: 0; }
+.proposal__meta { font-size: var(--fs-sm); margin: 0; }
 .proposal__field {
-  font: inherit; font-size: .95rem; color: var(--ink); background-color: var(--paper-raised);
-  border: 1px solid var(--edge); border-radius: 6px; padding: .45rem .6rem;
+  font: inherit; font-size: var(--fs-base); color: var(--ink); background-color: var(--paper-raised);
+  border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .45rem .6rem;
 }
 .proposal__text {
-  font: inherit; font-size: .88rem; line-height: 1.6; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  font: inherit; font-size: var(--fs-md); line-height: 1.6; color: var(--ink);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
   padding: .6rem; min-height: 14rem; resize: vertical;
 }
 .proposal__list { list-style: none; margin: 0; padding: 0; }
 .proposal__item { padding: .5rem 0; border-bottom: 1px solid var(--rule); }
 .proposal__item[data-dropped] { opacity: .45; }
 .proposal__item label { display: flex; align-items: center; gap: .45rem; cursor: pointer; }
-.proposal__ref { font-size: .78rem; color: var(--accent); font-weight: 600; }
-.proposal__verse { margin: .2rem 0 0 1.5rem; font-family: var(--serif); font-size: .88rem; line-height: 1.5; }
+.proposal__ref { font-size: var(--fs-sm); color: var(--accent); font-weight: 600; }
+.proposal__verse { margin: .2rem 0 0 1.5rem; font-family: var(--serif); font-size: var(--fs-md); line-height: 1.5; }
 .proposal__actions {
   display: flex; justify-content: flex-end; gap: .5rem;
   padding: .85rem 1.25rem; border-top: 1px solid var(--rule); background: var(--paper-raised);
 }
 .proposal__action {
-  font: inherit; font-size: .85rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper); border: 1px solid var(--edge); border-radius: 6px; padding: .4rem .8rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .4rem .8rem;
 }
 .proposal__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .proposal__action:disabled { opacity: .5; cursor: default; }
-.proposal__action--primary { color: var(--ink); border-color: var(--ink-soft); background-color: color-mix(in srgb, var(--accent) 20%, var(--paper)); }
+.proposal__action--primary { color: var(--ink); border-color: var(--ink-soft); background-color: var(--accent-wash); }
 
 /* ── Confirmation, before anything is deleted ─────────────────────────────── */
 
@@ -988,27 +1110,27 @@ summary:focus-visible,
   margin: 0; padding: 1rem; border: 0; background: transparent; color: var(--ink);
 }
 .confirm-dialog[open] { display: flex; align-items: center; justify-content: center; }
-.confirm-dialog::backdrop { background: color-mix(in srgb, #000 55%, transparent); }
+.confirm-dialog::backdrop { background: var(--backdrop); }
 /* The box scrolls rather than overflowing: a long note title at 200% text on
    a phone held sideways still leaves both buttons reachable (1.4.10). */
 .confirm-dialog__box {
   width: min(30rem, 100%); max-height: 100%; overflow-y: auto;
   padding: 1.1rem 1.25rem 1rem;
-  background: var(--paper); border: 1px solid var(--edge); border-top: 6px solid var(--danger);
-  border-radius: 12px; box-shadow: 0 20px 60px rgb(0 0 0 / .35);
+  background: var(--paper); border: var(--edge-w) solid var(--edge); border-top: 6px solid var(--danger);
+  border-radius: var(--radius-xl); box-shadow: var(--elev-3);
 }
 .confirm-dialog__title {
   display: flex; align-items: flex-start; gap: .55rem; margin: 0 0 .7rem;
-  font-family: var(--serif); font-size: 1.2rem; line-height: 1.35; overflow-wrap: anywhere;
+  font-family: var(--serif); font-size: var(--fs-lg); line-height: 1.35; overflow-wrap: anywhere;
 }
 .confirm-dialog__sign { flex: none; width: 1.35em; height: 1.35em; color: var(--danger); }
-.confirm-dialog__body { font-size: .92rem; line-height: 1.6; overflow-wrap: anywhere; }
+.confirm-dialog__body { font-size: var(--fs-base); line-height: 1.6; overflow-wrap: anywhere; }
 .confirm-dialog__body p { margin: 0 0 .6em; }
 .confirm-dialog__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .6rem; margin-top: 1rem; }
 .confirm-dialog__action {
-  font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; padding: .45rem 1rem;
+  font: inherit; font-size: var(--fs-md); font-weight: 600; cursor: pointer; padding: .45rem 1rem;
   color: var(--ink); background-color: var(--paper-raised);
-  border: 1px solid var(--edge); border-radius: 8px;
+  border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l);
 }
 .confirm-dialog__action:hover { border-color: var(--ink-soft); }
 /* The one button here that loses something is filled with the danger colour,
@@ -1024,44 +1146,44 @@ summary:focus-visible,
   container: canvas / inline-size;
 }
 /* Where a verse sent from the Bible or a search is confirmed, on the board. */
-.canvas__status { margin: 0; padding: .35rem 1rem; font-size: .8rem; border-top: 1px solid var(--rule); flex: none; }
+.canvas__status { margin: 0; padding: .35rem 1rem; font-size: var(--fs-sm); border-top: 1px solid var(--rule); flex: none; }
 .canvas__bar {
   display: flex; gap: .4rem; align-items: center; flex-wrap: wrap;
   padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
 }
 .canvas__spacer { flex: 1; }
 .canvas__select {
-  font: inherit; font-size: .85rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .5rem; max-width: 14rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .5rem; max-width: 14rem;
 }
 .canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
 /* The board's name, beside the menu that picks it. It gives way before the
    buttons do, down to a width that still shows a word or two. */
 .canvas__name {
   flex: 0 1 12rem; min-width: 6rem;
-  font: inherit; font-size: .85rem; color: var(--ink);
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .5rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink);
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .5rem;
 }
 .canvas__name::placeholder { color: var(--ink-soft); opacity: 1; }
 .canvas__name:hover { border-color: var(--ink-soft); }
 .canvas__action {
-  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .55rem;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .55rem;
 }
 .canvas__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .canvas__action:disabled { opacity: .55; cursor: default; }
 .canvas__action--danger:hover { color: var(--danger); border-color: var(--danger); }
 
-.canvas__zoom { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+.canvas__zoom { display: inline-flex; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); overflow: hidden; }
 .canvas__zoom button {
-  font: inherit; font-size: .78rem; color: var(--ink-soft); cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink-soft); cursor: pointer;
   background-color: var(--paper-raised); border: none; padding: .3rem .5rem;
 }
 .canvas__zoom button:hover { color: var(--ink); }
-.canvas__zoom button + button { border-left: 1px solid var(--edge); }
+.canvas__zoom button + button { border-left: var(--edge-w) solid var(--edge); }
 
 /* The plane is dotted so panning and zooming have something to read against —
    an empty white field gives no sense of having moved at all. */
@@ -1070,7 +1192,7 @@ summary:focus-visible,
   /* Its focus ring is drawn inside: the frame fills the view, so an outside
      ring would be clipped by the edges of the window. */
   outline-offset: -3px !important;
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--ink) 14%, transparent) 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--grid-dot) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 .canvas__frame[data-connecting] { cursor: crosshair; }
@@ -1088,57 +1210,60 @@ summary:focus-visible,
    takes no presses — and so it must never hold a control. */
 .canvas__empty {
   position: absolute; inset: auto 0 auto 0; top: 45%; text-align: center;
-  color: var(--ink-soft); font-size: .85rem; pointer-events: none;
+  color: var(--ink-soft); font-size: var(--fs-md); pointer-events: none;
 }
 /* No board at all: a message and the button that starts one, in the flow. */
 .canvas__none {
   flex: 1; display: grid; place-content: center; justify-items: center; gap: .6rem;
-  padding: 1rem; text-align: center; color: var(--ink-soft); font-size: .9rem;
+  padding: 1rem; text-align: center; color: var(--ink-soft); font-size: var(--fs-md);
 }
 
 /* Cards are a fixed size on purpose: an edge can then be drawn from centre to
    centre without measuring the DOM on every drag frame. */
 .card {
   position: absolute; display: flex; flex-direction: column;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 10px;
-  box-shadow: 0 2px 10px rgb(0 0 0 / .12); overflow: hidden;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
+  box-shadow: var(--elev-1); overflow: hidden;
 }
 /* A coloured card carries a 6px top rule in the collection's strong hue, so
    its colour is more than a thin outline — and its name is in its label. */
-.card[data-color] { border-top-width: 6px; }
-.card[data-color='amber']  { border-color: var(--hl-amber-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-amber-strong) 35%, transparent); }
-.card[data-color='rose']   { border-color: var(--hl-rose-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-rose-strong) 35%, transparent); }
-.card[data-color='sky']    { border-color: var(--hl-sky-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-sky-strong) 35%, transparent); }
-.card[data-color='mint']   { border-color: var(--hl-mint-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-mint-strong) 35%, transparent); }
-.card[data-color='violet'] { border-color: var(--hl-violet-strong); box-shadow: 0 2px 10px color-mix(in srgb, var(--hl-violet-strong) 35%, transparent); }
+.card[data-color] {
+  border-top-width: 6px; border-color: var(--card-hue);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--card-hue) 35%, transparent);
+}
+.card[data-color='amber']  { --card-hue: var(--hl-amber-strong); }
+.card[data-color='rose']   { --card-hue: var(--hl-rose-strong); }
+.card[data-color='sky']    { --card-hue: var(--hl-sky-strong); }
+.card[data-color='mint']   { --card-hue: var(--hl-mint-strong); }
+.card[data-color='violet'] { --card-hue: var(--hl-violet-strong); }
 
 /* The header is the drag handle, a full 44px tall so a finger finds it. */
 .card__grip {
   display: flex; align-items: center; gap: .35rem; min-height: var(--control-h);
   cursor: grab; padding: 0 .5rem; border-bottom: 1px solid var(--rule);
-  background: color-mix(in srgb, var(--rule) 35%, transparent);
+  background: var(--paper-sunken);
   flex: 0 0 auto;
 }
-.card__glyph { font-size: .75rem; color: var(--ink); }
+.card__glyph { font-size: var(--fs-xs); color: var(--ink); }
 .card__title-input {
-  flex: 1; min-width: 0; width: 100%; font: inherit; font-size: .8rem; font-weight: 600; color: var(--ink);
-  background: transparent; border: none; border-radius: 4px; padding: 0 .2rem;
+  flex: 1; min-width: 0; width: 100%; font: inherit; font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
+  background: transparent; border: none; border-radius: var(--radius-s); padding: 0 .2rem;
 }
 .card__title-input:focus { background: var(--paper-raised); }
 .card__title-input::placeholder { color: var(--ink-soft); font-weight: 500; }
 .card__title {
-  display: block; flex: 1; min-width: 0; font-size: .8rem; font-weight: 600; color: var(--ink);
+  display: block; flex: 1; min-width: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 /* Scrollable, not clipped: a card can hold a whole note or a long verse, and
    no fixed height fits both. Clipping made the rest simply unreachable. */
 .card__body {
   flex: 1; min-height: 0; margin: 0; padding: .4rem .5rem;
-  font-family: var(--serif); font-size: .8rem; line-height: 1.45;
+  font-family: var(--serif); font-size: var(--fs-sm); line-height: 1.45;
   overflow-y: auto; overscroll-behavior: contain; white-space: pre-wrap;
 }
 .card__editor {
-  flex: 1; margin: 0; padding: .4rem .5rem; font: inherit; font-size: .8rem;
+  flex: 1; margin: 0; padding: .4rem .5rem; font: inherit; font-size: var(--fs-sm);
   line-height: 1.45; color: var(--ink); background: transparent;
   border: none; resize: none;
 }
@@ -1159,12 +1284,12 @@ summary:focus-visible,
 .card__resize::after {
   content: ''; position: absolute; right: 3px; bottom: 3px; width: 18px; height: 18px;
   background: linear-gradient(135deg, transparent 50%, var(--edge) 50%);
-  border-bottom-right-radius: 7px;
+  border-bottom-right-radius: calc(var(--radius-xl) - 3px);
 }
 .card__action {
   display: inline-flex; align-items: center; justify-content: center;
-  font: inherit; font-size: .95rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid transparent; border-radius: 6px; padding: 0;
+  font: inherit; font-size: var(--fs-base); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-m); padding: 0;
 }
 /* The colour button shows the card's colour, or an empty dashed ring. */
 .card__colour { width: 1.1rem; height: 1.1rem; }
@@ -1181,7 +1306,7 @@ summary:focus-visible,
 /* The connections, in words. */
 .canvas__connections {
   padding: .5rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper-raised);
-  max-height: 40vh; overflow-y: auto; font-size: .85rem;
+  max-height: 40vh; overflow-y: auto; font-size: var(--fs-md);
 }
 .canvas__connections-empty { margin: .4rem 0; color: var(--ink-soft); }
 .canvas__connections-list { list-style: none; margin: 0; padding: 0; }
@@ -1195,18 +1320,18 @@ summary:focus-visible,
 /* Moving the view and changing a card without dragging (2.5.7): a panel of
    plain buttons, at the bottom of the board where a thumb reaches it and
    where panning and zooming never carry it off screen. */
-.canvas__pan button { font-size: .95rem; }
+.canvas__pan button { font-size: var(--fs-base); }
 .canvas__panel {
   position: absolute; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 5;
   transform: translateX(-50%); width: max-content; max-width: calc(100% - 1rem);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem .6rem;
   padding: .5rem .7rem; cursor: default;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 14px;
-  box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
+  box-shadow: var(--elev-2);
 }
-.canvas__panel-title { flex: 1 1 100%; margin: 0; font-size: .8rem; font-weight: 600; text-align: center; }
+.canvas__panel-title { flex: 1 1 100%; margin: 0; font-size: var(--fs-sm); font-weight: 600; text-align: center; }
 .canvas__panel-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem; }
-.canvas__panel-row .canvas__action { min-width: var(--control-h); font-size: .85rem; }
+.canvas__panel-row .canvas__action { min-width: var(--control-h); font-size: var(--fs-md); }
 
 /* ── Writing: the tools, and reading it back ──────────────────────────────── */
 
@@ -1224,33 +1349,33 @@ summary:focus-visible,
   padding: 0 0 .35rem; border-bottom: 1px solid var(--rule); margin-bottom: .4rem;
 }
 .tools__button {
-  font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 5px; padding: .2rem .4rem;
+  font: inherit; font-size: var(--fs-xs); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .2rem .4rem;
 }
 .tools__button:hover { color: var(--ink); border-color: var(--ink-soft); }
 .tools__button--bold { font-weight: 700; }
 .tools__button--italic { font-style: italic; font-family: var(--serif); }
-.tools__button--code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .66rem; }
+.tools__button--code { font-family: var(--mono); font-size: var(--fs-2xs); }
 .tools__rule { width: 1px; align-self: stretch; background: var(--rule); margin: .1rem .2rem; }
 
 .preview {
   flex: 1; min-height: 0; overflow-y: auto; padding: .3rem .1rem 1rem;
-  font-family: var(--serif); font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
+  font-family: var(--serif); font-size: calc(var(--fs-base) * var(--text-scale)); line-height: var(--reading-leading);
 }
 .preview--empty { color: var(--ink-soft); font-style: italic; cursor: text; }
 /* Every block is a way back into the editor, so reading and fixing are one
    gesture rather than a mode you have to leave first. */
-.preview__block { position: relative; cursor: text; border-radius: 4px; }
-.preview__block:hover { background: color-mix(in srgb, var(--rule) 28%, transparent); }
+.preview__block { position: relative; cursor: text; border-radius: var(--radius-s); }
+.preview__block:hover { background: var(--hover); }
 /* A real control for what the click on a block does, so the keyboard and a
    finger have it too (2.1.1). Quiet until the block is hovered or focused;
    always shown where there is no hover. */
 .preview__edit {
   position: absolute; top: 0; right: 0; z-index: 1;
   display: inline-flex; align-items: center; justify-content: center;
-  font: inherit; font-size: 1rem; color: var(--ink-soft); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 6px;
+  font: inherit; font-size: var(--fs-body); color: var(--ink-soft); cursor: pointer;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m);
   opacity: 0;
 }
 .preview__block:hover .preview__edit, .preview__block:focus-within .preview__edit, .preview__edit:focus-visible { opacity: 1; }
@@ -1265,42 +1390,42 @@ summary:focus-visible,
 .preview__heading { font-family: var(--serif); line-height: 1.3; margin: 1.1rem 0 .4rem; }
 .preview__block:first-child .preview__heading { margin-top: .2rem; }
 /* Sized by the level the author wrote, not the level the outline gives it. */
-.preview__heading[data-level='1'] { font-size: 1.5rem; }
-.preview__heading[data-level='2'] { font-size: 1.25rem; }
-.preview__heading[data-level='3'] { font-size: 1.08rem; }
-.preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: .98rem; }
+.preview__heading[data-level='1'] { font-size: var(--fs-2xl); }
+.preview__heading[data-level='2'] { font-size: var(--fs-xl); }
+.preview__heading[data-level='3'] { font-size: var(--fs-lg); }
+.preview__heading[data-level='4'], .preview__heading[data-level='5'], .preview__heading[data-level='6'] { font-size: var(--fs-base); }
 .preview__p { margin: .5rem 0; white-space: pre-wrap; }
 .preview__quote {
   margin: .6rem 0; padding-block: .2rem; padding-inline: .8rem 0;
-  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-inline-start: 3px solid var(--quote-rule);
   color: var(--ink-soft); white-space: pre-wrap;
 }
 .preview__list { margin: .5rem 0; padding-left: 1.4rem; }
 .preview__list li { margin: .2rem 0; }
 .preview__code {
   margin: .6rem 0; padding: .6rem .7rem; overflow-x: auto;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
-  background: var(--paper-raised); border: 1px solid var(--rule); border-radius: 8px;
+  font-family: var(--mono); font-size: var(--fs-sm);
+  background: var(--paper-raised); border: 1px solid var(--rule); border-radius: var(--radius-l);
 }
 .preview__inline-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
-  background: color-mix(in srgb, var(--rule) 55%, transparent);
-  border-radius: 4px; padding: .05em .3em;
+  font-family: var(--mono); font-size: .85em;
+  background: var(--paper-sunken);
+  border-radius: var(--radius-s); padding: .05em .3em;
 }
 .preview__rule { border: none; border-top: 1px solid var(--rule); margin: 1.2rem 0; }
 .preview__link {
   font: inherit; font-family: var(--sans); font-size: .85em; color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  border: none; border-radius: 4px; padding: .05em .35em; cursor: pointer;
+  background: var(--accent-tint);
+  border: none; border-radius: var(--radius-s); padding: .05em .35em; cursor: pointer;
 }
-.preview__link:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.preview__link:hover { color: var(--ink); background: var(--accent-pill); }
 
 /* An embedded board, drawn where it was written — the role a mermaid fence
    plays, with the note keeping only a plain-text reference. */
 .embed { margin: .8rem 0; padding: 0; }
 /* Scrolls rather than shrinking past legibility — a genealogy is a wide board,
    and 560px of squeezed boxes is not a diagram. */
-.embed__scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-raised); }
+.embed__scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--radius-l); background: var(--paper-raised); }
 .embed__canvas { display: block; }
 .embed__canvas line { stroke: var(--ink-soft); stroke-width: 1.5; }
 .embed__canvas marker path { fill: var(--ink-soft); }
@@ -1310,9 +1435,9 @@ summary:focus-visible,
 .embed__card[data-color='sky']    { stroke: var(--hl-sky-strong); fill: var(--hl-sky); }
 .embed__card[data-color='mint']   { stroke: var(--hl-mint-strong); fill: var(--hl-mint); }
 .embed__card[data-color='violet'] { stroke: var(--hl-violet-strong); fill: var(--hl-violet); }
-.embed__label { font-family: var(--sans); font-size: 10px; fill: var(--ink); }
-.embed__empty, .embed--missing { font-size: .8rem; color: var(--ink-soft); font-style: italic; }
-.embed__caption { font-family: var(--sans); font-size: .72rem; color: var(--ink-soft); margin-top: .3rem; }
+.embed__label { font-family: var(--sans); font-size: var(--fs-embed); fill: var(--ink); }
+.embed__empty, .embed--missing { font-size: var(--fs-sm); color: var(--ink-soft); font-style: italic; }
+.embed__caption { font-family: var(--sans); font-size: var(--fs-xs); color: var(--ink-soft); margin-top: .3rem; }
 .embed__open {
   font: inherit; font-size: inherit; color: var(--ink); background: none;
   border: none; padding: 0; cursor: pointer; text-decoration: underline;
@@ -1328,10 +1453,10 @@ summary:focus-visible,
 
 .results { padding: 1rem 1.25rem 2rem; }
 .results__bar { display: flex; align-items: baseline; gap: .5rem; }
-.results__title { font-family: var(--serif); font-size: 1.15rem; margin: 0; flex: 1; font-weight: 600; }
+.results__title { font-family: var(--serif); font-size: var(--fs-lg); margin: 0; flex: 1; font-weight: 600; }
 .results__close {
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .2rem .45rem;
 }
 .results__close:hover { color: var(--ink); border-color: var(--ink-soft); }
 
@@ -1339,14 +1464,14 @@ summary:focus-visible,
    the filter. Wraps rather than scrolls: 40-odd books is a paragraph. */
 .results__books { display: flex; flex-wrap: wrap; gap: .3rem; margin: .75rem 0 1rem; }
 .results__book {
-  font: inherit; font-size: .74rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 999px; padding: .2rem .5rem;
+  font: inherit; font-size: var(--fs-xs); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-pill); padding: .2rem .5rem;
 }
 .results__book:hover { color: var(--ink); border-color: var(--ink-soft); }
 .results__book[aria-pressed='true'] {
   color: var(--ink); border-color: var(--ink-soft);
-  background-color: color-mix(in srgb, var(--accent) 18%, var(--paper-raised));
+  background-color: var(--accent-wash);
 }
 .results__book-count { color: var(--accent); font-variant-numeric: tabular-nums; }
 /* On the pressed chip the background is already accent-tinted; the accent as
@@ -1358,31 +1483,31 @@ summary:focus-visible,
 .results__item { display: flex; align-items: stretch; gap: .25rem; border-bottom: 1px solid var(--rule); }
 .results__ref {
   flex: 1; min-width: 0; text-align: left; font: inherit; color: var(--ink);
-  background: transparent; border: none; border-radius: 6px; padding: .45rem .5rem; cursor: pointer;
+  background: transparent; border: none; border-radius: var(--radius-m); padding: .45rem .5rem; cursor: pointer;
 }
-.results__ref:hover { background: color-mix(in srgb, var(--rule) 45%, transparent); }
-.results__ref-label { display: block; font-size: .72rem; color: var(--accent); }
-.results__ref-text { display: block; font-family: var(--serif); font-size: .92rem; line-height: 1.55; }
+.results__ref:hover { background: var(--hover); }
+.results__ref-label { display: block; font-size: var(--fs-xs); color: var(--accent); }
+.results__ref-text { display: block; font-family: var(--serif); font-size: var(--fs-base); line-height: 1.55; }
 .results__insert {
-  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: 1rem; color: var(--ink-soft);
-  background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer;
+  flex: 0 0 auto; width: var(--control-h); font: inherit; font-size: var(--fs-body); color: var(--ink-soft);
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-m); cursor: pointer;
 }
 .results__insert:hover { color: var(--ink); border-color: var(--rule); }
 /* A search hit onto the board: the verse actions' word, so it is the same
    act by the same name. A word, not a glyph, so it takes its own width. */
 .search__canvas, .results__canvas {
   width: auto; min-width: var(--control-h); padding-inline: .45rem;
-  font-family: var(--sans); font-size: .75rem; white-space: nowrap;
+  font-family: var(--sans); font-size: var(--fs-xs); white-space: nowrap;
 }
 
 /* Ranked order needs to say why, or it reads as shuffled. */
 .results__divider {
   margin: .9rem 0 .3rem; padding-top: .5rem;
   border-top: 1px solid var(--rule);
-  font-size: .72rem; color: var(--ink-soft); font-style: italic;
+  font-size: var(--fs-xs); color: var(--ink-soft); font-style: italic;
 }
 
-.results__footer { font-size: .76rem; color: var(--ink-soft); margin-top: 1rem; }
+.results__footer { font-size: var(--fs-xs); color: var(--ink-soft); margin-top: 1rem; }
 .results__more {
   font: inherit; font-size: inherit; color: var(--ink); cursor: pointer;
   background: none; border: none; padding: 0; text-decoration: underline;
@@ -1392,17 +1517,17 @@ summary:focus-visible,
 
 .library { padding: 1rem 1.25rem 2rem; }
 .library__bar { display: flex; align-items: center; gap: .5rem; }
-.library__title { font-family: var(--serif); font-size: 1.3rem; margin: 0; flex: 1; }
+.library__title { font-family: var(--serif); font-size: var(--fs-xl); margin: 0; flex: 1; }
 .library__close {
-  font: inherit; font-size: .9rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: 1px solid var(--edge); border-radius: 6px; padding: .2rem .45rem;
+  font: inherit; font-size: var(--fs-md); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-m); padding: .2rem .45rem;
 }
 .library__close:hover { color: var(--ink); border-color: var(--ink-soft); }
-.library__storage { font-size: .78rem; color: var(--ink-soft); margin: .35rem 0 1.1rem; }
+.library__storage { font-size: var(--fs-sm); color: var(--ink-soft); margin: .35rem 0 1.1rem; }
 
 .library__group { margin-bottom: 1.3rem; }
 .library__language {
-  font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+  font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .08em;
   color: var(--ink-soft); margin: 0 0 .4rem; font-weight: 600;
 }
 .library__list { list-style: none; margin: 0; padding: 0; }
@@ -1411,36 +1536,36 @@ summary:focus-visible,
   padding: .5rem 0; border-bottom: 1px solid var(--rule);
 }
 .library__meta { flex: 1 1 12rem; min-width: 0; }
-.library__name { display: block; font-size: .92rem; font-weight: 600; }
+.library__name { display: block; font-size: var(--fs-base); font-weight: 600; }
 .library__badge {
-  margin-left: .4rem; font-size: .62rem; font-weight: 600; letter-spacing: .04em;
-  text-transform: uppercase; padding: .1rem .3rem; border-radius: 4px;
-  background: color-mix(in srgb, var(--accent) 26%, transparent); color: var(--ink);
+  margin-left: .4rem; font-size: var(--fs-2xs); font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; padding: .1rem .3rem; border-radius: var(--radius-s);
+  background: var(--accent-pill); color: var(--ink);
 }
-.library__detail { display: block; font-size: .74rem; color: var(--ink-soft); }
-.library__error { display: block; font-size: .74rem; color: var(--danger); margin-top: .15rem; }
+.library__detail { display: block; font-size: var(--fs-xs); color: var(--ink-soft); }
+.library__error { display: block; font-size: var(--fs-xs); color: var(--danger); margin-top: .15rem; }
 
 .library__progress {
-  display: block; height: 4px; margin-top: .35rem; border-radius: 999px;
-  background: color-mix(in srgb, var(--rule) 70%, transparent); overflow: hidden;
+  display: block; height: 4px; margin-top: .35rem; border-radius: var(--radius-pill);
+  background: var(--rule); overflow: hidden;
 }
 .library__progress-fill { display: block; height: 100%; background: var(--accent); transition: width .15s linear; }
 
 .library__actions { display: flex; gap: .35rem; flex: 0 0 auto; }
 .library__action {
-  font: inherit; font-size: .76rem; color: var(--ink-soft); cursor: pointer;
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .3rem .55rem;
+  font: inherit; font-size: var(--fs-xs); color: var(--ink-soft); cursor: pointer;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .3rem .55rem;
 }
 .library__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .library__action:disabled { opacity: .55; cursor: default; }
 .library__action[aria-pressed='true'] {
   color: var(--ink); border-color: var(--ink-soft);
-  background-color: color-mix(in srgb, var(--accent) 16%, var(--paper-raised));
+  background-color: var(--accent-wash);
 }
 .library__action--primary { color: var(--ink); border-color: var(--ink-soft); }
 .library__action--danger:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); }
-.library__note { font-size: .74rem; color: var(--ink-soft); margin-top: 1rem; line-height: 1.5; }
+.library__note { font-size: var(--fs-xs); color: var(--ink-soft); margin-top: 1rem; line-height: 1.5; }
 
 /* ── Compare: one chapter, side by side ───────────────────────────────────── */
 
@@ -1454,7 +1579,7 @@ summary:focus-visible,
 .compare__table { border-collapse: collapse; width: 100%; font-family: var(--serif); }
 .compare__head, .compare__num-head {
   position: sticky; top: 0; z-index: 1;
-  text-align: left; font-family: var(--sans); font-weight: 600; font-size: .78rem;
+  text-align: left; font-family: var(--sans); font-weight: 600; font-size: var(--fs-sm);
   /* Room on the right for the 44px drop button. */
   padding: .4rem 3rem .4rem .5rem; vertical-align: bottom;
   background: var(--paper); border-bottom: 1px solid var(--rule);
@@ -1463,21 +1588,21 @@ summary:focus-visible,
    hanging over the first verse. `height` on a table cell is a floor. */
 .compare__head, .compare__num-head { height: calc(var(--control-h) + .6rem); }
 .compare__head-name { display: block; }
-.compare__head-id { display: block; font-size: .68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: .06em; }
+.compare__head-id { display: block; font-size: var(--fs-2xs); font-weight: 500; color: var(--ink-soft); letter-spacing: .06em; }
 .compare__drop {
   position: absolute; top: 50%; right: .2rem; transform: translateY(-50%);
-  font: inherit; font-size: .7rem; color: var(--ink-soft); cursor: pointer;
-  background: transparent; border: none; border-radius: 4px; padding: .1rem .25rem;
+  font: inherit; font-size: var(--fs-2xs); color: var(--ink-soft); cursor: pointer;
+  background: transparent; border: none; border-radius: var(--radius-s); padding: .1rem .25rem;
 }
 .compare__head { position: sticky; }
-.compare__drop:hover { color: var(--ink); background: color-mix(in srgb, var(--rule) 60%, transparent); }
+.compare__drop:hover { color: var(--ink); background: var(--hover); }
 .compare__num {
-  font-family: var(--sans); font-size: .7rem; font-weight: 500; color: var(--accent);
-  text-align: right; vertical-align: top; padding: .5rem .4rem 0 0; width: 2.2rem;
+  font-family: var(--sans); font-size: var(--fs-2xs); font-weight: 500; color: var(--rubric);
+  font-variant-numeric: var(--num-figures); text-align: right; vertical-align: top; padding: .5rem .4rem 0 0; width: 2.2rem;
 }
 .compare__cell {
   vertical-align: top; padding: .45rem .5rem; min-width: 12rem;
-  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
+  font-size: calc(var(--fs-base) * var(--text-scale)); line-height: var(--reading-leading); border-bottom: 1px solid var(--rule);
 }
 .compare__absent { color: var(--ink-soft); }
 
@@ -1485,10 +1610,10 @@ summary:focus-visible,
 .compare__bar { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; }
 .compare__chip {
   display: inline-flex; align-items: center; gap: .25rem; min-height: var(--control-h);
-  padding: 0 .1rem 0 .6rem; border: 1px solid var(--edge); border-radius: 999px;
-  font-family: var(--sans); font-size: .8rem; font-weight: 600; letter-spacing: .04em;
+  padding: 0 .1rem 0 .6rem; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-pill);
+  font-family: var(--sans); font-size: var(--fs-sm); font-weight: 600; letter-spacing: .04em;
 }
-.compare__drop--inline { position: static; transform: none; border-radius: 999px; }
+.compare__drop--inline { position: static; transform: none; border-radius: var(--radius-pill); }
 .compare__stack { list-style: none; margin: 0; padding: 0; }
 .compare__verse {
   display: grid; grid-template-columns: 2rem 1fr; gap: .25rem .5rem;
@@ -1498,12 +1623,12 @@ summary:focus-visible,
 .compare__readings { margin: 0; }
 .compare__reading + .compare__reading { margin-top: .5rem; }
 .compare__reading-id {
-  font-family: var(--sans); font-size: .72rem; font-weight: 600; letter-spacing: .06em; color: var(--ink-soft);
+  font-family: var(--sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: .06em; color: var(--ink-soft);
 }
 .compare__reading dd { margin: .1rem 0 0; }
 .compare__reading-text {
   display: flex; align-items: flex-start; gap: .35rem;
-  font-size: calc(.95rem * var(--text-scale)); line-height: var(--reading-leading);
+  font-size: calc(var(--fs-base) * var(--text-scale)); line-height: var(--reading-leading);
 }
 .compare__reading-text .compare__text { flex: 1; }
 .compare__reading-text .compare__quote { flex: 0 0 auto; margin-left: 0; }
@@ -1511,9 +1636,9 @@ summary:focus-visible,
    invisible to touch and to anyone who does not know to hover (1.4.13). */
 .compare__quote {
   display: inline-flex; align-items: center; justify-content: center;
-  opacity: .75; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: .9rem;
-  color: var(--ink-soft); background: transparent; border: 1px solid var(--edge);
-  border-radius: 6px; padding: 0 .3rem; cursor: pointer; vertical-align: middle;
+  opacity: .75; margin-left: .35rem; font: inherit; font-family: var(--sans); font-size: var(--fs-md);
+  color: var(--ink-soft); background: transparent; border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: 0 .3rem; cursor: pointer; vertical-align: middle;
 }
 .compare__cell:hover .compare__quote, .compare__quote:focus-visible, .compare__quote:hover { opacity: 1; color: var(--ink); }
 
@@ -1539,19 +1664,19 @@ summary:focus-visible,
 .notes__bar-end { display: inline-flex; align-items: center; gap: .35rem; }
 .notes__bar-end:empty { display: none; }
 .notes__select {
-  font: inherit; font-size: .85rem; color: var(--ink);
+  font: inherit; font-size: var(--fs-md); color: var(--ink);
   /* Explicit for the same reason as .reader__select: a transparent <select>
      leaves the browser to paint the open list from an unresolved colour. */
-  background-color: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .4rem; flex: 1; min-width: 6.5rem;
+  background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .25rem .4rem; flex: 1; min-width: 6.5rem;
   text-overflow: ellipsis;
 }
 .notes__select option { background-color: var(--paper-raised); color: var(--ink); }
 .notes__select:hover { border-color: var(--ink-soft); }
 .notes__action {
-  font: inherit; font-size: .78rem; color: var(--ink-soft);
-  background: transparent; border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .4rem; cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink-soft);
+  background: transparent; border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .25rem .4rem; cursor: pointer;
 }
 .notes__action:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
 .notes__action:disabled { opacity: .45; cursor: default; }
@@ -1574,7 +1699,7 @@ summary:focus-visible,
 /* The editing group fills what the title leaves; the textarea fills the rest. */
 .notes__editor { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .notes__title {
-  font: inherit; font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
+  font: inherit; font-family: var(--serif); font-size: var(--fs-lg); font-weight: 600;
   color: var(--ink); background: transparent; border: none;
   border-bottom: 1px solid transparent; padding: .2rem var(--surface-pad-x); margin-bottom: .5rem;
 }
@@ -1587,7 +1712,7 @@ summary:focus-visible,
   padding: var(--surface-pad-y) var(--surface-pad-x);
   flex: 1; width: 100%; resize: none; min-height: 0;
   border: none; background: transparent; color: var(--ink);
-  font-family: var(--serif); font-size: calc(1rem * var(--text-scale)); line-height: var(--reading-leading);
+  font-family: var(--serif); font-size: calc(var(--fs-body) * var(--text-scale)); line-height: var(--reading-leading);
 }
 
 /* ── The live editor (components/LiveEditor.tsx) ─────────────────────────────
@@ -1624,22 +1749,22 @@ summary:focus-visible,
 /* Full ink, not the quote's softer colour: on the code tint --ink-soft falls short of 7:1. */
 .md-code {
   color: var(--ink);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .85em;
-  background: color-mix(in srgb, var(--rule) 55%, transparent); border-radius: 4px;
+  font-family: var(--mono); font-size: .85em;
+  background: var(--paper-sunken); border-radius: var(--radius-s);
 }
 .md-link { color: var(--accent); text-decoration: underline; text-underline-offset: .15em; }
 
 /* Headings on the preview's scale. */
 .live-line--heading { font-weight: 600; line-height: 1.3; }
-.live-line--h1 { font-size: 1.5rem; }
-.live-line--h2 { font-size: 1.25rem; }
-.live-line--h3 { font-size: 1.08rem; }
-.live-line--h4, .live-line--h5, .live-line--h6 { font-size: .98rem; }
+.live-line--h1 { font-size: var(--fs-2xl); }
+.live-line--h2 { font-size: var(--fs-xl); }
+.live-line--h3 { font-size: var(--fs-lg); }
+.live-line--h4, .live-line--h5, .live-line--h6 { font-size: var(--fs-base); }
 .live-line--heading:not(:first-child) { padding-top: .5rem; }
 
 .live-line--quote {
   padding-inline-start: .8rem; color: var(--ink-soft);
-  border-inline-start: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  border-inline-start: 3px solid var(--quote-rule);
 }
 /* The dash is hidden off the caret's line and a bullet drawn in its place —
    drawn only: its alternative text is empty, since the dash is still read.
@@ -1655,7 +1780,7 @@ summary:focus-visible,
   background: linear-gradient(var(--rule), var(--rule)) center / 100% 1px no-repeat;
 }
 .live-line--code, .live-line--fence {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .8rem;
+  font-family: var(--mono); font-size: var(--fs-sm);
   background: var(--paper-raised); padding-inline: .6rem;
 }
 .live-line--code .md-code { background: none; font-size: inherit; }
@@ -1673,12 +1798,12 @@ summary:focus-visible,
 .live-widget { display: block; white-space: normal; cursor: default; user-select: none; }
 .live-line.is-active > .live-widget { display: none; }
 
-.notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: .9rem; }
+.notes__empty { flex: 1; display: grid; place-content: center; gap: .6rem; justify-items: center; color: var(--ink-soft); font-size: var(--fs-md); }
 .notes__status {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 .75rem;
-  min-height: 1.2rem; font-size: .72rem; color: var(--ink-soft);
+  min-height: 1.2rem; font-size: var(--fs-xs); color: var(--ink-soft);
 }
-.notes__done { font-size: .8rem; }
+.notes__done { font-size: var(--fs-sm); }
 .notes__status--bad { color: var(--danger); }
 
 /* ── Bibles in the reader's language ──────────────────────────────────────── */
@@ -1686,10 +1811,10 @@ summary:focus-visible,
 .offer {
   margin: 1rem 1.25rem 0; padding: .75rem .9rem;
   background: var(--paper-raised); color: var(--ink);
-  border: 1px solid var(--edge); border-radius: 12px;
+  border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
 }
 .offer__title { margin: 0 0 .25rem; font-weight: 600; }
-.offer__text { margin: 0 0 .5rem; font-size: .9rem; }
+.offer__text { margin: 0 0 .5rem; font-size: var(--fs-md); }
 .offer__list { list-style: none; margin: 0; padding: 0; }
 .offer__item {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .35rem .75rem;
@@ -1697,15 +1822,15 @@ summary:focus-visible,
 }
 .offer__meta { display: flex; flex-direction: column; min-width: 0; }
 .offer__name { font-weight: 600; }
-.offer__detail { font-size: .8rem; color: var(--ink-soft); }
-.offer__error { font-size: .8rem; color: var(--danger); }
+.offer__detail { font-size: var(--fs-sm); color: var(--ink-soft); }
+.offer__error { font-size: var(--fs-sm); color: var(--danger); }
 .offer__actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; margin-top: .5rem; }
 .offer__action {
   min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
-  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+  font: inherit; font-size: var(--fs-md); color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l);
 }
-.offer__action--primary { border-color: var(--ink-soft); background: color-mix(in srgb, var(--accent) 12%, var(--paper-raised)); }
+.offer__action--primary { border-color: var(--ink-soft); background: var(--accent-wash); }
 .offer__action:disabled { cursor: progress; }
 
 /* ── Durability ───────────────────────────────────────────────────────────── */
@@ -1713,9 +1838,9 @@ summary:focus-visible,
 .durability {
   display: flex; gap: .75rem; align-items: center; flex-wrap: wrap;
   padding: .5rem .9rem;
-  background: color-mix(in srgb, var(--accent) 14%, var(--paper));
+  background: var(--accent-wash);
   border-bottom: 1px solid var(--rule);
-  font-size: .8rem;
+  font-size: var(--fs-sm);
 }
 .durability__text { margin: 0; flex: 1; min-width: 12rem; }
 
@@ -1727,7 +1852,7 @@ summary:focus-visible,
   padding: .35rem .9rem;
   background: var(--paper-raised);
   border-bottom: 1px solid var(--rule);
-  font-size: .8rem;
+  font-size: var(--fs-sm);
 }
 .preview-notice__text { margin: 0; flex: 1; min-width: 12rem; }
 .preview-notice__actions { display: flex; gap: .4rem .75rem; align-items: center; flex-wrap: wrap; }
@@ -1740,19 +1865,19 @@ summary:focus-visible,
 .preview-notice__words { text-decoration: underline; text-underline-offset: .15em; }
 .preview-notice__link:hover .preview-notice__words { text-decoration-thickness: 2px; }
 .preview-notice__hide {
-  font: inherit; font-size: .78rem; color: var(--ink);
-  background: var(--paper); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink);
+  background: var(--paper); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .25rem .55rem; cursor: pointer;
 }
 .preview-notice__hide:hover { border-color: var(--ink-soft); }
 .durability__actions { display: flex; gap: .4rem; align-items: center; }
 .durability__action {
-  font: inherit; font-size: .78rem; color: var(--ink);
-  background: var(--paper-raised); border: 1px solid var(--edge);
-  border-radius: 6px; padding: .25rem .55rem; cursor: pointer;
+  font: inherit; font-size: var(--fs-sm); color: var(--ink);
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-m); padding: .25rem .55rem; cursor: pointer;
 }
 .durability__dismiss {
-  font: inherit; font-size: 1rem; line-height: 1; color: var(--ink-soft);
+  font: inherit; font-size: var(--fs-body); line-height: 1; color: var(--ink-soft);
   background: transparent; border: none; cursor: pointer; padding: .1rem .3rem;
 }
 
@@ -1780,9 +1905,9 @@ summary:focus-visible,
   height: var(--sheet-size);
   display: flex; flex-direction: column;
   background: var(--paper-raised);
-  border-top: 1px solid var(--edge);
-  border-radius: 14px 14px 0 0;
-  box-shadow: 0 -8px 28px rgb(0 0 0 / .12);
+  border-top: var(--edge-w) solid var(--edge);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: var(--elev-up);
   transition: height .22s ease, top .22s ease;
 }
 .sheet[data-sheet='half'] { --sheet-size: max(var(--sheet-peek, 3.25rem), calc(var(--vvh, 100dvh) * .5)); }
@@ -1794,19 +1919,19 @@ summary:focus-visible,
 .sheet__grip {
   display: flex; flex-direction: column; align-items: center; gap: .3rem;
   padding: .5rem; border: none; background: transparent;
-  color: var(--ink-soft); font: inherit; font-size: .78rem; cursor: pointer;
+  color: var(--ink-soft); font: inherit; font-size: var(--fs-sm); cursor: pointer;
   /* The grip is the one control in the thumb zone; the home indicator must
      not sit on it. */
   padding-bottom: calc(.5rem + env(safe-area-inset-bottom));
 }
 .sheet__grip { flex: 0 0 auto; width: 100%; cursor: grab; }
 .sheet[data-dragging] .sheet__grip { cursor: grabbing; }
-.sheet__handle { width: 2.75rem; height: 5px; border-radius: 3px; background: var(--edge); }
+.sheet__handle { width: 2.75rem; height: 5px; border-radius: var(--radius-xs); background: var(--edge); }
 /* "Notes", and beside it what was just put into them. Wraps rather than
    truncating; the peek height is the grip's measured height, so a second
    line raises the sheet instead of being cut off. */
 .sheet__label { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0 .6rem; text-align: center; }
-.sheet__done { font-size: .82rem; }
+.sheet__done { font-size: var(--fs-sm); }
 .sheet__body { flex: 1; min-height: 0; overflow-y: auto; container: sheet-body / size; display: flex; flex-direction: column; }
 /* With a keyboard up, the sheet is what is left above it — about 330px on a
    phone — and the note bar, the title and two rows of tools took all but
@@ -1831,23 +1956,23 @@ summary:focus-visible,
   position: fixed; z-index: 25; left: 1rem; right: 1rem; margin-inline: auto; max-width: 30rem;
   bottom: calc(var(--sheet-h, 0px) + 1rem + env(safe-area-inset-bottom));
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem .75rem;
-  padding: .5rem .75rem; border: 1px solid var(--edge); border-radius: 12px;
-  background: var(--paper-raised); color: var(--ink); box-shadow: 0 8px 28px rgb(0 0 0 / .18);
+  padding: .5rem .75rem; border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
+  background: var(--paper-raised); color: var(--ink); box-shadow: var(--elev-2);
 }
-.update__text { margin: 0; font-size: .9rem; }
+.update__text { margin: 0; font-size: var(--fs-md); }
 .update__actions { display: flex; gap: .4rem; }
 .update__action {
   min-height: var(--control-h); min-width: var(--control-h); padding: 0 .9rem;
-  font: inherit; font-size: .9rem; color: var(--ink); cursor: pointer;
-  background: var(--paper-raised); border: 1px solid var(--edge); border-radius: 8px;
+  font: inherit; font-size: var(--fs-md); color: var(--ink); cursor: pointer;
+  background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l);
 }
-.update__action--primary { background: color-mix(in srgb, var(--accent) 18%, var(--paper-raised)); border-color: var(--ink-soft); }
+.update__action--primary { background: var(--accent-wash); border-color: var(--ink-soft); }
 
 /* ── Boot ─────────────────────────────────────────────────────────────────── */
 
 .boot {
   display: grid; place-items: center; height: 100%;
-  color: var(--ink-soft); font-size: .95rem; padding: 2rem; text-align: center;
+  color: var(--ink-soft); font-size: var(--fs-base); padding: 2rem; text-align: center;
 }
 .boot--error { color: var(--danger); }
 
