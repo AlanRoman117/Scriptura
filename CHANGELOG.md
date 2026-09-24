@@ -7,6 +7,23 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Added
+
+- **Styles.** Settings → Reading & display now offers a style and, separately, light or dark. Five styles are new, each with a light and a dark palette: **Vellum** (an illuminated page, with rubric-red verse numbers and small-capital titles), **Emerald** (deep green on a jade-tinted page), **Slate** (cool, flat and exact), **Nocturne** (ink-blue night with gold; navy by day) and **Ember** (amber on true black for reading in the dark). Sepia gains a dark version. A theme chosen before this carries over.
+- **Design tokens.** Every colour, corner, shadow and type size in the reader comes from a token, in three tiers: palettes, fills derived from them, and style (corners, depth, type, the reading face). A style can change all of them.
+
+### Changed
+
+- **Classic, refreshed.** Rounder corners, softer and warmer shadows, a slightly tighter chapter title. The colours barely move.
+- **High contrast** keeps its colours and gains 2px control edges; it drops shadows and the blur behind the sticky bars.
+- The contrast test now measures every fill the reader draws, evaluated from its formula, in every style and polarity: 944 pairs.
+
+### Fixed
+
+- Secondary text on hovered rows, pressed buttons and tags fell just under the 7:1 AAA ratio in the light, dark and sepia themes. It is darker in light and sepia, lighter in dark.
+- The number of the verse being acted on fell under 7:1 on its blue wash. It is now drawn in ink, as a highlighted verse's number is.
+- In dark, the accent on its own tint (a link in a previewed note) was 6.5:1. The dark accent is lighter, and a hovered link reads in ink.
+
 ## [0.1.0-preview.3] - 2026-09-22
 
 The third preview. Notes take shape as they are written, and the canvas moves
