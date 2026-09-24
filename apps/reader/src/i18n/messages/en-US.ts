@@ -499,6 +499,11 @@ export const enUS = {
       classic: 'Classic',
       contrast: 'High contrast',
       sepia: 'Sepia',
+      vellum: 'Vellum',
+      emerald: 'Emerald',
+      slate: 'Slate',
+      nocturne: 'Nocturne',
+      ember: 'Ember',
     },
     appearance: 'Light or dark',
     appearances: {

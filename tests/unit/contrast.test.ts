@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contrastRatio, NON_TEXT_MIN, TEXT_MIN } from '../helpers/contrast';
+import { HIGHLIGHTS, NON_TEXT, PALETTE, TEXT } from '../helpers/token-pairs';
 import { readSheet, schemesOf, stripComments, theme, type Theme } from '../helpers/tokens';
 
 /**
@@ -25,68 +26,11 @@ const STYLESHEET = fileURLToPath(new URL('../../apps/reader/src/styles.css', imp
 const css = readFileSync(STYLESHEET, 'utf8');
 const sheet = readSheet(css);
 
-const HIGHLIGHTS = ['amber', 'rose', 'sky', 'mint', 'violet'];
-
-/** What a palette must choose for itself; everything else may be derived. */
-const PALETTE = ['--ink', '--ink-soft', '--paper', '--paper-raised', '--rule', '--edge', '--accent', '--danger', '--focus'];
-
 const themes: Theme[] = [...sheet.palettes.entries()]
   .filter(([name]) => !name.endsWith('-auto'))
   .flatMap(([name, decls]) => schemesOf(decls).map((scheme) => theme(sheet, name, scheme)));
 
 const ratio = (a: string, b: string) => Number(contrastRatio(a, b).toFixed(2));
-
-/**
- * Every pair the stylesheet draws, as [foreground, background]. Kept to the
- * pairs that exist: a colour that is never text on a surface is not held to
- * 7:1 on it.
- */
-const TEXT: [string, string][] = [
-  // Text on the three papers.
-  ...['--ink', '--ink-soft', '--accent', '--danger', '--rubric', '--heading'].flatMap((fg) =>
-    ['--paper', '--paper-raised'].map((bg): [string, string] => [fg, bg])
-  ),
-  ['--ink', '--paper-sunken'],
-  ['--ink-soft', '--paper-sunken'],
-  // Ink on every fill: rows under the pointer, pressed and selected controls,
-  // count pills, the verse being acted on, the sticky bars, and each tint.
-  ...['--hover', '--press', '--accent-tint', '--accent-wash', '--accent-pill', '--selection-wash', '--bar-bg', '--bar-bg-raised'].map(
-    (bg): [string, string] => ['--ink', bg]
-  ),
-  ...HIGHLIGHTS.map((h): [string, string] => ['--ink', `--hl-${h}`]),
-  // A quiet control's label, under the pointer or pressed, and on a bar.
-  ['--ink-soft', '--hover'],
-  ['--ink-soft', '--press'],
-  ['--ink-soft', '--bar-bg'],
-  // A result's reference on its hovered row; a link in a previewed note.
-  ['--accent', '--hover'],
-  ['--accent', '--accent-tint'],
-  // A verse number on a hovered verse. On the verse being acted on, as on a
-  // highlighted one, the number turns to ink.
-  ['--rubric', '--hover'],
-  // The delete button's words on its fill.
-  ['--paper', '--danger'],
-];
-
-const NON_TEXT: [string, string][] = [
-  // Control boundaries and focus rings on every paper, sunken bars included.
-  ...['--edge', '--focus'].flatMap((fg) =>
-    ['--paper', '--paper-raised', '--paper-sunken'].map((bg): [string, string] => [fg, bg])
-  ),
-  // A collection's rule beside a verse, and its colour on a card's edge.
-  ...HIGHLIGHTS.flatMap((h) => ['--paper', '--paper-raised'].map((bg): [string, string] => [`--hl-${h}-strong`, bg])),
-  // The pane divider is a bar in the rule colour holding a grip, two buttons
-  // and, when focused, a ring. --edge is too faint on it in the light theme,
-  // so the grip and the buttons' borders there are --ink-soft; hovering or
-  // focusing turns the grip --accent.
-  ['--ink-soft', '--rule'],
-  ['--focus', '--rule'],
-  ['--accent', '--rule'],
-  // A focused verse number inside the verse being acted on.
-  ['--focus', '--selection-wash'],
-  // The glyph on each swatch, when Settings asks for one.
-  ...HIGHLIGHTS.map((h): [string, string] => ['--sw-glyph', `--sw-${h}`]),
-];
 
 describe('colour tokens', () => {
   test('the stylesheet has its token blocks', () => {
@@ -148,7 +92,7 @@ describe('the evaluator', () => {
  */
 describe('stylesheet hygiene', () => {
   const rules = stripComments(
-    css.replace(/\/\* @(tokens [\w-]+|derived|hues|style) \*\/[\s\S]*?\/\* @(tokens|derived|hues|style) end \*\//g, '')
+    css.replace(/\/\* @(tokens [\w-]+|style [\w-]+|derived|hues|style) \*\/[\s\S]*?\/\* @(tokens|derived|hues|style) end \*\//g, '')
   );
 
   test('nothing removes the focus ring', () => {

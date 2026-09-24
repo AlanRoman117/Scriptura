@@ -479,6 +479,11 @@ export const jaJP = {
       classic: 'クラシック',
       contrast: 'ハイコントラスト',
       sepia: 'セピア',
+      vellum: '羊皮紙',
+      emerald: 'エメラルド',
+      slate: 'スレート',
+      nocturne: 'ノクターン',
+      ember: '残り火',
     },
     appearance: '外観',
     appearances: {

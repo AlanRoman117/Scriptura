@@ -28,7 +28,7 @@ import { LOCALES, deviceLanguages, isLocale, matchLocale, type Locale } from '..
  * an *absent* `data-style`, which is also what lets the operating system's
  * "more contrast" request swap in the high-contrast palette (styles.css).
  */
-export const STYLES = ['classic', 'contrast', 'sepia'] as const;
+export const STYLES = ['classic', 'contrast', 'sepia', 'vellum', 'emerald', 'slate', 'nocturne', 'ember'] as const;
 export type Style = (typeof STYLES)[number];
 
 export const APPEARANCES = ['system', 'light', 'dark'] as const;
@@ -122,6 +122,11 @@ export const STYLE_PAPER: Record<Style, { light: string; dark: string }> = {
   classic: { light: '#faf9f7', dark: '#171614' },
   contrast: { light: '#ffffff', dark: '#000000' },
   sepia: { light: '#f4ecd8', dark: '#1e1912' },
+  vellum: { light: '#f6efe0', dark: '#1c1611' },
+  emerald: { light: '#f3f7f4', dark: '#0d1a15' },
+  slate: { light: '#f4f5f7', dark: '#16191d' },
+  nocturne: { light: '#f5f6fa', dark: '#0f1424' },
+  ember: { light: '#fbf0e2', dark: '#000000' },
 };
 
 /**

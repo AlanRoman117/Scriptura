@@ -96,11 +96,11 @@
   --hl-sky: color-mix(in srgb, var(--sw-sky) 24%, var(--paper));
   --hl-mint: color-mix(in srgb, var(--sw-mint) 24%, var(--paper));
   --hl-violet: color-mix(in srgb, var(--sw-violet) 24%, var(--paper));
-  --hl-amber-strong: color-mix(in srgb, var(--sw-amber) 68%, var(--ink));
-  --hl-rose-strong: color-mix(in srgb, var(--sw-rose) 68%, var(--ink));
-  --hl-sky-strong: color-mix(in srgb, var(--sw-sky) 68%, var(--ink));
-  --hl-mint-strong: color-mix(in srgb, var(--sw-mint) 68%, var(--ink));
-  --hl-violet-strong: color-mix(in srgb, var(--sw-violet) 68%, var(--ink));
+  --hl-amber-strong: color-mix(in srgb, var(--sw-amber) 62%, var(--ink));
+  --hl-rose-strong: color-mix(in srgb, var(--sw-rose) 62%, var(--ink));
+  --hl-sky-strong: color-mix(in srgb, var(--sw-sky) 62%, var(--ink));
+  --hl-mint-strong: color-mix(in srgb, var(--sw-mint) 62%, var(--ink));
+  --hl-violet-strong: color-mix(in srgb, var(--sw-violet) 62%, var(--ink));
 }
 /* @derived end */
 
@@ -136,10 +136,10 @@
 
   /* Corners, from a focus ring's to a dialog's, and a pill. */
   --radius-xs: 3px;
-  --radius-s: 4px;
-  --radius-m: 6px;
-  --radius-l: 8px;
-  --radius-xl: 12px;
+  --radius-s: 5px;
+  --radius-m: 8px;
+  --radius-l: 10px;
+  --radius-xl: 16px;
   --radius-pill: 999px;
   /* The width of a control's boundary. */
   --edge-w: 1px;
@@ -147,11 +147,15 @@
   /* Depth: a card, a floating panel, a dialog, and the sheet (which lifts
      upwards). Shadows are decoration — every surface they lift also has a
      boundary — so a flat style can set them to none. */
-  --shadow-rgb: 0 0 0;
-  --elev-1: 0 2px 10px rgb(var(--shadow-rgb) / .12);
-  --elev-2: 0 8px 28px rgb(var(--shadow-rgb) / .16);
-  --elev-3: 0 20px 60px rgb(var(--shadow-rgb) / .35);
-  --elev-up: 0 -8px 28px rgb(var(--shadow-rgb) / .12);
+  /* Each is a tight contact shadow under a wide soft one, tinted with the
+     paper's own warmth rather than grey. */
+  --shadow-rgb: 40 30 12;
+  --elev-1: 0 1px 2px rgb(var(--shadow-rgb) / .08), 0 3px 10px rgb(var(--shadow-rgb) / .08);
+  --elev-2: 0 2px 6px rgb(var(--shadow-rgb) / .08), 0 12px 32px rgb(var(--shadow-rgb) / .14);
+  --elev-3: 0 4px 12px rgb(var(--shadow-rgb) / .12), 0 24px 64px rgb(var(--shadow-rgb) / .3);
+  --elev-up: 0 -1px 3px rgb(var(--shadow-rgb) / .06), 0 -10px 30px rgb(var(--shadow-rgb) / .12);
+  /* The glow of a coloured card, in its collection's hue. */
+  --glow: 0 2px 10px;
 
   /* The sticky bars over the scrolling text: how much of the paper they keep,
      and the blur behind them. */
@@ -174,7 +178,7 @@
 
   /* How the chapter title and the verse numbers are set. */
   --title-caps: normal;
-  --title-tracking: normal;
+  --title-tracking: -.01em;
   --title-weight: 600;
   --num-figures: normal;
   --num-weight: 400;
@@ -307,6 +311,18 @@
   }
   /* @tokens end */
 }
+@media (prefers-contrast: more) {
+  :root:not([data-style]) {
+    --edge-w: 2px;
+    --elev-1: none;
+    --elev-2: none;
+    --elev-3: none;
+    --elev-up: none;
+    --glow: 0 0 0;
+    --bar-opacity: 100%;
+    --bar-blur: none;
+  }
+}
 
 /* Sepia: warm paper, dark ink — the reading mode e-readers settle on — and
    at night the same warmth inverted, tan on umber. */
@@ -333,6 +349,184 @@
   --hl-violet-strong: light-dark(#9576cc, #a98bd6);
 }
 /* @tokens end */
+
+/* Vellum: an illuminated page. Cream vellum and brown-black ink, verse
+   numbers and the chapter title in rubric red — the red-letter tradition —
+   and gold kept to what is not text: rules and fills. By lamplight, umber
+   paper, parchment ink and a rose rubric. */
+/* @tokens vellum */
+:root[data-style='vellum'], [data-style-preview='vellum'] {
+  --ink: light-dark(#2a1f14, #efe4cc);
+  --ink-soft: light-dark(#4f3f2b, #cdbb98);
+  --paper: light-dark(#f6efe0, #1c1611);
+  --paper-raised: light-dark(#fbf7ee, #221b14);
+  --rule: light-dark(#e2d6bd, #3a2e22);
+  --edge: light-dark(#8c7a5c, #8f7c5e);
+  --accent: light-dark(#533c0c, #e3c27a);
+  --rubric: light-dark(#8b1a10, #f0a293);
+  --heading: light-dark(#8b1a10, #f0a293);
+  --danger: light-dark(#7d1010, #f4ae9f);
+  --focus: light-dark(#2d5a8a, #8fb4e0);
+}
+/* @tokens end */
+
+/* Emerald: deep green ink on a paper with a breath of jade in it, and at
+   night a forest-dark page with mint-white ink. */
+/* @tokens emerald */
+:root[data-style='emerald'], [data-style-preview='emerald'] {
+  --ink: light-dark(#10231b, #e4f0e9);
+  --ink-soft: light-dark(#34493f, #b2c7bc);
+  --paper: light-dark(#f3f7f4, #0d1a15);
+  --paper-raised: light-dark(#fbfdfb, #11211b);
+  --rule: light-dark(#d5e2da, #23392f);
+  --edge: light-dark(#72877c, #6f8f80);
+  --accent: light-dark(#084d34, #6fd3a5);
+  --heading: light-dark(#0a3d2a, #e4f0e9);
+  --danger: light-dark(#9a1f18, #f2b8b5);
+  --focus: light-dark(#1f5fa8, #8ab8f0);
+}
+/* @tokens end */
+
+/* Slate: cool stone and slate blue, flat and exact. */
+/* @tokens slate */
+:root[data-style='slate'], [data-style-preview='slate'] {
+  --ink: light-dark(#1b1f24, #e6e9ed);
+  --ink-soft: light-dark(#454c55, #b7bec7);
+  --paper: light-dark(#f4f5f7, #16191d);
+  --paper-raised: light-dark(#ffffff, #1c2025);
+  --rule: light-dark(#dde1e6, #2c3239);
+  --edge: light-dark(#7d858f, #7a838e);
+  --accent: light-dark(#2a4a70, #b0cbeb);
+  --danger: light-dark(#9a1f18, #f2b8b5);
+  --focus: light-dark(#1e5fbf, #7fb0ff);
+}
+/* @tokens end */
+
+/* Nocturne: ink-blue night and parchment text with muted gold, and by day
+   the same navy as ink on a pale page, the gold kept for the verse numbers. */
+/* @tokens nocturne */
+:root[data-style='nocturne'], [data-style-preview='nocturne'] {
+  --ink: light-dark(#141b33, #ece4d0);
+  --ink-soft: light-dark(#3f4763, #bfb8a6);
+  --paper: light-dark(#f5f6fa, #0f1424);
+  --paper-raised: light-dark(#ffffff, #141a2c);
+  --rule: light-dark(#dde0ea, #262e45);
+  --edge: light-dark(#7c839b, #7a84a0);
+  --accent: light-dark(#1f3370, #e0c068);
+  --rubric: light-dark(#5f480e, #e0c068);
+  --danger: light-dark(#9a1f18, #f4b0a8);
+  --focus: light-dark(#2d62c4, #8fb2ff);
+}
+/* @tokens end */
+
+/* Ember: for reading in the dark with as little blue light as the page can
+   manage — amber on true black, which an OLED screen leaves unlit — and by
+   day a candle-warm page with burnt-orange accents. */
+/* @tokens ember */
+:root[data-style='ember'], [data-style-preview='ember'] {
+  --ink: light-dark(#2b1a0e, #f3dcb8);
+  --ink-soft: light-dark(#5a3f27, #cfae80);
+  --paper: light-dark(#fbf0e2, #000000);
+  --paper-raised: light-dark(#fff8ef, #0e0a07);
+  --rule: light-dark(#ead8c2, #2a2016);
+  --edge: light-dark(#8f7458, #8a6d4b);
+  --accent: light-dark(#6e2e09, #ffa25e);
+  --danger: light-dark(#8f1c15, #ffb4a8);
+  --focus: light-dark(#2c5a88, #ffe08a);
+}
+/* @tokens end */
+
+/* What each style does besides colour. Classic's values are the @style
+   defaults; these are not measured, but the hygiene test keeps them here. */
+/* @style vellum */
+:root[data-style='vellum'], [data-style-preview='vellum'] {
+  --serif-latin: 'Hoefler Text', Baskerville, 'Baskerville Old Face', 'Sitka Text', 'Book Antiqua', 'Palatino Linotype', Palatino, Georgia, serif;
+  --radius-xs: 3px;
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 10px;
+  --radius-xl: 16px;
+  --shadow-rgb: 70 45 10;
+  --title-caps: small-caps;
+  --title-tracking: .06em;
+  --num-figures: oldstyle-nums;
+  --num-weight: 600;
+}
+/* @style end */
+
+/* @style emerald */
+:root[data-style='emerald'], [data-style-preview='emerald'] {
+  --serif-latin: 'Iowan Old Style', 'Sitka Text', Constantia, Georgia, serif;
+  --radius-xs: 4px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 12px;
+  --radius-xl: 18px;
+  --shadow-rgb: 8 48 30;
+}
+/* @style end */
+
+/* @style slate */
+:root[data-style='slate'], [data-style-preview='slate'] {
+  --serif-latin: Charter, 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif;
+  --radius-xs: 2px;
+  --radius-s: 2px;
+  --radius-m: 3px;
+  --radius-l: 4px;
+  --radius-xl: 6px;
+  --radius-pill: 4px;
+  --elev-1: none;
+  --elev-2: none;
+  --elev-3: none;
+  --elev-up: none;
+  --glow: 0 0 0;
+  --bar-opacity: 100%;
+  --bar-blur: none;
+  --title-weight: 700;
+  --title-tracking: -.01em;
+}
+/* @style end */
+
+/* @style nocturne */
+:root[data-style='nocturne'], [data-style-preview='nocturne'] {
+  --serif-latin: Baskerville, 'Baskerville Old Face', Charter, 'Sitka Text', Georgia, serif;
+  --radius-m: 8px;
+  --radius-l: 10px;
+  --radius-xl: 14px;
+  --shadow-rgb: 4 8 24;
+  --title-tracking: .03em;
+  --num-figures: oldstyle-nums;
+}
+/* @style end */
+
+/* @style ember */
+:root[data-style='ember'], [data-style-preview='ember'] {
+  --serif-latin: Georgia, Charter, 'Sitka Text', Cambria, serif;
+  --elev-1: none;
+  --elev-2: none;
+  --elev-3: none;
+  --elev-up: none;
+  --glow: 0 0 0;
+  --bar-opacity: 100%;
+  --bar-blur: none;
+  --title-weight: 700;
+}
+/* @style end */
+
+/* High contrast wants every boundary heavier and nothing it has to see
+   through: no blur, no shadow standing in for an edge. */
+/* @style contrast */
+:root[data-style='contrast'], [data-style-preview='contrast'] {
+  --edge-w: 2px;
+  --elev-1: none;
+  --elev-2: none;
+  --elev-3: none;
+  --elev-up: none;
+  --glow: 0 0 0;
+  --bar-opacity: 100%;
+  --bar-blur: none;
+}
+/* @style end */
 
 * { box-sizing: border-box; }
 
@@ -1229,7 +1423,7 @@ summary:focus-visible,
    its colour is more than a thin outline — and its name is in its label. */
 .card[data-color] {
   border-top-width: 6px; border-color: var(--card-hue);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--card-hue) 35%, transparent);
+  box-shadow: var(--glow) color-mix(in srgb, var(--card-hue) 35%, transparent);
 }
 .card[data-color='amber']  { --card-hue: var(--hl-amber-strong); }
 .card[data-color='rose']   { --card-hue: var(--hl-rose-strong); }

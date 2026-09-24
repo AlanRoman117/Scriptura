@@ -487,6 +487,11 @@ const catalog = {
       classic: 'Classique',
       contrast: 'Contraste élevé',
       sepia: 'Sépia',
+      vellum: 'Vélin',
+      emerald: 'Émeraude',
+      slate: 'Ardoise',
+      nocturne: 'Nocturne',
+      ember: 'Braise',
     },
     appearance: 'Clair ou sombre',
     appearances: {

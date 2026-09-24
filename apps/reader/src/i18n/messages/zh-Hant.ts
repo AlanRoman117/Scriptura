@@ -482,6 +482,11 @@ export const zhHant = {
       classic: '經典',
       contrast: '高對比',
       sepia: '棕褐色',
+      vellum: '羊皮紙',
+      emerald: '祖母綠',
+      slate: '石板',
+      nocturne: '夜曲',
+      ember: '餘燼',
     },
     appearance: '淺色或深色',
     appearances: {

@@ -484,6 +484,11 @@ export const zhHans = {
       classic: '经典',
       contrast: '高对比度',
       sepia: '棕褐色',
+      vellum: '羊皮纸',
+      emerald: '祖母绿',
+      slate: '石板',
+      nocturne: '夜曲',
+      ember: '余烬',
     },
     appearance: '浅色或深色',
     appearances: {

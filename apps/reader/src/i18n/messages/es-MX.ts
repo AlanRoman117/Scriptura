@@ -483,6 +483,11 @@ export const esMX = {
       classic: 'Clásico',
       contrast: 'Alto contraste',
       sepia: 'Sepia',
+      vellum: 'Vitela',
+      emerald: 'Esmeralda',
+      slate: 'Pizarra',
+      nocturne: 'Nocturno',
+      ember: 'Brasa',
     },
     appearance: 'Claro u oscuro',
     appearances: {

@@ -504,6 +504,11 @@ export const ptBR = {
       classic: 'Clássico',
       contrast: 'Alto contraste',
       sepia: 'Sépia',
+      vellum: 'Velino',
+      emerald: 'Esmeralda',
+      slate: 'Ardósia',
+      nocturne: 'Noturno',
+      ember: 'Brasa',
     },
     appearance: 'Claro ou escuro',
     appearances: {

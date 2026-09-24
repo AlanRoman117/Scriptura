@@ -238,7 +238,7 @@ const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
   'asked before deleting': STATES['asked before deleting'],
 };
 
-for (const style of ['contrast', 'sepia'] as const) {
+for (const style of ['contrast', 'sepia', 'vellum', 'emerald', 'slate', 'nocturne', 'ember'] as const) {
   for (const appearance of ['light', 'dark'] as const) {
     test.describe(`no axe violations, ${style} ${appearance}`, () => {
       for (const [name, arrange] of Object.entries(STYLE_STATES)) {

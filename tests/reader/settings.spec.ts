@@ -65,6 +65,11 @@ const PAPER = {
   classic: { light: 'rgb(250, 249, 247)', dark: 'rgb(23, 22, 20)' },
   contrast: { light: 'rgb(255, 255, 255)', dark: 'rgb(0, 0, 0)' },
   sepia: { light: 'rgb(244, 236, 216)', dark: 'rgb(30, 25, 18)' },
+  vellum: { light: 'rgb(246, 239, 224)', dark: 'rgb(28, 22, 17)' },
+  emerald: { light: 'rgb(243, 247, 244)', dark: 'rgb(13, 26, 21)' },
+  slate: { light: 'rgb(244, 245, 247)', dark: 'rgb(22, 25, 29)' },
+  nocturne: { light: 'rgb(245, 246, 250)', dark: 'rgb(15, 20, 36)' },
+  ember: { light: 'rgb(251, 240, 226)', dark: 'rgb(0, 0, 0)' },
 } as const;
 
 const hex = (rgb: string) => '#' + rgb.match(/\d+/g)!.map((n) => Number(n).toString(16).padStart(2, '0')).join('');
