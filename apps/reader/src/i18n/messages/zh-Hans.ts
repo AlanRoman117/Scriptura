@@ -479,14 +479,17 @@ export const zhHans = {
     title: '设置',
     close: '关闭设置',
     display: '阅读与显示',
-    colours: '颜色',
-    themes: {
+    style: '风格',
+    styles: {
+      classic: '经典',
+      contrast: '高对比度',
+      sepia: '棕褐色',
+    },
+    appearance: '浅色或深色',
+    appearances: {
       system: '跟随设备',
       light: '浅色',
       dark: '深色',
-      'hc-light': '高对比度（浅色）',
-      'hc-dark': '高对比度（深色）',
-      sepia: '棕褐色',
     },
     textSize: '文字大小',
     spacing: '行距',

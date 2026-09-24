@@ -12,10 +12,13 @@
  * Three tiers, each in its own marked block, so tests/unit/contrast.test.ts can
  * read them straight out of this file:
  *
- * 1. Palettes (`@tokens <name>`): the colours a theme chooses. `light-dark()`
- *    holds the light and dark value of each in one place; `color-scheme`
- *    decides which is used — `light dark` follows the operating system, and
- *    `[data-theme]` (written by lib/prefs.ts) pins it.
+ * 1. Palettes (`@tokens <style>`): the colours a style chooses, one palette
+ *    per style. `light-dark()` holds the light and dark value of each in one
+ *    place; `color-scheme` decides which is used — `light dark` follows the
+ *    operating system, and `[data-appearance]` pins it. `[data-style]`
+ *    chooses the palette; both are written by lib/prefs.ts, and Classic is
+ *    the absent attribute. Each selector also names `[data-style-preview]`,
+ *    so an element can draw itself in a style other than the page's.
  * 2. Derived (`@derived`): every other colour, written as a formula over the
  *    palette — the hover fill, the selected chip, the highlight tints. A
  *    palette gets them for free and may override any of them. They are opaque
@@ -61,7 +64,7 @@
 /* @hues end */
 
 /* @derived */
-:root {
+:root, [data-style-preview] {
   /* Surfaces: a step below the paper (bars, code, a card's grip), a row
      under the pointer, and a control being pressed. */
   --paper-sunken: color-mix(in srgb, var(--rule) 50%, var(--paper-raised));
@@ -101,8 +104,8 @@
 }
 /* @derived end */
 
-/* @tokens light-dark */
-:root {
+/* @tokens classic */
+:root:not([data-style]), [data-style-preview='classic'] {
   --ink: light-dark(#1f1d1a, #ece8e1);
   --ink-soft: light-dark(#4d4944, #c2bcb4);
   --paper: light-dark(#faf9f7, #171614);
@@ -246,14 +249,13 @@
 :lang(zh-Hant) em { font-style: normal; font-weight: 600; }
 
 /* The reader's choice pins the scheme; `light-dark()` follows it. */
-:root[data-theme='light'] { color-scheme: light; }
-:root[data-theme='dark'] { color-scheme: dark; }
+:root[data-appearance='light'] { color-scheme: light; }
+:root[data-appearance='dark'] { color-scheme: dark; }
 
-/* High contrast, in both polarities. One block, `light-dark()` again, with
-   the polarity chosen by the theme name. */
-/* @tokens hc */
-:root[data-theme='hc-light'],
-:root[data-theme='hc-dark'] {
+/* High contrast, in both polarities: the conformance baseline, kept as it
+   was hand-tuned. */
+/* @tokens contrast */
+:root[data-style='contrast'], [data-style-preview='contrast'] {
   --ink: light-dark(#000000, #ffffff);
   --ink-soft: light-dark(#333333, #d9d9d9);
   --paper: light-dark(#ffffff, #000000);
@@ -275,16 +277,14 @@
   --hl-violet-strong: light-dark(#9b7bd4, #9b7bd4);
 }
 /* @tokens end */
-:root[data-theme='hc-light'] { color-scheme: light; }
-:root[data-theme='hc-dark'] { color-scheme: dark; }
 
 /* The same tokens when the operating system asks for more contrast and the
-   reader has not chosen a theme. CSS cannot reference the block above from
+   reader has not chosen a style. CSS cannot reference the block above from
    inside a media query, so it is repeated; contrast.test.ts asserts the two
    copies are identical. */
 @media (prefers-contrast: more) {
-  /* @tokens hc-auto */
-  :root:not([data-theme]) {
+  /* @tokens contrast-auto */
+  :root:not([data-style]) {
     --ink: light-dark(#000000, #ffffff);
     --ink-soft: light-dark(#333333, #d9d9d9);
     --paper: light-dark(#ffffff, #000000);
@@ -308,29 +308,29 @@
   /* @tokens end */
 }
 
-/* Sepia: warm paper, dark ink — the reading mode e-readers settle on. */
+/* Sepia: warm paper, dark ink — the reading mode e-readers settle on — and
+   at night the same warmth inverted, tan on umber. */
 /* @tokens sepia */
-:root[data-theme='sepia'] {
-  color-scheme: light;
-  --ink: #2b2418;
-  --ink-soft: #4a3f28;
-  --paper: #f4ecd8;
-  --paper-raised: #fbf6ea;
-  --rule: #d8cdb2;
-  --edge: #7d776e;
-  --accent: #4f3b0c;
-  --danger: #8f1c15;
-  --focus: #2c5a88;
-  --hl-amber: #f3ddab;
-  --hl-rose: #efc8c1;
-  --hl-sky: #c8d7dc;
-  --hl-mint: #c5dfc2;
-  --hl-violet: #ddcfd7;
-  --hl-amber-strong: #a87e1d;
-  --hl-rose-strong: #d75c79;
-  --hl-sky-strong: #4388cc;
-  --hl-mint-strong: #33966b;
-  --hl-violet-strong: #9576cc;
+:root[data-style='sepia'], [data-style-preview='sepia'] {
+  --ink: light-dark(#2b2418, #efe3ca);
+  --ink-soft: light-dark(#4a3f28, #cdbd9c);
+  --paper: light-dark(#f4ecd8, #1e1912);
+  --paper-raised: light-dark(#fbf6ea, #231d15);
+  --rule: light-dark(#d8cdb2, #3b3223);
+  --edge: light-dark(#7d776e, #8f7e60);
+  --accent: light-dark(#4f3b0c, #e6c887);
+  --danger: light-dark(#8f1c15, #f3b4a8);
+  --focus: light-dark(#2c5a88, #8fb4d9);
+  --hl-amber: light-dark(#f3ddab, #4a3a16);
+  --hl-rose: light-dark(#efc8c1, #4a2a27);
+  --hl-sky: light-dark(#c8d7dc, #29363a);
+  --hl-mint: light-dark(#c5dfc2, #263a26);
+  --hl-violet: light-dark(#ddcfd7, #3a2e37);
+  --hl-amber-strong: light-dark(#a87e1d, #e0ad3c);
+  --hl-rose-strong: light-dark(#d75c79, #e0708a);
+  --hl-sky-strong: light-dark(#4388cc, #6aa3d6);
+  --hl-mint-strong: light-dark(#33966b, #52b584);
+  --hl-violet-strong: light-dark(#9576cc, #a98bd6);
 }
 /* @tokens end */
 

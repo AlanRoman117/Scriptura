@@ -213,3 +213,44 @@ for (const scheme of ['light', 'dark'] as const) {
     }
   });
 }
+
+/**
+ * Every style other than Classic (the two scheme runs above), pinned light and
+ * dark. A style changes colour, corners, depth and type, and colour is what
+ * axe can judge, so these are the states that between them put every surface
+ * on screen: marked verses with the actions open, a note with its tools,
+ * Settings, the board, and the confirmation over a dimmed page.
+ * tests/unit/contrast.test.ts measures the same tokens pair by pair; this is
+ * the backstop that sees them as painted.
+ */
+const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
+  'marked verses': async (page) => {
+    for (const [verse, colour] of [[2, 'amber'], [3, 'rose'], [4, 'sky'], [5, 'mint'], [6, 'violet']] as const) {
+      await page.getByTestId(`verse-${verse}`).click();
+      await page.getByTestId(`swatch-${colour}`).click();
+    }
+    await page.getByTestId('verse-7').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+  },
+  'formatting tools': STATES['formatting tools'],
+  settings: STATES.settings,
+  board: STATES.board,
+  'asked before deleting': STATES['asked before deleting'],
+};
+
+for (const style of ['contrast', 'sepia'] as const) {
+  for (const appearance of ['light', 'dark'] as const) {
+    test.describe(`no axe violations, ${style} ${appearance}`, () => {
+      for (const [name, arrange] of Object.entries(STYLE_STATES)) {
+        test(name, async ({ page }) => {
+          await page.addInitScript((prefs) => localStorage.setItem('scriptura-display', prefs), JSON.stringify({ style, appearance }));
+          await open(page);
+          await expect(page.locator('html')).toHaveAttribute('data-style', style);
+          await arrange(page);
+          const results = await axeFor(page).analyze();
+          expect(results.violations.length, describeViolations(results)).toBe(0);
+        });
+      }
+    });
+  }
+}

@@ -28,10 +28,19 @@
       try {
         var p = JSON.parse(localStorage.getItem('scriptura-display') || '{}') || {};
         var r = document.documentElement;
-        var themes = { light: '#faf9f7', dark: '#171614', 'hc-light': '#ffffff', 'hc-dark': '#000000', sepia: '#f4ecd8' };
+        var papers = {
+          classic: ['#faf9f7', '#171614'], contrast: ['#ffffff', '#000000'], sepia: ['#f4ecd8', '#1e1912']
+        };
+        var legacy = {
+          system: ['classic', 'system'], light: ['classic', 'light'], dark: ['classic', 'dark'],
+          'hc-light': ['contrast', 'light'], 'hc-dark': ['contrast', 'dark'], sepia: ['sepia', 'light']
+        }[p.theme] || [];
+        var style = papers.hasOwnProperty(p.style) ? p.style : legacy[0] || 'classic';
+        var appearance = ['system', 'light', 'dark'].indexOf(p.appearance) !== -1 ? p.appearance : legacy[1] || 'system';
         var spacing = { normal: ['1.75', '.85rem'], relaxed: ['1.9', '2.85em'], loose: ['2.1', '3.15em'] }[p.spacing] || ['1.75', '.85rem'];
         var measure = { narrow: '56ch', normal: '64ch', wide: '70ch' }[p.measure] || '64ch';
-        if (themes[p.theme]) r.setAttribute('data-theme', p.theme);
+        if (style !== 'classic') r.setAttribute('data-style', style);
+        if (appearance !== 'system') r.setAttribute('data-appearance', appearance);
         if (p.motion === 'reduce') r.setAttribute('data-motion', 'reduce');
         if (p.markers === true) r.setAttribute('data-markers', 'true');
         if ([112, 125, 150, 175, 200].indexOf(p.textSize) !== -1) r.style.setProperty('--text-scale', String(p.textSize / 100));
@@ -55,7 +64,10 @@
           lang = (parts[0] === 'zh' ? chinese(parts) : byLanguage[parts[0]]) || '';
         }
         r.setAttribute('lang', lang || 'en-US');
-        if (themes[p.theme]) document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = themes[p.theme]; });
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) {
+          var dark = appearance === 'system' ? String(m.media).indexOf('dark') !== -1 : appearance === 'dark';
+          m.content = papers[style][dark ? 1 : 0];
+        });
       } catch (e) {}
     </script>
   </head>

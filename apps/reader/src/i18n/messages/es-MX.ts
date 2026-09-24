@@ -478,14 +478,17 @@ export const esMX = {
     title: 'Configuración',
     close: 'Cerrar la configuración',
     display: 'Lectura y pantalla',
-    colours: 'Colores',
-    themes: {
+    style: 'Estilo',
+    styles: {
+      classic: 'Clásico',
+      contrast: 'Alto contraste',
+      sepia: 'Sepia',
+    },
+    appearance: 'Claro u oscuro',
+    appearances: {
       system: 'Igual que el dispositivo',
       light: 'Claro',
       dark: 'Oscuro',
-      'hc-light': 'Alto contraste, claro',
-      'hc-dark': 'Alto contraste, oscuro',
-      sepia: 'Sepia',
     },
     textSize: 'Tamaño del texto',
     spacing: 'Interlineado',

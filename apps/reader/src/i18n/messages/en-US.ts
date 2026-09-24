@@ -494,14 +494,17 @@ export const enUS = {
     title: 'Settings',
     close: 'Close settings',
     display: 'Reading & display',
-    colours: 'Colours',
-    themes: {
+    style: 'Style',
+    styles: {
+      classic: 'Classic',
+      contrast: 'High contrast',
+      sepia: 'Sepia',
+    },
+    appearance: 'Light or dark',
+    appearances: {
       system: 'Follow the device',
       light: 'Light',
       dark: 'Dark',
-      'hc-light': 'High contrast, light',
-      'hc-dark': 'High contrast, dark',
-      sepia: 'Sepia',
     },
     textSize: 'Text size',
     spacing: 'Line spacing',

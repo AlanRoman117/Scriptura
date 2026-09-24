@@ -477,14 +477,17 @@ export const zhHant = {
     title: '設定',
     close: '關閉設定',
     display: '閱讀與顯示',
-    colours: '顏色',
-    themes: {
+    style: '風格',
+    styles: {
+      classic: '經典',
+      contrast: '高對比',
+      sepia: '棕褐色',
+    },
+    appearance: '淺色或深色',
+    appearances: {
       system: '跟隨裝置',
       light: '淺色',
       dark: '深色',
-      'hc-light': '高對比（淺色）',
-      'hc-dark': '高對比（深色）',
-      sepia: '棕褐色',
     },
     textSize: '文字大小',
     spacing: '行距',

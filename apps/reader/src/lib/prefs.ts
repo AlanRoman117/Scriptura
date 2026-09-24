@@ -18,8 +18,21 @@
 import { useSyncExternalStore } from 'react';
 import { LOCALES, deviceLanguages, isLocale, matchLocale, type Locale } from '../i18n/locales';
 
-export const THEMES = ['system', 'light', 'dark', 'hc-light', 'hc-dark', 'sepia'] as const;
-export type Theme = (typeof THEMES)[number];
+/**
+ * How the reader looks: a style, drawn light or dark.
+ *
+ * A style is a whole look — its palette, its corners and depth, its reading
+ * face, how a chapter title is set — and every style has a light and a dark
+ * palette, so the two choices are independent: any style follows the device
+ * or is pinned to either polarity. Classic is the default and is written as
+ * an *absent* `data-style`, which is also what lets the operating system's
+ * "more contrast" request swap in the high-contrast palette (styles.css).
+ */
+export const STYLES = ['classic', 'contrast', 'sepia'] as const;
+export type Style = (typeof STYLES)[number];
+
+export const APPEARANCES = ['system', 'light', 'dark'] as const;
+export type Appearance = (typeof APPEARANCES)[number];
 
 export const TEXT_SIZES = [100, 112, 125, 150, 175, 200] as const;
 export type TextSize = (typeof TEXT_SIZES)[number];
@@ -46,7 +59,8 @@ export const LANGUAGES = ['system', ...LOCALES] as const;
 export type LanguagePref = (typeof LANGUAGES)[number];
 
 export interface DisplayPrefs {
-  theme: Theme;
+  style: Style;
+  appearance: Appearance;
   textSize: TextSize;
   spacing: Spacing;
   measure: Measure;
@@ -60,7 +74,8 @@ export interface DisplayPrefs {
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
-  theme: 'system',
+  style: 'classic',
+  appearance: 'system',
   textSize: 100,
   spacing: 'normal',
   measure: 'normal',
@@ -98,13 +113,29 @@ export const MEASURE_VALUES: Record<Measure, string> = {
   wide: '70ch',
 };
 
-/** The browser-chrome colour for each pinned theme; `system` uses the metas' own media queries. */
-export const THEME_PAPER: Record<Exclude<Theme, 'system'>, string> = {
-  light: '#faf9f7',
-  dark: '#171614',
-  'hc-light': '#ffffff',
-  'hc-dark': '#000000',
-  sepia: '#f4ecd8',
+/**
+ * Each style's paper, light and dark: the browser chrome's colour
+ * (`theme-color`). Mirrored in index.html's inline script, and checked
+ * against each palette's `--paper` in styles.css by tests/unit/prefs.test.ts.
+ */
+export const STYLE_PAPER: Record<Style, { light: string; dark: string }> = {
+  classic: { light: '#faf9f7', dark: '#171614' },
+  contrast: { light: '#ffffff', dark: '#000000' },
+  sepia: { light: '#f4ecd8', dark: '#1e1912' },
+};
+
+/**
+ * The single `theme` this preference used to be, as a style and an
+ * appearance, so a reader's choice survives the change. Mirrored in
+ * index.html's inline script.
+ */
+export const LEGACY_THEMES: Record<string, [Style, Appearance]> = {
+  system: ['classic', 'system'],
+  light: ['classic', 'light'],
+  dark: ['classic', 'dark'],
+  'hc-light': ['contrast', 'light'],
+  'hc-dark': ['contrast', 'dark'],
+  sepia: ['sepia', 'light'],
 };
 
 const oneOf = <T extends readonly unknown[]>(values: T, v: unknown, fallback: T[number]): T[number] =>
@@ -113,8 +144,11 @@ const oneOf = <T extends readonly unknown[]>(values: T, v: unknown, fallback: T[
 /** Validate whatever was stored; anything unknown falls back field by field, never throws. */
 export function normalizePrefs(raw: unknown): DisplayPrefs {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const legacy = typeof r.theme === 'string' && Object.hasOwn(LEGACY_THEMES, r.theme) ? LEGACY_THEMES[r.theme] : undefined;
   return {
-    theme: oneOf(THEMES, r.theme, DEFAULT_PREFS.theme),
+    // A valid new value, else what the old theme meant, else the default.
+    style: oneOf(STYLES, r.style, legacy?.[0] ?? DEFAULT_PREFS.style),
+    appearance: oneOf(APPEARANCES, r.appearance, legacy?.[1] ?? DEFAULT_PREFS.appearance),
     textSize: oneOf(TEXT_SIZES, Number(r.textSize), DEFAULT_PREFS.textSize),
     spacing: oneOf(SPACINGS, r.spacing, DEFAULT_PREFS.spacing),
     measure: oneOf(MEASURES, r.measure, DEFAULT_PREFS.measure),
@@ -154,7 +188,7 @@ export function savePrefs(prefs: DisplayPrefs): void {
 /**
  * Write the preferences onto the document.
  *
- * Attributes for the discrete choices (theme, motion, markers) — the state
+ * Attributes for the discrete choices (style, appearance, motion, markers) — the state
  * channel the stylesheet and the tests read — and custom properties for the
  * continuous ones. Safe to call before React mounts and on every change.
  */
@@ -164,7 +198,8 @@ export function applyPrefs(prefs: DisplayPrefs): void {
   const set = (name: string, value: string | null) =>
     value === null ? root.removeAttribute(name) : root.setAttribute(name, value);
 
-  set('data-theme', prefs.theme === 'system' ? null : prefs.theme);
+  set('data-style', prefs.style === 'classic' ? null : prefs.style);
+  set('data-appearance', prefs.appearance === 'system' ? null : prefs.appearance);
   set('data-motion', prefs.motion === 'system' ? null : prefs.motion);
   set('data-markers', prefs.markers ? 'true' : null);
   // Always present: the page's language is how a screen reader picks its voice (3.1.1).
@@ -175,16 +210,12 @@ export function applyPrefs(prefs: DisplayPrefs): void {
   root.style.setProperty('--verse-gap', SPACING_VALUES[prefs.spacing].gap);
   root.style.setProperty('--measure', MEASURE_VALUES[prefs.measure]);
 
-  // The browser chrome follows the theme. With `system` each meta keeps its
-  // own media query; a pinned theme colours both.
+  // The browser chrome follows the paper. Each meta answers its own media
+  // query — one light, one dark — unless the appearance is pinned, which
+  // colours both.
   for (const meta of document.querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')) {
-    const own = meta.dataset.default;
-    if (prefs.theme === 'system') {
-      if (own) meta.content = own;
-    } else {
-      if (!own) meta.dataset.default = meta.content;
-      meta.content = THEME_PAPER[prefs.theme];
-    }
+    const own = meta.media.includes('dark') ? 'dark' : 'light';
+    meta.content = STYLE_PAPER[prefs.style][prefs.appearance === 'system' ? own : prefs.appearance];
   }
 }
 

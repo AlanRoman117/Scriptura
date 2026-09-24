@@ -60,40 +60,70 @@ test.describe('spacing', () => {
   });
 });
 
-test.describe('colours', () => {
-  test('a pinned theme overrides the device, and system follows it again', async ({ page }) => {
+/** Each style's paper, as the page paints it: rgb() of STYLE_PAPER in lib/prefs.ts. */
+const PAPER = {
+  classic: { light: 'rgb(250, 249, 247)', dark: 'rgb(23, 22, 20)' },
+  contrast: { light: 'rgb(255, 255, 255)', dark: 'rgb(0, 0, 0)' },
+  sepia: { light: 'rgb(244, 236, 216)', dark: 'rgb(30, 25, 18)' },
+} as const;
+
+const hex = (rgb: string) => '#' + rgb.match(/\d+/g)!.map((n) => Number(n).toString(16).padStart(2, '0')).join('');
+
+test.describe('style and appearance', () => {
+  const paper = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const metas = (page: import('@playwright/test').Page) =>
+    page.locator('meta[name="theme-color"]').evaluateAll((m) => m.map((el) => (el as HTMLMetaElement).content));
+
+  test('a pinned appearance overrides the device, and system follows it again', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page);
-    const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(await paper()).toBe('rgb(250, 249, 247)');
+    expect(await paper(page)).toBe(PAPER.classic.light);
 
     await page.getByTestId('settings-open').click();
-    await page.getByTestId('pref-theme').selectOption('dark');
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    expect(await paper()).toBe('rgb(23, 22, 20)');
+    await page.getByTestId('pref-appearance').selectOption('dark');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
+    expect(await paper(page)).toBe(PAPER.classic.dark);
     // The browser chrome follows.
-    const metas = await page.locator('meta[name="theme-color"]').evaluateAll((m) =>
-      m.map((el) => (el as HTMLMetaElement).content)
-    );
-    expect(metas).toEqual(['#171614', '#171614']);
+    expect(await metas(page)).toEqual([hex(PAPER.classic.dark), hex(PAPER.classic.dark)]);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
 
     await page.getByTestId('settings-open').click();
-    await page.getByTestId('pref-theme').selectOption('system');
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
-    expect(await paper()).toBe('rgb(250, 249, 247)');
+    await page.getByTestId('pref-appearance').selectOption('system');
+    await expect(page.locator('html')).not.toHaveAttribute('data-appearance', /./);
+    expect(await paper(page)).toBe(PAPER.classic.light);
   });
 
-  test('high contrast and sepia are real themes', async ({ page }) => {
+  test('every style paints its own paper, light and dark, and survives a reload', async ({ page }) => {
     await open(page);
     await page.getByTestId('settings-open').click();
-    const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    await page.getByTestId('pref-theme').selectOption('hc-dark');
-    expect(await paper()).toBe('rgb(0, 0, 0)');
-    await page.getByTestId('pref-theme').selectOption('sepia');
-    expect(await paper()).toBe('rgb(244, 236, 216)');
+    for (const [style, papers] of Object.entries(PAPER)) {
+      await page.getByTestId('pref-style').selectOption(style);
+      // Classic is the absent attribute.
+      if (style === 'classic') await expect(page.locator('html')).not.toHaveAttribute('data-style', /./);
+      else await expect(page.locator('html')).toHaveAttribute('data-style', style);
+      for (const appearance of ['light', 'dark'] as const) {
+        await page.getByTestId('pref-appearance').selectOption(appearance);
+        expect(await paper(page), `${style} ${appearance}`).toBe(papers[appearance]);
+      }
+    }
+    await page.getByTestId('pref-style').selectOption('sepia');
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    expect(await paper(page)).toBe(PAPER.sepia.dark);
+  });
+
+  test('a theme stored before styles existed still applies', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ theme: 'hc-dark' })));
+    await open(page);
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'contrast');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
+    expect(await paper(page)).toBe(PAPER.contrast.dark);
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByTestId('pref-style')).toHaveValue('contrast');
+    await expect(page.getByTestId('pref-appearance')).toHaveValue('dark');
   });
 });

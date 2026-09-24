@@ -499,14 +499,17 @@ export const ptBR = {
     title: 'Configurações',
     close: 'Fechar as configurações',
     display: 'Leitura e exibição',
-    colours: 'Cores',
-    themes: {
+    style: 'Estilo',
+    styles: {
+      classic: 'Clássico',
+      contrast: 'Alto contraste',
+      sepia: 'Sépia',
+    },
+    appearance: 'Claro ou escuro',
+    appearances: {
       system: 'Seguir o dispositivo',
       light: 'Claro',
       dark: 'Escuro',
-      'hc-light': 'Alto contraste, claro',
-      'hc-dark': 'Alto contraste, escuro',
-      sepia: 'Sépia',
     },
     textSize: 'Tamanho do texto',
     spacing: 'Espaçamento entre linhas',

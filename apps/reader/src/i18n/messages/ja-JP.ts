@@ -474,14 +474,17 @@ export const jaJP = {
     title: '設定',
     close: '設定を閉じる',
     display: '表示と読みやすさ',
-    colours: '配色',
-    themes: {
+    style: 'スタイル',
+    styles: {
+      classic: 'クラシック',
+      contrast: 'ハイコントラスト',
+      sepia: 'セピア',
+    },
+    appearance: '外観',
+    appearances: {
       system: '端末の設定に合わせる',
       light: 'ライト',
       dark: 'ダーク',
-      'hc-light': 'ハイコントラスト（ライト）',
-      'hc-dark': 'ハイコントラスト（ダーク）',
-      sepia: 'セピア',
     },
     textSize: '文字の大きさ',
     spacing: '行間',
