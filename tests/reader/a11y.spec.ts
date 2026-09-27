@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { PAGE_LEVEL_RULES, axeFor, describeViolations } from '../helpers/axe';
 import type { Page } from '@playwright/test';
+import { PAPER, STYLES, displayPrefs, rgb } from '../helpers/styles';
 
 /**
  * Automated accessibility checks, one UI state per test.
@@ -215,13 +216,17 @@ for (const scheme of ['light', 'dark'] as const) {
 }
 
 /**
- * Every style other than Classic (the two scheme runs above), pinned light and
- * dark. A style changes colour, corners, depth and type, and colour is what
- * axe can judge, so these are the states that between them put every surface
- * on screen: marked verses with the actions open, a note with its tools,
- * Settings, the board, and the confirmation over a dimmed page.
- * tests/unit/contrast.test.ts measures the same tokens pair by pair; this is
- * the backstop that sees them as painted.
+ * Every style, in every appearance: following the device (on a light device
+ * and on a dark one) and pinned light and dark — each pin on a device set to
+ * the opposite, where a pin that did not hold would show. Classic following
+ * the device is the two scheme runs above, over every state. A style changes
+ * colour, corners, depth and type, and colour is what axe can judge, so these
+ * are the states that between them put every surface on screen: marked verses
+ * with the actions open, a note with its tools, Settings, the board, and the
+ * confirmation over a dimmed page. tests/unit/contrast.test.ts measures the
+ * same tokens pair by pair; this is the backstop that sees them as painted,
+ * and tests/reader/styles.spec.ts proves each appearance paints the palette
+ * it should.
  */
 const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
   'marked verses': async (page) => {
@@ -238,14 +243,28 @@ const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
   'asked before deleting': STATES['asked before deleting'],
 };
 
-for (const style of ['contrast', 'sepia', 'vellum', 'emerald', 'slate', 'nocturne', 'ember'] as const) {
-  for (const appearance of ['light', 'dark'] as const) {
-    test.describe(`no axe violations, ${style} ${appearance}`, () => {
+const CONDITIONS = [
+  { appearance: 'system', device: 'light', label: 'system, on a light device' },
+  { appearance: 'system', device: 'dark', label: 'system, on a dark device' },
+  { appearance: 'light', device: 'dark', label: 'light, on a dark device' },
+  { appearance: 'dark', device: 'light', label: 'dark, on a light device' },
+] as const;
+
+for (const style of STYLES) {
+  for (const { appearance, device, label } of CONDITIONS) {
+    if (style === 'classic' && appearance === 'system') continue;
+    test.describe(`no axe violations, ${style}, ${label}`, () => {
       for (const [name, arrange] of Object.entries(STYLE_STATES)) {
         test(name, async ({ page }) => {
-          await page.addInitScript((prefs) => localStorage.setItem('scriptura-display', prefs), JSON.stringify({ style, appearance }));
+          await page.emulateMedia({ colorScheme: device });
+          await page.addInitScript((prefs) => localStorage.setItem('scriptura-display', prefs), displayPrefs(style, appearance));
           await open(page);
-          await expect(page.locator('html')).toHaveAttribute('data-style', style);
+          const root = page.locator('html');
+          if (style === 'classic') await expect(root).not.toHaveAttribute('data-style', /./);
+          else await expect(root).toHaveAttribute('data-style', style);
+          // The paper says which palette is painted; styles.spec.ts checks the rest.
+          const polarity = appearance === 'system' ? device : appearance;
+          expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe(rgb(PAPER[style][polarity]));
           await arrange(page);
           const results = await axeFor(page).analyze();
           expect(results.violations.length, describeViolations(results)).toBe(0);

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { PAPER, rgb } from '../helpers/styles';
 
 /**
  * Display preferences (1.4.8, 2.3.3): chosen once, applied everywhere, kept
@@ -60,20 +61,6 @@ test.describe('spacing', () => {
   });
 });
 
-/** Each style's paper, as the page paints it: rgb() of STYLE_PAPER in lib/prefs.ts. */
-const PAPER = {
-  classic: { light: 'rgb(250, 249, 247)', dark: 'rgb(23, 22, 20)' },
-  contrast: { light: 'rgb(255, 255, 255)', dark: 'rgb(0, 0, 0)' },
-  sepia: { light: 'rgb(244, 236, 216)', dark: 'rgb(30, 25, 18)' },
-  vellum: { light: 'rgb(246, 239, 224)', dark: 'rgb(28, 22, 17)' },
-  emerald: { light: 'rgb(243, 247, 244)', dark: 'rgb(13, 26, 21)' },
-  slate: { light: 'rgb(244, 245, 247)', dark: 'rgb(22, 25, 29)' },
-  nocturne: { light: 'rgb(245, 246, 250)', dark: 'rgb(15, 20, 36)' },
-  ember: { light: 'rgb(251, 240, 226)', dark: 'rgb(0, 0, 0)' },
-} as const;
-
-const hex = (rgb: string) => '#' + rgb.match(/\d+/g)!.map((n) => Number(n).toString(16).padStart(2, '0')).join('');
-
 test.describe('style and appearance', () => {
   const paper = (page: import('@playwright/test').Page) =>
     page.evaluate(() => getComputedStyle(document.body).backgroundColor);
@@ -83,14 +70,14 @@ test.describe('style and appearance', () => {
   test('a pinned appearance overrides the device, and system follows it again', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page);
-    expect(await paper(page)).toBe(PAPER.classic.light);
+    expect(await paper(page)).toBe(rgb(PAPER.classic.light));
 
     await page.getByTestId('settings-open').click();
     await page.getByTestId('pref-appearance').selectOption('dark');
     await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
-    expect(await paper(page)).toBe(PAPER.classic.dark);
+    expect(await paper(page)).toBe(rgb(PAPER.classic.dark));
     // The browser chrome follows.
-    expect(await metas(page)).toEqual([hex(PAPER.classic.dark), hex(PAPER.classic.dark)]);
+    expect(await metas(page)).toEqual([PAPER.classic.dark, PAPER.classic.dark]);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
@@ -99,7 +86,7 @@ test.describe('style and appearance', () => {
     await page.getByTestId('settings-open').click();
     await page.getByTestId('pref-appearance').selectOption('system');
     await expect(page.locator('html')).not.toHaveAttribute('data-appearance', /./);
-    expect(await paper(page)).toBe(PAPER.classic.light);
+    expect(await paper(page)).toBe(rgb(PAPER.classic.light));
   });
 
   test('every style paints its own paper, light and dark, and survives a reload', async ({ page }) => {
@@ -112,13 +99,13 @@ test.describe('style and appearance', () => {
       else await expect(page.locator('html')).toHaveAttribute('data-style', style);
       for (const appearance of ['light', 'dark'] as const) {
         await page.getByTestId('pref-appearance').selectOption(appearance);
-        expect(await paper(page), `${style} ${appearance}`).toBe(papers[appearance]);
+        expect(await paper(page), `${style} ${appearance}`).toBe(rgb(papers[appearance]));
       }
     }
     await page.getByTestId('pref-style').selectOption('sepia');
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    expect(await paper(page)).toBe(PAPER.sepia.dark);
+    expect(await paper(page)).toBe(rgb(PAPER.sepia.dark));
   });
 
   test('a theme stored before styles existed still applies', async ({ page }) => {
@@ -126,7 +113,7 @@ test.describe('style and appearance', () => {
     await open(page);
     await expect(page.locator('html')).toHaveAttribute('data-style', 'contrast');
     await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
-    expect(await paper(page)).toBe(PAPER.contrast.dark);
+    expect(await paper(page)).toBe(rgb(PAPER.contrast.dark));
     await page.getByTestId('settings-open').click();
     await expect(page.getByTestId('pref-style')).toHaveValue('contrast');
     await expect(page.getByTestId('pref-appearance')).toHaveValue('dark');

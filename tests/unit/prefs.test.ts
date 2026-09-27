@@ -15,7 +15,8 @@ import {
   resolveLocale,
   savePrefs,
 } from '../../apps/reader/src/lib/prefs';
-import { readSheet, theme } from '../helpers/tokens';
+import { readSheet, stripComments, theme } from '../helpers/tokens';
+import { APPEARANCES as SPEC_APPEARANCES, PAPER as SPEC_PAPER, STYLES as SPEC_STYLES } from '../helpers/styles';
 
 /**
  * Display preferences: whatever is in storage, the app gets a valid object.
@@ -85,6 +86,44 @@ describe('STYLE_PAPER', () => {
   test('every style has a palette and every palette a style', () => {
     const palettes = [...sheet.palettes.keys()].filter((name) => !name.endsWith('-auto')).sort();
     expect(palettes).toEqual([...STYLES].sort());
+  });
+
+  // The browser specs keep their own copy, since they do not import app code.
+  test('the browser specs test the same styles, appearances and papers', () => {
+    expect([...SPEC_STYLES]).toEqual([...STYLES]);
+    expect([...SPEC_APPEARANCES]).toEqual([...APPEARANCES]);
+    expect(SPEC_PAPER).toEqual(STYLE_PAPER);
+  });
+});
+
+/*
+ * Light and dark change colour and nothing else: `[data-appearance]` only
+ * sets `color-scheme`, which picks one side of each `light-dark()` pair, and
+ * nothing asks the device's scheme directly. Layout differs by style (Vellum
+ * sets its titles in spaced small caps, High contrast draws 2px edges), not by
+ * appearance. That is what lets the phone's layout gates run once per style
+ * rather than once per style and appearance (tests/reader-touch/styles.spec.ts).
+ */
+describe('appearance is colour only', () => {
+  const css = stripComments(readFileSync(STYLESHEET, 'utf8'));
+
+  test('the only rules on [data-appearance] set color-scheme', () => {
+    const rules = [...css.matchAll(/([^{}]*\[data-appearance[^{}]*)\{([^}]*)\}/g)];
+    expect(rules.length).toBeGreaterThan(0);
+    for (const [, , body] of rules) {
+      const props = body.split(';').map((d) => d.split(':')[0].trim()).filter(Boolean);
+      expect(props).toEqual(['color-scheme']);
+    }
+  });
+
+  test('nothing asks the device for its scheme', () => {
+    expect(css).not.toMatch(/prefers-color-scheme/);
+  });
+
+  test('light-dark() appears only in colour declarations', () => {
+    for (const [, prop] of css.matchAll(/([\w-]+)\s*:[^;{}]*light-dark\(/g)) {
+      expect(prop).toMatch(/^--|color|background|border|outline|fill|stroke|shadow|caret/);
+    }
   });
 });
 
