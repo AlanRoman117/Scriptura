@@ -53,6 +53,13 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await expect(sheet).toHaveAttribute('data-sheet', 'full');
     await expect.poll(() => sheet.evaluate((el) => el.getAnimations().length)).toBe(0);
   },
+  // A title long enough to wrap: it grows, and nothing beside it moves or clips.
+  'a long note title': async (page) => {
+    await STATES['writing a note'](page);
+    await page.getByTestId('note-title').tap();
+    await page.keyboard.type('Notes on the prologue of John: the Word, the light, the witness of John the Baptist, and grace upon grace');
+    await expect.poll(() => page.getByTestId('note-title').evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);
+  },
   marks: async (page) => {
     await page.getByTestId('marks-open').tap();
     await expect(page.getByTestId('marks-panel')).toBeVisible();

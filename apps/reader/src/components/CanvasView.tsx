@@ -25,6 +25,7 @@ import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type Vie
 import { settleFocus, useDismissable, useReturnFocus } from '../lib/focus';
 import { announce } from '../lib/announce';
 import { ConfirmButton } from './ConfirmButton';
+import { TitleField, oneLine } from './TitleField';
 import { useConfirm, type ConfirmRequest } from './ConfirmDialog';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
@@ -551,6 +552,9 @@ export function CanvasView({
           aria-label={words.picker}
           data-testid="board-select"
           value={activeId ?? ''}
+          // The full name for a pointer's hover: the picker shows as much as
+          // fits, and its open list shows every name whole.
+          title={board ? board.name || t.common.untitledBoard : undefined}
           onChange={(e) => onSelect(e.target.value)}
         >
           {boards.length === 0 && <option value="">{words.none}</option>}
@@ -564,13 +568,18 @@ export function CanvasView({
           // The board's name, the reader's to give. A new board has none and
           // shows "Untitled board" in the interface language until it does:
           // the placeholder is never stored.
-          <input
+          // It wraps, and grows to show the whole name (TitleField).
+          <TitleField
             className="canvas__name"
             data-testid="board-name"
             aria-label={words.name}
             placeholder={t.common.untitledBoard}
             value={board.name}
-            onChange={(e) => patch({ name: e.target.value })}
+            enterKeyHint="done"
+            onChange={(e) => patch({ name: oneLine(e.target.value) })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) e.preventDefault();
+            }}
           />
         )}
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>

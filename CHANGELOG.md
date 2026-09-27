@@ -21,6 +21,7 @@ suffix and is published as a GitHub pre-release.
 
 ### Fixed
 
+- **A long note title or board name is shown whole.** Its field wraps and grows, where it used to scroll the title out of sight. And typing a long board name no longer pushes the buttons beside it along the bar.
 - **A tapped link in a note now opens its passage** on a phone or tablet. A touch screen has no Ctrl or ⌘, so a tap only put the cursor in the link and raised the keyboard (found on an iPad). A tap on a link the note is showing now opens it; on the line being edited, a tap still places the cursor so the link can be changed.
 - The chapter title's book name, and the names in the book picker, now carry their Bible's language: a screen reader speaks them in its voice, and a Japanese or Chinese name no longer takes a style's Latin letter-spacing (Vellum, Nocturne).
 - Secondary text on hovered rows, pressed buttons and tags fell just under the 7:1 AAA ratio in the light, dark and sepia themes. It is darker in light and sepia, lighter in dark.

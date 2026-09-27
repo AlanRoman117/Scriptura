@@ -640,3 +640,38 @@ test.describe('beside the Bible', () => {
     await expect(page.locator('.verse[data-verse="3"]')).toBeInViewport();
   });
 });
+
+/*
+ * The board picker sized itself to its longest name, and shows a name as it
+ * is typed, so typing a long board name widened it and pushed New and every
+ * button after it along the bar. And the name field was one line that
+ * scrolled. Neither now.
+ */
+test.describe('a long board name', () => {
+  const LONG = 'Signs in John: water into wine, the official’s son, the pool, the loaves, the storm, the blind man, Lazarus';
+
+  test('typing it moves nothing, and the field shows all of it', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('side-board').click();
+    await page.getByTestId('board-start').click();
+    const ids = ['board-select', 'board-new', 'board-add-text', 'zoom-out'];
+    const xs = () => Promise.all(ids.map(async (id) => Math.round((await page.getByTestId(id).boundingBox())!.x)));
+    const before = await xs();
+
+    const name = page.getByTestId('board-name');
+    await name.click();
+    await page.keyboard.type(LONG);
+    await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText(LONG);
+    expect(await xs()).toEqual(before);
+
+    const hidden = await name.evaluate((el) => ({
+      across: el.scrollWidth - el.clientWidth,
+      down: el.scrollHeight - el.clientHeight,
+    }));
+    expect(hidden).toEqual({ across: 0, down: 0 });
+    await expect(page.getByTestId('board-select')).toHaveAttribute('title', LONG);
+    // Enter adds no line break: a name is one line of data.
+    await name.press('Enter');
+    await expect(name).toHaveValue(LONG);
+  });
+});
