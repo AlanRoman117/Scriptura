@@ -92,7 +92,7 @@ Status: `open` · `assigned (who)` · `in review` · `done (commit)` · `blocked
 | X1 | Real-device verification: iOS Safari keyboard and sheet | `briefs/91-device-ios.md` | assigned (owner) |
 | X2 | Screen-reader pass: VoiceOver, TalkBack, NVDA | `briefs/92-screen-readers.md` | assigned (owner) |
 | X3 | Windows High Contrast and forced-colors check | `briefs/93-forced-colors.md` | assigned (owner) |
-| X4 | PNG icons: `apple-touch-icon` and maskable | `briefs/94-icons.md` | assigned (owner) |
+| X4 | PNG icons: `apple-touch-icon` and maskable | `briefs/94-icons.md` | done (2026-09-27) |
 
 ## Order of work
 
