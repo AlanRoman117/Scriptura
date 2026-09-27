@@ -7,6 +7,19 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.4] - 2026-09-27
+
+The fourth preview. The reader gains eight styles, each light and dark and
+chosen from tiles that show them, and a round of fixes found by using it: a
+tapped link in a note now opens on a phone or tablet, a long title is shown
+whole, and the canvas bar is shorter beside the Bible. It also gets proper
+icons for a phone's home screen.
+
+For reviewers, a few new words in every language: Style, Light or dark, and
+the canvas bar's More. They are listed in `docs/plans/reader-i18n/README.md`.
+
+**Try it:** <https://alanroman117.github.io/Scriptura/>
+
 ### Added
 
 - **App icons for phones.** Adding the reader to an iPhone's home screen shows its icon, and Android gets a maskable icon whose artwork survives any launcher shape.
@@ -19,6 +32,8 @@ suffix and is published as a GitHub pre-release.
 - **Classic, refreshed.** Rounder corners, softer and warmer shadows, a slightly tighter chapter title. The colours barely move.
 - **High contrast** keeps its colours and gains 2px control edges; it drops shadows and the blur behind the sticky bars.
 - The contrast test now measures every fill the reader draws, evaluated from its formula, in every style and polarity: 944 pairs.
+- Every style is tested in every appearance: following the device, and pinned light and dark on a device set to the opposite, under axe and on the phone's layout gates.
+- `npm run dev:api` runs the packages from their sources, subpaths included, so it needs no build and reloads on any edit.
 
 ### Fixed
 
@@ -117,6 +132,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.4]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.1
