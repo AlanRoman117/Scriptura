@@ -5,7 +5,7 @@
 | **ID** | `94-icons` |
 | **Size** | S |
 | **Depends on** | none |
-| **Status** | assigned (owner) |
+| **Status** | done (2026-09-27): `scripts/render-icons.mjs`, PNGs committed, `tests/unit/icons.test.ts` and the `site` project |
 | **Criteria** | none (install experience); noted by the audit |
 
 ## Outcome

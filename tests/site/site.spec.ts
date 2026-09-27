@@ -32,13 +32,22 @@ test.describe('the published site', () => {
     // A start_url of "/" would open the account's root site from the home screen.
     expect(new URL(manifest.start_url, manifestUrl).pathname).toBe(path);
     expect(new URL(manifest.scope, manifestUrl).pathname).toBe(path);
-    for (const icon of manifest.icons as { src: string }[]) {
-      expect((await page.request.get(new URL(icon.src, manifestUrl).href)).status(), icon.src).toBe(200);
+    for (const icon of manifest.icons as { src: string; type: string }[]) {
+      const response = await page.request.get(new URL(icon.src, manifestUrl).href);
+      expect(response.status(), icon.src).toBe(200);
+      expect(response.headers()['content-type'], icon.src).toContain(icon.type);
     }
+    // A maskable icon of its own, beside the ones for any shape.
+    const purposes = (manifest.icons as { purpose?: string }[]).map((i) => i.purpose);
+    expect(purposes).toContain('maskable');
+    expect(purposes).toContain('any');
 
-    const favicon = new URL((await page.locator('link[rel="icon"]').getAttribute('href'))!, site);
-    expect(favicon.pathname.startsWith(path)).toBe(true);
-    expect((await page.request.get(favicon.href)).status()).toBe(200);
+    // The favicon, and the PNG iOS takes for the home screen, under the path too.
+    for (const rel of ['icon', 'apple-touch-icon']) {
+      const href = new URL((await page.locator(`link[rel="${rel}"]`).getAttribute('href'))!, site);
+      expect(href.pathname.startsWith(path), rel).toBe(true);
+      expect((await page.request.get(href.href)).status(), rel).toBe(200);
+    }
 
     const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
     expect(new URL(scope).pathname).toBe(path);

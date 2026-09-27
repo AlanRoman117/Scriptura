@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "bundle:text": "node scripts/bundle-translation.mjs",
+    "icons": "node scripts/render-icons.mjs",
     "dev": "npm run bundle:text && vite",
     "build": "npm run bundle:text && tsc -b && vite build",
     "preview": "vite preview"
