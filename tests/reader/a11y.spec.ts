@@ -158,6 +158,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(2);
   },
+  // Beside the Bible, with the less-used actions unfolded over the board.
+  'board, More open': async (page) => {
+    await STATES.board(page);
+    await page.getByTestId('board-more').click();
+    await expect(page.getByTestId('board-delete')).toBeVisible();
+  },
   // The canvas filling the window: the page's h1 moves to the side pane.
   'board maximized': async (page) => {
     await page.getByTestId('verse-1').click();

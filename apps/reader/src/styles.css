@@ -1350,6 +1350,27 @@ summary:focus-visible,
   padding: .6rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
 }
 .canvas__spacer { flex: 1; }
+
+/* The less-used board actions (CanvasView's "More"). On a wide board the fold
+   does not exist: its button is hidden and its actions sit in the bar. Beside
+   the Bible the bar took three rows, so below 52rem they fold behind More,
+   and open as a panel the width of the bar — anchored to the bar, not the
+   button, so it can never run off the pane's edge. */
+.canvas__more, .canvas__more-actions { display: contents; }
+.canvas__more-button { display: none; }
+@container canvas (max-width: 52rem) {
+  .canvas__bar { position: relative; z-index: 2; }
+  .canvas__more { display: block; }
+  .canvas__more-button { display: inline-flex; align-items: center; gap: .3rem; }
+  .canvas__more-button[aria-expanded='true'] { color: var(--ink); border-color: var(--ink-soft); background-color: var(--press); }
+  .canvas__more-actions { display: none; }
+  .canvas__more-actions[data-open] {
+    display: flex; flex-wrap: wrap; gap: .4rem; align-items: center;
+    position: absolute; top: calc(100% + .35rem); inset-inline: 1rem;
+    padding: .5rem; background: var(--paper-raised);
+    border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l); box-shadow: var(--elev-2);
+  }
+}
 .canvas__select {
   font: inherit; font-size: var(--fs-md); color: var(--ink);
   background-color: var(--paper-raised); border: var(--edge-w) solid var(--edge);
@@ -1357,14 +1378,14 @@ summary:focus-visible,
   /* ⚠️ A width that does not come from its options. Sized to its longest
      name, the picker grew as a board's name was typed — it shows the name
      live — and pushed New and every button after it along the bar. */
-  flex: 0 1 14rem; min-width: 6.5rem; max-width: 14rem;
+  flex: 0 1 10rem; min-width: 6.5rem; max-width: 14rem;
 }
 .canvas__select option { background-color: var(--paper-raised); color: var(--ink); }
 /* The board's name, beside the menu that picks it. It gives way before the
    buttons do, down to a width that still shows a word or two. */
 /* Takes what the row has left beside the picker, and wraps a long name onto
    more lines rather than scrolling it out of sight (TitleField). */
-.canvas__name-field { flex: 1 1 12rem; min-width: 8rem; font-size: var(--fs-md); line-height: 1.3; }
+.canvas__name-field { flex: 1 1 10rem; min-width: 8rem; font-size: var(--fs-md); line-height: 1.3; }
 .canvas__name, .canvas__name-field::after {
   font: inherit;
   border: var(--edge-w) solid var(--edge);

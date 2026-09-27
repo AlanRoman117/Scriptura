@@ -585,6 +585,8 @@ const catalog = {
 
   canvas: {
     new: 'Nouveau',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'Plus',
     startOne: 'En créer un',
     label: 'Tableaux',
     heading: (board: string) => `Tableau : ${board}`,

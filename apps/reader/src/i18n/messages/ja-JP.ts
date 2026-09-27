@@ -577,6 +577,8 @@ export const jaJP = {
 
   canvas: {
     new: '新規',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'その他',
     startOne: '作成する',
     label: 'ボード',
     heading: (board: string) => `ボード：${board}`,

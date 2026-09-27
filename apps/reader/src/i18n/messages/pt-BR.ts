@@ -625,6 +625,8 @@ export const ptBR = {
   canvas: {
     /** Um quadro novo: masculino. */
     new: 'Novo',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'Mais',
     startOne: 'Criar um',
     label: 'Quadros',
     heading: (board: string) => `Quadro: ${board}`,
