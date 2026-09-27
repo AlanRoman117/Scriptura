@@ -126,7 +126,7 @@ for (const style of STYLES) {
       expect(dark['--paper']).not.toBe(light['--paper']);
 
       await page.getByTestId('settings-open').click();
-      await expect(page.getByTestId('pref-style')).toHaveValue(style);
+      await expect(page.getByTestId(`pref-style-${style}`)).toBeChecked();
       await expect(page.getByTestId('pref-appearance')).toHaveValue('system');
     });
 

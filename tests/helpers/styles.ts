@@ -43,3 +43,7 @@ export const displayPrefs = (style: StyleName, appearance: AppearanceName): stri
     ...(style === 'classic' ? {} : { style }),
     ...(appearance === 'system' ? {} : { appearance }),
   });
+
+/** A style's tile in Settings: what a reader clicks to choose it (the radio under it is hidden). */
+export const styleTile = (page: import('@playwright/test').Page, style: StyleName) =>
+  page.locator(`.style-tile[data-style-preview="${style}"]`);

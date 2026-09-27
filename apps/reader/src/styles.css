@@ -129,7 +129,10 @@
 /* @tokens end */
 
 /* @style */
-:root {
+/* On a preview too: a style tile in Settings starts from these defaults, so
+   Classic drawn inside a Vellum page is Classic, and each style's own block
+   below then overrides them on its tile. */
+:root, [data-style-preview] {
   --serif-latin: Iowan Old Style, Palatino Linotype, Palatino, Georgia, 'Times New Roman', serif;
   --sans-latin: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -1204,6 +1207,51 @@ summary:focus-visible,
   border-radius: var(--radius-m); padding: .3rem .5rem; min-width: 12rem;
 }
 .settings__field select option { background-color: var(--paper-raised); color: var(--ink); }
+
+/* Style, as tiles (SettingsPanel). Each tile is drawn in its own style by
+   `data-style-preview`, so every token below resolves to that style's value;
+   light or dark follows the page's `color-scheme`. The radio is visually
+   hidden but real — focus, arrow keys and the checked state are its — and
+   the tile shows both: a ring when focused, and a check and a heavier edge
+   when chosen, so the choice is never colour alone (1.4.1). */
+.style-picker { border: none; margin: .45rem 0; padding: 0; min-width: 0; }
+.style-picker__legend { font-size: var(--fs-md); padding: 0; margin-bottom: .45rem; }
+.style-picker__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .5rem; }
+.style-tile {
+  position: relative; display: flex; flex-direction: column; gap: .4rem;
+  min-height: var(--control-h); padding: .55rem .65rem .6rem; cursor: pointer;
+  background: var(--paper); color: var(--ink);
+  border: var(--edge-w) solid var(--edge); border-radius: var(--radius-l); box-shadow: var(--elev-1);
+}
+.style-tile__input {
+  position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+.style-tile:has(.style-tile__input:focus-visible) { outline: var(--focus-ring); outline-offset: 2px; }
+.style-tile:has(.style-tile__input:checked) { border-color: var(--ink); box-shadow: 0 0 0 2px var(--ink); }
+.style-tile__name {
+  font-family: var(--serif); font-size: var(--fs-md); font-weight: var(--title-weight);
+  font-variant-caps: var(--title-caps); letter-spacing: var(--title-tracking); color: var(--heading);
+  padding-inline-end: 1.4rem;
+}
+.style-tile__sample { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; }
+.style-tile__num {
+  font-family: var(--serif); font-size: var(--fs-xs); font-weight: var(--num-weight);
+  font-variant-numeric: var(--num-figures); color: var(--rubric);
+}
+.style-tile__line { flex: 1 1 60%; height: .45rem; border-radius: var(--radius-xs); background: var(--ink-soft); opacity: .55; }
+.style-tile__line--marked { background: var(--hl-amber); border-inline-start: 3px solid var(--hl-amber-strong); opacity: 1; }
+.style-tile__line--short { flex-basis: 35%; flex-grow: 0; background: var(--accent); opacity: 1; }
+.style-tile__name { padding-inline-end: 1.6rem; }
+/* A filled badge, not a bare glyph: High contrast draws every tile edge 2px
+   in ink, so the chosen tile's heavier edge alone did not stand out there. */
+.style-tile__check {
+  position: absolute; inset-block-start: .4rem; inset-inline-end: .45rem;
+  display: grid; place-items: center; width: 1.3rem; height: 1.3rem;
+  border-radius: var(--radius-pill); background: var(--ink); color: var(--paper);
+  font-size: var(--fs-xs); line-height: 1; visibility: hidden;
+}
+.style-tile:has(.style-tile__input:checked) .style-tile__check { visibility: visible; }
 .settings__tools { font-size: var(--fs-sm); color: var(--ink-soft); margin-top: .6rem; }
 .settings__tools summary { cursor: pointer; }
 .settings__tools ul { list-style: none; margin: .6rem 0 0; padding: 0; }

@@ -119,21 +119,40 @@ export function SettingsPanel({
           control, and nothing to relearn. */}
       <section className="settings__group">
         <h2 className="settings__heading">{words.display}</h2>
-        <div className="settings__field">
-          <label htmlFor="pref-style">{words.style}</label>
-          <select
-            id="pref-style"
-            data-testid="pref-style"
-            value={prefs.style}
-            onChange={(e) => onPrefs({ style: e.target.value as Style })}
-          >
+        {/* Each style as a tile drawn in that style — its paper, its ink,
+            its title face, its verse number and highlight — so the choice
+            shows what it gives rather than naming it. Native radios under
+            the tiles: a group name, arrow keys and a checked state for
+            free. Each tile follows the page's light or dark, as the choice
+            will. The picture is decoration; the name is the label. */}
+        <fieldset className="style-picker" data-testid="pref-style">
+          <legend className="style-picker__legend">{words.style}</legend>
+          <div className="style-picker__tiles">
             {STYLES.map((style) => (
-              <option key={style} value={style}>
-                {words.styles[style]}
-              </option>
+              <label key={style} className="style-tile" data-style-preview={style}>
+                <input
+                  type="radio"
+                  name="pref-style"
+                  value={style}
+                  className="style-tile__input"
+                  data-testid={`pref-style-${style}`}
+                  checked={prefs.style === style}
+                  onChange={() => onPrefs({ style: style as Style })}
+                />
+                <span className="style-tile__name">{words.styles[style]}</span>
+                <span className="style-tile__sample" aria-hidden="true">
+                  <span className="style-tile__num">1</span>
+                  <span className="style-tile__line style-tile__line--marked" />
+                  <span className="style-tile__line" />
+                  <span className="style-tile__line style-tile__line--short" />
+                </span>
+                <span className="style-tile__check" aria-hidden="true">
+                  ✓
+                </span>
+              </label>
             ))}
-          </select>
-        </div>
+          </div>
+        </fieldset>
         <div className="settings__field">
           <label htmlFor="pref-appearance">{words.appearance}</label>
           <select

@@ -10,7 +10,7 @@ suffix and is published as a GitHub pre-release.
 ### Added
 
 - **App icons for phones.** Adding the reader to an iPhone's home screen shows its icon, and Android gets a maskable icon whose artwork survives any launcher shape.
-- **Styles.** Settings → Reading & display now offers a style and, separately, light or dark. Five styles are new, each with a light and a dark palette: **Vellum** (an illuminated page, with rubric-red verse numbers and small-capital titles), **Emerald** (deep green on a jade-tinted page), **Slate** (cool, flat and exact), **Nocturne** (ink-blue night with gold; navy by day) and **Ember** (amber on true black for reading in the dark). Sepia gains a dark version. A theme chosen before this carries over.
+- **Styles.** Settings → Reading & display now offers a style, chosen from tiles that each show that style, and, separately, light or dark. Five styles are new, each with a light and a dark palette: **Vellum** (an illuminated page, with rubric-red verse numbers and small-capital titles), **Emerald** (deep green on a jade-tinted page), **Slate** (cool, flat and exact), **Nocturne** (ink-blue night with gold; navy by day) and **Ember** (amber on true black for reading in the dark). Sepia gains a dark version. A theme chosen before this carries over.
 - **Design tokens.** Every colour, corner, shadow and type size in the reader comes from a token, in three tiers: palettes, fills derived from them, and style (corners, depth, type, the reading face). A style can change all of them.
 
 ### Changed
