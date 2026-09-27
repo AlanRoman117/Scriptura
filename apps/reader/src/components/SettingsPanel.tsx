@@ -6,21 +6,23 @@ import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import { LOCALE_LABELS } from '../i18n/locales';
 import {
+  APPEARANCES,
   EDITORS,
   LANGUAGES,
   MEASURES,
   MOTIONS,
   SPACINGS,
+  STYLES,
   TEXT_SIZES,
-  THEMES,
+  type Appearance,
   type DisplayPrefs,
   type EditorPref,
   type LanguagePref,
   type Measure,
   type Motion,
   type Spacing,
+  type Style,
   type TextSize,
-  type Theme,
 } from '../lib/prefs';
 
 interface SettingsPanelProps {
@@ -118,16 +120,31 @@ export function SettingsPanel({
       <section className="settings__group">
         <h2 className="settings__heading">{words.display}</h2>
         <div className="settings__field">
-          <label htmlFor="pref-theme">{words.colours}</label>
+          <label htmlFor="pref-style">{words.style}</label>
           <select
-            id="pref-theme"
-            data-testid="pref-theme"
-            value={prefs.theme}
-            onChange={(e) => onPrefs({ theme: e.target.value as Theme })}
+            id="pref-style"
+            data-testid="pref-style"
+            value={prefs.style}
+            onChange={(e) => onPrefs({ style: e.target.value as Style })}
           >
-            {THEMES.map((t) => (
-              <option key={t} value={t}>
-                {words.themes[t]}
+            {STYLES.map((style) => (
+              <option key={style} value={style}>
+                {words.styles[style]}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="settings__field">
+          <label htmlFor="pref-appearance">{words.appearance}</label>
+          <select
+            id="pref-appearance"
+            data-testid="pref-appearance"
+            value={prefs.appearance}
+            onChange={(e) => onPrefs({ appearance: e.target.value as Appearance })}
+          >
+            {APPEARANCES.map((appearance) => (
+              <option key={appearance} value={appearance}>
+                {words.appearances[appearance]}
               </option>
             ))}
           </select>
