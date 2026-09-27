@@ -325,3 +325,71 @@ test.describe('the formatting tools from the keyboard (2.1.1, 4.1.2)', () => {
     await expect(page.getByTestId('tool-h1')).toBeFocused();
   });
 });
+
+/*
+ * A long title was a one-line input: it scrolled sideways, its start cut off,
+ * and was never seen whole. It wraps now and grows to show all of it, and it
+ * moves nothing beside it. No tooltip: a tooltip is hover, which a touch screen
+ * and a keyboard never produce (1.4.13).
+ */
+test.describe('a long note title', () => {
+  const LONG = 'Notes on the prologue of John: the Word, the light, the witness of John the Baptist, and grace upon grace';
+
+  test('wraps to show all of itself, in a narrow pane too', async ({ page }) => {
+    await open(page);
+    const title = page.getByTestId('note-title');
+    const oneLine = (await title.boundingBox())!.height;
+    await title.fill(LONG);
+    for (const width of [1280, 900]) {
+      await page.setViewportSize({ width, height: 800 });
+      const box = (await title.boundingBox())!;
+      expect(box.height, `taller than one line at ${width}px`).toBeGreaterThan(oneLine);
+      // A narrower pane wraps onto more lines; the field refits when its width changes.
+      await expect
+        .poll(() => title.evaluate((el) => ({ across: el.scrollWidth - el.clientWidth, down: el.scrollHeight - el.clientHeight })), {
+          message: `nothing hidden at ${width}px`,
+        })
+        .toEqual({ across: 0, down: 0 });
+    }
+    // Emptied again, it is one line tall again.
+    await title.fill('');
+    await expect.poll(async () => (await title.boundingBox())!.height).toBe(oneLine);
+  });
+
+  test('Enter goes on into the note, and a pasted line break becomes a space', async ({ page }) => {
+    await open(page);
+    const title = page.getByTestId('note-title');
+    await title.fill('Grace');
+    await title.press('Enter');
+    await expect(page.getByTestId('notes-surface')).toBeFocused();
+    await expect(title).toHaveValue('Grace');
+
+    await title.focus();
+    await title.evaluate((el) => {
+      const data = new DataTransfer();
+      data.setData('text/plain', ' upon\r\n grace');
+      (el as HTMLTextAreaElement).setSelectionRange(5, 5);
+      el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }));
+    });
+    // A synthetic paste is not inserted by the browser, so type the same text
+    // through the field, line break and all.
+    await page.keyboard.insertText(' upon\n grace');
+    await expect(title).toHaveValue('Grace upon grace');
+    await expect(page.getByTestId('note-select').locator('option:checked')).toHaveText('Grace upon grace');
+  });
+
+  test('typing it moves none of the buttons in the bar', async ({ page }) => {
+    await open(page);
+    const xs = () =>
+      Promise.all(['note-select', 'note-new', 'note-export', 'note-delete'].map(async (id) => {
+        const box = (await page.getByTestId(id).boundingBox())!;
+        return [id, Math.round(box.x), Math.round(box.width)];
+      }));
+    const before = await xs();
+    await page.getByTestId('note-title').click();
+    await page.keyboard.type(LONG.slice(0, 60));
+    expect(await xs()).toEqual(before);
+    // The picker names the whole title for a pointer's hover.
+    await expect(page.getByTestId('note-select')).toHaveAttribute('title', LONG.slice(0, 60));
+  });
+});
