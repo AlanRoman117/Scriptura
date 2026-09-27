@@ -578,6 +578,8 @@ export const zhHant = {
 
   canvas: {
     new: '新增',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: '更多',
     startOne: '新增一個',
     label: '看板',
     heading: (board: string) => `看板：${board}`,

@@ -15,6 +15,7 @@ suffix and is published as a GitHub pre-release.
 
 ### Changed
 
+- **A shorter canvas bar beside the Bible.** Add note, Add to note, Delete board and the pan buttons fold behind **More** there, giving the board a row back; maximized, they sit in the bar as before.
 - **Classic, refreshed.** Rounder corners, softer and warmer shadows, a slightly tighter chapter title. The colours barely move.
 - **High contrast** keeps its colours and gains 2px control edges; it drops shadows and the blur behind the sticky bars.
 - The contrast test now measures every fill the reader draws, evaluated from its formula, in every style and polarity: 944 pairs.

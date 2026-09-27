@@ -103,6 +103,23 @@ export function CanvasView({
   const words = t.canvas;
   const ask = useConfirm();
   const board = boards.find((b) => b.id === activeId) ?? null;
+  /** The less-used actions, folded behind "More" while the board is narrow. */
+  const [more, setMore] = useState(false);
+  const moreEl = useRef<HTMLDivElement>(null);
+  const moreButton = useRef<HTMLButtonElement>(null);
+  /**
+   * Fold the actions away. ⚠️ Focus inside the fold goes to More by hand: a
+   * control hidden by CSS keeps focus until the browser next fixes it up, so
+   * `useReturnFocus`, which only restores focus that was lost, saw a pan
+   * button still focused and left focus on something no longer drawn.
+   */
+  const closeMore = () => {
+    if (moreEl.current?.querySelector('.canvas__more-actions')?.contains(document.activeElement)) {
+      moreButton.current?.focus();
+    }
+    setMore(false);
+  };
+  useDismissable(more, closeMore, moreEl);
   // Zoom and pan are one state: every zoom moves the pan too (to keep what is
   // under the pointer, the fingers or the centre where it is), and two
   // setStates nested inside each other were how that used to be done.
@@ -610,27 +627,6 @@ export function CanvasView({
             >
               {words.addCard}
             </button>
-            <button
-              type="button"
-              className="canvas__action"
-              data-testid="board-add-note"
-              disabled={notes.length === 0}
-              aria-label={notes.length === 0 ? words.addNoteNoNotes : words.addNoteName}
-              onClick={() => addCard({ kind: 'note', noteId: notes[0].id })}
-            >
-              {words.addNote}
-            </button>
-            {onAddToNote && (
-              <button
-                type="button"
-                className="canvas__action"
-                data-testid="board-to-note"
-                aria-label={words.toNoteName}
-                onClick={() => onAddToNote(board.id)}
-              >
-                {words.toNote}
-              </button>
-            )}
             {/* The connections in words: the text alternative to the arrows,
                 which are drawn as a picture (1.1.1), and the keyboard's way to
                 remove one (2.1.1). */}
@@ -644,23 +640,98 @@ export function CanvasView({
             >
               {words.connections(board.edges.length)}
             </button>
-            {/* Asks first, saying what goes with it (3.3.4). Afterwards the
-                picker says which board is open now. */}
-            <ConfirmButton
-              label={words.deleteBoard}
-              className="canvas__action canvas__action--danger"
-              data-testid="board-delete"
-              confirm={{
-                title: t.confirm.board.title(board.name || t.common.untitledBoard),
-                body: board.nodes.length
-                  ? [t.confirm.board.cards(board.nodes.length), t.confirm.board.kept, t.confirm.permanent]
-                  : [t.confirm.board.empty, t.confirm.permanent],
-                action: t.confirm.board.action,
-                onConfirm: () => onDelete(board.id),
-                focusAfter: { to: ['[data-testid="board-start"]', '[data-testid="board-select"]'] },
-                done: t.confirm.board.done(board.name || t.common.untitledBoard),
-              }}
-            />
+            {/* The less-used actions: inline while the board has the room,
+                folded behind More beside the Bible, where they took two of
+                the bar's three rows (styles.css, the "canvas" container). The
+                button comes right before them, so the order they are reached
+                in is the order they are drawn in (1.3.2, 2.4.3). The pan
+                buttons are the drag's single-pointer alternative (2.5.7):
+                one press further away, and the frame's arrow keys, drag and
+                wheel pan as before. */}
+            <div className="canvas__more" ref={moreEl}>
+              <button
+                type="button"
+                ref={moreButton}
+                className="canvas__action canvas__more-button"
+                data-testid="board-more"
+                aria-expanded={more}
+                aria-controls="board-more-actions"
+                onClick={() => setMore((open) => !open)}
+              >
+                {words.more}
+                <span className="canvas__more-caret" aria-hidden="true">
+                  {more ? '▴' : '▾'}
+                </span>
+              </button>
+              <div
+                className="canvas__more-actions"
+                id="board-more-actions"
+                data-open={more || undefined}
+                onClick={(e) => {
+                  // A one-off action closes the fold; moving the view or
+                  // asking to delete keeps it, for another press or for
+                  // focus to come back to.
+                  if ((e.target as HTMLElement).closest('[data-testid="board-add-note"], [data-testid="board-to-note"]')) {
+                    setMore(false);
+                  }
+                }}
+              >
+                <button
+                  type="button"
+                  className="canvas__action"
+                  data-testid="board-add-note"
+                  disabled={notes.length === 0}
+                  aria-label={notes.length === 0 ? words.addNoteNoNotes : words.addNoteName}
+                  onClick={() => addCard({ kind: 'note', noteId: notes[0].id })}
+                >
+                  {words.addNote}
+                </button>
+                {onAddToNote && (
+                  <button
+                    type="button"
+                    className="canvas__action"
+                    data-testid="board-to-note"
+                    aria-label={words.toNoteName}
+                    onClick={() => onAddToNote(board.id)}
+                  >
+                    {words.toNote}
+                  </button>
+                )}
+                {/* Asks first, saying what goes with it (3.3.4). Afterwards the
+                    picker says which board is open now. */}
+                <ConfirmButton
+                  label={words.deleteBoard}
+                  className="canvas__action canvas__action--danger"
+                  data-testid="board-delete"
+                  confirm={{
+                    title: t.confirm.board.title(board.name || t.common.untitledBoard),
+                    body: board.nodes.length
+                      ? [t.confirm.board.cards(board.nodes.length), t.confirm.board.kept, t.confirm.permanent]
+                      : [t.confirm.board.empty, t.confirm.permanent],
+                    action: t.confirm.board.action,
+                    onConfirm: () => onDelete(board.id),
+                    focusAfter: { to: ['[data-testid="board-start"]', '[data-testid="board-select"]'] },
+                    done: t.confirm.board.done(board.name || t.common.untitledBoard),
+                  }}
+                />
+                {/* Moving the view without dragging it (2.5.7). Each says which way
+                    the view goes, so the plane moves the other way. */}
+                <div className="canvas__zoom canvas__pan" role="group" aria-label={words.moveView}>
+                  <button type="button" data-testid="pan-left" aria-label={words.viewLeft} onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
+                    ←
+                  </button>
+                  <button type="button" data-testid="pan-up" aria-label={words.viewUp} onClick={() => panBy(0, PAN_BUTTON_STEP)}>
+                    ↑
+                  </button>
+                  <button type="button" data-testid="pan-down" aria-label={words.viewDown} onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
+                    ↓
+                  </button>
+                  <button type="button" data-testid="pan-right" aria-label={words.viewRight} onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
+                    →
+                  </button>
+                </div>
+              </div>
+            </div>
           </>
         )}
 
@@ -687,22 +758,6 @@ export function CanvasView({
           </button>
           <button type="button" data-testid="zoom-in" aria-label={words.zoomIn} onClick={() => zoomBy(0.2)}>
             +
-          </button>
-        </div>
-        {/* Moving the view without dragging it (2.5.7). Each says which way
-            the view goes, so the plane moves the other way. */}
-        <div className="canvas__zoom canvas__pan" role="group" aria-label={words.moveView}>
-          <button type="button" data-testid="pan-left" aria-label={words.viewLeft} onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
-            ←
-          </button>
-          <button type="button" data-testid="pan-up" aria-label={words.viewUp} onClick={() => panBy(0, PAN_BUTTON_STEP)}>
-            ↑
-          </button>
-          <button type="button" data-testid="pan-down" aria-label={words.viewDown} onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
-            ↓
-          </button>
-          <button type="button" data-testid="pan-right" aria-label={words.viewRight} onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
-            →
           </button>
         </div>
         {onHelp && (

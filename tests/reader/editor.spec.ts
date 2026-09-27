@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { noteValue, usePlainEditor } from '../helpers/note';
+import { boardAction } from '../helpers/board';
 
 /**
  * The writing surface: tools for people who do not write Markdown, and a way
@@ -164,7 +165,7 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('canvas-3').click();
 
     await page.getByTestId('side-board').click();
-    await page.getByTestId('board-to-note').click();
+    await (await boardAction(page, 'board-to-note')).click();
     // The board closed behind the button, so the note says what arrived.
     await expect(page.getByTestId('note-done')).toHaveText('✓ Added the board “Study board”');
     await expect(page.getByTestId('announcer')).toHaveText('Added the board “Study board” in “Prologue study”');
@@ -204,7 +205,7 @@ test.describe('a board inside a note', () => {
       .getByTestId(`card-title-${cards[cards.length - 1]}`)
       .fill('WWWWW From Adam through Abraham to David MMMMM');
 
-    await page.getByTestId('board-to-note').click();
+    await (await boardAction(page, 'board-to-note')).click();
     await page.getByTestId('note-preview').click();
 
     const embed = page.getByTestId('notes-preview').locator('.embed');
@@ -232,10 +233,10 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
     await page.getByTestId('side-board').click();
-    await page.getByTestId('board-to-note').click();
+    await (await boardAction(page, 'board-to-note')).click();
 
     await page.getByTestId('side-board').click();
-    await page.getByTestId('board-delete').click();
+    await (await boardAction(page, 'board-delete')).click();
     await page.getByTestId('confirm-accept').click();
     await page.getByTestId('side-notes').click();
 

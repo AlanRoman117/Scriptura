@@ -581,6 +581,8 @@ export const esMX = {
 
   canvas: {
     new: 'Nuevo',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'Más',
     startOne: 'Empieza uno',
     label: 'Tableros',
     heading: (board: string) => `Tablero: ${board}`,

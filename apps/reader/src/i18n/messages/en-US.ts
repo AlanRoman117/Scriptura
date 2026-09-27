@@ -599,6 +599,8 @@ export const enUS = {
   canvas: {
     /** A new board. */
     new: 'New',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'More',
     startOne: 'Start one',
     label: 'Boards',
     heading: (board: string) => `Board: ${board}`,
