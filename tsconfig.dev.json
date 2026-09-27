@@ -17,6 +17,13 @@
       "@scriptura/core": ["packages/core/src"],
       "@scriptura/search": ["packages/search/src"],
       "@scriptura/compare": ["packages/compare/src"],
+      // The subpaths too (`@scriptura/core/books`, `/types`, `/bible`,
+      // `/search/matcher`, `/compare/chapters`). Without these they resolved
+      // through the packages' `exports` to dist/: missing on a fresh clone,
+      // and stale after any edit, while the API itself reloaded.
+      "@scriptura/core/*": ["packages/core/src/*"],
+      "@scriptura/search/*": ["packages/search/src/*"],
+      "@scriptura/compare/*": ["packages/compare/src/*"],
       "@scriptura/validate": ["packages/validate/src"],
       "@scriptura/api": ["packages/api/src"]
     }

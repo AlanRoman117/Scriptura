@@ -81,15 +81,16 @@ npm run dev:reader
 
 **Why the build step is not optional.** Each package publishes its modules from
 `dist/`, which is generated and gitignored. Until it exists, `@scriptura/core/books`
-and its sibling subpaths resolve to files that are not there, and both of these
-fail on a fresh clone:
+and its sibling subpaths resolve to files that are not there, and the tests and
+the reader fail on a fresh clone:
 
 ```
 ✘ [ERROR] Could not resolve "@scriptura/core/books"        # npm test
-Error [ERR_MODULE_NOT_FOUND]: Cannot find module …/dist/books.js   # npm run dev:api
 ```
 
-`npm run build` fixes both. If a later build looks like it did nothing — no
+`npm run build` fixes that. `npm run dev:api` is the exception: it runs the
+packages from their sources (`tsconfig.dev.json` maps every `@scriptura/*`
+import, subpaths included), so it needs no build and reloads on any edit. If a later build looks like it did nothing — no
 `dist/`, yet nothing is compiled — its incremental cache is stale, and
 `npm run build -- --force` clears it.
 

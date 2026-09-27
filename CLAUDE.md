@@ -46,6 +46,8 @@ python3 scripts/validate.py           # Validate data/ (npm run validate wraps t
 
 Single-package builds: `cd packages/<name> && npm run build`
 
+**`npm run dev:api` needs no build.** It runs `tsx` with `tsconfig.dev.json`, which maps every `@scriptura/*` import at the package sources — the subpaths too, by wildcard (`@scriptura/core/*`), so a new subpath needs no entry there. Without the wildcards the subpaths went through `exports` to `dist/`: missing on a fresh clone, and stale after an edit while the rest reloaded. Everything else (`npm test`, the reader) still reads `dist/`, hence `npm run build` after installing. There is deliberately no `prepare` hook: it would build in every CI job and Dependabot run.
+
 **Workspaces** are `packages/*` plus `examples/node-server` and `examples/cli-demo`, listed explicitly rather than as `examples/*` — `examples/react-app` is a package.json with no source files, and a glob would install the whole vite/react tree for it.
 
 **Node version:** `.nvmrc` pins **Node 24** — the current Active LTS (EOL 2028-04-30). It was Node 20 until that line went end-of-life on 2026-04-30. The repo is developed with `mise`, which reads `.nvmrc` directly once `idiomatic_version_file_enable_tools` includes `node` (`mise settings set idiomatic_version_file_enable_tools "node"`); `mise install` then provisions it. Do not add a `mise.toml` — it would duplicate `.nvmrc` and create another file to keep in sync.
