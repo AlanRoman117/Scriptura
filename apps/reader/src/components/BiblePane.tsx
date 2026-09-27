@@ -177,8 +177,11 @@ export function BiblePane({
             value={book.slug}
             onChange={(e) => onNavigate(e.target.value, 1)}
           >
+            {/* Book names are the Bible's words, in its language (3.1.2);
+                the select around them, its name and its chapters are the
+                interface's. */}
             {bible.books.map((b) => (
-              <option key={b.slug} value={b.slug}>
+              <option key={b.slug} value={b.slug} lang={bible.meta.language}>
                 {b.name}
               </option>
             ))}
@@ -270,8 +273,14 @@ export function BiblePane({
         data-testid="chapter"
         hidden={!!overlay}
       >
+        {/* The book's name is the Bible's, in its language (3.1.2): spoken in
+            its voice, and set the way that language is set — a style's
+            Latin tracking and small capitals stay off Japanese and Chinese. */}
         <h1 className="chapter__title" ref={title} data-stuck={stuck} data-testid="chapter-title">
-          {book.name} {chapter}
+          <span className="chapter__book" lang={bible.meta.language}>
+            {book.name}
+          </span>{' '}
+          {chapter}
         </h1>
         {compare ? (
           compare

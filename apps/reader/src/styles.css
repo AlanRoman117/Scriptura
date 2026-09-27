@@ -877,9 +877,13 @@ summary:focus-visible,
 /* Only draw the rule once it is actually pinned, so the resting state stays
    quiet. */
 .chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
-/* Tracking and small capitals are Latin devices: a Japanese or Chinese title
-   keeps its own spacing. */
-.chapter__title:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)) { letter-spacing: normal; }
+/* Tracking and small capitals are Latin devices: a Japanese or Chinese book
+   name keeps its own spacing. It carries its Bible's `lang`, so this holds
+   under an interface in any language; keyed on the title, it only held when
+   the interface was Japanese or Chinese too. The face is declared where the
+   `lang` is, since a family resolves where it is declared. */
+.chapter__book { font-family: var(--serif); }
+.chapter__book:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)) { letter-spacing: normal; font-variant-caps: normal; }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
 /* Scripture carries its translation's lang on the text itself, not on the
    containers around it (3.1.2), so the family is declared again right there:

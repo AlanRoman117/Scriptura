@@ -196,7 +196,7 @@ test.describe('in Japanese (Japan)', () => {
 
   test('English scripture inside a Japanese page keeps its Latin type', async ({ page }) => {
     await open(page);
-    const scripture = await page.locator('[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
+    const scripture = await page.locator('.verse__text[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
     expect(scripture).toMatch(/Iowan Old Style/);
     expect(scripture).not.toMatch(/Mincho/);
   });
@@ -247,7 +247,7 @@ for (const [locale, words] of [
 
     test('English scripture inside a Chinese page keeps its Latin type', async ({ page }) => {
       await open(page);
-      const scripture = await page.locator('[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
+      const scripture = await page.locator('.verse__text[lang="en"]').first().evaluate((el) => getComputedStyle(el).fontFamily);
       expect(scripture).toMatch(/Iowan Old Style/);
       expect(scripture).not.toMatch(/PingFang/);
     });
