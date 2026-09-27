@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { axeFor, describeViolations } from '../helpers/axe';
 import { describeSmall, tooSmall } from '../helpers/targets';
+import { STYLES, displayPrefs } from '../helpers/styles';
 
 /**
  * The phone gets the same gates as the desktop, in its own states.
@@ -264,6 +265,54 @@ for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] 
 
       test(`${name}: text spacing`, async ({ page }) => {
         await open(page);
+        await arrange(page);
+        await page.addStyleTag({ content: SPACING });
+        expect(await sidewaysOverflow(page)).toEqual([]);
+        expect(await clipped(page)).toEqual([]);
+      });
+    }
+  });
+}
+
+/**
+ * The same gates in every style. A style changes more than colour: Vellum
+ * sets titles in spaced small caps, High contrast draws 2px edges, and each
+ * sets its own corners and reading face — any of which can widen a control,
+ * push a row past 320px or clip a label. Light and dark cannot: appearance
+ * only chooses a side of each colour pair (tests/unit/prefs.test.ts, "appearance
+ * is colour only"), so each style runs once, and axe on the desktop covers
+ * every appearance (tests/reader/a11y.spec.ts).
+ */
+const STYLE_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'board'];
+
+for (const style of STYLES.filter((s) => s !== 'classic')) {
+  test.describe(`in the ${style} style`, () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript((prefs) => localStorage.setItem('scriptura-display', prefs), displayPrefs(style, 'system'));
+    });
+
+    for (const name of STYLE_HEAVY) {
+      const arrange = STATES[name];
+
+      test(`${name}: 44px targets`, async ({ page }) => {
+        await open(page);
+        await expect(page.locator('html')).toHaveAttribute('data-style', style);
+        await arrange(page);
+        const small = await tooSmall(page);
+        expect(small, describeSmall(small)).toEqual([]);
+      });
+
+      test(`${name}: reflow at 320px`, async ({ page }) => {
+        await page.setViewportSize({ width: 320, height: 640 });
+        await open(page);
+        await expect(page.locator('html')).toHaveAttribute('data-style', style);
+        await arrange(page);
+        expect(await sidewaysOverflow(page)).toEqual([]);
+      });
+
+      test(`${name}: text spacing`, async ({ page }) => {
+        await open(page);
+        await expect(page.locator('html')).toHaveAttribute('data-style', style);
         await arrange(page);
         await page.addStyleTag({ content: SPACING });
         expect(await sidewaysOverflow(page)).toEqual([]);
