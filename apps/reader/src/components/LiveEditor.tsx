@@ -1,7 +1,7 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { tokenizeNote, lineKey, type LiveLine } from '../lib/livemd';
-import { buildLine, isDrawnLine, lineIndex, lineStarts, pointAt, readSelection, readText, widgetHost } from '../lib/livedom';
+import { buildLine, isDrawnLine, lineIndex, lineStarts, offsetOf, pointAt, readSelection, readText, widgetHost } from '../lib/livedom';
 import { History, type ChangeKind, type Snapshot } from '../lib/history';
 import { BOARD_FENCE } from '../lib/markdown';
 import type { NoteSurface } from '../lib/surface';
@@ -14,7 +14,7 @@ interface LiveEditorProps {
   onChange: (text: string) => void;
   /** The caret moved or the text changed; the pane follows the heading and link under it. */
   onCaret?: () => void;
-  /** Ctrl/⌘ + click on a `[[link]]`. */
+  /** Ctrl/⌘ + click on a `[[link]]`, or a tap on one that is drawn. */
   onFollowLink?: (offset: number) => void;
   /** A board embedded in the note, drawn in place while the caret is elsewhere. */
   renderBoard?: (id: string) => ReactNode;
@@ -34,6 +34,11 @@ const PLAINTEXT_ONLY = (() => {
     return false;
   }
 })();
+
+/** A tap, not a scroll: moved no further than this, in CSS px… */
+const TAP_SLOP = 10;
+/** …and let go within this, in ms. */
+const TAP_MS = 500;
 
 /** What an `inputType` does to the undo history. */
 const kindOf = (inputType: string): ChangeKind =>
@@ -325,6 +330,62 @@ export function LiveEditor({
     const listener = (event: Event) => beforeInput.current(event as InputEvent);
     el.addEventListener('beforeinput', listener);
     return () => el.removeEventListener('beforeinput', listener);
+  }, []);
+
+  /*
+   * A tap on a link that is *drawn* follows it; on the line being edited, a
+   * tap is text and places the caret. The live-preview rule, as for markers.
+   *
+   * A touch screen has no Ctrl or ⌘, so without this a tapped link only put
+   * the caret in it and raised the keyboard (found on an iPad). ⚠️ Touch
+   * events, not pointer events: `preventDefault()` on `pointerdown` does not
+   * stop iOS Safari focusing the field, and React registers its touch
+   * listeners as passive. The decision waits for `touchend`, so a touch that
+   * moves is a scroll and is left alone; cancelling that `touchend` cancels
+   * the click after it, so no caret is placed and no keyboard appears. The
+   * mouse is unchanged: a click places the caret, Ctrl/⌘ + click follows.
+   */
+  const followLink = useRef(onFollowLink);
+  followLink.current = onFollowLink;
+  useEffect(() => {
+    const el = root.current!;
+    let tap: { x: number; y: number; at: number; link: Element } | null = null;
+    const moved = (touch: Touch, from: { x: number; y: number }) =>
+      Math.hypot(touch.clientX - from.x, touch.clientY - from.y) > TAP_SLOP;
+
+    const start = (e: TouchEvent) => {
+      tap = null;
+      if (e.touches.length !== 1) return;
+      const target = e.target instanceof Element ? e.target : (e.target as Node | null)?.parentElement;
+      const link = target?.closest('.md-link:not(.md-mark)');
+      const line = link?.closest('.live-line');
+      if (!link || !line || line.classList.contains('is-active')) return;
+      tap = { x: e.touches[0].clientX, y: e.touches[0].clientY, at: e.timeStamp, link };
+    };
+    const move = (e: TouchEvent) => {
+      if (tap && (e.touches.length !== 1 || moved(e.touches[0], tap))) tap = null;
+    };
+    const end = (e: TouchEvent) => {
+      const was = tap;
+      tap = null;
+      const touch = e.changedTouches[0];
+      if (!was || !touch || moved(touch, was) || e.timeStamp - was.at > TAP_MS) return;
+      e.preventDefault();
+      followLink.current?.(offsetOf(el, was.link, 0));
+    };
+    const cancel = () => {
+      tap = null;
+    };
+    el.addEventListener('touchstart', start, { passive: true });
+    el.addEventListener('touchmove', move, { passive: true });
+    el.addEventListener('touchend', end, { passive: false });
+    el.addEventListener('touchcancel', cancel);
+    return () => {
+      el.removeEventListener('touchstart', start);
+      el.removeEventListener('touchmove', move);
+      el.removeEventListener('touchend', end);
+      el.removeEventListener('touchcancel', cancel);
+    };
   }, []);
 
   // Watch for the browser's own edits, so a line it touched is redrawn.

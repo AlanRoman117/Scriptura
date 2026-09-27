@@ -20,6 +20,7 @@ suffix and is published as a GitHub pre-release.
 
 ### Fixed
 
+- **A tapped link in a note now opens its passage** on a phone or tablet. A touch screen has no Ctrl or ⌘, so a tap only put the cursor in the link and raised the keyboard (found on an iPad). A tap on a link the note is showing now opens it; on the line being edited, a tap still places the cursor so the link can be changed.
 - Secondary text on hovered rows, pressed buttons and tags fell just under the 7:1 AAA ratio in the light, dark and sepia themes. It is darker in light and sepia, lighter in dark.
 - The number of the verse being acted on fell under 7:1 on its blue wash. It is now drawn in ink, as a highlighted verse's number is.
 - In dark, the accent on its own tint (a link in a previewed note) was 6.5:1. The dark accent is lighter, and a hovered link reads in ink.
