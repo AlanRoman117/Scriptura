@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { boardAction } from '../helpers/board';
 
 /**
  * Stage 5: the board.
@@ -278,7 +279,7 @@ test.describe('getting around the board', () => {
 
     await page.getByTestId('side-board').click();
     await page.getByTestId('board-new').click();
-    await page.getByTestId('board-add-note').click();
+    await (await boardAction(page, 'board-add-note')).click();
 
     const card = page.locator('.card').first();
     const id = await card.evaluate((c) => (c as HTMLElement).dataset.testid!.replace('card-', ''));
@@ -404,9 +405,9 @@ test.describe('the board without a mouse, and without dragging (2.1.1, 2.5.7)', 
     const start = (await card.boundingBox())!;
 
     // "Move the view right" shows what is to the right, so the card moves left.
-    await page.getByTestId('pan-right').click();
+    await (await boardAction(page, 'pan-right')).click();
     expect(Math.round((await card.boundingBox())!.x - start.x)).toBe(-80);
-    await page.getByTestId('pan-down').click();
+    await (await boardAction(page, 'pan-down')).click();
     expect(Math.round((await card.boundingBox())!.y - start.y)).toBe(-80);
 
     const frame = page.locator('.canvas__frame');
@@ -638,5 +639,117 @@ test.describe('beside the Bible', () => {
     await expect(page.getByTestId('pane-bible')).toBeVisible();
     await expect(page.getByTestId('canvas')).toBeVisible();
     await expect(page.locator('.verse[data-verse="3"]')).toBeInViewport();
+  });
+});
+
+/*
+ * The board picker sized itself to its longest name, and shows a name as it
+ * is typed, so typing a long board name widened it and pushed New and every
+ * button after it along the bar. And the name field was one line that
+ * scrolled. Neither now.
+ */
+test.describe('a long board name', () => {
+  const LONG = 'Signs in John: water into wine, the official’s son, the pool, the loaves, the storm, the blind man, Lazarus';
+
+  test('typing it moves nothing, and the field shows all of it', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('side-board').click();
+    await page.getByTestId('board-start').click();
+    const ids = ['board-select', 'board-new', 'board-add-text', 'zoom-out'];
+    const xs = () => Promise.all(ids.map(async (id) => Math.round((await page.getByTestId(id).boundingBox())!.x)));
+    const before = await xs();
+
+    const name = page.getByTestId('board-name');
+    await name.click();
+    await page.keyboard.type(LONG);
+    await expect(page.getByTestId('board-select').locator('option:checked')).toHaveText(LONG);
+    expect(await xs()).toEqual(before);
+
+    const hidden = await name.evaluate((el) => ({
+      across: el.scrollWidth - el.clientWidth,
+      down: el.scrollHeight - el.clientHeight,
+    }));
+    expect(hidden).toEqual({ across: 0, down: 0 });
+    await expect(page.getByTestId('board-select')).toHaveAttribute('title', LONG);
+    // Enter adds no line break: a name is one line of data.
+    await name.press('Enter');
+    await expect(name).toHaveValue(LONG);
+  });
+});
+
+/*
+ * Beside the Bible the canvas bar took three rows. The less-used actions now
+ * fold behind "More" there, and sit in the bar when the board is maximized.
+ */
+test.describe('the canvas bar beside the Bible', () => {
+  /** How many rows the bar's visible controls take. */
+  const rows = (page: import('@playwright/test').Page) =>
+    page.locator('.canvas__bar').evaluate(
+      (bar) =>
+        new Set(
+          [...bar.querySelectorAll<HTMLElement>(':scope > * button, :scope > button, :scope > select, :scope > * select, :scope > * textarea, :scope > textarea, :scope > input')]
+            .filter((el) => el.checkVisibility() && !el.closest('.canvas__more-actions'))
+            .map((el) => Math.round(el.getBoundingClientRect().top))
+        ).size
+    );
+
+  test('is two rows, with the rest behind More', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    expect(await rows(page)).toBeLessThanOrEqual(2);
+    const more = page.getByTestId('board-more');
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByTestId('board-delete')).toBeHidden();
+
+    await more.click();
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    for (const id of ['board-add-note', 'board-to-note', 'board-delete', 'pan-left', 'pan-down']) {
+      await expect(page.getByTestId(id)).toBeVisible();
+    }
+    // Reached next from More, in the order drawn (2.4.3). Add note is
+    // disabled with no notes to add, so Tab goes on to Add to note.
+    await page.keyboard.press('Tab');
+    await expect(page.getByTestId('board-to-note')).toBeFocused();
+
+    // Moving the view keeps the fold open for another press.
+    const card = page.locator('.card').first();
+    const before = (await card.boundingBox())!.x;
+    await page.getByTestId('pan-right').click();
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    expect((await card.boundingBox())!.x).toBeLessThan(before);
+
+    // Escape closes it and hands focus back to More.
+    await page.keyboard.press('Escape');
+    await expect(more).toHaveAttribute('aria-expanded', 'false');
+    await expect(more).toBeFocused();
+    await expect(page.getByTestId('pan-right')).toBeHidden();
+  });
+
+  test('a one-off action closes it', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    await page.getByTestId('board-more').click();
+    await page.getByTestId('board-to-note').click();
+    await expect(page.getByTestId('side-notes')).toHaveAttribute('aria-selected', 'true');
+    await page.getByTestId('side-board').click();
+    await expect(page.getByTestId('board-more')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  // Not "one row": how many rows the bar takes at a given width depends on the
+  // system's fonts, and CI's are wider than a Mac's. What the fold promises is
+  // that a wide board has no fold: every action in the bar itself.
+  test('maximized, there is no More and every action sits in the bar', async ({ page }) => {
+    await open(page);
+    await boardWithTwoVerses(page);
+    const besideRows = await rows(page);
+    await page.getByTestId('maximize-notes').click();
+    await expect(page.getByTestId('board-more')).toBeHidden();
+    for (const id of ['board-add-note', 'board-to-note', 'board-delete', 'pan-left', 'zoom-in']) {
+      await expect(page.getByTestId(id)).toBeVisible();
+    }
+    // In the bar's own flow, not in a panel laid over the board.
+    const panel = await page.locator('.canvas__more-actions').evaluate((el) => getComputedStyle(el).display);
+    expect(panel).toBe('contents');
+    expect(await rows(page)).toBeLessThanOrEqual(besideRows);
   });
 });

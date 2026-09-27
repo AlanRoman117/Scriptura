@@ -40,7 +40,7 @@ async function boundaryProblems(page: Page, reading: string): Promise<string[]> 
 
       // Scripture, with the translation each piece comes from.
       const pieces: [Element, string][] = [];
-      for (const el of Array.from(document.querySelectorAll('.verse__text, .marks__ref-text, .results__ref-text, .search__result-text, .card__body > span')))
+      for (const el of Array.from(document.querySelectorAll('.chapter__book, .verse__text, .marks__ref-text, .results__ref-text, .search__result-text, .card__body > span')))
         pieces.push([el, reading]);
       for (const quote of Array.from(document.querySelectorAll('[data-testid^="compare-quote-"]'))) {
         const id = quote.getAttribute('data-testid')!.split('-')[2];
@@ -145,3 +145,35 @@ test.describe('a Spanish Bible beside an English one, under an English interface
     expect(await boundaryProblems(page, 'rv1909')).toEqual([]);
   });
 });
+
+/*
+ * The chapter title's book name is the Bible's, not the interface's. It had
+ * no `lang`, so under a Latin interface a Chinese or Japanese book name was
+ * spoken in the interface's voice, and a style's Latin tracking (Vellum's
+ * .06em) spread its characters apart.
+ */
+test.describe('a Chinese Bible, in Vellum, under an English interface', () => {
+  test('the book name carries its language, and keeps its own spacing', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ style: 'vellum' })));
+    await open(page);
+    await page.getByTestId('library-open').click();
+    await page.getByTestId('library-get-cuvs').click();
+    await page.getByTestId('library-read-cuvs').click({ timeout: 60_000 });
+    await expect(page.getByTestId('chapter-title')).toContainText('约翰福音');
+
+    const book = page.locator('.chapter__book');
+    await expect(book).toHaveAttribute('lang', 'zh-Hans');
+    const spacing = await page.getByTestId('chapter-title').evaluate((title) => ({
+      book: getComputedStyle(title.querySelector('.chapter__book')!).letterSpacing,
+      title: getComputedStyle(title).letterSpacing,
+    }));
+    // Vellum's tracking is still the title's, for the chapter number beside it…
+    expect(spacing.title).not.toBe('normal');
+    // …but not the Chinese name's.
+    expect(spacing.book).toBe('normal');
+    // The picker's book names are the Bible's too; the picker itself is not.
+    await expect(page.getByTestId('book-select').locator('option:checked')).toHaveAttribute('lang', 'zh-Hans');
+    await expect(page.getByTestId('book-select')).not.toHaveAttribute('lang', /./);
+  });
+});
+

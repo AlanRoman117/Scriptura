@@ -474,14 +474,22 @@ export const jaJP = {
     title: '設定',
     close: '設定を閉じる',
     display: '表示と読みやすさ',
-    colours: '配色',
-    themes: {
+    style: 'スタイル',
+    styles: {
+      classic: 'クラシック',
+      contrast: 'ハイコントラスト',
+      sepia: 'セピア',
+      vellum: '羊皮紙',
+      emerald: 'エメラルド',
+      slate: 'スレート',
+      nocturne: 'ノクターン',
+      ember: '残り火',
+    },
+    appearance: '外観',
+    appearances: {
       system: '端末の設定に合わせる',
       light: 'ライト',
       dark: 'ダーク',
-      'hc-light': 'ハイコントラスト（ライト）',
-      'hc-dark': 'ハイコントラスト（ダーク）',
-      sepia: 'セピア',
     },
     textSize: '文字の大きさ',
     spacing: '行間',
@@ -569,6 +577,8 @@ export const jaJP = {
 
   canvas: {
     new: '新規',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'その他',
     startOne: '作成する',
     label: 'ボード',
     heading: (board: string) => `ボード：${board}`,

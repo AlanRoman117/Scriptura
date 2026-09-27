@@ -482,14 +482,22 @@ const catalog = {
     title: 'Paramètres',
     close: 'Fermer les paramètres',
     display: 'Lecture et affichage',
-    colours: 'Couleurs',
-    themes: {
+    style: 'Style',
+    styles: {
+      classic: 'Classique',
+      contrast: 'Contraste élevé',
+      sepia: 'Sépia',
+      vellum: 'Vélin',
+      emerald: 'Émeraude',
+      slate: 'Ardoise',
+      nocturne: 'Nocturne',
+      ember: 'Braise',
+    },
+    appearance: 'Clair ou sombre',
+    appearances: {
       system: 'Comme l’appareil',
       light: 'Clair',
       dark: 'Sombre',
-      'hc-light': 'Contraste élevé, clair',
-      'hc-dark': 'Contraste élevé, sombre',
-      sepia: 'Sépia',
     },
     textSize: 'Taille du texte',
     spacing: 'Interligne',
@@ -577,6 +585,8 @@ const catalog = {
 
   canvas: {
     new: 'Nouveau',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'Plus',
     startOne: 'En créer un',
     label: 'Tableaux',
     heading: (board: string) => `Tableau : ${board}`,

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { boardAction } from '../helpers/board';
 
 /**
  * The question asked before anything is deleted (3.3.4, 3.3.6).
@@ -170,7 +171,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
     await page.getByTestId('board-new').click();
     await expect(page.getByTestId('board-select').locator('option')).toHaveCount(2);
 
-    await page.getByTestId('board-delete').click();
+    await (await boardAction(page, 'board-delete')).click();
     await expect(page.getByRole('alertdialog', { name: 'Delete the board “Untitled board”?' })).toBeVisible();
     await expect(page.getByTestId('confirm-body').locator('p')).toHaveText(['The board is empty.', 'You cannot undo this.']);
     await page.getByTestId('confirm-accept').click();
@@ -178,7 +179,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
     await expect(page.getByTestId('board-select').locator('option')).toHaveCount(1);
     await expect(page.getByTestId('announcer')).toHaveText('Deleted the board “Untitled board”');
 
-    await page.getByTestId('board-delete').click();
+    await (await boardAction(page, 'board-delete')).click();
     await page.getByTestId('confirm-accept').click();
     await expect(page.getByTestId('board-start')).toBeFocused();
   });
@@ -190,7 +191,7 @@ test.describe('after a confirmed removal, focus lands where the removed thing wa
       await page.getByTestId(`canvas-${verse}`).click();
     }
     await page.getByTestId('side-board').click();
-    await page.getByTestId('board-delete').click();
+    await (await boardAction(page, 'board-delete')).click();
     await expect(page.getByTestId('confirm-body').locator('p')).toHaveText([
       'The board and its 2 cards will be deleted.',
       'Your notes are not changed.',

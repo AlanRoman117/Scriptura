@@ -6,21 +6,23 @@ import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import { LOCALE_LABELS } from '../i18n/locales';
 import {
+  APPEARANCES,
   EDITORS,
   LANGUAGES,
   MEASURES,
   MOTIONS,
   SPACINGS,
+  STYLES,
   TEXT_SIZES,
-  THEMES,
+  type Appearance,
   type DisplayPrefs,
   type EditorPref,
   type LanguagePref,
   type Measure,
   type Motion,
   type Spacing,
+  type Style,
   type TextSize,
-  type Theme,
 } from '../lib/prefs';
 
 interface SettingsPanelProps {
@@ -117,17 +119,51 @@ export function SettingsPanel({
           control, and nothing to relearn. */}
       <section className="settings__group">
         <h2 className="settings__heading">{words.display}</h2>
+        {/* Each style as a tile drawn in that style — its paper, its ink,
+            its title face, its verse number and highlight — so the choice
+            shows what it gives rather than naming it. Native radios under
+            the tiles: a group name, arrow keys and a checked state for
+            free. Each tile follows the page's light or dark, as the choice
+            will. The picture is decoration; the name is the label. */}
+        <fieldset className="style-picker" data-testid="pref-style">
+          <legend className="style-picker__legend">{words.style}</legend>
+          <div className="style-picker__tiles">
+            {STYLES.map((style) => (
+              <label key={style} className="style-tile" data-style-preview={style}>
+                <input
+                  type="radio"
+                  name="pref-style"
+                  value={style}
+                  className="style-tile__input"
+                  data-testid={`pref-style-${style}`}
+                  checked={prefs.style === style}
+                  onChange={() => onPrefs({ style: style as Style })}
+                />
+                <span className="style-tile__name">{words.styles[style]}</span>
+                <span className="style-tile__sample" aria-hidden="true">
+                  <span className="style-tile__num">1</span>
+                  <span className="style-tile__line style-tile__line--marked" />
+                  <span className="style-tile__line" />
+                  <span className="style-tile__line style-tile__line--short" />
+                </span>
+                <span className="style-tile__check" aria-hidden="true">
+                  ✓
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div className="settings__field">
-          <label htmlFor="pref-theme">{words.colours}</label>
+          <label htmlFor="pref-appearance">{words.appearance}</label>
           <select
-            id="pref-theme"
-            data-testid="pref-theme"
-            value={prefs.theme}
-            onChange={(e) => onPrefs({ theme: e.target.value as Theme })}
+            id="pref-appearance"
+            data-testid="pref-appearance"
+            value={prefs.appearance}
+            onChange={(e) => onPrefs({ appearance: e.target.value as Appearance })}
           >
-            {THEMES.map((t) => (
-              <option key={t} value={t}>
-                {words.themes[t]}
+            {APPEARANCES.map((appearance) => (
+              <option key={appearance} value={appearance}>
+                {words.appearances[appearance]}
               </option>
             ))}
           </select>

@@ -93,9 +93,16 @@ export default defineConfig({
         orientation: 'any',
         start_url: BASE,
         scope: BASE,
+        // PNGs first: not every launcher takes an SVG. The maskable icon is
+        // its own entry: one icon claiming "any maskable" has its artwork
+        // cropped as a mask, or its corners showing as an icon. Rendered from
+        // the SVG by scripts/render-icons.mjs.
         icons: [
-          { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
-          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' },
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: 'icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' },
         ],
       },
       devOptions: { enabled: true, type: 'module' },

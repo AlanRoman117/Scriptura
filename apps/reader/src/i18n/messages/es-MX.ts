@@ -478,14 +478,22 @@ export const esMX = {
     title: 'Configuración',
     close: 'Cerrar la configuración',
     display: 'Lectura y pantalla',
-    colours: 'Colores',
-    themes: {
+    style: 'Estilo',
+    styles: {
+      classic: 'Clásico',
+      contrast: 'Alto contraste',
+      sepia: 'Sepia',
+      vellum: 'Vitela',
+      emerald: 'Esmeralda',
+      slate: 'Pizarra',
+      nocturne: 'Nocturno',
+      ember: 'Brasa',
+    },
+    appearance: 'Claro u oscuro',
+    appearances: {
       system: 'Igual que el dispositivo',
       light: 'Claro',
       dark: 'Oscuro',
-      'hc-light': 'Alto contraste, claro',
-      'hc-dark': 'Alto contraste, oscuro',
-      sepia: 'Sepia',
     },
     textSize: 'Tamaño del texto',
     spacing: 'Interlineado',
@@ -573,6 +581,8 @@ export const esMX = {
 
   canvas: {
     new: 'Nuevo',
+    /** Beside the Bible, the button the less-used board actions fold behind. */
+    more: 'Más',
     startOne: 'Empieza uno',
     label: 'Tableros',
     heading: (board: string) => `Tablero: ${board}`,

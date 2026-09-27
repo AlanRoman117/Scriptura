@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { PAPER, rgb, styleTile, type StyleName } from '../helpers/styles';
 
 /**
  * Display preferences (1.4.8, 2.3.3): chosen once, applied everywhere, kept
@@ -60,40 +61,115 @@ test.describe('spacing', () => {
   });
 });
 
-test.describe('colours', () => {
-  test('a pinned theme overrides the device, and system follows it again', async ({ page }) => {
+test.describe('style and appearance', () => {
+  const paper = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  const metas = (page: import('@playwright/test').Page) =>
+    page.locator('meta[name="theme-color"]').evaluateAll((m) => m.map((el) => (el as HTMLMetaElement).content));
+
+  test('a pinned appearance overrides the device, and system follows it again', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await open(page);
-    const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(await paper()).toBe('rgb(250, 249, 247)');
+    expect(await paper(page)).toBe(rgb(PAPER.classic.light));
 
     await page.getByTestId('settings-open').click();
-    await page.getByTestId('pref-theme').selectOption('dark');
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    expect(await paper()).toBe('rgb(23, 22, 20)');
+    await page.getByTestId('pref-appearance').selectOption('dark');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
+    expect(await paper(page)).toBe(rgb(PAPER.classic.dark));
     // The browser chrome follows.
-    const metas = await page.locator('meta[name="theme-color"]').evaluateAll((m) =>
-      m.map((el) => (el as HTMLMetaElement).content)
-    );
-    expect(metas).toEqual(['#171614', '#171614']);
+    expect(await metas(page)).toEqual([PAPER.classic.dark, PAPER.classic.dark]);
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
 
     await page.getByTestId('settings-open').click();
-    await page.getByTestId('pref-theme').selectOption('system');
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /./);
-    expect(await paper()).toBe('rgb(250, 249, 247)');
+    await page.getByTestId('pref-appearance').selectOption('system');
+    await expect(page.locator('html')).not.toHaveAttribute('data-appearance', /./);
+    expect(await paper(page)).toBe(rgb(PAPER.classic.light));
   });
 
-  test('high contrast and sepia are real themes', async ({ page }) => {
+  test('every style paints its own paper, light and dark, and survives a reload', async ({ page }) => {
     await open(page);
     await page.getByTestId('settings-open').click();
-    const paper = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    await page.getByTestId('pref-theme').selectOption('hc-dark');
-    expect(await paper()).toBe('rgb(0, 0, 0)');
-    await page.getByTestId('pref-theme').selectOption('sepia');
-    expect(await paper()).toBe('rgb(244, 236, 216)');
+    for (const [style, papers] of Object.entries(PAPER)) {
+      await styleTile(page, style as StyleName).click();
+      // Classic is the absent attribute.
+      if (style === 'classic') await expect(page.locator('html')).not.toHaveAttribute('data-style', /./);
+      else await expect(page.locator('html')).toHaveAttribute('data-style', style);
+      for (const appearance of ['light', 'dark'] as const) {
+        await page.getByTestId('pref-appearance').selectOption(appearance);
+        expect(await paper(page), `${style} ${appearance}`).toBe(rgb(papers[appearance]));
+      }
+    }
+    await styleTile(page, 'sepia').click();
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    expect(await paper(page)).toBe(rgb(PAPER.sepia.dark));
+  });
+
+  test('a theme stored before styles existed still applies', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ theme: 'hc-dark' })));
+    await open(page);
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'contrast');
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
+    expect(await paper(page)).toBe(rgb(PAPER.contrast.dark));
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByTestId('pref-style-contrast')).toBeChecked();
+    await expect(page.getByTestId('pref-appearance')).toHaveValue('dark');
   });
 });
+
+/*
+ * Style is chosen from tiles, each drawn in its own style, so the choice
+ * shows what it gives. Native radios underneath: one group name, arrow keys,
+ * and a checked state a screen reader can say.
+ */
+test.describe('the style tiles', () => {
+  test("each tile is drawn in its own style, in the page's light or dark", async ({ page }) => {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await open(page);
+      await page.getByTestId('settings-open').click();
+      for (const [style, papers] of Object.entries(PAPER)) {
+        const tile = page.locator(`.style-tile[data-style-preview="${style}"]`);
+        expect(await tile.evaluate((el) => getComputedStyle(el).backgroundColor), `${style}, ${scheme}`).toBe(rgb(papers[scheme]));
+      }
+    }
+  });
+
+  test('a group with a name, reached as one stop, moved through with the arrows', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('radiogroup', { name: 'Style' }).or(page.getByRole('group', { name: 'Style' }))).toHaveCount(1);
+    const classic = page.getByTestId('pref-style-classic');
+    await expect(classic).toBeChecked();
+    await classic.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('pref-style-contrast')).toBeChecked();
+    // The focused tile shows the ring, since the radio itself is hidden.
+    await expect(styleTile(page, 'contrast')).toHaveCSS('outline-style', 'solid');
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'contrast');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'sepia');
+    // The chosen tile is marked by more than colour: a check and a heavier edge.
+    const check = page.locator('.style-tile[data-style-preview="sepia"] .style-tile__check');
+    await expect(check).toBeVisible();
+    await expect(page.locator('.style-tile[data-style-preview="classic"] .style-tile__check')).toBeHidden();
+  });
+
+  test('a tile takes its own corners and faces inside another style', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ style: 'vellum' })));
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    const radius = (style: string) =>
+      page.locator(`.style-tile[data-style-preview="${style}"]`).evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
+    const tracking = (style: string) =>
+      page.locator(`.style-tile[data-style-preview="${style}"] .style-tile__name`).evaluate((el) => getComputedStyle(el).fontVariantCaps);
+    // Classic drawn inside a Vellum page is Classic: no small capitals.
+    expect(await tracking('vellum')).toBe('small-caps');
+    expect(await tracking('classic')).toBe('normal');
+    expect(await radius('classic')).not.toBe(await radius('emerald'));
+  });
+});
+

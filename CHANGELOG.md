@@ -7,6 +7,43 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.4] - 2026-09-27
+
+The fourth preview. The reader gains eight styles, each light and dark and
+chosen from tiles that show them, and a round of fixes found by using it: a
+tapped link in a note now opens on a phone or tablet, a long title is shown
+whole, and the canvas bar is shorter beside the Bible. It also gets proper
+icons for a phone's home screen.
+
+For reviewers, a few new words in every language: Style, Light or dark, and
+the canvas bar's More. They are listed in `docs/plans/reader-i18n/README.md`.
+
+**Try it:** <https://alanroman117.github.io/Scriptura/>
+
+### Added
+
+- **App icons for phones.** Adding the reader to an iPhone's home screen shows its icon, and Android gets a maskable icon whose artwork survives any launcher shape.
+- **Styles.** Settings → Reading & display now offers a style, chosen from tiles that each show that style, and, separately, light or dark. Five styles are new, each with a light and a dark palette: **Vellum** (an illuminated page, with rubric-red verse numbers and small-capital titles), **Emerald** (deep green on a jade-tinted page), **Slate** (cool, flat and exact), **Nocturne** (ink-blue night with gold; navy by day) and **Ember** (amber on true black for reading in the dark). Sepia gains a dark version. A theme chosen before this carries over.
+- **Design tokens.** Every colour, corner, shadow and type size in the reader comes from a token, in three tiers: palettes, fills derived from them, and style (corners, depth, type, the reading face). A style can change all of them.
+
+### Changed
+
+- **A shorter canvas bar beside the Bible.** Add note, Add to note, Delete board and the pan buttons fold behind **More** there, giving the board a row back; maximized, they sit in the bar as before.
+- **Classic, refreshed.** Rounder corners, softer and warmer shadows, a slightly tighter chapter title. The colours barely move.
+- **High contrast** keeps its colours and gains 2px control edges; it drops shadows and the blur behind the sticky bars.
+- The contrast test now measures every fill the reader draws, evaluated from its formula, in every style and polarity: 944 pairs.
+- Every style is tested in every appearance: following the device, and pinned light and dark on a device set to the opposite, under axe and on the phone's layout gates.
+- `npm run dev:api` runs the packages from their sources, subpaths included, so it needs no build and reloads on any edit.
+
+### Fixed
+
+- **A long note title or board name is shown whole.** Its field wraps and grows, where it used to scroll the title out of sight. And typing a long board name no longer pushes the buttons beside it along the bar.
+- **A tapped link in a note now opens its passage** on a phone or tablet. A touch screen has no Ctrl or ⌘, so a tap only put the cursor in the link and raised the keyboard (found on an iPad). A tap on a link the note is showing now opens it; on the line being edited, a tap still places the cursor so the link can be changed.
+- The chapter title's book name, and the names in the book picker, now carry their Bible's language: a screen reader speaks them in its voice, and a Japanese or Chinese name no longer takes a style's Latin letter-spacing (Vellum, Nocturne).
+- Secondary text on hovered rows, pressed buttons and tags fell just under the 7:1 AAA ratio in the light, dark and sepia themes. It is darker in light and sepia, lighter in dark.
+- The number of the verse being acted on fell under 7:1 on its blue wash. It is now drawn in ink, as a highlighted verse's number is.
+- In dark, the accent on its own tint (a link in a previewed note) was 6.5:1. The dark accent is lighter, and a hovered link reads in ink.
+
 ## [0.1.0-preview.3] - 2026-09-22
 
 The third preview. Notes take shape as they are written, and the canvas moves
@@ -95,6 +132,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.4]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.2
 [0.1.0-preview.1]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.1

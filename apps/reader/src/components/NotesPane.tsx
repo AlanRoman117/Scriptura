@@ -10,6 +10,7 @@ import { LiveEditor } from './LiveEditor';
 import { BoardThumbnail } from './BoardThumbnail';
 import { textareaSurface, type NoteSurface } from '../lib/surface';
 import type { EditorPref } from '../lib/prefs';
+import { TitleField, oneLine } from './TitleField';
 import { ConfirmButton } from './ConfirmButton';
 import { settleFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
@@ -187,6 +188,9 @@ export function NotesPane({
           aria-label={t.notes.picker}
           data-testid="note-select"
           value={activeId ?? ''}
+          // The full name for a pointer's hover: the picker shows as much as
+          // fits, and its open list shows every name whole.
+          title={active ? active.title || t.common.untitledNote : undefined}
           onChange={(e) => onSelect(e.target.value)}
         >
           {notes.length === 0 && <option value="">{t.notes.none}</option>}
@@ -249,13 +253,21 @@ export function NotesPane({
 
       {active ? (
         <>
-          <input
+          {/* It wraps, and grows to show the whole title (TitleField).
+              Enter goes on into the note, as it does in a writing app. */}
+          <TitleField
             className="notes__title"
             data-testid="note-title"
             aria-label={t.notes.title}
             value={active.title}
             placeholder={t.common.untitledNote}
-            onChange={(e) => onChange(active.id, { title: e.target.value })}
+            enterKeyHint="next"
+            onChange={(e) => onChange(active.id, { title: oneLine(e.target.value) })}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+              e.preventDefault();
+              surface.focus();
+            }}
           />
           {/* The editing group: the tools, what the caret is under, and the
               note itself. The tools are shown whenever the note is open for
