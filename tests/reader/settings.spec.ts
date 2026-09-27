@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { PAPER, rgb } from '../helpers/styles';
+import { PAPER, rgb, styleTile, type StyleName } from '../helpers/styles';
 
 /**
  * Display preferences (1.4.8, 2.3.3): chosen once, applied everywhere, kept
@@ -93,7 +93,7 @@ test.describe('style and appearance', () => {
     await open(page);
     await page.getByTestId('settings-open').click();
     for (const [style, papers] of Object.entries(PAPER)) {
-      await page.getByTestId('pref-style').selectOption(style);
+      await styleTile(page, style as StyleName).click();
       // Classic is the absent attribute.
       if (style === 'classic') await expect(page.locator('html')).not.toHaveAttribute('data-style', /./);
       else await expect(page.locator('html')).toHaveAttribute('data-style', style);
@@ -102,7 +102,7 @@ test.describe('style and appearance', () => {
         expect(await paper(page), `${style} ${appearance}`).toBe(rgb(papers[appearance]));
       }
     }
-    await page.getByTestId('pref-style').selectOption('sepia');
+    await styleTile(page, 'sepia').click();
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
     expect(await paper(page)).toBe(rgb(PAPER.sepia.dark));
@@ -115,7 +115,61 @@ test.describe('style and appearance', () => {
     await expect(page.locator('html')).toHaveAttribute('data-appearance', 'dark');
     expect(await paper(page)).toBe(rgb(PAPER.contrast.dark));
     await page.getByTestId('settings-open').click();
-    await expect(page.getByTestId('pref-style')).toHaveValue('contrast');
+    await expect(page.getByTestId('pref-style-contrast')).toBeChecked();
     await expect(page.getByTestId('pref-appearance')).toHaveValue('dark');
   });
 });
+
+/*
+ * Style is chosen from tiles, each drawn in its own style, so the choice
+ * shows what it gives. Native radios underneath: one group name, arrow keys,
+ * and a checked state a screen reader can say.
+ */
+test.describe('the style tiles', () => {
+  test("each tile is drawn in its own style, in the page's light or dark", async ({ page }) => {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await open(page);
+      await page.getByTestId('settings-open').click();
+      for (const [style, papers] of Object.entries(PAPER)) {
+        const tile = page.locator(`.style-tile[data-style-preview="${style}"]`);
+        expect(await tile.evaluate((el) => getComputedStyle(el).backgroundColor), `${style}, ${scheme}`).toBe(rgb(papers[scheme]));
+      }
+    }
+  });
+
+  test('a group with a name, reached as one stop, moved through with the arrows', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByRole('radiogroup', { name: 'Style' }).or(page.getByRole('group', { name: 'Style' }))).toHaveCount(1);
+    const classic = page.getByTestId('pref-style-classic');
+    await expect(classic).toBeChecked();
+    await classic.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByTestId('pref-style-contrast')).toBeChecked();
+    // The focused tile shows the ring, since the radio itself is hidden.
+    await expect(styleTile(page, 'contrast')).toHaveCSS('outline-style', 'solid');
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'contrast');
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('html')).toHaveAttribute('data-style', 'sepia');
+    // The chosen tile is marked by more than colour: a check and a heavier edge.
+    const check = page.locator('.style-tile[data-style-preview="sepia"] .style-tile__check');
+    await expect(check).toBeVisible();
+    await expect(page.locator('.style-tile[data-style-preview="classic"] .style-tile__check')).toBeHidden();
+  });
+
+  test('a tile takes its own corners and faces inside another style', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ style: 'vellum' })));
+    await open(page);
+    await page.getByTestId('settings-open').click();
+    const radius = (style: string) =>
+      page.locator(`.style-tile[data-style-preview="${style}"]`).evaluate((el) => getComputedStyle(el).borderTopLeftRadius);
+    const tracking = (style: string) =>
+      page.locator(`.style-tile[data-style-preview="${style}"] .style-tile__name`).evaluate((el) => getComputedStyle(el).fontVariantCaps);
+    // Classic drawn inside a Vellum page is Classic: no small capitals.
+    expect(await tracking('vellum')).toBe('small-caps');
+    expect(await tracking('classic')).toBe('normal');
+    expect(await radius('classic')).not.toBe(await radius('emerald'));
+  });
+});
+
