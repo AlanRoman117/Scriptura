@@ -59,6 +59,13 @@ describe('normalizePrefs', () => {
     expect(normalizePrefs({ markers: 1 }).markers).toBe(false);
   });
 
+  test('verse lines and numbers stay on unless switched off', () => {
+    // Stored before these existed: the chapter looks as it did.
+    expect(normalizePrefs({ style: 'sepia' })).toMatchObject({ verseLines: true, verseNumbers: true });
+    expect(normalizePrefs({ verseLines: false, verseNumbers: false })).toMatchObject({ verseLines: false, verseNumbers: false });
+    expect(normalizePrefs({ verseLines: 'no', verseNumbers: 0 })).toMatchObject({ verseLines: true, verseNumbers: true });
+  });
+
   /**
    * The preference was one `theme` before it was a style and an appearance.
    * A reader who chose high contrast, dark, keeps it.
@@ -178,7 +185,7 @@ describe('the inline script in index.html agrees with the module', () => {
 
   test('same storage key and attribute names', () => {
     expect(script).toContain(`'${STORAGE_KEY}'`);
-    for (const attr of ['data-style', 'data-appearance', 'data-motion', 'data-markers']) expect(script).toContain(`'${attr}'`);
+    for (const attr of ['data-style', 'data-appearance', 'data-motion', 'data-markers', 'data-verse-flow', 'data-verse-numbers']) expect(script).toContain(`'${attr}'`);
   });
 
   test('same custom properties', () => {
@@ -264,6 +271,20 @@ describe('the inline script in index.html agrees with the module', () => {
     expect(attrs.get('data-style')).toBe(want.style);
     expect(attrs.get('data-appearance')).toBe(want.appearance);
     expect(metas).toEqual(want.metas);
+  });
+
+  test.each([
+    {},
+    { verseLines: false },
+    { verseNumbers: false },
+    { verseLines: false, verseNumbers: false },
+    { verseLines: true, verseNumbers: true },
+    { verseLines: 'no', verseNumbers: 0 },
+  ])('the script lays out verses as the module does for %j', (stored) => {
+    const { attrs } = runInline(['en-US'], stored);
+    const { verseLines, verseNumbers } = normalizePrefs(stored);
+    expect(attrs.get('data-verse-flow')).toBe(verseLines ? undefined : 'run-in');
+    expect(attrs.get('data-verse-numbers')).toBe(verseNumbers ? undefined : 'hidden');
   });
 
   test.each([

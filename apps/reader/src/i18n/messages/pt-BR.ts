@@ -81,6 +81,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         p: 'Pressione um versículo, ou o número dele, para marcá-lo em uma de cinco cores. Cada cor é uma coleção: dê a ela o nome do assunto que você acompanha, e o painel **Marcas** lista os versículos na ordem da Bíblia. As marcas acompanham a passagem, não a tradução, então uma marca feita em uma tradução aparece em todas.',
       },
       { p: 'Nas configurações você pode acrescentar um símbolo a cada marca, para que a cor não seja o único sinal.' },
+      { p: 'Nas configurações você também pode juntar os versículos em um só texto e ocultar os números. Pressionar uma frase continua escolhendo o versículo a que ela pertence.' },
     ],
   },
   {
@@ -529,6 +530,8 @@ export const ptBR = {
     motion: 'Movimento',
     motions: { system: 'Seguir o dispositivo', reduce: 'Reduzir o movimento' },
     markers: 'Mostrar um símbolo em cada marca, não só uma cor',
+    verseLines: 'Começar cada versículo em uma nova linha',
+    verseNumbers: 'Mostrar os números dos versículos',
     storage: 'Onde seu trabalho fica',
     persistence: {
       persisted: 'Este navegador concordou em guardar suas notas. Limpar os dados do site ainda as apaga.',

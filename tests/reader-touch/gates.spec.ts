@@ -197,6 +197,7 @@ const TRUNCATES_BY_DESIGN = [
   '.notes__heading', // one-line reminder of the heading the caret is under
   '.reader__select', // native select; its options list shows the full name
   '.notes__select', // native select; its options list shows the full title
+  ":root[data-verse-numbers='hidden'] .verse__num", // hidden on request; shown whole while it has focus
 ];
 
 const clipped = (page: Page) =>
@@ -328,3 +329,48 @@ for (const style of STYLES.filter((s) => s !== 'classic')) {
     }
   });
 }
+
+/**
+ * Read as running text with the verse numbers hidden: every verse inline, and
+ * every number clipped to a pixel until it has focus. The gates again, in the
+ * states that show the chapter.
+ */
+test.describe('as running text, without verse numbers', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ verseLines: false, verseNumbers: false })));
+  });
+
+  for (const name of ['reading', 'verse actions docked', 'a quote confirmed on the grip']) {
+    const arrange = STATES[name];
+
+    test(`${name}: axe`, async ({ page }) => {
+      await open(page);
+      await expect(page.locator('html')).toHaveAttribute('data-verse-flow', 'run-in');
+      await arrange(page);
+      const results = await axeFor(page).analyze();
+      expect(results.violations.length, describeViolations(results)).toBe(0);
+    });
+
+    test(`${name}: 44px targets`, async ({ page }) => {
+      await open(page);
+      await arrange(page);
+      const small = await tooSmall(page);
+      expect(small, describeSmall(small)).toEqual([]);
+    });
+
+    test(`${name}: reflow at 320px`, async ({ page }) => {
+      await page.setViewportSize({ width: 320, height: 640 });
+      await open(page);
+      await arrange(page);
+      expect(await sidewaysOverflow(page)).toEqual([]);
+    });
+
+    test(`${name}: text spacing`, async ({ page }) => {
+      await open(page);
+      await arrange(page);
+      await page.addStyleTag({ content: SPACING });
+      expect(await sidewaysOverflow(page)).toEqual([]);
+      expect(await clipped(page)).toEqual([]);
+    });
+  }
+});

@@ -47,6 +47,8 @@
         if (appearance !== 'system') r.setAttribute('data-appearance', appearance);
         if (p.motion === 'reduce') r.setAttribute('data-motion', 'reduce');
         if (p.markers === true) r.setAttribute('data-markers', 'true');
+        if (p.verseLines === false) r.setAttribute('data-verse-flow', 'run-in');
+        if (p.verseNumbers === false) r.setAttribute('data-verse-numbers', 'hidden');
         if ([112, 125, 150, 175, 200].indexOf(p.textSize) !== -1) r.style.setProperty('--text-scale', String(p.textSize / 100));
         r.style.setProperty('--reading-leading', spacing[0]);
         r.style.setProperty('--verse-gap', spacing[1]);

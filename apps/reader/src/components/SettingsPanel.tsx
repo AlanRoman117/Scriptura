@@ -213,6 +213,26 @@ export function SettingsPanel({
             ))}
           </select>
         </div>
+        {/* How the chapter is laid out, and nothing else: a press on a
+            sentence still picks its verse either way. */}
+        <label className="settings__toggle">
+          <input
+            type="checkbox"
+            data-testid="pref-verse-lines"
+            checked={prefs.verseLines}
+            onChange={(e) => onPrefs({ verseLines: e.target.checked })}
+          />
+          <span>{words.verseLines}</span>
+        </label>
+        <label className="settings__toggle">
+          <input
+            type="checkbox"
+            data-testid="pref-verse-numbers"
+            checked={prefs.verseNumbers}
+            onChange={(e) => onPrefs({ verseNumbers: e.target.checked })}
+          />
+          <span>{words.verseNumbers}</span>
+        </label>
         <div className="settings__field">
           <label htmlFor="pref-editor">{words.editor}</label>
           <select

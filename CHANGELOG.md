@@ -7,6 +7,16 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Added
+
+- Two reading switches in Settings: **Start each verse on a new line** and
+  **Show verse numbers**. Off, a chapter reads as running prose without
+  numbers, closer to how it was first written. They change only how the
+  chapter looks: pressing a sentence still picks the verse it belongs to, and
+  highlighting, quoting, linking and the canvas work as before. Japanese and
+  Chinese run their verses together without a space; a comparison keeps its
+  rows and numbers.
+
 ## [0.1.0-preview.4] - 2026-09-27
 
 The fourth preview. The reader gains eight styles, each light and dark and
