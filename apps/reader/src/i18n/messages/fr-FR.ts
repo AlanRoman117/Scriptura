@@ -83,6 +83,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         p: 'Appuyez sur un verset, ou sur son numéro, pour le marquer d’une des cinq couleurs. Chaque couleur est une collection : donnez-lui le nom du sujet que vous suivez, et le panneau **Marques** en liste les versets dans l’ordre de la Bible. Les marques suivent le passage, pas la traduction : une marque faite dans une traduction apparaît dans toutes.',
       },
       { p: 'Dans les Paramètres, vous pouvez ajouter un symbole à chaque marque, pour que la couleur ne soit pas le seul signe.' },
+      { p: 'Dans les Paramètres, vous pouvez aussi lire les versets à la suite, comme un seul texte, et masquer leurs numéros. Appuyer sur une phrase choisit toujours le verset auquel elle appartient.' },
     ],
   },
   {
@@ -512,6 +513,8 @@ const catalog = {
     motion: 'Animations',
     motions: { system: 'Comme l’appareil', reduce: 'Réduire les animations' },
     markers: 'Afficher un symbole sur chaque surlignage, pas seulement une couleur',
+    verseLines: 'Commencer chaque verset sur une nouvelle ligne',
+    verseNumbers: 'Afficher les numéros de verset',
     storage: 'Où se trouve votre travail',
     persistence: {
       persisted: 'Ce navigateur a accepté de conserver vos notes. Effacer les données du site les supprime tout de même.',

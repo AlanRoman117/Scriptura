@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { prefersReducedMotion } from '../lib/prefs';
+import { verseSeparator } from '../lib/verses';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import {
   HIGHLIGHT_GLYPHS,
@@ -163,6 +164,7 @@ export function BiblePane({
   }, [book.slug, chapter]);
   const current = book.chapters.find((c) => c.number === chapter);
   const meta = bible.meta;
+  const separator = verseSeparator(meta.language);
 
   return (
     <div className="reader" ref={reader}>
@@ -353,6 +355,9 @@ export function BiblePane({
                   <span className="verse__text" lang={meta.language}>
                     {v.text}
                   </span>
+                  {/* Read as running text, the verses need a space between
+                      them — except in Japanese and Chinese (lib/verses.ts). */}
+                  {separator}
 
                   {open && (
                     <VerseActions

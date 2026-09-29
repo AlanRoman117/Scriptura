@@ -249,6 +249,29 @@ const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
   'asked before deleting': STATES['asked before deleting'],
 };
 
+/**
+ * Read as running text with the verse numbers hidden, in both schemes: marked
+ * verses that run across lines, and one verse open — reached by pressing its
+ * text, since its number is out of sight.
+ */
+for (const scheme of ['light', 'dark'] as const) {
+  test(`no axe violations, running text without numbers, ${scheme}`, async ({ page }) => {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ verseLines: false, verseNumbers: false })));
+    await open(page);
+    await expect(page.locator('html')).toHaveAttribute('data-verse-flow', 'run-in');
+    for (const [verse, colour] of [[2, 'amber'], [3, 'rose'], [4, 'sky'], [5, 'mint'], [6, 'violet']] as const) {
+      await page.locator(`.verse[data-verse="${verse}"] .verse__text`).click();
+      await page.getByTestId(`swatch-${colour}`).click();
+      await expect(page.locator(`.verse[data-verse="${verse}"]`)).toHaveAttribute('data-highlight', colour);
+    }
+    await page.locator('.verse[data-verse="7"] .verse__text').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+    const results = await axeFor(page).analyze();
+    expect(results.violations.length, describeViolations(results)).toBe(0);
+  });
+}
+
 const CONDITIONS = [
   { appearance: 'system', device: 'light', label: 'system, on a light device' },
   { appearance: 'system', device: 'dark', label: 'system, on a dark device' },

@@ -71,6 +71,13 @@ export interface DisplayPrefs {
   language: LanguagePref;
   /** The note editor. */
   editor: EditorPref;
+  /**
+   * Each verse on a line of its own (the default), or the chapter as running
+   * text. Display only: every verse is still its own target.
+   */
+  verseLines: boolean;
+  /** Draw the verse numbers. Hidden, each stays a control and shows while it has focus. */
+  verseNumbers: boolean;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -83,6 +90,8 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   markers: false,
   language: 'system',
   editor: 'live',
+  verseLines: true,
+  verseNumbers: true,
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */
@@ -161,6 +170,10 @@ export function normalizePrefs(raw: unknown): DisplayPrefs {
     markers: r.markers === true,
     language: oneOf(LANGUAGES, r.language, DEFAULT_PREFS.language),
     editor: oneOf(EDITORS, r.editor, DEFAULT_PREFS.editor),
+    // On unless switched off: a reader who stored preferences before these
+    // existed keeps the chapter as it was.
+    verseLines: r.verseLines !== false,
+    verseNumbers: r.verseNumbers !== false,
   };
 }
 
@@ -193,7 +206,8 @@ export function savePrefs(prefs: DisplayPrefs): void {
 /**
  * Write the preferences onto the document.
  *
- * Attributes for the discrete choices (style, appearance, motion, markers) — the state
+ * Attributes for the discrete choices (style, appearance, motion, markers, how
+ * verses are laid out) — the state
  * channel the stylesheet and the tests read — and custom properties for the
  * continuous ones. Safe to call before React mounts and on every change.
  */
@@ -207,6 +221,8 @@ export function applyPrefs(prefs: DisplayPrefs): void {
   set('data-appearance', prefs.appearance === 'system' ? null : prefs.appearance);
   set('data-motion', prefs.motion === 'system' ? null : prefs.motion);
   set('data-markers', prefs.markers ? 'true' : null);
+  set('data-verse-flow', prefs.verseLines ? null : 'run-in');
+  set('data-verse-numbers', prefs.verseNumbers ? null : 'hidden');
   // Always present: the page's language is how a screen reader picks its voice (3.1.1).
   set('lang', resolveLocale(prefs.language));
 

@@ -1040,6 +1040,42 @@ summary:focus-visible,
   background: none; border: none; cursor: pointer; border-radius: var(--radius-xs);
 }
 .verse__num:hover { color: var(--ink); background: var(--accent-pill); }
+/* A number is a verse's address, not its words: copying a passage leaves it out. */
+.verse__num { user-select: none; }
+
+/* ── Reading as running text, and without verse numbers ─────────────────────
+ *
+ * Two display preferences (lib/prefs.ts), and nothing else changes: every
+ * verse is still its own <p> and its own target, so a tap on a sentence
+ * selects the verse it belongs to wherever the line breaks.
+ *
+ * Run together, a verse is inline. The 3px left rule a marked verse carries
+ * (the 3:1 boundary of 1.4.11) has no left edge to sit on across lines, so
+ * each line of it carries a bottom rule instead — a border, not a shadow, so
+ * forced colours keep it. `clone` gives every line its own tint, rule and
+ * corners. No side padding: marking a verse must not move its words. */
+:root[data-verse-flow='run-in'] .verse {
+  display: inline; margin: 0; padding: .1em 0;
+  border-left: 0; border-bottom: 3px solid transparent;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+:root[data-verse-flow='run-in'] .verse[data-highlight='amber']  { border-bottom-color: var(--hl-amber-strong); }
+:root[data-verse-flow='run-in'] .verse[data-highlight='rose']   { border-bottom-color: var(--hl-rose-strong); }
+:root[data-verse-flow='run-in'] .verse[data-highlight='sky']    { border-bottom-color: var(--hl-sky-strong); }
+:root[data-verse-flow='run-in'] .verse[data-highlight='mint']   { border-bottom-color: var(--hl-mint-strong); }
+:root[data-verse-flow='run-in'] .verse[data-highlight='violet'] { border-bottom-color: var(--hl-violet-strong); }
+
+/* Hidden numbers are clipped to a pixel inline, never removed: each is the
+ * keyboard's way into its verse's actions and where focus returns from them,
+ * and a screen reader still hears "Mark John 1:2" at every verse. It shows
+ * while it has keyboard focus, so the ring is never drawn round nothing
+ * (2.4.7), and on the verse being acted on, so the actions say whose they are. */
+:root[data-verse-numbers='hidden'] .verse:not([data-open]) .verse__num:not(:focus-visible) {
+  display: inline-block; width: 1px; height: 1px; margin: 0; padding: 0;
+  overflow: hidden; white-space: nowrap; clip-path: inset(50%);
+  /* Takes back its pixel, so a verse starting a line starts at the margin. */
+  margin-inline-end: -1px;
+}
 
 /* Centred under the verse it belongs to: short travel from anywhere in it. */
 .swatches {
@@ -2297,6 +2333,7 @@ summary:focus-visible,
   .divider-col { border-inline: 1px solid CanvasText; }
   .divider::before { forced-color-adjust: none; background: radial-gradient(circle, CanvasText 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y; }
   .verse[data-highlight] { border-left-color: Highlight; }
+  :root[data-verse-flow='run-in'] .verse[data-highlight] { border-bottom-color: Highlight; }
   .swatch__disc { forced-color-adjust: none; }
   /* The confirmation's delete button loses its fill, and the rule above would
      give it the same border as Cancel. An inverted block in the system's own

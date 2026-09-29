@@ -7,6 +7,25 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.5] - 2026-09-29
+
+The fifth preview adds two reading switches, so a chapter can be read as
+running prose without verse numbers.
+
+For reviewers, three new texts in every language: the two switches in
+Settings and one sentence about them in Help, under Marks. They are listed in
+`docs/plans/reader-i18n/README.md`.
+
+### Added
+
+- Two reading switches in Settings: **Start each verse on a new line** and
+  **Show verse numbers**. Off, a chapter reads as running prose without
+  numbers, closer to how it was first written. They change only how the
+  chapter looks: pressing a sentence still picks the verse it belongs to, and
+  highlighting, quoting, linking and the canvas work as before. Japanese and
+  Chinese run their verses together without a space; a comparison keeps its
+  rows and numbers.
+
 ## [0.1.0-preview.4] - 2026-09-27
 
 The fourth preview. The reader gains eight styles, each light and dark and
@@ -132,6 +151,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.5]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.5
 [0.1.0-preview.4]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.3
 [0.1.0-preview.2]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.2
