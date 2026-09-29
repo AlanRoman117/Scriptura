@@ -85,6 +85,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         p: 'Press a verse, or its number, to mark it in one of five colours. Each colour is a collection: name it for the subject you are following, and the **Marks** panel lists its verses in Bible order. Marks follow the passage, not the translation, so a mark made in one translation shows in all of them.',
       },
       { p: 'In Settings you can add a symbol to every mark, so colour is not the only sign.' },
+      { p: 'In Settings you can also run the verses together as one text and hide their numbers. Pressing a sentence still picks the verse it belongs to.' },
     ],
   },
   {
@@ -524,6 +525,8 @@ export const enUS = {
     motion: 'Motion',
     motions: { system: 'Follow the device', reduce: 'Reduce motion' },
     markers: 'Show a symbol on every highlight, not only a colour',
+    verseLines: 'Start each verse on a new line',
+    verseNumbers: 'Show verse numbers',
     storage: 'Where your work lives',
     persistence: {
       persisted: 'This browser has agreed to keep your notes. Clearing site data still removes them.',

@@ -75,3 +75,22 @@ test('a tap marks the verse; a tap elsewhere closes the row', async ({ page }) =
   await page.getByTestId('chapter-title').tap();
   await expect(page.getByTestId('verse-actions')).toHaveCount(0);
 });
+
+test('read as running text without numbers, a tap on a sentence mid-line docks that verse’s actions', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ verseLines: false, verseNumbers: false })));
+  await open(page);
+  // Verse 3 begins partway along the line verse 2 ends on; tap its first words.
+  const [two, three] = await Promise.all(
+    [2, 3].map((n) =>
+      page.locator(`.verse[data-verse="${n}"]`).evaluate((el) => [...el.getClientRects()].map((r) => ({ x: r.x, y: r.y, width: r.width, height: r.height })))
+    )
+  );
+  expect(three[0].y).toBeCloseTo(two.at(-1)!.y, 0);
+  await page.touchscreen.tap(three[0].x + three[0].width / 2, three[0].y + three[0].height / 2);
+
+  await expect(page.getByTestId('verse-actions')).toBeVisible();
+  await expect(page.locator('.verse[data-verse="3"]')).toHaveAttribute('data-open', 'true');
+  await expect(page.locator('.verse[data-open]')).toHaveCount(1);
+  await page.getByTestId('quote-3').tap();
+  await expect(page.getByTestId('sheet-done')).toContainText('1:3');
+});

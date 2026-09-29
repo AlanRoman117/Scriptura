@@ -114,6 +114,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] The note editor choice in Settings (`settings.editor`, `settings.editors`, added 2026-09-22) and the two sentences about it in Help's notes section (the live editor, and Preview only with Plain text).
 - [ ] The Notes and Canvas tabs (`layout.sides`, `layout.paneBoard`, `layout.expandBoard`, `layout.collapseBoard`, `layout.showBoard`, `app.skipToBoard`) and the Canvas button on search results (`search.toCanvas`), added 2026-09-22.
 - [ ] The canvas bar's **More** button (`canvas.more`), added 2026-09-27: it holds the less-used board actions beside the Bible.
+- [ ] Two reading switches in Settings (`settings.verseLines`, `settings.verseNumbers`), added 2026-09-29, and the Help sentence about them under Marks: verses on lines of their own or run together, and verse numbers shown or hidden.
 - [ ] The style names and the "Light or dark" choice in Settings (`settings.style`, `settings.styles`, `settings.appearance`, `settings.appearances`, added 2026-09-24). Style names are evocative rather than literal (Vellum, Emerald, Slate, Nocturne, Ember); each should sound like a name in the language, not a translated description.
 - [ ] With a screen reader: the interface is spoken in the language, and a Bible in another language switches voice (brief 92).
 
