@@ -7,7 +7,7 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
-## [0.1.0-preview.6] - 2026-10-01
+## [0.1.0-preview.6] - 2026-10-02
 
 The sixth preview makes room on a small phone, upright and on its side: the
 menus step aside while you read, write or arrange a board. It also adds a
