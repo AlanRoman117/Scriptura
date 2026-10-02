@@ -312,14 +312,22 @@ test.describe('tabbing along the pinned bar leaves the text where it is', () => 
     await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.6);
     for (let i = 0; i < 6; i++) await page.mouse.wheel(0, 250);
     await expect.poll(() => place(page)).toBeGreaterThan(1000);
-    // The wheel is answered over several frames: wait until it has stopped.
+    // The wheel is answered over several frames, and on a starved runner two
+    // readings a moment apart can agree mid-scroll: four, 120ms apart.
+    let last = NaN;
+    let same = 0;
     await expect
-      .poll(async () => {
-        const a = await place(page);
-        await page.waitForTimeout(80);
-        return (await place(page)) === a;
-      })
-      .toBe(true);
+      .poll(
+        async () => {
+          const top = await place(page);
+          same = top === last ? same + 1 : 0;
+          last = top;
+          if (same < 3) await page.waitForTimeout(120);
+          return same;
+        },
+        { timeout: 15_000 }
+      )
+      .toBeGreaterThanOrEqual(3);
     const before = await place(page);
 
     const stops: string[] = [];
