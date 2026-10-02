@@ -694,9 +694,23 @@ summary:focus-visible,
   /* Keyboard focus scrolls a control into view; without this it lands under
      the sticky bar, focused and invisible (2.4.11, 2.4.12). `--search-h` and
      `--sheet-h` are set by the components that own those surfaces. */
-  scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + .5rem);
+  scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + var(--head-h, 0px) + .5rem);
   scroll-padding-bottom: calc(var(--sheet-h, 0px) + .5rem);
 }
+/* ⚠️ The scroll padding above is for what scrolls *under* the pinned bars. A
+   control *in* them is inside the padding by definition, so on focus the
+   browser tried to bring it clear: the bar stayed where it was pinned and
+   the text moved instead, 360px back for every Tab along the bar, to the
+   top of the chapter. And a control in receded menus, parked above the pane,
+   sent the pane to the top to look for it. They are told they are already in
+   view: a scroll margin larger than the pane, taken off the top of each. Not
+   the suggestions under the search box, which scroll in a panel of their own
+   and must still be brought into view there. A text field scrolls for its
+   caret and takes no notice of this; BiblePane puts its place back. */
+:is(.reader__bar, .chapter__head) :is(button, select, input, a),
+.search :is(button, input):not(.search__panel *) { scroll-margin-top: -100vh; }
+/* With the menus receded (a phone) only the title strip is pinned. */
+.pane:has(> .reader[data-menus='hidden']) { scroll-padding-top: calc(var(--head-h, 0px) + .5rem); }
 .pane--notes { background: var(--paper-raised); border-left: 1px solid var(--rule); display: flex; flex-direction: column; }
 /* ⚠️ The display above would otherwise beat the `hidden` attribute. */
 .pane--notes[hidden] { display: none; }
@@ -875,18 +889,21 @@ summary:focus-visible,
  * dropdowns still hold the answer, but a control reads as something to change,
  * not something to consult.
  */
-.chapter__title {
+.chapter__head {
   position: sticky; top: var(--bar-h); z-index: 1;
-  font-family: var(--serif); font-size: var(--fs-2xl); font-weight: var(--title-weight);
-  font-variant-caps: var(--title-caps); letter-spacing: var(--title-tracking); color: var(--heading);
-  margin: 0 0 1.5rem; padding: .4rem 0 .5rem;
+  margin: 0 0 1.5rem;
   background: var(--bar-bg);
   backdrop-filter: var(--bar-blur);
   border-bottom: 1px solid transparent;
 }
+.chapter__title {
+  font-family: var(--serif); font-size: var(--fs-2xl); font-weight: var(--title-weight);
+  font-variant-caps: var(--title-caps); letter-spacing: var(--title-tracking); color: var(--heading);
+  margin: 0; padding: .4rem 0 .5rem;
+}
 /* Only draw the rule once it is actually pinned, so the resting state stays
    quiet. */
-.chapter__title[data-stuck='true'] { border-bottom-color: var(--rule); }
+.chapter__head[data-stuck='true'] { border-bottom-color: var(--rule); }
 /* Tracking and small capitals are Latin devices: a Japanese or Chinese book
    name keeps its own spacing. It carries its Bible's `lang`, so this holds
    under an interface in any language; keyed on the title, it only held when
@@ -985,7 +1002,36 @@ summary:focus-visible,
 /* Search sits under the bar, so the chapter title parks below both. Both
    heights are measured by BiblePane's ResizeObserver: at 44px controls, and
    at any text size the reader picks, the old constants were wrong. */
-.reader:has(.search) .chapter__title { top: calc(var(--bar-h) + var(--search-h, 2.9rem)); }
+.reader:has(.search) .chapter__head { top: calc(var(--bar-h) + var(--search-h, 2.9rem)); }
+
+/* ── Menus that step aside on a small screen (lib/recede.ts) ─────────────────
+   On a phone the bar, the search box and the title were all pinned, and an
+   iPhone SE in landscape had 164px of 375 left for scripture. Now the bar and
+   the search box recede as the reader scrolls on, and the title strip stays,
+   with a button at its end that brings them back.
+
+   ⚠️ Receded is unpinned, never hidden. The two stay `position: sticky` and
+   only their `top` changes, to minus their own height: they scroll off like
+   any content, keep their place in the flow (so nothing below them moves),
+   and stay in the accessibility tree and the Tab order. Focus arriving in
+   them pins them again (BiblePane). `display: none`, `visibility: hidden` or
+   `inert` here would take the passage landmark and the Help chip away from a
+   screen reader for as long as the pane was scrolled.
+
+   `top` is what moves, so the slide is a transition, and both reduced-motion
+   rules already switch it off (2.3.3). */
+/* The button's sign, on all three panes: up to put the menus away, down to
+   bring them back. The same carets as beside More, drawn large enough to be
+   the whole of a button's face. */
+.menus__glyph { font-size: var(--fs-xl); line-height: 1; }
+.layout--narrow .chapter__head { display: flex; align-items: center; gap: .5rem; }
+.layout--narrow .chapter__title { flex: 1; min-width: 0; }
+.chapter__menus:disabled { opacity: .45; cursor: default; }
+.layout--narrow :is(.reader__bar, .search, .chapter__head) { transition: top .2s ease; }
+.layout--narrow .reader[data-menus='hidden'] .reader__bar { top: calc(-1 * var(--bar-h)); }
+.layout--narrow .reader[data-menus='hidden'] .search { top: calc(-1 * var(--search-h, 2.9rem)); }
+/* Pinned at the very top now, where an installed app's status area is. */
+.layout--narrow .reader[data-menus='hidden'] .chapter__head { top: 0; padding-top: env(safe-area-inset-top); }
 
 /* ── Highlights ───────────────────────────────────────────────────────────── */
 
@@ -1481,6 +1527,19 @@ summary:focus-visible,
 /* Takes what the row has left beside the picker, and wraps a long name onto
    more lines rather than scrolling it out of sight (TitleField). */
 .canvas__name-field { flex: 1 1 10rem; min-width: 8rem; font-size: var(--fs-md); line-height: 1.3; }
+/* In the phone's strip it gives way before it wraps: the row breaks only
+   when even a short name would not fit beside the zoom. */
+.canvas__title-row .canvas__name-field { flex-basis: 6rem; min-width: 6rem; }
+/* On a phone the name is a strip of its own under the bar, with the button
+   for the board's menus beside it: what stays when the bar and the tabs step
+   aside (lib/recede.ts). */
+.canvas__title-row {
+  /* Wraps: at a large text size the zoom and the button go under the name
+     rather than off the edge of a 320px screen (1.4.10). */
+  display: flex; flex-wrap: wrap; align-items: flex-start; gap: .4rem; flex: none;
+  padding: .4rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper);
+}
+.canvas__menus { flex: none; min-width: var(--control-h); }
 .canvas__name, .canvas__name-field::after {
   font: inherit;
   border: var(--edge-w) solid var(--edge);
@@ -1647,6 +1706,9 @@ summary:focus-visible,
 .canvas__panel {
   position: absolute; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 5;
   transform: translateX(-50%); width: max-content; max-width: calc(100% - 1rem);
+  /* Never taller than the board it sits in: on a phone on its side the frame
+     can be shorter than the panel, whose top then left the frame. */
+  max-height: calc(100% - 1.5rem - env(safe-area-inset-bottom)); overflow-y: auto;
   display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: .4rem .6rem;
   padding: .5rem .7rem; cursor: default;
   background: var(--paper-raised); border: var(--edge-w) solid var(--edge); border-radius: var(--radius-xl);
@@ -2040,6 +2102,10 @@ summary:focus-visible,
 }
 .title-field > textarea { white-space: pre-wrap; overflow-wrap: anywhere; }
 
+/* The title, and on a phone the button for the note's menus beside it. */
+.notes__title-row { display: flex; align-items: flex-start; gap: .35rem; }
+.notes__title-row > .title-field { flex: 1; min-width: 0; }
+.notes__menus { flex: none; min-width: var(--control-h); }
 .notes__title-field {
   margin-bottom: .5rem;
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: 600; line-height: 1.3;
@@ -2295,6 +2361,38 @@ summary:focus-visible,
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
+
+/* A note's menus — its picker row, and the Notes/Canvas tabs above it — step
+   aside as the note is scrolled (lib/recede.ts, NotesPane).
+
+   ⚠️ Clipped, never removed: they stay in the accessibility tree and the Tab
+   order, and focus inside either shows it again, so the way to the canvas and
+   to another note is never taken from a screen reader. The phone gates' clip
+   check lists them by this state. A board's bar is the same (CanvasView).
+
+   ⚠️ No focus guard here (`:not(:focus-within)`, `:has(:focus-visible)`).
+   The state is the whole of it: the hook shows the menus when focus arrives
+   in them or a key is pressed with focus inside, and refuses to hide them
+   while the reader is working there. A guard in the stylesheet as well
+   disagreed with it — the tab a finger pressed to get here kept the tabs on
+   screen, and a picker focused by script stayed drawn over a note that had
+   already made room for its going.
+
+   ⚠️ The text keeps its place. The note's scroller grows upward by the
+   menus' height when they leave, which alone would move every line up by as
+   much — and the lines jumped over could then only be read by scrolling
+   back, which brought the menus back and moved the lines away again. So the
+   scroller's content is padded by the same amount (`--menus-pad`, padFor):
+   the line being read stays put, and the room above it fills with the lines
+   just scrolled past. Nothing writes a scroll position. */
+.sheet .notes[data-menus='hidden'] .notes__bar,
+.sheet .canvas[data-menus='hidden'] .canvas__bar,
+.sheet__body:has(.side-panel:not([hidden]) > [data-menus='hidden']) .side-switch {
+  position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+}
+.sheet .notes[data-menus='hidden'] .notes__surface { padding-top: calc(var(--surface-pad-y) + var(--menus-pad, 0px)); }
+.sheet .notes[data-menus='hidden'] .preview { padding-top: calc(.3rem + var(--menus-pad, 0px)); }
 
 /* ── A new version is ready ───────────────────────────────────────────────── */
 

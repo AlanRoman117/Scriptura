@@ -97,6 +97,26 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('search-input').press('Enter');
     await expect(page.getByTestId('search-results')).toBeVisible();
   },
+  // The menus stepped aside (lib/recede.ts): out of sight, and still in the
+  // page — so every gate runs over them where they now are. Sent away by the
+  // button beside each title, which needs no long text to scroll.
+  'reading, menus receded': async (page) => {
+    await page.getByTestId('chapter-menus-toggle').tap();
+    await expect(page.locator('.reader')).toHaveAttribute('data-menus', 'hidden');
+    await expect
+      .poll(() => page.getByTestId('pane-bible').evaluate((el) => el.getAnimations({ subtree: true }).length))
+      .toBe(0);
+  },
+  'a note, menus receded': async (page) => {
+    await STATES['writing a note'](page);
+    await page.getByTestId('note-menus-toggle').tap();
+    await expect(page.getByTestId('notes')).toHaveAttribute('data-menus', 'hidden');
+  },
+  'a board, menus receded': async (page) => {
+    await STATES.board(page);
+    await page.getByTestId('board-menus-toggle').tap();
+    await expect(page.getByTestId('canvas')).toHaveAttribute('data-menus', 'hidden');
+  },
   'asked before deleting': async (page) => {
     await expandSheet(page);
     await page.getByTestId('note-new').tap();
@@ -198,6 +218,12 @@ const TRUNCATES_BY_DESIGN = [
   '.reader__select', // native select; its options list shows the full name
   '.notes__select', // native select; its options list shows the full title
   ":root[data-verse-numbers='hidden'] .verse__num", // hidden on request; shown whole while it has focus
+  // Menus that have stepped aside on a small screen: clipped to a pixel, still
+  // in the Tab order, and shown whole when focus enters them or their button
+  // is pressed.
+  ".sheet [data-menus='hidden'] .notes__bar",
+  ".sheet [data-menus='hidden'] .canvas__bar",
+  ".sheet__body:has(.side-panel:not([hidden]) > [data-menus='hidden']) .side-switch",
 ];
 
 const clipped = (page: Page) =>

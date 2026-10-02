@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import type { Persistence } from './DurabilityBanner';
 import { useDismissable, useReturnFocus } from '../lib/focus';
+import { useIsNarrow } from '../lib/viewport';
 import { TOOLS } from '../lib/webmcp';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
@@ -63,6 +64,7 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
   const { t, fmt, locale } = useI18n();
   const words = t.settings;
+  const narrow = useIsNarrow();
   const root = useRef<HTMLElement>(null);
   // Only mounted while open: Escape closes it, and focus returns to the chip
   // that opened it when it unmounts (2.4.3).
@@ -233,6 +235,20 @@ export function SettingsPanel({
           />
           <span>{words.verseNumbers}</span>
         </label>
+        {/* Offered where it does something: the one-pane layout, which a
+            desktop window zoomed far in gets too. Off, the menus move only
+            when their button is pressed (lib/recede.ts). */}
+        {narrow && (
+          <label className="settings__toggle">
+            <input
+              type="checkbox"
+              data-testid="pref-recede-menus"
+              checked={prefs.recedeMenus}
+              onChange={(e) => onPrefs({ recedeMenus: e.target.checked })}
+            />
+            <span>{words.recedeMenus}</span>
+          </label>
+        )}
         <div className="settings__field">
           <label htmlFor="pref-editor">{words.editor}</label>
           <select

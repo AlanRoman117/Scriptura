@@ -44,6 +44,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: '也可以用工具列上的兩個選單挑選書卷和章。' },
+      { p: '在小螢幕上，閱讀、書寫或整理看板時，選單會自動讓開。按標題旁的 **▾** 按鈕，就能讓它們回來；在經文或筆記裡，往回捲動一點也可以。在設定裡可以讓它們不再自動移動。' },
     ],
   },
   {
@@ -247,6 +248,9 @@ export const zhHant = {
       `標記${ref} — 在${withColour(collection, colour)}中`,
     chapterMissing: (translation: string) => `${translation}中沒有這一章。`,
     readingAnnounce: (translation: string) => `正在閱讀${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: '顯示閱讀選單',
+    hideMenus: '隱藏閱讀選單',
   },
 
   verseActions: {
@@ -368,6 +372,8 @@ export const zhHant = {
     startOne: '新增一則',
     heading: '筆記',
     picker: '筆記',
+    showMenus: '顯示筆記選單',
+    hideMenus: '隱藏筆記選單',
     none: '還沒有筆記',
     preview: '預覽',
     write: '編輯',
@@ -509,6 +515,7 @@ export const zhHant = {
     markers: '為每個標記顯示符號，而不只用顏色',
     verseLines: '每節經文另起一行',
     verseNumbers: '顯示節號',
+    recedeMenus: '在小螢幕上，閱讀時隱藏選單',
     storage: '你的內容存在哪裡',
     persistence: {
       persisted: '這個瀏覽器已同意保留你的筆記。清除網站資料仍會刪除它們。',
@@ -588,6 +595,8 @@ export const zhHant = {
     heading: (board: string) => `看板：${board}`,
     noneOpenHeading: '未開啟任何看板',
     picker: '看板',
+    showMenus: '顯示看板選單',
+    hideMenus: '隱藏看板選單',
     name: '看板名稱',
     none: '還沒有看板',
     undo: (what: Removed) =>

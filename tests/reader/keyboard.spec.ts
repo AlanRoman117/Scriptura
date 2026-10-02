@@ -295,3 +295,53 @@ test.describe('help is where you left it (3.2.6, 3.3.5)', () => {
     await expect(page.getByTestId('help-panel')).toBeVisible();
   });
 });
+
+/*
+ * The pane's scroll padding keeps a focused verse clear of the pinned bars.
+ * A control *in* those bars is inside the padding, so the browser used to
+ * "bring it into view" too: the bar stayed pinned and the text moved, 360px
+ * back for every Tab along the bar, until the chapter was at its top.
+ */
+test.describe('tabbing along the pinned bar leaves the text where it is', () => {
+  const place = (page: import('@playwright/test').Page) => page.getByTestId('pane-bible').evaluate((el) => el.scrollTop);
+
+  test('the bar, the search box and back', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('book-select').focus();
+    const box = (await page.getByTestId('pane-bible').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.6);
+    for (let i = 0; i < 6; i++) await page.mouse.wheel(0, 250);
+    await expect.poll(() => place(page)).toBeGreaterThan(1000);
+    // The wheel is answered over several frames: wait until it has stopped.
+    await expect
+      .poll(async () => {
+        const a = await place(page);
+        await page.waitForTimeout(80);
+        return (await place(page)) === a;
+      })
+      .toBe(true);
+    const before = await place(page);
+
+    const stops: string[] = [];
+    for (let i = 0; i < 7; i++) {
+      await page.keyboard.press('Tab');
+      stops.push((await page.locator(':focus').getAttribute('data-testid')) ?? '');
+      expect(await place(page), `after Tab to ${stops.at(-1)}`).toBe(before);
+    }
+    expect(stops).toEqual(['chapter-select', 'library-open', 'marks-open', 'settings-open', 'help-open', 'maximize-bible', 'search-input']);
+    for (let i = 0; i < 7; i++) await page.keyboard.press('Shift+Tab');
+    await expect(page.getByTestId('book-select')).toBeFocused();
+    expect(await place(page)).toBe(before);
+  });
+
+  test('a suggestion out of view in the panel under the search box is still brought into it', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('search-input').fill('love');
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'love');
+    const panel = page.locator('.search__panel');
+    const last = panel.locator('button').last();
+    await last.focus();
+    await expect(last).toBeInViewport({ ratio: 1 });
+    expect(await panel.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  });
+});

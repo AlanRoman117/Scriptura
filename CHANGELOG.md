@@ -10,13 +10,49 @@ suffix and is published as a GitHub pre-release.
 For reviewers, one new text in every language: the fourth column width in
 Settings. It is listed in `docs/plans/reader-i18n/README.md`.
 
+For reviewers, more new texts in every language: the three buttons that show
+and hide a pane's menus, the switch for them in Settings and one sentence in
+Help, under Finding a passage.
+
 ### Added
 
+- On a small screen the menus step aside while you read. Scrolling on through
+  a chapter sends the reading bar and the search box away and leaves the
+  chapter title; scrolling back a little, reaching the top, or the button at
+  the end of the title brings them back. A note does the same with its picker
+  row and the Notes/Canvas tabs, and a board with its bar and the tabs when
+  you start to pan, drag a card or pinch. On an iPhone SE held on its side,
+  scripture goes from 164 to 286 px of the screen's 375, a note's text from
+  about 30 to 126, and a board from 130 to 240; upright, of 667, from 406 to
+  578, about 175 to 346, and 348 to 509. The menus are never removed: they
+  stay reachable by keyboard and by a screen reader, and moving focus into
+  them shows them.
+- **On a small screen, hide the menus while reading** in Settings, on by
+  default. Off, the menus move only when their button is pressed.
 - A fourth column width in Settings: **Full**. The chapter fills its pane
   instead of keeping to a centred column, which shows most when the Bible is
   maximized on a wide screen. Narrow, Normal and Wide are unchanged, and Normal
   is still the default. Under Full, a verse's actions open at the start of the
   verse rather than in the middle of the pane.
+
+### Changed
+
+- On a phone the storage notice sits at the top of the Bible pane and scrolls
+  away with the chapter, instead of staying pinned above it.
+- On a phone a board's name and its zoom buttons are in a strip of their own
+  under the board's bar, where they stay while the bar is away.
+
+### Fixed
+
+- Pressing Tab along the reading bar moved the text back by most of a screen
+  each time, until the chapter was at its top. The text now stays where it is.
+- A verse reached with the Tab key could come to rest under the pinned chapter
+  title, 37px of it covered. The title's height now counts in where focus
+  comes to rest.
+- On a short board, a card's Move and Size panel could leave the board's frame
+  when its card was reached by keyboard or by a screen reader, which scroll
+  the frame. Such a scroll now moves the view instead, and the panel is never
+  taller than the board.
 
 ## [0.1.0-preview.5] - 2026-09-29
 

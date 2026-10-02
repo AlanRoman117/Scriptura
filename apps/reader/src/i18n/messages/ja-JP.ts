@@ -42,6 +42,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: 'バーの2つのメニューから書と章を選ぶこともできます。' },
+      { p: '小さい画面では、読んだり、書いたり、ボードを整えたりしている間、メニューが脇へ下がります。タイトルの横の**▾**ボタンを押すと、また表示されます。章やノートでは、少し戻るだけでも表示されます。設定で、自動で動かないようにできます。' },
     ],
   },
   {
@@ -245,6 +246,9 @@ export const jaJP = {
       `${ref}をマーク（${withColour(collection, colour)}にマーク済み）`,
     chapterMissing: (translation: string) => `この章は${translation}にありません。`,
     readingAnnounce: (translation: string) => `${translation}を表示しています`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: '聖書のメニューを表示する',
+    hideMenus: '聖書のメニューを隠す',
   },
 
   verseActions: {
@@ -365,6 +369,8 @@ export const jaJP = {
     startOne: '作成する',
     heading: 'ノート',
     picker: 'ノート',
+    showMenus: 'ノートのメニューを表示する',
+    hideMenus: 'ノートのメニューを隠す',
     none: 'ノートはまだありません',
     preview: 'プレビュー',
     write: '編集',
@@ -507,6 +513,7 @@ export const jaJP = {
     markers: '色だけでなく、すべてのマークに記号を表示する',
     verseLines: '節ごとに改行する',
     verseNumbers: '節番号を表示する',
+    recedeMenus: '小さい画面では、読んでいる間メニューを隠す',
     storage: 'データの保存場所',
     persistence: {
       persisted: 'このブラウザーはノートを保持することに同意しています。ただし、サイトのデータを消去するとノートも消えます。',
@@ -587,6 +594,8 @@ export const jaJP = {
     heading: (board: string) => `ボード：${board}`,
     noneOpenHeading: '開いているボードはありません',
     picker: 'ボード',
+    showMenus: 'ボードのメニューを表示する',
+    hideMenus: 'ボードのメニューを隠す',
     name: 'ボードの名前',
     none: 'ボードはまだありません',
     undo: (what: Removed) =>

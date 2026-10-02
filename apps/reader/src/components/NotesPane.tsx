@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import type { Note } from '../lib/notes';
 import type { Board } from '../lib/canvas';
@@ -13,6 +13,7 @@ import type { EditorPref } from '../lib/prefs';
 import { TitleField, oneLine } from './TitleField';
 import { ConfirmButton } from './ConfirmButton';
 import { settleFocus } from '../lib/focus';
+import { padFor, useRecedingMenus } from '../lib/recede';
 import { useI18n } from '../i18n';
 
 interface NotesPaneProps {
@@ -32,6 +33,10 @@ interface NotesPaneProps {
   onSurfaceReady?: (surface: NoteSurface) => void;
   /** Which editor to write in: drawn as typed, or plain Markdown. */
   editor?: EditorPref;
+  /** The phone layout, where the picker row and the tabs may recede (lib/recede.ts). */
+  narrow?: boolean;
+  /** The reader's preference: recede while scrolling, or only from the button. */
+  recede?: boolean;
   /** How a `[[…]]` link reads, or null when it resolves to nothing. */
   describeLink?: (inner: string) => string | null;
   onFollowLink?: (inner: string) => void;
@@ -40,6 +45,11 @@ interface NotesPaneProps {
   boards?: Board[];
   onOpenBoard?: (id: string) => void;
 }
+
+/** What scrolls a note: the live editor or the textarea, or the preview. */
+const NOTE_SCROLLERS = '.notes__surface, .preview';
+/** Below this height, in px, a note has no room to read in: about three lines. */
+const ROOM_TO_READ = 96;
 
 /**
  * The writing surface: write, or read it back rendered.
@@ -74,9 +84,64 @@ export function NotesPane({
   boards = [],
   onOpenBoard,
   editor = 'live',
+  narrow = false,
+  recede = true,
 }: NotesPaneProps) {
   const { t } = useI18n();
   const active = notes.find((n) => n.id === activeId) ?? null;
+
+  // On a phone the picker row and the Notes/Canvas tabs step aside as the
+  // note is scrolled, as the reading bar does (lib/recede.ts): read back on
+  // an iPhone SE on its side, a note had one line of its own text. They are
+  // clipped, not removed — still in the Tab order, and focus brings them
+  // back. A note's scroller is the live editor, the textarea or the preview,
+  // so the listener sits on the group around them.
+  const bar = useRef<HTMLElement>(null);
+  /** How much taller the note gets without them, measured while they show. */
+  const gain = useRef(0);
+  const editorGroup = useRef<HTMLElement | null>(null);
+  const receding = useRecedingMenus({
+    enabled: narrow && !!active,
+    auto: recede,
+    match: NOTE_SCROLLERS,
+    menus: '.notes__bar, .side-switch',
+    // The menus wait until the note has been scrolled as far as they are
+    // tall, so that the room they give back fills with lines already read
+    // (lib/recede.ts). Not where the note has almost no room to begin with —
+    // a phone on its side leaves it 16px, a line cut in half — where there is
+    // nothing being read to keep still, and waiting would mean scrolling that
+    // sliver a menu's height before it grew.
+    gain: () => {
+      const scroller = editorGroup.current?.querySelector<HTMLElement>(NOTE_SCROLLERS);
+      return scroller && scroller.clientHeight < ROOM_TO_READ ? 0 : gain.current;
+    },
+  });
+  const menusShown = receding.menus === 'shown';
+  const { watch } = receding;
+  const watchEditor = useCallback(
+    (node: HTMLDivElement | null) => {
+      editorGroup.current = node;
+      watch(node);
+    },
+    [watch]
+  );
+  useLayoutEffect(() => {
+    const barEl = bar.current;
+    if (!narrow || !menusShown || !barEl) return;
+    const tabs = barEl.closest('.sheet__body')?.querySelector<HTMLElement>('.side-switch');
+    const measure = () => {
+      const height =
+        barEl.offsetHeight + (parseFloat(getComputedStyle(barEl).marginBottom) || 0) + (tabs?.offsetHeight ?? 0);
+      // Zero is the short sheet's own rule hiding them while the note is
+      // typed into, not their size.
+      if (height > 0) gain.current = height;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(barEl);
+    if (tabs) observer.observe(tabs);
+    return () => observer.disconnect();
+  }, [narrow, menusShown]);
   const textarea = useRef<HTMLTextAreaElement>(null);
   const live = useRef<NoteSurface>(null);
   const editorNow = useRef(editor);
@@ -178,11 +243,23 @@ export function NotesPane({
   };
 
   return (
-    <div className="notes" id="notes" tabIndex={-1} data-testid="notes">
+    <div
+      className="notes"
+      id="notes"
+      tabIndex={-1}
+      data-testid="notes"
+      data-menus={narrow ? receding.menus : undefined}
+      // The text stays where it was when the menus leave (padFor).
+      style={
+        narrow && !menusShown
+          ? { ['--menus-pad' as string]: `${padFor(gain.current, receding.at)}px` }
+          : undefined
+      }
+    >
       {/* The pane's own heading, so a note's headings have a parent and the
           outline reads chapter → notes → the note (2.4.10). */}
       <h2 className="visually-hidden">{t.notes.heading}</h2>
-      <header className="notes__bar">
+      <header className="notes__bar" ref={bar}>
         <select
           className="notes__select"
           aria-label={t.notes.picker}
@@ -255,25 +332,40 @@ export function NotesPane({
         <>
           {/* It wraps, and grows to show the whole title (TitleField).
               Enter goes on into the note, as it does in a writing app. */}
-          <TitleField
-            className="notes__title"
-            data-testid="note-title"
-            aria-label={t.notes.title}
-            value={active.title}
-            placeholder={t.common.untitledNote}
-            enterKeyHint="next"
-            onChange={(e) => onChange(active.id, { title: oneLine(e.target.value) })}
-            onKeyDown={(e) => {
-              if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
-              e.preventDefault();
-              surface.focus();
-            }}
-          />
+          <div className="notes__title-row">
+            <TitleField
+              className="notes__title"
+              data-testid="note-title"
+              aria-label={t.notes.title}
+              value={active.title}
+              placeholder={t.common.untitledNote}
+              enterKeyHint="next"
+              onChange={(e) => onChange(active.id, { title: oneLine(e.target.value) })}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter' || e.nativeEvent.isComposing) return;
+                e.preventDefault();
+                surface.focus();
+              }}
+            />
+            {/* A press for what a scroll does (2.5.1), as beside the chapter
+                title. */}
+            {narrow && (
+              <button
+                type="button"
+                className="notes__action notes__menus"
+                data-testid="note-menus-toggle"
+                aria-label={menusShown ? t.notes.hideMenus : t.notes.showMenus}
+                onClick={() => (menusShown ? receding.hide() : receding.show())}
+              >
+                <span className="menus__glyph" aria-hidden="true">{menusShown ? '▴' : '▾'}</span>
+              </button>
+            )}
+          </div>
           {/* The editing group: the tools, what the caret is under, and the
               note itself. The tools are shown whenever the note is open for
               writing, wherever focus is — not only while it is inside this
               group. Preview has nothing to format, so it has no tools. */}
-          <div className="notes__editor">
+          <div className="notes__editor" ref={watchEditor}>
           {!reading && (
             <div className="tools__slot">
               <EditorToolbar

@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { usePointerDrag } from '../lib/viewport';
+import { useIsNarrow, usePointerDrag } from '../lib/viewport';
 import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
 import { MaximizeButton, PaneControlsContext, type Maximized, type Pane } from './PaneControl';
 import { useI18n } from '../i18n';
 
-/** Below this the panes cannot sit side by side; notes become a sheet. */
-const NARROW = 850;
 /**
  * Neither pane may be squeezed below this, in pixels.
  *
@@ -48,21 +46,6 @@ const SIDES: readonly Side[] = ['notes', 'board'];
 
 /** The full sheet's share of the visible viewport; mirrored in styles.css. */
 const FULL_SHARE = 0.92;
-
-/** Whether the panes are too narrow to sit side by side, so the side pane is a sheet. */
-export function useIsNarrow(): boolean {
-  const [narrow, setNarrow] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth < NARROW
-  );
-  useEffect(() => {
-    const query = window.matchMedia(`(max-width: ${NARROW - 1}px)`);
-    const onChange = (e: MediaQueryListEvent) => setNarrow(e.matches);
-    setNarrow(query.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
-  return narrow;
-}
 
 interface LayoutProps {
   bible: ReactNode;

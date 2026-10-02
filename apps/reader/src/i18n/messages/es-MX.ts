@@ -34,6 +34,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: 'También puedes elegir el libro y el capítulo en los dos menús de la barra.' },
+      { p: 'En una pantalla pequeña los menús se apartan mientras lees, escribes u ordenas un tablero. Presiona el botón **▾** junto al título para que vuelvan; en un capítulo o en una nota, basta con desplazarte un poco hacia atrás. En Configuración puedes hacer que no se muevan solos.' },
     ],
   },
   {
@@ -245,6 +246,9 @@ export const esMX = {
     markVerseIn: (ref: string, collection: string, colour: string) => `Marcar ${ref}: está en ${collection} (${colour})`,
     chapterMissing: (translation: string) => `Este capítulo no está en ${translation}.`,
     readingAnnounce: (translation: string) => `Leyendo ${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: 'Mostrar los menús de lectura',
+    hideMenus: 'Ocultar los menús de lectura',
   },
 
   verseActions: {
@@ -367,6 +371,8 @@ export const esMX = {
     startOne: 'Empieza una',
     heading: 'Notas',
     picker: 'Nota',
+    showMenus: 'Mostrar los menús de la nota',
+    hideMenus: 'Ocultar los menús de la nota',
     none: 'Todavía no hay notas',
     preview: 'Vista previa',
     write: 'Escribir',
@@ -511,6 +517,7 @@ export const esMX = {
     markers: 'Mostrar un símbolo en cada resaltado, no solo un color',
     verseLines: 'Empezar cada versículo en una línea nueva',
     verseNumbers: 'Mostrar los números de versículo',
+    recedeMenus: 'En pantallas pequeñas, ocultar los menús al leer',
     storage: 'Dónde está tu trabajo',
     persistence: {
       persisted: 'Este navegador aceptó conservar tus notas. Borrar los datos del sitio todavía las elimina.',
@@ -591,6 +598,8 @@ export const esMX = {
     heading: (board: string) => `Tablero: ${board}`,
     noneOpenHeading: 'ninguno abierto',
     picker: 'Tablero',
+    showMenus: 'Mostrar los menús del tablero',
+    hideMenus: 'Ocultar los menús del tablero',
     name: 'Nombre del tablero',
     none: 'Todavía no hay tableros',
     undo: (what: Removed) =>

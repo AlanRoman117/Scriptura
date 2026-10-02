@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
-import { Layout, useIsNarrow, type Maximized, type SheetPosition, type Side } from './components/Layout';
+import { Layout, type Maximized, type SheetPosition, type Side } from './components/Layout';
 import { BiblePane } from './components/BiblePane';
 import { NotesPane } from './components/NotesPane';
 import { DurabilityBanner, type Persistence } from './components/DurabilityBanner';
@@ -71,7 +71,7 @@ import { quotePassage, resolveLink, toWikiLink } from './lib/references';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
 import type { NoteSurface } from './lib/surface';
-import { useVisualViewport } from './lib/viewport';
+import { useIsNarrow, useVisualViewport } from './lib/viewport';
 import { announce } from './lib/announce';
 import { setPendingFlush } from './lib/pending';
 import type { SearchResult } from '@scriptura/core/types';
@@ -1038,6 +1038,8 @@ export function App() {
   // a reader building a diagram swaps to the note and back without leaving it.
   const boardView = (
     <CanvasView
+      narrow={narrow}
+      recede={prefs.recedeMenus}
       bible={bible}
       notes={notes}
       labels={colorLabels}
@@ -1072,6 +1074,17 @@ export function App() {
     />
   );
 
+  const storageNotice = !bannerDismissed && (
+    <DurabilityBanner
+      persistence={persistence}
+      mirroring={isMirroring}
+      exportStale={staleExport}
+      onChooseFolder={doChooseFolder}
+      onExport={doExport}
+      onDismiss={() => setBannerDismissed(true)}
+    />
+  );
+
   return (
     <>
       {staged}
@@ -1085,16 +1098,10 @@ export function App() {
         {side === 'notes' ? words.app.skipToNotes : words.app.skipToBoard}
       </a>
       <PreviewNotice />
-      {!bannerDismissed && (
-        <DurabilityBanner
-          persistence={persistence}
-          mirroring={isMirroring}
-          exportStale={staleExport}
-          onChooseFolder={doChooseFolder}
-          onExport={doExport}
-          onDismiss={() => setBannerDismissed(true)}
-        />
-      )}
+      {/* Beside the Bible it sits above both panes. On a phone that pinned
+          a tenth of the screen for as long as it showed, so there it goes
+          into the Bible pane and scrolls off with the chapter. */}
+      {!narrow && storageNotice}
       <Layout
         side={side}
         onSide={(next) => {
@@ -1110,6 +1117,9 @@ export function App() {
         onNotesShown={clearInserted}
         bible={
           <BiblePane
+            narrow={narrow}
+            recede={prefs.recedeMenus}
+            notice={narrow ? storageNotice : null}
             bible={bible}
             book={book}
             chapter={position.chapter}
@@ -1306,6 +1316,8 @@ export function App() {
               surfaceRef.current = el;
             }}
             editor={prefs.editor}
+            narrow={narrow}
+            recede={prefs.recedeMenus}
             describeLink={describeLink}
             onFollowLink={followLink}
             bible={bible}
