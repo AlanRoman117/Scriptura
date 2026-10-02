@@ -57,6 +57,29 @@ async function press(page: Page, testId: string) {
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
 }
 
+/**
+ * Wait until a scroller has stopped. A wheel is answered over several frames,
+ * and on a starved runner two readings a moment apart can agree while the
+ * scroll is still under way — a macOS runner read a position mid-scroll and
+ * then found the pane somewhere else. Four readings, 120ms apart, all equal.
+ */
+async function stopped(page: Page, scroller: ReturnType<Page['locator']>) {
+  let last = NaN;
+  let same = 0;
+  await expect
+    .poll(
+      async () => {
+        const top = await scroller.evaluate((el) => el.scrollTop);
+        same = top === last ? same + 1 : 0;
+        last = top;
+        if (same < 3) await page.waitForTimeout(120);
+        return same;
+      },
+      { timeout: 15_000 }
+    )
+    .toBeGreaterThanOrEqual(3);
+}
+
 const pane = (page: Page) => page.getByTestId('pane-bible');
 const menus = (page: Page) => page.locator('.reader');
 
@@ -72,13 +95,7 @@ async function scrollBy(page: Page, by: number) {
   for (let i = 0; i < 6; i++) await page.mouse.wheel(0, by / 6);
   // The wheel is answered a frame or two later.
   await expect.poll(() => pane(page).evaluate((el) => el.scrollTop)).not.toBe(before);
-  await expect
-    .poll(async () => {
-      const a = await pane(page).evaluate((el) => el.scrollTop);
-      await page.waitForTimeout(60);
-      return (await pane(page).evaluate((el) => el.scrollTop)) === a;
-    })
-    .toBe(true);
+  await stopped(page, pane(page));
 }
 
 /** Nothing in the pane is still sliding: the bars' `top` is a transition. */
@@ -156,7 +173,6 @@ for (const screen of SCREENS) {
       const toggle = page.getByTestId('chapter-menus-toggle');
       await scrollBy(page, 900);
       await expect(menus(page)).toHaveAttribute('data-menus', 'hidden');
-      const position = await pane(page).evaluate((el) => el.scrollTop);
 
       // Named for what a press will do, and a full-size target.
       await expect(toggle).toHaveAccessibleName('Show the reading menus');
@@ -164,6 +180,10 @@ for (const screen of SCREENS) {
       expect(box.width).toBeGreaterThanOrEqual(44);
       expect(box.height).toBeGreaterThanOrEqual(44);
 
+      // The place is noted at the last moment before the press, once the
+      // pane is still.
+      await stopped(page, pane(page));
+      const position = await pane(page).evaluate((el) => el.scrollTop);
       await press(page, 'chapter-menus-toggle');
       await expect(menus(page)).toHaveAttribute('data-menus', 'shown');
       await expect(toggle).toHaveAccessibleName('Hide the reading menus');
@@ -195,6 +215,7 @@ for (const screen of SCREENS) {
       await expect(menus(page)).toHaveAttribute('data-menus', 'hidden');
 
       await page.getByTestId('chapter-menus-toggle').focus();
+      await stopped(page, pane(page));
       const place = await pane(page).evaluate((el) => el.scrollTop);
       await page.keyboard.press('Shift+Tab');
       const input = page.getByTestId('search-input');
@@ -437,13 +458,7 @@ async function scrollNote(page: Page, by: number) {
     await page.mouse.wheel(0, by / 6);
     await page.waitForTimeout(50);
   }
-  await expect
-    .poll(async () => {
-      const a = await surface(page).evaluate((el) => el.scrollTop);
-      await page.waitForTimeout(60);
-      return (await surface(page).evaluate((el) => el.scrollTop)) === a;
-    })
-    .toBe(true);
+  await stopped(page, surface(page));
 }
 
 /** The note's own text: how much of the screen its scroller shows, and where one line is. */

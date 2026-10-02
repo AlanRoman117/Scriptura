@@ -7,12 +7,18 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
-For reviewers, one new text in every language: the fourth column width in
-Settings. It is listed in `docs/plans/reader-i18n/README.md`.
+## [0.1.0-preview.6] - 2026-10-02
 
-For reviewers, more new texts in every language: the three buttons that show
-and hide a pane's menus, the switch for them in Settings and one sentence in
-Help, under Finding a passage.
+The sixth preview makes room on a small phone, upright and on its side: the
+menus step aside while you read, write or arrange a board. It also adds a
+fourth column width, Full, and fixes the text moving when Tab is pressed
+along the reading bar.
+
+For reviewers, new texts in every language: the fourth column width in
+Settings; the three buttons that show and hide a pane's menus, which a screen
+reader says and the screen does not show; the switch for them in Settings;
+and one sentence in Help, under Finding a passage. They are listed in
+`docs/plans/reader-i18n/README.md`.
 
 ### Added
 
@@ -198,6 +204,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.6]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.6
 [0.1.0-preview.5]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.5
 [0.1.0-preview.4]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.4
 [0.1.0-preview.3]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.3
