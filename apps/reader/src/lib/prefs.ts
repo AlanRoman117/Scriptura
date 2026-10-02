@@ -40,7 +40,7 @@ export type TextSize = (typeof TEXT_SIZES)[number];
 export const SPACINGS = ['normal', 'relaxed', 'loose'] as const;
 export type Spacing = (typeof SPACINGS)[number];
 
-export const MEASURES = ['narrow', 'normal', 'wide'] as const;
+export const MEASURES = ['narrow', 'normal', 'wide', 'full'] as const;
 export type Measure = (typeof MEASURES)[number];
 
 export const MOTIONS = ['system', 'reduce'] as const;
@@ -115,11 +115,19 @@ export const SPACING_VALUES: Record<Spacing, { leading: string; gap: string }> =
   loose: { leading: '2.1', gap: '3.15em' },
 };
 
-/** Column width in `ch`. Never above 70: 1.4.8's ceiling is 80 characters. */
+/**
+ * Column width: the chapter's `max-width`.
+ *
+ * The three presets are in `ch` and never above 70: 1.4.8's ceiling is 80
+ * characters, and they are the mechanism the criterion asks for. *Full* has no
+ * limit — the chapter fills its pane — and is the reader's own choice: the
+ * criterion wants a way to reach the narrower width, not every setting under it.
+ */
 export const MEASURE_VALUES: Record<Measure, string> = {
   narrow: '56ch',
   normal: '64ch',
   wide: '70ch',
+  full: 'none',
 };
 
 /**
@@ -207,7 +215,7 @@ export function savePrefs(prefs: DisplayPrefs): void {
  * Write the preferences onto the document.
  *
  * Attributes for the discrete choices (style, appearance, motion, markers, how
- * verses are laid out) — the state
+ * verses are laid out, a column with no limit) — the state
  * channel the stylesheet and the tests read — and custom properties for the
  * continuous ones. Safe to call before React mounts and on every change.
  */
@@ -223,6 +231,8 @@ export function applyPrefs(prefs: DisplayPrefs): void {
   set('data-markers', prefs.markers ? 'true' : null);
   set('data-verse-flow', prefs.verseLines ? null : 'run-in');
   set('data-verse-numbers', prefs.verseNumbers ? null : 'hidden');
+  // The width itself is `--measure`; this is for what a column with no limit changes around it.
+  set('data-measure', prefs.measure === 'full' ? 'full' : null);
   // Always present: the page's language is how a screen reader picks its voice (3.1.1).
   set('lang', resolveLocale(prefs.language));
 

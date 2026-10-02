@@ -202,8 +202,10 @@
      line spacing; the relaxed and loose presets in Settings reach it, and the
      default keeps the compact rhythm the column was designed around. */
   --verse-gap: .85rem;
-  /* Never more than 70ch: 1.4.8's ceiling is 80 characters, and a serif at
-     this size runs about 1.15 characters per ch. */
+  /* The presets are never more than 70ch: 1.4.8's ceiling is 80 characters,
+     and a serif at this size runs about 1.15 characters per ch. Settings also
+     offers Full, which sets this to `none`: the reader's own choice, with the
+     presets still the way to the narrower column the criterion asks for. */
   --measure: 64ch;
   /* Height of the sticky reading bar. The chapter title parks directly beneath
      it, so both are pinned from one constant. */
@@ -857,6 +859,11 @@ summary:focus-visible,
 }
 
 .chapter { padding: 2rem 1.25rem 3rem; margin-inline: auto; max-width: var(--measure); }
+/* Full: the whole pane. Lifting the limit is not enough — auto margins in a
+   flex column size the chapter to its content, so it stopped at its longest
+   verse and a short chapter stayed a narrow centred block. Without them it
+   stretches. */
+:root[data-measure='full'] .chapter { margin-inline: 0; }
 /* Focus scrolls a verse number clear of the sticky bar, not flush under it. */
 .verse { scroll-margin-block: .5rem; }
 /*
@@ -1085,6 +1092,10 @@ summary:focus-visible,
   background: var(--paper-raised); border: var(--edge-w) solid var(--edge);
   border-radius: var(--radius-pill); box-shadow: var(--elev-1);
 }
+/* A column with no limit can be a couple of thousand pixels wide, and a short
+   verse sits at its start: centred, the row would open far from the press that
+   asked for it. It starts where the verse does instead. */
+:root[data-measure='full'] .swatches { margin-inline-start: 0; }
 .swatches__set { display: inline-flex; align-items: center; gap: .1rem; }
 /* The button is the 44px target; the coloured disc inside it is what shows. */
 .swatch {

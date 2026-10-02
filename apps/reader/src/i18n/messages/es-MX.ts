@@ -500,7 +500,7 @@ export const esMX = {
     spacing: 'Interlineado',
     spacings: { normal: 'Normal', relaxed: 'Amplio', loose: 'Muy amplio' },
     measure: 'Ancho de columna',
-    measures: { narrow: 'Angosto', normal: 'Normal', wide: 'Ancho' },
+    measures: { narrow: 'Angosto', normal: 'Normal', wide: 'Ancho', full: 'Completo' },
     editor: 'Editor de notas',
     editors: { live: 'Mostrar el formato al escribir', plain: 'Texto simple' },
     displayNote:

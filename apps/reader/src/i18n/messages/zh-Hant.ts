@@ -499,7 +499,7 @@ export const zhHant = {
     spacing: '行距',
     spacings: { normal: '標準', relaxed: '寬鬆', loose: '更寬鬆' },
     measure: '欄寬',
-    measures: { narrow: '窄', normal: '標準', wide: '寬' },
+    measures: { narrow: '窄', normal: '標準', wide: '寬', full: '全寬' },
     editor: '筆記編輯器',
     editors: { live: '輸入時顯示格式', plain: '純文字' },
     displayNote: '「寬鬆」和「更寬鬆」的行距符合 WCAG 對行距和段距的建議。這些設定只對本裝置生效。',

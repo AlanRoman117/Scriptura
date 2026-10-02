@@ -521,7 +521,7 @@ export const ptBR = {
     spacing: 'Espaçamento entre linhas',
     spacings: { normal: 'Normal', relaxed: 'Folgado', loose: 'Amplo' },
     measure: 'Largura da coluna',
-    measures: { narrow: 'Estreita', normal: 'Normal', wide: 'Larga' },
+    measures: { narrow: 'Estreita', normal: 'Normal', wide: 'Larga', full: 'Total' },
     editor: 'Editor de notas',
     editors: { live: 'Mostrar a formatação ao escrever', plain: 'Texto simples' },
     displayNote:
