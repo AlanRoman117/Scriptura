@@ -7,6 +7,17 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+For reviewers, one new text in every language: the fourth column width in
+Settings. It is listed in `docs/plans/reader-i18n/README.md`.
+
+### Added
+
+- A fourth column width in Settings: **Full**. The chapter fills its pane
+  instead of keeping to a centred column, which shows most when the Bible is
+  maximized on a wide screen. Narrow, Normal and Wide are unchanged, and Normal
+  is still the default. Under Full, a verse's actions open at the start of the
+  verse rather than in the middle of the pane.
+
 ## [0.1.0-preview.5] - 2026-09-29
 
 The fifth preview adds two reading switches, so a chapter can be read as

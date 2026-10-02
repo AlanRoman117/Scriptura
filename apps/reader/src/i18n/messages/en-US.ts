@@ -516,7 +516,7 @@ export const enUS = {
     spacing: 'Line spacing',
     spacings: { normal: 'Normal', relaxed: 'Relaxed', loose: 'Loose' },
     measure: 'Column width',
-    measures: { narrow: 'Narrow', normal: 'Normal', wide: 'Wide' },
+    measures: { narrow: 'Narrow', normal: 'Normal', wide: 'Wide', full: 'Full' },
     editor: 'Note editor',
     editors: { live: 'Show formatting as you write', plain: 'Plain text' },
     displayNote:

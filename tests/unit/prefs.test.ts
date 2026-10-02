@@ -5,6 +5,7 @@ import {
   APPEARANCES,
   DEFAULT_PREFS,
   LEGACY_THEMES,
+  MEASURES,
   MEASURE_VALUES,
   SPACING_VALUES,
   STORAGE_KEY,
@@ -52,6 +53,28 @@ describe('normalizePrefs', () => {
     // Canonical case only: this is the value that becomes the page's lang.
     expect(normalizePrefs({ language: 'es-mx' }).language).toBe('system');
     expect(normalizePrefs({ language: 'de-DE' }).language).toBe('system');
+  });
+
+  test('the column width is one of the four, the full pane included', () => {
+    expect(normalizePrefs({}).measure).toBe('normal');
+    expect(normalizePrefs({ measure: 'full' }).measure).toBe('full');
+    expect(normalizePrefs({ measure: 'none' }).measure).toBe('normal');
+    expect(normalizePrefs({ measure: '120ch' }).measure).toBe('normal');
+  });
+
+  /*
+   * 1.4.8 asks for a way to a column of 80 characters or fewer. The presets
+   * are that way, so they stay in `ch` and at or under 70; only Full, which
+   * the reader has to choose, is without a limit.
+   */
+  test('every preset is at most 70ch, the default among them, and only Full has no limit', () => {
+    const { full, ...presets } = MEASURE_VALUES;
+    expect(full).toBe('none');
+    for (const value of Object.values(presets)) {
+      expect(value).toMatch(/^\d+ch$/);
+      expect(parseInt(value, 10)).toBeLessThanOrEqual(70);
+    }
+    expect(Object.keys(presets)).toContain(DEFAULT_PREFS.measure);
   });
 
   test('markers is only ever a real boolean true', () => {
@@ -185,7 +208,7 @@ describe('the inline script in index.html agrees with the module', () => {
 
   test('same storage key and attribute names', () => {
     expect(script).toContain(`'${STORAGE_KEY}'`);
-    for (const attr of ['data-style', 'data-appearance', 'data-motion', 'data-markers', 'data-verse-flow', 'data-verse-numbers']) expect(script).toContain(`'${attr}'`);
+    for (const attr of ['data-style', 'data-appearance', 'data-motion', 'data-markers', 'data-verse-flow', 'data-verse-numbers', 'data-measure']) expect(script).toContain(`'${attr}'`);
   });
 
   test('same custom properties', () => {
@@ -224,9 +247,10 @@ describe('the inline script in index.html agrees with the module', () => {
    */
   function runInline(languages: string[], stored: Record<string, unknown> = {}) {
     const attrs = new Map<string, string>();
+    const props = new Map<string, string>();
     const root = {
       setAttribute: (name: string, value: string) => void attrs.set(name, value),
-      style: { setProperty: () => {} },
+      style: { setProperty: (name: string, value: string) => void props.set(name, value) },
     };
     const metas = [
       { media: '(prefers-color-scheme: light)', content: '' },
@@ -243,7 +267,7 @@ describe('the inline script in index.html agrees with the module', () => {
       { documentElement: root, querySelectorAll: () => metas },
       { languages, language: languages[0] ?? '' }
     );
-    return { attrs, metas: metas.map((m) => m.content) };
+    return { attrs, props, metas: metas.map((m) => m.content) };
   }
   const inlineLang = (languages: string[], stored: Record<string, unknown> = {}) =>
     runInline(languages, stored).attrs.get('lang') ?? '';
@@ -285,6 +309,18 @@ describe('the inline script in index.html agrees with the module', () => {
     const { verseLines, verseNumbers } = normalizePrefs(stored);
     expect(attrs.get('data-verse-flow')).toBe(verseLines ? undefined : 'run-in');
     expect(attrs.get('data-verse-numbers')).toBe(verseNumbers ? undefined : 'hidden');
+  });
+
+  test.each([
+    {},
+    ...MEASURES.map((measure) => ({ measure })),
+    { measure: 'none' },
+    { measure: 'huge' },
+  ])('the script sets the same column width as the module for %j', (stored) => {
+    const { attrs, props } = runInline(['en-US'], stored);
+    const { measure } = normalizePrefs(stored);
+    expect(props.get('--measure')).toBe(MEASURE_VALUES[measure]);
+    expect(attrs.get('data-measure')).toBe(measure === 'full' ? 'full' : undefined);
   });
 
   test.each([

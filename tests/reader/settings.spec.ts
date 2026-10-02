@@ -173,3 +173,112 @@ test.describe('the style tiles', () => {
   });
 });
 
+
+/*
+ * Column width. Narrow, Normal and Wide are the column 1.4.8 asks a way to
+ * (tests/unit/prefs.test.ts holds them at or under 70ch); Full is the reader's
+ * choice to give the whole pane to the text. Measured on a wide window with
+ * the Bible maximized, where a limit and no limit are far apart.
+ */
+test.describe('column width', () => {
+  test.use({ viewport: { width: 1600, height: 900 } });
+
+  type Page = import('@playwright/test').Page;
+
+  async function choose(page: Page, measure: 'narrow' | 'normal' | 'wide' | 'full') {
+    await page.getByTestId('settings-open').click();
+    await page.getByTestId('pref-measure').selectOption(measure);
+    await page.getByTestId('settings-close').click();
+  }
+
+  /** The chapter's box inside its pane: its width, the pane's, and the room either side. */
+  const column = (page: Page) =>
+    page.getByTestId('chapter').evaluate((chapter) => {
+      const pane = chapter.closest('.pane--bible') as HTMLElement;
+      const box = chapter.getBoundingClientRect();
+      const paneBox = pane.getBoundingClientRect();
+      return {
+        width: box.width,
+        pane: pane.clientWidth,
+        before: box.left - paneBox.left,
+        after: paneBox.left + pane.clientWidth - box.right,
+      };
+    });
+
+  /**
+   * Where the open verse's actions sit in their verse: the room before and
+   * after the row, inside the verse's border and padding (a verse keeps a 3px
+   * edge for its highlight on one side only).
+   */
+  const actions = (page: Page) =>
+    page.getByTestId('verse-actions').evaluate((row) => {
+      const verse = row.parentElement as HTMLElement;
+      const style = getComputedStyle(verse);
+      const px = (value: string) => parseFloat(value) || 0;
+      const box = row.getBoundingClientRect();
+      const verseBox = verse.getBoundingClientRect();
+      return {
+        before: box.left - (verseBox.left + px(style.borderLeftWidth) + px(style.paddingLeft)),
+        after: verseBox.right - px(style.borderRightWidth) - px(style.paddingRight) - box.right,
+      };
+    });
+
+  test('a preset keeps the chapter centred in a column; Full gives it the pane', async ({ page }) => {
+    await open(page);
+    await page.getByTestId('maximize-bible').click();
+
+    await choose(page, 'wide');
+    await expect(page.locator('html')).not.toHaveAttribute('data-measure');
+    const wide = await column(page);
+    expect(wide.width).toBeLessThan(wide.pane - 200);
+    expect(Math.abs(wide.before - wide.after)).toBeLessThanOrEqual(1);
+
+    await choose(page, 'full');
+    await expect(page.locator('html')).toHaveAttribute('data-measure', 'full');
+    const full = await column(page);
+    expect(Math.abs(full.width - full.pane)).toBeLessThanOrEqual(1);
+    expect(full.width).toBeGreaterThan(wide.width + 200);
+
+    // And back: the attribute goes with the limit's return.
+    await choose(page, 'normal');
+    await expect(page.locator('html')).not.toHaveAttribute('data-measure');
+    expect((await column(page)).width).toBeLessThan(wide.width);
+  });
+
+  test('Full survives a reload, from the first paint', async ({ page }) => {
+    await open(page);
+    await choose(page, 'full');
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('html')).toHaveAttribute('data-measure', 'full');
+    await expect(page.locator('html')).toHaveAttribute('style', /--measure:\s*none/);
+    const full = await column(page);
+    expect(Math.abs(full.width - full.pane)).toBeLessThanOrEqual(1);
+
+    await page.getByTestId('settings-open').click();
+    await expect(page.getByTestId('pref-measure')).toHaveValue('full');
+  });
+
+  // Centred in a column two thousand pixels wide, the row would open far from
+  // a short verse at the start of its line.
+  test("a verse's actions are centred under it in a column, and start with it under Full", async ({ page }) => {
+    await open(page);
+    await page.getByTestId('maximize-bible').click();
+
+    await choose(page, 'wide');
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+    const centred = await actions(page);
+    expect(centred.before).toBeGreaterThan(20);
+    expect(Math.abs(centred.before - centred.after)).toBeLessThanOrEqual(1);
+    await page.keyboard.press('Escape');
+
+    await choose(page, 'full');
+    await page.getByTestId('verse-1').click();
+    await expect(page.getByTestId('verse-actions')).toBeVisible();
+    const started = await actions(page);
+    expect(Math.abs(started.before)).toBeLessThanOrEqual(1);
+    expect(started.after).toBeGreaterThan(400);
+  });
+});

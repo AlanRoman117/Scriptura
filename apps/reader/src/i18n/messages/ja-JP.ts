@@ -496,7 +496,7 @@ export const jaJP = {
     spacing: '行間',
     spacings: { normal: '標準', relaxed: '広め', loose: 'かなり広め' },
     measure: '1行の長さ',
-    measures: { narrow: '短め', normal: '標準', wide: '長め' },
+    measures: { narrow: '短め', normal: '標準', wide: '長め', full: '幅いっぱい' },
     editor: 'ノートの編集',
     editors: { live: '書きながら書式を表示', plain: 'プレーンテキスト' },
     displayNote:

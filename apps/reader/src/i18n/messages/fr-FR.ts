@@ -504,7 +504,7 @@ const catalog = {
     spacing: 'Interligne',
     spacings: { normal: 'Normal', relaxed: 'Aéré', loose: 'Très aéré' },
     measure: 'Largeur de colonne',
-    measures: { narrow: 'Étroite', normal: 'Normale', wide: 'Large' },
+    measures: { narrow: 'Étroite', normal: 'Normale', wide: 'Large', full: 'Pleine' },
     editor: 'Éditeur de notes',
     editors: { live: 'Afficher la mise en forme pendant la saisie', plain: 'Texte brut' },
     displayNote:

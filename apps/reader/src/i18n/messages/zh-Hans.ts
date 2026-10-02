@@ -501,7 +501,7 @@ export const zhHans = {
     spacing: '行距',
     spacings: { normal: '标准', relaxed: '宽松', loose: '更宽松' },
     measure: '栏宽',
-    measures: { narrow: '窄', normal: '标准', wide: '宽' },
+    measures: { narrow: '窄', normal: '标准', wide: '宽', full: '全宽' },
     editor: '笔记编辑器',
     editors: { live: '输入时显示格式', plain: '纯文本' },
     displayNote: '“宽松”和“更宽松”的行距符合 WCAG 对行距和段距的建议。这些设置只对本设备生效。',
