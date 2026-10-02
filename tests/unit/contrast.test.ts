@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { contrastRatio, NON_TEXT_MIN, TEXT_MIN } from '../helpers/contrast';
-import { HIGHLIGHTS, NON_TEXT, PALETTE, TEXT } from '../helpers/token-pairs';
+import { NON_TEXT, PALETTE, TEXT } from '../helpers/token-pairs';
 import { readSheet, schemesOf, stripComments, theme, type Theme } from '../helpers/tokens';
 
 /**
