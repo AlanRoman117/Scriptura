@@ -17,8 +17,29 @@
  * the document. Capturing the pointer keeps the moves coming even when the
  * finger leaves the element, and cancel is treated exactly like up.
  */
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
+
+/** Below this the panes cannot sit side by side; notes become a sheet. */
+export const NARROW = 850;
+
+/**
+ * Whether the panes are too narrow to sit side by side, so the side pane is a
+ * sheet: a phone in either orientation, and a desktop window zoomed far in.
+ */
+export function useIsNarrow(): boolean {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth < NARROW
+  );
+  useEffect(() => {
+    const query = window.matchMedia(`(max-width: ${NARROW - 1}px)`);
+    const onChange = (e: MediaQueryListEvent) => setNarrow(e.matches);
+    setNarrow(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  return narrow;
+}
 
 /** Publish `--vvh` (visual viewport height) and `--vv-top` (its offset) on <html>. */
 export function useVisualViewport(): void {

@@ -46,6 +46,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: '也可以用工具栏上的两个菜单选择书卷和章。' },
+      { p: '在小屏幕上，阅读、书写或整理看板时，菜单会自动让开。按标题旁的 **▾** 按钮，就能让它们回来；在经文或笔记里，往回滚动一点也可以。在设置里可以让它们不再自动移动。' },
     ],
   },
   {
@@ -249,6 +250,9 @@ export const zhHans = {
       `标记${ref} — 在${withColour(collection, colour)}中`,
     chapterMissing: (translation: string) => `${translation}中没有这一章。`,
     readingAnnounce: (translation: string) => `正在阅读${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: '显示阅读菜单',
+    hideMenus: '隐藏阅读菜单',
   },
 
   verseActions: {
@@ -370,6 +374,8 @@ export const zhHans = {
     startOne: '新建一条',
     heading: '笔记',
     picker: '笔记',
+    showMenus: '显示笔记菜单',
+    hideMenus: '隐藏笔记菜单',
     none: '还没有笔记',
     preview: '预览',
     write: '编辑',
@@ -511,6 +517,7 @@ export const zhHans = {
     markers: '为每个标记显示符号，而不只用颜色',
     verseLines: '每节经文另起一行',
     verseNumbers: '显示节号',
+    recedeMenus: '在小屏幕上，阅读时隐藏菜单',
     storage: '你的内容保存在哪里',
     persistence: {
       persisted: '这个浏览器已同意保留你的笔记。清除网站数据仍会删除它们。',
@@ -590,6 +597,8 @@ export const zhHans = {
     heading: (board: string) => `看板：${board}`,
     noneOpenHeading: '未打开任何看板',
     picker: '看板',
+    showMenus: '显示看板菜单',
+    hideMenus: '隐藏看板菜单',
     name: '看板名称',
     none: '还没有看板',
     undo: (what: Removed) =>

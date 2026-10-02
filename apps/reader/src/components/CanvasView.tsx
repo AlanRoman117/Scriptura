@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import {
@@ -21,7 +21,8 @@ import {
   type BoardNode,
 } from '../lib/canvas';
 import { usePointerDrag } from '../lib/viewport';
-import { clampZoom, pinchView, zoomAround, type PinchStart, type Point, type View } from '../lib/geometry';
+import { useRecedingMenus, workingIn } from '../lib/recede';
+import { TAP_SLOP, clampZoom, pinchView, zoomAround, type PinchStart, type Point, type View } from '../lib/geometry';
 import { settleFocus, useDismissable, useReturnFocus } from '../lib/focus';
 import { announce } from '../lib/announce';
 import { ConfirmButton } from './ConfirmButton';
@@ -50,7 +51,14 @@ interface CanvasViewProps {
   onAddToNote?: (boardId: string) => void;
   /** Open the help panel, in the Bible pane beside the board. */
   onHelp?: () => void;
+  /** The phone layout, where the board's bar and the tabs may recede (lib/recede.ts). */
+  narrow?: boolean;
+  /** The reader's preference: recede when the board is worked on, or only from the button. */
+  recede?: boolean;
 }
+
+/** The board's menus: its own bar, and the Notes/Canvas tabs above it in the sheet. */
+const MENUS = '.canvas__bar, .side-switch';
 
 /** One arrow press moves or resizes a card this far; with Shift, `BIG_STEP`. */
 const STEP = 10;
@@ -98,6 +106,8 @@ export function CanvasView({
   onGo,
   onAddToNote,
   onHelp,
+  narrow = false,
+  recede = true,
 }: CanvasViewProps) {
   const { t, fmt } = useI18n();
   const words = t.canvas;
@@ -136,6 +146,32 @@ export function CanvasView({
   const resize = useRef<{ id: string; x: number; y: number; w: number; h: number } | null>(null);
   const panning = useRef<{ x: number; y: number } | null>(null);
 
+  // On a phone the board's bar and the Notes/Canvas tabs step aside when the
+  // reader starts moving things on the board (lib/recede.ts): on an iPhone SE
+  // on its side they left the board 130px, less than one card. A board is
+  // panned, not scrolled, so there is no direction to read — working on it is
+  // the sign, and the button beside the board's name brings the menus back.
+  // Clipped, not removed: zoom, pan and Connections are the ways to do without
+  // a drag (2.5.7), and focus reaches them wherever they are.
+  const receding = useRecedingMenus({ enabled: narrow && !!board, auto: recede, menus: MENUS });
+  const menusShown = receding.menus === 'shown';
+  /**
+   * The reader has started to work on the board. Not while they are working
+   * in the menus, and not while More is open over the board.
+   */
+  const stepAside = () => {
+    if (!narrow || !recede || !menusShown || more || workingIn(MENUS)) return;
+    receding.hide();
+  };
+  const stepAsideNow = useRef(stepAside);
+  stepAsideNow.current = stepAside;
+  /** Where a press began, to tell a drag from a tap on something. */
+  const pressed = useRef<Point | null>(null);
+  const draggedFrom = (e: { clientX: number; clientY: number }) => {
+    const from = pressed.current;
+    return !!from && Math.hypot(e.clientX - from.x, e.clientY - from.y) >= TAP_SLOP;
+  };
+
   // Escape cancels a connection in progress. Not on an outside press: pressing
   // the background already cancels through the pan, and pressing a card is
   // how the connection is completed.
@@ -147,7 +183,11 @@ export function CanvasView({
   useDismissable(panel !== null, () => setPanel(null), panelEl);
   useReturnFocus(panel !== null, panel ? `[data-testid="card-${panel.mode}-${panel.id}"]` : undefined);
   useEffect(() => {
-    if (panel) panelEl.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+    if (!panel) return;
+    panelEl.current?.querySelector<HTMLElement>('button')?.focus({ preventScroll: true });
+    // Moving or colouring a card is working on the board, and the panel needs
+    // the room: on a short frame it is most of the board's height.
+    stepAsideNow.current();
   }, [panel]);
 
   /**
@@ -164,6 +204,7 @@ export function CanvasView({
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
+      stepAsideNow.current();
       if (e.ctrlKey || e.metaKey) {
         const box = node.getBoundingClientRect();
         // Anchored on the pointer (lib/geometry.ts): zooming towards the
@@ -177,6 +218,28 @@ export function CanvasView({
 
     node.addEventListener('wheel', onWheel, { passive: false });
     return () => node.removeEventListener('wheel', onWheel);
+  }, [activeId]);
+
+  /*
+   * The frame clips, but it can still be scrolled: the browser does it to
+   * bring a focused card into view, and so does a screen reader. Its
+   * positioned children — the Move and Colour panel, the empty hint — then
+   * went with the scroll, and on a short frame the panel left the frame
+   * altogether, the panel that is the way to move a card without dragging.
+   * A scroll is turned into the pan it meant, and the frame put back.
+   */
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+    const onScroll = () => {
+      const { scrollLeft, scrollTop } = node;
+      if (!scrollLeft && !scrollTop) return;
+      node.scrollLeft = 0;
+      node.scrollTop = 0;
+      setView((v) => ({ ...v, pan: { x: v.pan.x - scrollLeft, y: v.pan.y - scrollTop } }));
+    };
+    node.addEventListener('scroll', onScroll, { passive: true });
+    return () => node.removeEventListener('scroll', onScroll);
   }, [activeId]);
 
   const patch = useCallback(
@@ -342,6 +405,7 @@ export function CanvasView({
       resize.current = null;
       panning.current = null;
       pinch.current = { view, mid, distance };
+      stepAside();
     },
     onPointerMoveCapture: (e: React.PointerEvent<HTMLDivElement>) => {
       if (!pointers.current.has(e.pointerId)) return;
@@ -394,9 +458,11 @@ export function CanvasView({
         return false;
       }
       panning.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+      pressed.current = { x: e.clientX, y: e.clientY };
       setConnecting(null);
     },
     onMove: (e) => {
+      if (draggedFrom(e)) stepAside();
       if (panning.current) {
         setPan({ x: e.clientX - panning.current.x, y: e.clientY - panning.current.y });
       }
@@ -417,8 +483,10 @@ export function CanvasView({
         dx: (e.clientX - box.left - pan.x) / zoom - node.x,
         dy: (e.clientY - box.top - pan.y) / zoom - node.y,
       };
+      pressed.current = { x: e.clientX, y: e.clientY };
     },
     onMove: (e) => {
+      if (draggedFrom(e)) stepAside();
       const held = drag.current;
       const box = frameBox();
       if (!held || !board || !box) return;
@@ -445,8 +513,10 @@ export function CanvasView({
       if (!node) return false;
       const { w, h } = cardSize(node);
       resize.current = { id: node.id, x: e.clientX, y: e.clientY, w, h };
+      pressed.current = { x: e.clientX, y: e.clientY };
     },
     onMove: (e) => {
+      if (draggedFrom(e)) stepAside();
       const sizing = resize.current;
       if (!sizing || !board) return;
       // Cards hold whole verses and whole notes, so a fixed size cannot be
@@ -555,11 +625,92 @@ export function CanvasView({
 
   const panelNode = panel ? board?.nodes.find((n) => n.id === panel.id) ?? null : null;
 
+  /*
+   * ⚠️ The board stays where it is on the screen when its menus come or go.
+   * The frame grows and shrinks from its top, and the plane is placed from
+   * the frame's corner, so every card would move by the menus' height — under
+   * the finger that is dragging one, since dragging is what sends them away.
+   * The frame's top is compared across the change and the difference goes
+   * into the pan before the browser paints; a pan or a pinch in progress is
+   * carried over the same way, or its next move would undo it.
+   */
+  const frameTop = useRef<number | null>(null);
+  const menusWere = useRef(receding.menus);
+  // ⚠️ Measured while rendering the change, when the page is still as it was.
+  // A top remembered from an earlier commit is stale: the sheet slides and
+  // resizes without React, and a top taken while it was still opening made
+  // the board jump by the sheet's travel.
+  if (menusWere.current !== receding.menus) {
+    frameTop.current = frame.current?.getBoundingClientRect().top ?? null;
+  }
+  useLayoutEffect(() => {
+    if (menusWere.current === receding.menus) return;
+    menusWere.current = receding.menus;
+    const before = frameTop.current;
+    const top = frame.current?.getBoundingClientRect().top ?? null;
+    if (top === null || before === null || top === before) return;
+    const delta = before - top;
+    setView((v) => ({ ...v, pan: { x: v.pan.x, y: v.pan.y + delta } }));
+    if (panning.current) panning.current.y -= delta;
+    for (const [id, point] of pointers.current) pointers.current.set(id, { x: point.x, y: point.y + delta });
+  }, [receding.menus]);
+
+  const zoomGroup = (
+    <div className="canvas__zoom" role="group" aria-label={words.zoom}>
+      <button type="button" data-testid="zoom-out" aria-label={words.zoomOut} onClick={() => zoomBy(-0.2)}>
+        −
+      </button>
+      <button
+        type="button"
+        data-testid="zoom-reset"
+        aria-label={words.zoomReset(fmt.percent(Math.round(zoom * 100)))}
+        onClick={() => {
+          // Panned to the content, not to the origin: a board whose cards
+          // all sit at x=2000 would otherwise "reset" to empty space.
+          const nodes = board?.nodes ?? [];
+          if (nodes.length === 0) return setView({ zoom: 1, pan: { x: 0, y: 0 } });
+          const left = Math.min(...nodes.map((n) => n.x));
+          const top = Math.min(...nodes.map((n) => n.y));
+          setView({ zoom: 1, pan: { x: 40 - left, y: 40 - top } });
+        }}
+      >
+        {fmt.percent(Math.round(zoom * 100))}
+      </button>
+      <button type="button" data-testid="zoom-in" aria-label={words.zoomIn} onClick={() => zoomBy(0.2)}>
+        +
+      </button>
+    </div>
+  );
+
+  // The board's name, the reader's to give. A new board has none and shows
+  // "Untitled board" in the interface language until it does: the placeholder
+  // is never stored. It wraps, and grows to show the whole name (TitleField).
+  const nameField = board && (
+    <TitleField
+      className="canvas__name"
+      data-testid="board-name"
+      aria-label={words.name}
+      placeholder={t.common.untitledBoard}
+      value={board.name}
+      enterKeyHint="done"
+      onChange={(e) => patch({ name: oneLine(e.target.value) })}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && !e.nativeEvent.isComposing) e.preventDefault();
+      }}
+    />
+  );
+
   return (
     // The side pane's other half, beside the Bible: a level-2 heading under the
     // chapter's h1, as the notes pane has (2.4.10). Focusable so "Show canvas"
     // and the skip link can land on it.
-    <div className="canvas" id="canvas" tabIndex={-1} data-testid="canvas">
+    <div
+      className="canvas"
+      id="canvas"
+      tabIndex={-1}
+      data-testid="canvas"
+      data-menus={narrow && board ? receding.menus : undefined}
+    >
       <h2 className="visually-hidden" id="canvas-heading">
         {words.heading(board ? board.name || t.common.untitledBoard : words.noneOpenHeading)}
       </h2>
@@ -581,24 +732,9 @@ export function CanvasView({
             </option>
           ))}
         </select>
-        {board && (
-          // The board's name, the reader's to give. A new board has none and
-          // shows "Untitled board" in the interface language until it does:
-          // the placeholder is never stored.
-          // It wraps, and grows to show the whole name (TitleField).
-          <TitleField
-            className="canvas__name"
-            data-testid="board-name"
-            aria-label={words.name}
-            placeholder={t.common.untitledBoard}
-            value={board.name}
-            enterKeyHint="done"
-            onChange={(e) => patch({ name: oneLine(e.target.value) })}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing) e.preventDefault();
-            }}
-          />
-        )}
+        {/* Beside the Bible the name is edited here, next to the picker. On a
+            phone it is the strip under the bar, which stays when the bar goes. */}
+        {!narrow && nameField}
         <button type="button" className="canvas__action" data-testid="board-new" onClick={onCreate}>
           {words.new}
         </button>
@@ -736,30 +872,9 @@ export function CanvasView({
         )}
 
         <span className="canvas__spacer" />
-        <div className="canvas__zoom" role="group" aria-label={words.zoom}>
-          <button type="button" data-testid="zoom-out" aria-label={words.zoomOut} onClick={() => zoomBy(-0.2)}>
-            −
-          </button>
-          <button
-            type="button"
-            data-testid="zoom-reset"
-            aria-label={words.zoomReset(fmt.percent(Math.round(zoom * 100)))}
-            onClick={() => {
-              // Panned to the content, not to the origin: a board whose cards
-              // all sit at x=2000 would otherwise "reset" to empty space.
-              const nodes = board?.nodes ?? [];
-              if (nodes.length === 0) return setView({ zoom: 1, pan: { x: 0, y: 0 } });
-              const left = Math.min(...nodes.map((n) => n.x));
-              const top = Math.min(...nodes.map((n) => n.y));
-              setView({ zoom: 1, pan: { x: 40 - left, y: 40 - top } });
-            }}
-          >
-            {fmt.percent(Math.round(zoom * 100))}
-          </button>
-          <button type="button" data-testid="zoom-in" aria-label={words.zoomIn} onClick={() => zoomBy(0.2)}>
-            +
-          </button>
-        </div>
+        {/* On a phone the zoom is in the strip under the bar, which stays
+            when the bar steps aside. */}
+        {!(narrow && board) && zoomGroup}
         {onHelp && (
           <button
             type="button"
@@ -798,6 +913,29 @@ export function CanvasView({
             </ul>
           )}
         </section>
+      )}
+
+      {/* What stays on a phone when the menus step aside: the board's name,
+          and the button for the menus beside it — as the chapter title and
+          the note's title are. The zoom stays with them: it is the way to
+          zoom without a pinch (2.5.1), and it is wanted while the board is
+          being worked on, which is exactly when the bar is away. With the
+          name and the zoom out of the bar, the bar is a row shorter, so the
+          strip costs the board nothing while the menus show. */}
+      {narrow && board && (
+        <div className="canvas__title-row">
+          {nameField}
+          {zoomGroup}
+          <button
+            type="button"
+            className="canvas__action canvas__menus"
+            data-testid="board-menus-toggle"
+            aria-label={menusShown ? words.hideMenus : words.showMenus}
+            onClick={() => (menusShown ? receding.hide() : receding.show())}
+          >
+            <span className="menus__glyph" aria-hidden="true">{menusShown ? '▴' : '▾'}</span>
+          </button>
+        </div>
       )}
 
       {board ? (

@@ -36,6 +36,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: 'Você também pode escolher o livro e o capítulo nos dois menus da barra.' },
+      { p: 'Em uma tela pequena, os menus saem do caminho enquanto você lê, escreve ou organiza um quadro. Pressione o botão **▾** ao lado do título para trazê-los de volta; em um capítulo ou em uma nota, basta rolar um pouco para trás. Nas configurações você pode impedir que eles se movam sozinhos.' },
     ],
   },
   {
@@ -249,6 +250,9 @@ export const ptBR = {
     markVerseIn: (ref: string, collection: string, colour: string) => `Marcar ${ref} — em ${collection} (${colour})`,
     chapterMissing: (translation: string) => `Este capítulo não está em ${translation}.`,
     readingAnnounce: (translation: string) => `Lendo ${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: 'Mostrar os menus de leitura',
+    hideMenus: 'Ocultar os menus de leitura',
   },
 
   verseActions: {
@@ -385,6 +389,8 @@ export const ptBR = {
     startOne: 'Criar uma',
     heading: 'Notas',
     picker: 'Nota',
+    showMenus: 'Mostrar os menus da nota',
+    hideMenus: 'Ocultar os menus da nota',
     none: 'Ainda não há notas',
     preview: 'Visualizar',
     write: 'Escrever',
@@ -532,6 +538,7 @@ export const ptBR = {
     markers: 'Mostrar um símbolo em cada marca, não só uma cor',
     verseLines: 'Começar cada versículo em uma nova linha',
     verseNumbers: 'Mostrar os números dos versículos',
+    recedeMenus: 'Em telas pequenas, ocultar os menus durante a leitura',
     storage: 'Onde seu trabalho fica',
     persistence: {
       persisted: 'Este navegador concordou em guardar suas notas. Limpar os dados do site ainda as apaga.',
@@ -635,6 +642,8 @@ export const ptBR = {
     heading: (board: string) => `Quadro: ${board}`,
     noneOpenHeading: 'nenhum aberto',
     picker: 'Quadro',
+    showMenus: 'Mostrar os menus do quadro',
+    hideMenus: 'Ocultar os menus do quadro',
     name: 'Nome do quadro',
     none: 'Ainda não há quadros',
     undo: (what: Removed) =>

@@ -30,6 +30,12 @@ Open the LAN URL on the phone (same Wi-Fi). For standalone-mode checks, Add to H
 - [ ] The docked action bar is `position: fixed` inside `.reader`, a size container (`container-type: inline-size`). Chromium 153 keeps it viewport-relative; confirm Safari does too (an engine that applies layout containment to size containers would pin the bar inside the reading column instead).
 - [ ] Canvas: one finger pans; two fingers zoom about the fingers; drag a card by its header; the resize corner works; a card's Move/Size popover moves it without dragging.
 - [ ] Rotate the phone with the sheet open; nothing is clipped.
+- [ ] **Menus that recede** (`lib/recede.ts`; ideally on an iPhone SE, upright and on its side). Reading a chapter, the bar and the search box slide away as you scroll on and return when you scroll back a little. Momentum scrolling does not make them flicker, and the bounce at the end of a chapter does not bring them back by itself. The button at the end of the chapter title shows and hides them.
+- [ ] The same in a long note, with the sheet full: the picker row and the Notes/Canvas tabs go as you scroll on, and **the line under your finger does not jump** when they go or come back.
+- [ ] On a board: panning, dragging a card or pinching sends the bar and the tabs away, and the card stays under the finger. The zoom buttons stay beside the board's name.
+- [ ] A tap straight after a pan on the board: Chromium swallows a tap that lands while the drag before it is still flinging. Note whether Safari does.
+- [ ] **VoiceOver with the menus receded.** Swipe back to the reading bar's controls, to a note's picker and to the Notes/Canvas tabs: each is announced and double-tap activates it, though it is not drawn (they are unpinned or clipped, never removed). Say what VoiceOver's cursor shows for a clipped control.
+- [ ] In Safari, not installed: the page itself never scrolls (only the pane does), so Safari's own toolbars never shrink. Note how much of the screen scripture has there, upright and on its side, against the installed app.
 - [ ] Delete a note, and remove a card on a board: the confirmation sits in the middle of the visible screen, both buttons are comfortably tappable, a tap outside the box cancels, and nothing behind it responds while it is open.
 
 ## Checklist — Android Chrome (Pixel or similar)

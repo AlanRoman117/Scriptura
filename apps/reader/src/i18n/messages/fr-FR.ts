@@ -38,6 +38,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: 'Vous pouvez aussi choisir le livre et le chapitre dans les deux menus de la barre.' },
+      { p: 'Sur un petit écran, les menus s’effacent pendant que vous lisez, écrivez ou organisez un tableau. Appuyez sur le bouton **▾** à côté du titre pour les faire revenir ; dans un chapitre ou une note, il suffit aussi de revenir un peu en arrière. Dans les Paramètres, vous pouvez les empêcher de bouger d’eux-mêmes.' },
     ],
   },
   {
@@ -250,6 +251,9 @@ const catalog = {
       `Marquer ${ref} : dans ${collection} (${colour})`,
     chapterMissing: (translation: string) => `Ce chapitre ne figure pas dans ${translation}.`,
     readingAnnounce: (translation: string) => `Lecture de ${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: 'Afficher les menus de lecture',
+    hideMenus: 'Masquer les menus de lecture',
   },
 
   verseActions: {
@@ -372,6 +376,8 @@ const catalog = {
     startOne: 'En créer une',
     heading: 'Notes',
     picker: 'Note',
+    showMenus: 'Afficher les menus de la note',
+    hideMenus: 'Masquer les menus de la note',
     none: 'Aucune note pour l’instant',
     preview: 'Aperçu',
     write: 'Écrire',
@@ -515,6 +521,7 @@ const catalog = {
     markers: 'Afficher un symbole sur chaque surlignage, pas seulement une couleur',
     verseLines: 'Commencer chaque verset sur une nouvelle ligne',
     verseNumbers: 'Afficher les numéros de verset',
+    recedeMenus: 'Sur un petit écran, masquer les menus pendant la lecture',
     storage: 'Où se trouve votre travail',
     persistence: {
       persisted: 'Ce navigateur a accepté de conserver vos notes. Effacer les données du site les supprime tout de même.',
@@ -595,6 +602,8 @@ const catalog = {
     heading: (board: string) => `Tableau : ${board}`,
     noneOpenHeading: 'aucun ouvert',
     picker: 'Tableau',
+    showMenus: 'Afficher les menus du tableau',
+    hideMenus: 'Masquer les menus du tableau',
     name: 'Nom du tableau',
     none: 'Aucun tableau pour l’instant',
     undo: (what: Removed) =>

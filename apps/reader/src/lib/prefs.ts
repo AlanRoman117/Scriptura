@@ -78,6 +78,12 @@ export interface DisplayPrefs {
   verseLines: boolean;
   /** Draw the verse numbers. Hidden, each stays a control and shows while it has focus. */
   verseNumbers: boolean;
+  /**
+   * On a small screen, let the menus step aside as the reader scrolls on
+   * (lib/recede.ts). Off, they move only when their button is pressed — for a
+   * reader who finds controls that move by themselves disorienting.
+   */
+  recedeMenus: boolean;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -92,6 +98,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   editor: 'live',
   verseLines: true,
   verseNumbers: true,
+  recedeMenus: true,
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */
@@ -182,6 +189,10 @@ export function normalizePrefs(raw: unknown): DisplayPrefs {
     // existed keeps the chapter as it was.
     verseLines: r.verseLines !== false,
     verseNumbers: r.verseNumbers !== false,
+    // On unless switched off, like the two above. It changes nothing before
+    // first paint — a page always opens with its menus showing — so
+    // index.html's inline script has no part in it.
+    recedeMenus: r.recedeMenus !== false,
   };
 }
 

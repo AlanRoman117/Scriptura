@@ -40,6 +40,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ],
       },
       { p: 'You can also pick the book and chapter from the two menus in the bar.' },
+      { p: 'On a small screen the menus step aside while you read, write or arrange a board. Press the **▾** button beside the title to bring them back; in a chapter or a note, scrolling back a little does the same. In Settings you can stop them moving by themselves.' },
     ],
   },
   {
@@ -258,6 +259,9 @@ export const enUS = {
     markVerseIn: (ref: string, collection: string, colour: string) => `Mark ${ref} — in ${collection} (${colour})`,
     chapterMissing: (translation: string) => `This chapter is not in ${translation}.`,
     readingAnnounce: (translation: string) => `Reading ${translation}`,
+    /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
+    showMenus: 'Show the reading menus',
+    hideMenus: 'Hide the reading menus',
   },
 
   verseActions: {
@@ -382,6 +386,8 @@ export const enUS = {
     startOne: 'Start one',
     heading: 'Notes',
     picker: 'Note',
+    showMenus: 'Show the note menus',
+    hideMenus: 'Hide the note menus',
     none: 'No notes yet',
     preview: 'Preview',
     write: 'Write',
@@ -527,6 +533,7 @@ export const enUS = {
     markers: 'Show a symbol on every highlight, not only a colour',
     verseLines: 'Start each verse on a new line',
     verseNumbers: 'Show verse numbers',
+    recedeMenus: 'On a small screen, hide the menus while reading',
     storage: 'Where your work lives',
     persistence: {
       persisted: 'This browser has agreed to keep your notes. Clearing site data still removes them.',
@@ -609,6 +616,8 @@ export const enUS = {
     heading: (board: string) => `Board: ${board}`,
     noneOpenHeading: 'none open',
     picker: 'Board',
+    showMenus: 'Show the board menus',
+    hideMenus: 'Hide the board menus',
     name: 'Board name',
     none: 'No boards yet',
     undo: (what: Removed) => `Undo: put back ${what.kind === 'card' ? what.label : `the connection ${what.label}`}`,

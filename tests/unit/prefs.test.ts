@@ -89,6 +89,13 @@ describe('normalizePrefs', () => {
     expect(normalizePrefs({ verseLines: 'no', verseNumbers: 0 })).toMatchObject({ verseLines: true, verseNumbers: true });
   });
 
+  test('the menus recede on a small screen unless switched off', () => {
+    // Stored before the switch existed: on, as it is for a new reader.
+    expect(normalizePrefs({ style: 'sepia' }).recedeMenus).toBe(true);
+    expect(normalizePrefs({ recedeMenus: false }).recedeMenus).toBe(false);
+    expect(normalizePrefs({ recedeMenus: 'no' }).recedeMenus).toBe(true);
+  });
+
   /**
    * The preference was one `theme` before it was a style and an appearance.
    * A reader who chose high contrast, dark, keeps it.
