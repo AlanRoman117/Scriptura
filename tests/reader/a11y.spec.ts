@@ -115,6 +115,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  // Several verses selected (lib/selection.ts): the row with its summary and
+  // the button that fills the gap, and each selected verse's outline and pill.
+  'several verses selected': async (page) => {
+    for (const verse of [2, 3, 6]) await page.locator(`.verse[data-verse="${verse}"] .verse__text`).click();
+    await expect(page.getByTestId('verse-fill')).toBeVisible();
+  },
   'a quote confirmed': async (page) => {
     await page.getByTestId('note-new').click();
     await page.getByTestId('verse-2').click();
@@ -196,7 +202,7 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
 for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const) {
   test.describe(`no axe violations, ${locale}`, () => {
     test.use({ locale });
-    for (const name of ['reading', 'verse actions', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed', 'asked before deleting']) {
+    for (const name of ['reading', 'verse actions', 'several verses selected', 'formatting tools', 'marks', 'library', 'settings', 'help', 'comparison', 'board', 'results', 'a quote confirmed', 'asked before deleting']) {
       test(name, async ({ page }) => {
         await open(page);
         await STATES[name](page);
@@ -242,6 +248,10 @@ const STYLE_STATES: Record<string, (page: Page) => Promise<void>> = {
     }
     await page.getByTestId('verse-7').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
+    // And a marked verse with it: a group, whose selected verses are an
+    // outline and a filled number over a tint as well as over the wash.
+    await page.locator('.verse[data-verse="3"] .verse__text').click();
+    await expect(page.getByTestId('verse-fill')).toBeVisible();
   },
   'formatting tools': STATES['formatting tools'],
   settings: STATES.settings,

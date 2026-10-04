@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { prefersReducedMotion } from '../lib/prefs';
 import { verseSeparator } from '../lib/verses';
-import { useDismissable, useReturnFocus } from '../lib/focus';
+import { settleFocus, useDismissable, useReturnFocus } from '../lib/focus';
+import { announce } from '../lib/announce';
 import { useRecedingMenus } from '../lib/recede';
 import {
+  HIGHLIGHT_COLORS,
   HIGHLIGHT_GLYPHS,
   colorLabel,
   highlightId,
@@ -13,6 +15,17 @@ import {
   type Highlight,
   type HighlightColor,
 } from '../lib/notes';
+import {
+  extendTo,
+  fillSpan,
+  formatRuns,
+  formatVerses,
+  swatchState,
+  toRuns,
+  toggleVerse,
+  type SwatchState,
+  type VerseSelection,
+} from '../lib/selection';
 import { VerseActions } from './VerseActions';
 import { MaximizeButton } from './PaneControl';
 import { useI18n } from '../i18n';
@@ -25,11 +38,22 @@ interface BiblePaneProps {
   /** What the reader calls each colour; a mark's name says its collection. */
   labels?: ColorLabels;
   onNavigate: (bookSlug: string, chapter: number) => void;
-  onHighlight: (verse: number, color: HighlightColor) => void;
-  onQuote: (verse: number) => void;
-  onLink: (verse: number) => void;
-  onSendToCanvas?: (verse: number) => void;
+  /**
+   * Each acts on every selected verse, given in the chapter's order: one
+   * verse, a range, or verses apart.
+   */
+  /**
+   * `group` is which selection the verses are: the same number for as long as
+   * the same verses stay selected, so the colour just pressed, pressed again,
+   * can be told from a first press on verses selected afresh.
+   */
+  onHighlight: (verses: number[], color: HighlightColor, group: number) => void;
+  onQuote: (verses: number[]) => void;
+  onLink: (verses: number[]) => void;
+  onSendToCanvas?: (verses: number[]) => void;
   focusVerse?: number | null;
+  /** The last verse of a range that was jumped to: the whole range is pointed out. */
+  focusThrough?: number | null;
   search?: React.ReactNode;
   /**
    * The phone layout: the bar and the search box may recede, and the title
@@ -69,6 +93,7 @@ export function BiblePane({
   onLink,
   onSendToCanvas,
   focusVerse,
+  focusThrough,
   search,
   narrow = false,
   recede = true,
@@ -87,13 +112,33 @@ export function BiblePane({
   onToggleHelp,
 }: BiblePaneProps) {
   const { t, fmt } = useI18n();
-  const [openVerse, setOpenVerse] = useState<number | null>(null);
-  /** Whether the actions were opened from the verse number, which moves focus into them. */
+  /**
+   * The verses the row of actions will act on (lib/selection.ts). A press adds
+   * a verse and pressing it again takes it out, so a passage is quoted as one
+   * block under one reference instead of a verse and a reference at a time.
+   */
+  const [selection, setSelection] = useState<VerseSelection | null>(null);
+  /** Whether the last verse was added from its number, which moves focus into the row. */
   const [fromNumber, setFromNumber] = useState(false);
+  const current = book.chapters.find((c) => c.number === chapter);
+  /** The chapter's verses in order: what "between" and "adjacent" mean here. */
+  const order = useMemo(() => current?.verses.map((v) => v.number) ?? [], [current]);
+  // For effects that read the order without answering to it: another
+  // translation gives a new list of the same verses.
+  const orderNow = useRef(order);
+  orderNow.current = order;
+  const selected = selection?.verses ?? [];
+  const many = selected.length > 1;
+  /** Which selection this is: a new number whenever the selection changes. */
+  const group = useRef(0);
+  useEffect(() => {
+    group.current += 1;
+  }, [selection]);
   const head = useRef<HTMLDivElement>(null);
   const reader = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
   const [stuck, setStuck] = useState(false);
+  const stuckNow = useRef(false);
 
   // On a phone the bar and the search box step aside as the reader scrolls
   // on, and the title strip is what stays (lib/recede.ts). They are unpinned,
@@ -109,6 +154,9 @@ export function BiblePane({
   const menusShown = receding.menus === 'shown';
   /** Whether the chapter is long enough to scroll past its menus. */
   const [canRecede, setCanRecede] = useState(true);
+  /** What `canRecede` was last set to, so it is set again only when it changes. */
+  const couldRecede = useRef(true);
+  const hasSearch = !!search;
 
   // The sticky offsets used to be constants (3.1rem for the bar, 2.9rem for
   // the search box). 44px controls and a text-size preference make both
@@ -137,7 +185,14 @@ export function BiblePane({
       target.style.setProperty('--head-h', `${headEl?.offsetHeight ?? 0}px`);
       target.style.setProperty('--pane-top', `${Math.max(0, Math.round(target.getBoundingClientRect().top))}px`);
       // A chapter too short to scroll past its own menus has nowhere to put them.
-      setCanRecede(target.scrollHeight - target.clientHeight >= barEl.offsetHeight + (searchEl?.offsetHeight ?? 0));
+      // ⚠️ Said only when it changes. Setting a state to the value it has is
+      // not always free: React cannot drop it while the component has other
+      // work waiting, and queues a render for it (see below).
+      const can = target.scrollHeight - target.clientHeight >= barEl.offsetHeight + (searchEl?.offsetHeight ?? 0);
+      if (can !== couldRecede.current) {
+        couldRecede.current = can;
+        setCanRecede(can);
+      }
     };
     write();
     const observer = new ResizeObserver(write);
@@ -157,7 +212,16 @@ export function BiblePane({
       observer.disconnect();
       window.removeEventListener('resize', write);
     };
-  }, [search, receding.menus]);
+    // ⚠️ Whether there is a search box, not the element App hands down, which
+    // is a new one on every render of the app. Answering to that, this ran
+    // after every keystroke anywhere, and each run queued a render to set
+    // `canRecede` to what it already was. React counts commits that finish
+    // with work still queued, and after fifty in a row the next state update
+    // throws "Maximum update depth exceeded": typed faster than the queue
+    // could drain, the fifty-first character of a note's title was thrown
+    // away with its handler (macOS CI, one run in five, since preview.6).
+    // `tests/reader/fast-typing.spec.ts`.
+  }, [hasSearch, receding.menus]);
 
   // ⚠️ Focus arriving in the pinned bars must not move the text. The pane's
   // scroll padding is for what scrolls under them, and a control in them is
@@ -190,30 +254,111 @@ export function BiblePane({
     };
   }, []);
 
-  /** The verse whose actions are open — the whole <p>, so a press on it is not "outside". */
-  const openVerseEl = useRef<HTMLParagraphElement | null>(null);
+  /** The row of actions. A press on a verse is that verse's to handle, not "outside". */
+  const rowEl = useRef<HTMLDivElement | null>(null);
 
-  // Swatches left open on a verse you have navigated away from are stale.
-  useEffect(() => setOpenVerse(null), [book.slug, chapter]);
+  // A selection left on verses you have navigated away from is stale: another
+  // chapter or translation, a panel over the text, a comparison in its place.
+  //
+  // ⚠️ Cleared while rendering, not in an effect. An effect runs after the new
+  // chapter is on screen, so for one render John 2 showed verses 1 and 2
+  // selected, with the row offering to quote them, because John 1's were. A
+  // slow machine made that render long enough to read (macOS CI did).
+  const scope = `${bible.meta.id}/${book.slug}/${chapter}/${overlay ? 'covered' : 'text'}/${compare ? 'compared' : 'read'}`;
+  const [scopeWas, setScopeWas] = useState(scope);
+  if (scopeWas !== scope) {
+    setScopeWas(scope);
+    setSelection(null);
+  }
 
-  // Escape closes them — only them, if something opened later is on top — and
-  // so does a press anywhere outside the verse. Focus goes back to where it
-  // was, or, when that was a control inside the row that has just gone, to the
-  // verse number the row belonged to (2.4.3).
-  useDismissable(openVerse !== null, () => setOpenVerse(null), openVerseEl, { ignore: '.verse' });
-  useReturnFocus(openVerse !== null, openVerse !== null ? `[data-testid="verse-${openVerse}"]` : undefined);
+  /** "John 1:3-5", "John 1:1, 14": the selection as it is cited. */
+  const refOf = (verses: readonly number[]) => `${book.name} ${chapter}:${formatVerses(verses, order)}`;
+
+  /** Clear the selection. A group going is said; one verse closing is not, as it never was. */
+  const clear = (said = true) => {
+    // Said every time: the same words answer a new group being cleared.
+    if (said && many) announce(t.reader.selectionCleared, { force: true });
+    setSelection(null);
+  };
+
+  /**
+   * A press on a verse, or on its number (`viaNumber`): it joins the
+   * selection, or leaves it. With Shift, everything between joins too.
+   */
+  const press = (verse: number, viaNumber: boolean, extend: boolean) => {
+    const next = extend ? extendTo(selection, verse, order, viaNumber) : toggleVerse(selection, verse, order, viaNumber);
+    const added = (next?.verses.length ?? 0) > selected.length;
+    // Added from its number, the verse brings the row and focus goes into it;
+    // removed from its number, focus stays on the number.
+    setFromNumber(viaNumber && added);
+    setSelection(next);
+    if (!next) {
+      if (many) announce(t.reader.selectionCleared, { force: true });
+      return;
+    }
+    // Said when focus does not carry the news. Focus moving into the row
+    // reads the row's name, which says the same, and a message as well would
+    // be cut off by it (4.1.3). One verse opening its actions stays quiet.
+    //
+    // ⚠️ Focus moves only when the row comes to a new verse. Shift+Enter on
+    // the number the row already hangs under takes in the verses between and
+    // leaves both the row and focus where they were: that was said by nothing.
+    const focusMoves = viaNumber && added && next.host !== selection?.host;
+    const isGroup = next.verses.length > 1 || many;
+    if (isGroup && !focusMoves) {
+      announce(t.reader.selection(next.verses.length, refOf(next.verses)), { force: true });
+    }
+  };
+
+  /** Every verse between the first and the last selected (the row's button). */
+  const fill = () => {
+    if (!selection) return;
+    const next = fillSpan(selection, order);
+    const said = () => announce(t.reader.selection(next.verses.length, refOf(next.verses)), { force: true });
+    // The button goes with the gaps it filled. If it had focus, focus moves on
+    // to Quote, the act a filled range is most often for, rather than falling
+    // to the top of the page; the news is said once it has landed.
+    const button = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setSelection(next);
+    if (button?.matches('[data-testid="verse-fill"]')) {
+      settleFocus(button, { to: [`[data-testid="quote-${next.host}"]`] }, said);
+    } else said();
+  };
+
+  // Escape clears the selection — only it, if something opened later is on
+  // top. A press anywhere outside closes one verse, as it always has; a group
+  // is left alone, so a stray press or the start of a scroll does not throw
+  // away ten verses chosen one by one. Focus goes back to where it was, or to
+  // the number of the verse the row hung under (2.4.3).
+  useDismissable(selection !== null, () => clear(), rowEl, { ignore: '.verse', outside: !many });
+  useReturnFocus(selection !== null, selection ? `[data-testid="verse-${selection.host}"]` : undefined);
 
   useEffect(() => {
     if (focusVerse == null) return;
-    const el = document.querySelector(`.verse[data-verse="${focusVerse}"]`);
+    // A range that was jumped to is pointed out whole, not by its first verse.
+    // ⚠️ The order is read, not answered to: as a dependency, another
+    // translation — a new list of the same verses — sent the pane back to a
+    // verse jumped to long before, and flashed it again.
+    const order = orderNow.current;
+    const from = order.indexOf(focusVerse);
+    const to = focusThrough != null && order.indexOf(focusThrough) > from ? order.indexOf(focusThrough) : from;
+    const numbers = from === -1 ? [focusVerse] : order.slice(from, to + 1);
+    const els = numbers
+      .map((n) => document.querySelector(`.verse[data-verse="${n}"]`))
+      .filter((el): el is Element => !!el);
     // The stylesheet cannot reach a scroll the script starts, so the motion
     // preference is asked here (2.3.3). The flash class stays: under reduced
     // motion the CSS draws it as a still outline rather than an animation.
-    el?.scrollIntoView({ block: 'center', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-    el?.classList.add('verse--flash');
-    const t = window.setTimeout(() => el?.classList.remove('verse--flash'), 1600);
+    els[0]?.scrollIntoView({
+      block: els.length > 1 ? 'start' : 'center',
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    });
+    for (const el of els) el.classList.add('verse--flash');
+    const t = window.setTimeout(() => {
+      for (const el of els) el.classList.remove('verse--flash');
+    }, 1600);
     return () => window.clearTimeout(t);
-  }, [focusVerse, book.slug, chapter]);
+  }, [focusVerse, focusThrough, book.slug, chapter]);
 
   // A sticky element gives no signal that it is pinned, so detect it by
   // comparing the heading's position against where it parks. Only then does it
@@ -230,7 +375,12 @@ export function BiblePane({
     const check = () => {
       const barHeight = parseFloat(getComputedStyle(node).top) || 0;
       const top = node.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-      setStuck(top <= barHeight + 1);
+      // Said only when it changes: this runs on every scroll event.
+      const is = top <= barHeight + 1;
+      if (is !== stuckNow.current) {
+        stuckNow.current = is;
+        setStuck(is);
+      }
     };
 
     check();
@@ -255,9 +405,19 @@ export function BiblePane({
     scroller.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   };
 
-  const current = book.chapters.find((c) => c.number === chapter);
   const meta = bible.meta;
   const separator = verseSeparator(meta.language);
+
+  // For each collection: all of the selected verses, some, or none.
+  const marks = new Map(highlights.map((h) => [h.id, h.color]));
+  const colours = selected.map((n) => marks.get(highlightId({ book_slug: book.slug, chapter, verse: n })));
+  const states = Object.fromEntries(HIGHLIGHT_COLORS.map((c) => [c, swatchState(colours, c)])) as Record<
+    HighlightColor,
+    SwatchState
+  >;
+  // "Select 3-18": shown while the selection skips verses.
+  const runs = toRuns(selected, order);
+  const span = runs.length > 1 ? formatRuns([[runs[0][0], runs[runs.length - 1][1]]]) : null;
 
   return (
     <div className="reader" ref={reader} data-menus={narrow ? receding.menus : undefined}>
@@ -412,24 +572,29 @@ export function BiblePane({
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);
-              const open = openVerse === v.number;
+              const open = selected.includes(v.number);
               return (
+                <Fragment key={v.number}>
                 <p
                   className="verse"
-                  key={v.number}
-                  ref={open ? openVerseEl : undefined}
                   data-verse={v.number}
                   data-highlight={mark?.color ?? undefined}
                   data-open={open || undefined}
+                  // Shift and a press is the browser's way to stretch a text
+                  // selection, which the guard below would then take for a
+                  // drag. While verses are selected and no text is, it is
+                  // ours: everything between joins the selection.
+                  onMouseDown={(e) => {
+                    if (e.shiftKey && selection && window.getSelection()?.isCollapsed) e.preventDefault();
+                  }}
                   // The whole verse is the target. Reaching for a control at
                   // the margin and then back out to the far end of the line is
                   // a lot of travel for what should be one quick act.
-                  onClick={() => {
+                  onClick={(e) => {
                     // …but a drag that selected text is not a click on the
                     // verse. Reading and copying must not trip the swatches.
                     if (!window.getSelection()?.isCollapsed) return;
-                    setFromNumber(false);
-                    setOpenVerse(open ? null : v.number);
+                    press(v.number, false, e.shiftKey && !!selection);
                   }}
                 >
                   {/* A shape as well as a colour, when the reader asks for it
@@ -452,18 +617,20 @@ export function BiblePane({
                     // is in does not depend on seeing the colour (1.4.1).
                     aria-label={
                       mark
-                        ? t.reader.markVerseIn(
+                        ? t.reader.selectVerseIn(
                             `${book.name} ${chapter}:${v.number}`,
                             colorLabel(mark.color, labels, t.colours),
                             t.colourWords[mark.color]
                           )
-                        : t.reader.markVerse(`${book.name} ${chapter}:${v.number}`)
+                        : t.reader.selectVerse(`${book.name} ${chapter}:${v.number}`)
                     }
-                    aria-expanded={open}
+                    // A toggle: pressed while its verse is in the selection.
+                    // It was a disclosure (`aria-expanded`), but with several
+                    // verses selected the one row belongs to no single number.
+                    aria-pressed={open}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setFromNumber(true);
-                      setOpenVerse(open ? null : v.number);
+                      press(v.number, true, e.shiftKey && !!selection);
                     }}
                   >
                     {v.number}
@@ -474,38 +641,50 @@ export function BiblePane({
                   {/* Read as running text, the verses need a space between
                       them — except in Japanese and Chinese (lib/verses.ts). */}
                   {separator}
-
-                  {open && (
-                    <VerseActions
-                      reference={`${book.name} ${chapter}:${v.number}`}
-                      verse={v.number}
-                      current={mark?.color}
-                      labels={labels}
-                      focusOnOpen={fromNumber}
-                      onHighlight={(color) => {
-                        onHighlight(v.number, color);
-                        setOpenVerse(null);
-                      }}
-                      onQuote={() => {
-                        onQuote(v.number);
-                        setOpenVerse(null);
-                      }}
-                      onLink={() => {
-                        onLink(v.number);
-                        setOpenVerse(null);
-                      }}
-                      onSendToCanvas={
-                        onSendToCanvas
-                          ? () => {
-                              onSendToCanvas(v.number);
-                              setOpenVerse(null);
-                            }
-                          : undefined
-                      }
-                      onClose={() => setOpenVerse(null)}
-                    />
-                  )}
                 </p>
+                {/* One row for the whole selection, after the verse it hangs
+                    under: its next sibling, not inside it, so it can stay on
+                    screen as the chapter scrolls. Keyed by that verse, so a
+                    verse added from its number brings a new row and focus. */}
+                {selection?.host === v.number && (
+                  <VerseActions
+                    key={`actions-${v.number}`}
+                    rowRef={rowEl}
+                    reference={refOf(selected)}
+                    book={{ name: book.name, lang: meta.language }}
+                    count={selected.length}
+                    verse={v.number}
+                    states={states}
+                    labels={labels}
+                    focusOnOpen={fromNumber}
+                    fill={span ? { label: t.verseActions.fill(span), onFill: fill } : undefined}
+                    onHighlight={(color) => {
+                      onHighlight(selected, color, group.current);
+                      // One verse closes, as it always has. A group stays
+                      // selected: the colour can be seen on it, and the same
+                      // press takes it off again.
+                      if (!many) clear(false);
+                    }}
+                    onQuote={() => {
+                      onQuote(selected);
+                      clear(false);
+                    }}
+                    onLink={() => {
+                      onLink(selected);
+                      clear(false);
+                    }}
+                    onSendToCanvas={
+                      onSendToCanvas
+                        ? () => {
+                            onSendToCanvas(selected);
+                            clear(false);
+                          }
+                        : undefined
+                    }
+                    onClose={() => clear()}
+                  />
+                )}
+                </Fragment>
               );
             })}
           </div>

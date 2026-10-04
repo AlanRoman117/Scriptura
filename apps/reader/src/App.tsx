@@ -52,6 +52,9 @@ import {
   saveColorLabels,
   saveNote,
   deleteNote as removeNote,
+  colorLabel,
+  markVerses,
+  type GroupMarkHistory,
   toggleHighlight,
   type ColorLabels,
   type Highlight,
@@ -67,7 +70,8 @@ import {
   type MatchOptions,
   type ResolvedReference,
 } from './lib/search';
-import { quotePassage, resolveLink, toWikiLink } from './lib/references';
+import { quotePassage, resolveLink, toWikiLinks } from './lib/references';
+import { formatRuns, toRuns } from './lib/selection';
 import { boardEmbed } from './lib/markdown';
 import { usePrefs } from './lib/prefs';
 import type { NoteSurface } from './lib/surface';
@@ -218,6 +222,8 @@ export function App() {
   const [matching, setMatching] = useState<MatchOptions>({ mode: 'substring' });
   const [reference, setReference] = useState<ResolvedReference | null>(null);
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
+  /** The last verse of a range that was jumped to, so the whole of it is pointed out. */
+  const [focusThrough, setFocusThrough] = useState<number | null>(null);
 
   const saveTimer = useRef<number | null>(null);
   /**
@@ -365,9 +371,15 @@ export function App() {
   const clearInserted = useCallback(() => setInserted(null), []);
 
   // A new chapter is a new action; the last confirmation has done its job.
-  useEffect(() => {
+  // While rendering, and only when the chapter has changed: from an effect,
+  // clearing what is already clear still leaves an update in React's queue,
+  // which comes due behind the next keystroke (tests/reader/fast-typing.spec.ts).
+  const place = `${position.bookSlug}/${position.chapter}`;
+  const [placeWas, setPlaceWas] = useState(place);
+  if (placeWas !== place) {
+    setPlaceWas(place);
     setInserted(null);
-  }, [position.bookSlug, position.chapter]);
+  }
 
   /**
    * Insert at the cursor, or append when the surface is not focused.
@@ -410,39 +422,55 @@ export function App() {
     [activeId, notes, confirmInsert]
   );
 
-  const quoteVerse = useCallback(
-    (verse: number) => {
+  /**
+   * The open chapter's verses in order, and the selected ones as runs of
+   * adjacent verses: what a group is cited as, and one link or card per run.
+   */
+  const runsOf = useCallback(
+    (verses: number[]) => {
+      const chapter = bible?.book(position.bookSlug)?.chapters.find((c) => c.number === position.chapter);
+      return toRuns(verses, chapter?.verses.map((v) => v.number) ?? verses);
+    },
+    [bible, position]
+  );
+
+  /** Quote the selected verses as one block under one citation (lib/references.ts). */
+  const quoteVerses = useCallback(
+    (verses: number[]) => {
       if (!bible) return;
       const b = bible.book(position.bookSlug);
       const ch = b?.chapters.find((c) => c.number === position.chapter);
-      const v = ch?.verses.find((x) => x.number === verse);
-      if (!b || !ch || !v) return;
+      const picked = ch?.verses.filter((x) => verses.includes(x.number)) ?? [];
+      if (!b || !ch || picked.length === 0) return;
       insertIntoNote(
-        quotePassage(bible, b, position.chapter, [v]),
-        wordsNow.current.insert.quoted(`${b.name} ${position.chapter}:${verse}`),
+        quotePassage(bible, b, position.chapter, picked),
+        wordsNow.current.insert.quoted(`${b.name} ${position.chapter}:${formatRuns(runsOf(verses))}`),
         { focus: true }
       );
     },
-    [bible, position, insertIntoNote]
+    [bible, position, insertIntoNote, runsOf]
   );
 
-  const linkVerse = useCallback(
-    (verse: number) => {
+  const linkVerses = useCallback(
+    (verses: number[]) => {
       const name = bible?.book(position.bookSlug)?.name ?? position.bookSlug;
+      const runs = runsOf(verses);
       insertIntoNote(
-        toWikiLink({
-          book_slug: position.bookSlug,
-          chapter: position.chapter,
-          verse,
-          // Which version, not only which passage: the same verse linked from
-          // two translations is otherwise the same string twice.
-          translation: translationId,
-        }),
-        wordsNow.current.insert.linked(`${name} ${position.chapter}:${verse}`),
+        toWikiLinks(
+          {
+            book_slug: position.bookSlug,
+            chapter: position.chapter,
+            // Which version, not only which passage: the same verse linked from
+            // two translations is otherwise the same string twice.
+            translation: translationId,
+          },
+          runs
+        ),
+        wordsNow.current.insert.linked(`${name} ${position.chapter}:${formatRuns(runs)}`),
         { focus: true }
       );
     },
-    [bible, position, translationId, insertIntoNote]
+    [bible, position, translationId, insertIntoNote, runsOf]
   );
 
   // Compared translations are read from IndexedDB — they are only offerable
@@ -464,9 +492,10 @@ export function App() {
     };
   }, [compareWith, compareBibles]);
 
-  const goTo = useCallback((bookSlug: string, chapter: number, verse?: number) => {
+  const goTo = useCallback((bookSlug: string, chapter: number, verse?: number, endVerse?: number) => {
     setPosition({ bookSlug, chapter });
     setFocusVerse(verse ?? null);
+    setFocusThrough(endVerse ?? null);
   }, []);
 
   const reportStoreFailure = (store: string, err: unknown) => {
@@ -698,29 +727,42 @@ export function App() {
    * answer "make a canvas first" the one time someone tries it.
    */
   /**
-   * Put a verse on the open board, or on a new one when none is open. From
-   * the verse actions, and from a search hit anywhere in the Bible.
+   * Put verses on the open board, or on a new one when none is open: one card
+   * for each run of adjacent verses, so a passage is one card and not twenty.
+   * From the verse actions, and from a search hit anywhere in the Bible.
+   *
+   * ⚠️ Every card is built against one board, in one go. `boards` is read from
+   * this render, so a call per run would start each from the same board and
+   * the last would overwrite the others.
    */
-  const addVerseToBoard = useCallback(
-    (bookSlug: string, chapter: number, verse: number) => {
+  const addVersesToBoard = useCallback(
+    (bookSlug: string, chapter: number, runs: [number, number][]) => {
       const target = boards.find((b) => b.id === boardId) ?? newBoard(wordsNow.current.insert.studyBoard);
-      const node: BoardNode = {
-        id: crypto.randomUUID(),
-        kind: 'verse',
-        book_slug: bookSlug,
-        chapter,
-        verse,
-        translation: translationId,
-        ...freeSlot(target.nodes),
-      };
-      const already = target.nodes.some(
-        (n) =>
+      let nodes = target.nodes;
+      for (const [first, last] of runs) {
+        const held = (n: BoardNode) =>
           n.kind === 'verse' &&
-          n.book_slug === node.book_slug &&
-          n.chapter === node.chapter &&
-          n.verse === node.verse
-      );
-      const next = already ? target : { ...target, nodes: [...target.nodes, node], updated: Date.now() };
+          n.book_slug === bookSlug &&
+          n.chapter === chapter &&
+          n.verse === first &&
+          (n.endVerse ?? n.verse) === last;
+        if (nodes.some(held)) continue;
+        nodes = [
+          ...nodes,
+          {
+            id: crypto.randomUUID(),
+            kind: 'verse',
+            book_slug: bookSlug,
+            chapter,
+            verse: first,
+            endVerse: last === first ? undefined : last,
+            translation: translationId,
+            ...freeSlot(nodes),
+          },
+        ];
+      }
+      const already = nodes === target.nodes;
+      const next = already ? target : { ...target, nodes, updated: Date.now() };
 
       setBoards((current) =>
         current.some((b) => b.id === next.id)
@@ -731,16 +773,21 @@ export function App() {
       void saveBoard(next);
 
       // The board is out of sight, so this is the only sign anything happened.
-      const what = `${bible?.book(bookSlug)?.name ?? bookSlug} ${chapter}:${verse}`;
+      const what = `${bible?.book(bookSlug)?.name ?? bookSlug} ${chapter}:${formatRuns(runs)}`;
       const said = wordsNow.current;
       const where = next.name || said.common.untitledBoard;
       confirmInsert(already ? said.insert.alreadyOnBoard(what, where) : said.insert.addedToBoard(what, where));
     },
     [bible, boards, boardId, translationId, confirmInsert]
   );
+  /** One verse, from a search hit. */
+  const addVerseToBoard = useCallback(
+    (bookSlug: string, chapter: number, verse: number) => addVersesToBoard(bookSlug, chapter, [[verse, verse]]),
+    [addVersesToBoard]
+  );
   const sendToCanvas = useCallback(
-    (verse: number) => addVerseToBoard(position.bookSlug, position.chapter, verse),
-    [addVerseToBoard, position]
+    (verses: number[]) => addVersesToBoard(position.bookSlug, position.chapter, runsOf(verses)),
+    [addVersesToBoard, position, runsOf]
   );
 
   /** A card in one line, for the export. */
@@ -777,22 +824,51 @@ export function App() {
     });
   }, [notes]);
 
+  /**
+   * What the colour presses on the selected group have done, so the same
+   * press again puts each verse back (lib/notes.ts). `group` is which
+   * selection that was: clear it and select the same verses another day, and
+   * a press there is a fresh one, not the undoing of an old one.
+   */
+  const groupMarks = useRef<{ group: number; history: GroupMarkHistory | null } | null>(null);
+
   const highlight = useCallback(
-    (verse: number, color: HighlightColor) => {
+    (verses: number[], color: HighlightColor, group = 0) => {
       if (!bible) return;
       setUndoMark(null);
-      void toggleHighlight(
-        {
-          // Kept as provenance. The mark itself is keyed on the passage, so a
-          // colour's collection survives a change of translation.
-          translation: bible.meta.id,
-          book_slug: position.bookSlug,
-          chapter: position.chapter,
-          verse,
-        },
-        color,
-        highlights
-      ).then(setHighlights);
+      const anchors = verses.map((verse) => ({
+        // Kept as provenance. The mark itself is keyed on the passage, so a
+        // colour's collection survives a change of translation.
+        translation: bible.meta.id,
+        book_slug: position.bookSlug,
+        chapter: position.chapter,
+        verse,
+      }));
+      if (anchors.length === 1) {
+        void toggleHighlight(anchors[0], color, highlights).then(setHighlights);
+        return;
+      }
+      // A group: all marked, or — when all already were — all cleared; and
+      // the colour just pressed, pressed again, puts each verse back as it
+      // was. Said in words, since the verses stay selected and show it only
+      // by their tint; said every time, since the same words answer a new
+      // press on another group of the same size.
+      const before = groupMarks.current?.group === group ? groupMarks.current.history : null;
+      void markVerses(anchors, color, highlights, before).then(({ highlights: next, said, history }) => {
+        groupMarks.current = { group, history };
+        setHighlights(next);
+        if (!said) return;
+        const words = wordsNow.current;
+        const collection = colorLabel(color, agentState.current.colorLabels, words.colours);
+        announce(
+          (said.kind === 'marked' ? words.verseActions.marked : words.verseActions.unmarked)(
+            said.count,
+            collection,
+            words.colourWords[color]
+          ),
+          { force: true }
+        );
+      });
     },
     [bible, position, highlights]
   );
@@ -975,7 +1051,7 @@ export function App() {
     ) {
       readTranslation(link.translation);
     }
-    goTo(link.book_slug, link.chapter, link.verse);
+    goTo(link.book_slug, link.chapter, link.verse, link.endVerse);
   };
 
   /** Quote a search hit, from the translation the search ran against. */
@@ -1062,8 +1138,8 @@ export function App() {
         setHelpOpen(true);
         revealBible();
       }}
-      onGo={(bookSlug, chapter, verse) => {
-        goTo(bookSlug, chapter, verse);
+      onGo={(bookSlug, chapter, verse, endVerse) => {
+        goTo(bookSlug, chapter, verse, endVerse);
         revealBible();
       }}
       onAddToNote={(id) => {
@@ -1126,13 +1202,15 @@ export function App() {
             labels={colorLabels}
             highlights={highlights}
             focusVerse={focusVerse}
+            focusThrough={focusThrough}
             onNavigate={(bookSlug, chapter) => {
               setPosition({ bookSlug, chapter });
               setFocusVerse(null);
+              setFocusThrough(null);
             }}
             onHighlight={highlight}
-            onQuote={quoteVerse}
-            onLink={linkVerse}
+            onQuote={quoteVerses}
+            onLink={linkVerses}
             onSendToCanvas={sendToCanvas}
             marksOpen={marksOpen}
             markCount={highlights.length}

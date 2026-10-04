@@ -25,6 +25,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  // Several verses selected (lib/selection.ts): the row with its summary and
+  // the button that fills the gap, and each selected verse's outline and pill.
+  'several verses selected': async (page) => {
+    for (const verse of [2, 3, 6]) await page.locator(`.verse[data-verse="${verse}"] .verse__text`).click();
+    await expect(page.getByTestId('verse-fill')).toBeVisible();
+  },
   'a quote confirmed, Bible maximized': async (page) => {
     await page.getByTestId('maximize-bible').click();
     await page.getByTestId('verse-2').click();

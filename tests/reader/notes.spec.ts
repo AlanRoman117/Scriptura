@@ -166,7 +166,8 @@ test.describe('marking a verse', () => {
     await verse.click();
     await expect(verse).toHaveAttribute('data-open', 'true');
 
-    const swatches = verse.locator('.swatches');
+    // The row follows its verse: the verse's next sibling.
+    const swatches = page.locator('.verse[data-verse="2"] + .swatches');
     await expect(swatches).toBeVisible();
 
     // "Centred below" is the whole point of the change — the old row sat at the

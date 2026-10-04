@@ -814,3 +814,57 @@ for (const screen of SCREENS) {
     });
   });
 }
+
+/* ── A group of verses ─────────────────────────────────────────────────────
+ * The docked row is taller for a group: a line that says what it holds, with
+ * the button that fills a range. On a small phone on its side that must still
+ * leave text to read and to press.
+ */
+for (const screen of SCREENS) {
+  test.describe(`several verses on a small phone, ${screen.name}`, () => {
+    test.use({ viewport: screen.viewport });
+
+    test('the docked row for a group leaves text to read and every control a finger\'s size', async ({ page }) => {
+      await open(page);
+      for (const n of [1, 2, 4]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+      const row = page.getByTestId('verse-actions');
+      await expect(page.getByTestId('verse-summary')).toHaveText('3 verses · John 1:1-2, 4');
+      await expect(page.getByTestId('verse-fill')).toBeVisible();
+      await settled(page);
+
+      const [rowBox, sheet, head] = [
+        (await row.boundingBox())!,
+        (await page.getByTestId('pane-notes').boundingBox())!,
+        (await page.locator('.chapter__head').boundingBox())!,
+      ];
+      expect(rowBox.y + rowBox.height).toBeLessThanOrEqual(sheet.y + 1);
+      expect(rowBox.x).toBeGreaterThanOrEqual(0);
+      expect(rowBox.x + rowBox.width).toBeLessThanOrEqual(screen.viewport.width);
+      for (const button of await row.locator('button').all()) {
+        const box = (await button.boundingBox())!;
+        expect.soft(box.width, (await button.getAttribute('data-testid')) ?? '').toBeGreaterThanOrEqual(44);
+        expect.soft(box.height, (await button.getAttribute('data-testid')) ?? '').toBeGreaterThanOrEqual(44);
+      }
+      // Room between whatever is pinned above and the row: at least two lines
+      // of scripture, even on its side with the menus showing.
+      expect(head.y + head.height).toBeLessThanOrEqual(rowBox.y);
+      const room = await page.evaluate(() => {
+        const rowTop = document.querySelector('[data-testid="verse-actions"]')!.getBoundingClientRect().top;
+        const pinned = ['.reader__bar', '.search', '.chapter__head']
+          .map((s) => document.querySelector(s)!.getBoundingClientRect())
+          .filter((b) => b.bottom > 0 && b.top < rowTop)
+          .reduce((low, b) => Math.max(low, b.bottom), 0);
+        return rowTop - pinned;
+      });
+      expect(room).toBeGreaterThanOrEqual(screen.name === 'upright' ? 150 : 40);
+    });
+
+    test('quoting the group confirms it as one on the grip', async ({ page }) => {
+      await open(page);
+      for (const n of [1, 2, 3]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+      await press(page, 'quote-1');
+      await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:1-3');
+      await expect(page.locator('.verse[data-open]')).toHaveCount(0);
+    });
+  });
+}

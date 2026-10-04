@@ -46,7 +46,7 @@ interface CanvasViewProps {
   /** The last thing put on a board from elsewhere, in words, until the next action. */
   inserted?: string | null;
   /** Open a card's passage in the reader. */
-  onGo: (bookSlug: string, chapter: number, verse?: number) => void;
+  onGo: (bookSlug: string, chapter: number, verse?: number, endVerse?: number) => void;
   /** Embed this board in the open note, where it renders as a diagram. */
   onAddToNote?: (boardId: string) => void;
   /** Open the help panel, in the Bible pane beside the board. */
@@ -179,7 +179,20 @@ export function CanvasView({
 
   // The move/size and colour panel closes on Escape or a press outside it, and
   // gives focus back to the card button that opened it.
-  useEffect(() => setPanel(null), [activeId]);
+  // It belongs to the board it was opened on, and goes when another is shown.
+  //
+  // ⚠️ While rendering, and only when the board has changed — not
+  // `useEffect(() => setPanel(null), [activeId])`. Setting a state to the
+  // value it has, from an effect, is not free: React keeps the update in the
+  // queue at the effect's low priority, the next keystroke's render skips it
+  // as not yet due, and that commit finishes with work still queued. React
+  // counts such commits; fifty in a row and the next update throws (see
+  // `tests/reader/fast-typing.spec.ts`).
+  const [panelBoard, setPanelBoard] = useState(activeId);
+  if (panelBoard !== activeId) {
+    setPanelBoard(activeId);
+    setPanel(null);
+  }
   useDismissable(panel !== null, () => setPanel(null), panelEl);
   useReturnFocus(panel !== null, panel ? `[data-testid="card-${panel.mode}-${panel.id}"]` : undefined);
   useEffect(() => {
@@ -1112,7 +1125,7 @@ export function CanvasView({
                         aria-label={words.open(label(node))}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
+                          onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse, node.endVerse);
                         }}
                       >
                         ↗

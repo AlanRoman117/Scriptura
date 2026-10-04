@@ -76,7 +76,6 @@
   --accent-pill: color-mix(in srgb, var(--accent) 24%, var(--paper-raised));
   /* The verse being acted on, and a verse just jumped to. */
   --selection-wash: color-mix(in srgb, var(--focus) 12%, var(--paper));
-  --selection-edge: color-mix(in srgb, var(--focus) 55%, var(--paper));
   --flash: color-mix(in srgb, var(--accent) 34%, var(--paper));
   /* Decoration only: carries no text and is not a boundary. */
   --quote-rule: color-mix(in srgb, var(--accent) 60%, var(--paper));
@@ -1055,9 +1054,8 @@ summary:focus-visible,
 }
 :root[data-markers='true'] .verse__marker { display: inline; }
 /* The rubric is 7:1 on paper but not over a tint, so a highlighted verse's
-   number reads in ink — and so does the number of the verse being acted on,
-   whose wash the rubric fell short on too. */
-.verse[data-highlight] .verse__num, .verse[data-open] .verse__num { color: var(--ink); }
+   number reads in ink. */
+.verse[data-highlight] .verse__num { color: var(--ink); }
 
 /* The whole verse is the target.
  *
@@ -1071,12 +1069,25 @@ summary:focus-visible,
 .verse { cursor: pointer; transition: background-color .12s ease, box-shadow .12s ease; }
 .verse:not([data-highlight]):hover { background: var(--hover); }
 .verse[data-highlight]:hover { box-shadow: inset 0 0 0 2px var(--ink-veil); }
-/* The verse you are acting on, held visibly while the swatches are open. */
+/* The verses that are selected, held visibly while the actions are open.
+ *
+ * Several can be, so each has to say so by itself, and not by colour alone
+ * (1.4.1): an outline, which follows a verse across lines in running text and
+ * which forced colours keep; its number drawn as a filled pill; and the wash.
+ * It was the wash and a one-pixel inset shadow, both of which forced colours
+ * drop, so there the row of actions inside the verse was the only sign — and
+ * one row cannot mark five verses.
+ *
+ * The outline is `--ink-soft`, not `--edge`: a control's edge is measured
+ * against the papers, and on the wash it fell under 3:1 in four light styles.
+ *
+ * ⚠️ A marked verse keeps its tint while selected. The wash used to replace
+ * it, and a colour pressed for a group, which stays selected, would then not
+ * have shown on any of them. */
 .verse[data-open],
-.verse[data-open]:hover {
-  background: var(--selection-wash);
-  box-shadow: inset 0 0 0 1px var(--selection-edge);
-}
+.verse[data-open]:hover { outline: 2px solid var(--ink-soft); outline-offset: -2px; }
+.verse[data-open]:not([data-highlight]),
+.verse[data-open]:not([data-highlight]):hover { background: var(--selection-wash); }
 /* Touch has no hover, so the number stays the visible affordance there. */
 @media (hover: none) { .verse:hover { background: none; } }
 
@@ -1093,6 +1104,9 @@ summary:focus-visible,
   background: none; border: none; cursor: pointer; border-radius: var(--radius-xs);
 }
 .verse__num:hover { color: var(--ink); background: var(--accent-pill); }
+/* A selected verse's number: paper on ink, on any tint and in any style. */
+.verse[data-open] .verse__num,
+.verse[data-open] .verse__num:hover { color: var(--paper); background: var(--ink); }
 /* A number is a verse's address, not its words: copying a passage leaves it out. */
 .verse__num { user-select: none; }
 
@@ -1130,14 +1144,57 @@ summary:focus-visible,
   margin-inline-end: -1px;
 }
 
-/* Centred under the verse it belongs to: short travel from anywhere in it. */
+/* Centred under the verse it belongs to: short travel from anywhere in it.
+   It is that verse's next sibling, so its top margin takes back the gap the
+   verse leaves below itself and gives it to the verse that follows. */
 .swatches {
   display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .15rem .3rem;
-  width: fit-content; max-width: 100%; margin: .5rem auto 0; padding: .25rem .45rem;
-  cursor: default;
+  width: fit-content; max-width: 100%; margin: calc(.5rem - var(--verse-gap)) auto var(--verse-gap); padding: .25rem .45rem;
+  cursor: default; font-family: var(--sans);
   background: var(--paper-raised); border: var(--edge-w) solid var(--edge);
   border-radius: var(--radius-pill); box-shadow: var(--elev-1);
+  /* It sits between verses: a passage dragged across and copied must not
+     carry "3 verses · John 1:3-5 Select 3-5" in the middle of it. */
+  user-select: none;
 }
+/* Verses run together have no gap between them to take back. */
+:root[data-verse-flow='run-in'] .swatches { margin: .5rem auto; }
+/* With several verses selected the row stays on screen as the chapter
+   scrolls — under the pinned title, or at the foot of the pane — so the
+   button that fills a range is there at the far end of it, and so is what the
+   row says it holds. One verse's row stays with its verse, as it always has:
+   it says nothing of which verse it is for, and away from it would not be
+   understood. The pane keeps a focused verse clear of it (2.4.11). */
+.swatches[data-many] {
+  position: sticky; z-index: 1;
+  top: calc(var(--bar-h) + var(--search-h, 0px) + var(--head-h, 0px) + .5rem); bottom: .5rem;
+  border-radius: var(--radius-xl);
+}
+.layout:not(.layout--narrow) .pane:has(.swatches[data-many]) {
+  scroll-padding-top: calc(var(--bar-h) + var(--search-h, 0px) + var(--head-h, 0px) + var(--actions-h, 0px) + 1rem);
+  scroll-padding-bottom: calc(var(--actions-h, 0px) + 1rem);
+}
+/* ⚠️ Focus on a control in the stuck row must not move the text. The row is
+   always on screen, but it sits inside the scroll padding kept clear for it,
+   so the browser "brought it into view": pressing Select at the far end of a
+   range sent the chapter back by the height of the row. As for the pinned
+   bars, its controls say they are already in view. */
+.swatches[data-many] button { scroll-margin-block: -100vh; }
+/* The Bible maximized, with "✓ Quoted…" in the corner: the row stuck at the
+   foot of the pane stays above that bar instead of running under it, and a
+   focused verse comes to rest clear of both (2.4.11). */
+.pane--bible:has(> .layout__done) .swatches[data-many] { bottom: calc(var(--control-h) + 2.5rem); }
+.layout:not(.layout--narrow) .pane--bible:has(> .layout__done):has(.swatches[data-many]) {
+  scroll-padding-bottom: calc(var(--control-h) + 3rem + var(--actions-h, 0px) + .5rem);
+}
+/* What the row will act on, in words — "3 verses · John 1:3-5" — and beside
+   it the button that fills a range. A line of its own above the actions, as
+   tall as a control whether the button is there or not. */
+.swatches__head {
+  flex: 1 1 100%; display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+  min-height: var(--control-h); padding-inline: .5rem .1rem;
+}
+.swatches__summary { flex: 1; min-width: 0; font-size: var(--fs-sm); color: var(--ink); }
 /* A column with no limit can be a couple of thousand pixels wide, and a short
    verse sits at its start: centred, the row would open far from the press that
    asked for it. It starts where the verse does instead. */
@@ -1164,6 +1221,8 @@ summary:focus-visible,
 .swatch__glyph { display: none; }
 :root[data-markers='true'] .swatch__glyph { display: inline; }
 .swatch[aria-pressed='true'] .swatch__disc { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* Some of the selected verses are in this collection and some are not. */
+.swatch[aria-pressed='mixed'] .swatch__disc { outline: 2px dashed var(--ink); outline-offset: 2px; }
 .swatches__rule { width: 1px; align-self: stretch; background: var(--rule); margin: .3rem .15rem; }
 .swatches__action {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1173,17 +1232,26 @@ summary:focus-visible,
   padding: 0 .55rem; cursor: pointer;
 }
 .swatches__action:hover { color: var(--ink); background: var(--hover); }
+/* "Select 3-18": the one action that changes the selection, set apart. */
+.swatches__fill { color: var(--ink); border: var(--edge-w) solid var(--edge); }
 
 /* On a phone the row docks above the notes sheet: in reach of a thumb, and it
    no longer pushes the rest of the chapter down the screen when it opens. It
-   stays inside the verse in the DOM, so focus order and outside presses work
-   the same as inline. The pane keeps the verse above it by the height the row
+   follows its verse in the DOM, so focus order and outside presses work the
+   same as inline. The pane keeps the verse above it by the height the row
    publishes as --actions-h. */
-.layout--narrow .swatches {
-  position: fixed; z-index: 4; left: .5rem; right: .5rem; width: auto; margin: 0;
+.layout--narrow .swatches,
+:root[data-verse-flow='run-in'] .layout--narrow .swatches {
+  position: fixed; z-index: 4; left: .5rem; right: .5rem; top: auto; width: auto; margin: 0;
   bottom: calc(var(--sheet-h, 3.25rem) + .5rem + env(safe-area-inset-bottom));
   border-radius: var(--radius-xl); padding: .3rem;
 }
+/* A group stays selected when the notes are opened, where one verse closed.
+   With the sheet at full height the text is covered and inert, and the row,
+   docked above the sheet, showed its last line of buttons over the top of
+   it: there to see and dead to press. It waits out of sight with the text it
+   belongs to, and is back when the sheet comes down. */
+.layout--narrow .pane--bible[inert] .swatches { visibility: hidden; }
 .layout--narrow .pane--bible { scroll-padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
 .layout--narrow .pane--bible:has(.verse[data-open]) { padding-bottom: calc(var(--sheet-h, 3.25rem) + var(--actions-h, 0px) + 1rem); }
 
@@ -2443,6 +2511,11 @@ summary:focus-visible,
   .divider::before { forced-color-adjust: none; background: radial-gradient(circle, CanvasText 1.6px, transparent 1.8px) 0 0 / 4px 8px repeat-y; }
   .verse[data-highlight] { border-left-color: Highlight; }
   :root[data-verse-flow='run-in'] .verse[data-highlight] { border-bottom-color: Highlight; }
+  /* A selected verse: its wash is gone here, so the outline and the number
+     carry it. The number is an inverted block in the system's own pair. */
+  .verse[data-open] { outline-color: CanvasText; }
+  .verse[data-open] .verse__num { forced-color-adjust: none; color: Canvas; background: CanvasText; }
+  .swatch[aria-pressed] .swatch__disc { outline-color: CanvasText; }
   .swatch__disc { forced-color-adjust: none; }
   /* The confirmation's delete button loses its fill, and the rule above would
      give it the same border as Cancel. An inverted block in the system's own
@@ -2451,4 +2524,10 @@ summary:focus-visible,
     forced-color-adjust: none; color: Canvas; background-color: CanvasText; border: 2px solid CanvasText;
   }
   :focus-visible { outline-color: Highlight; }
+  /* ⚠️ What has opted out of forced colours keeps the palette's ring unless
+     it is told here: `button:focus-visible` outranks the rule above, and the
+     browser no longer forces the colour for it. On a black system theme the
+     palette's ring could be all but invisible (2.4.7, 2.4.13). */
+  .verse[data-open] .verse__num:focus-visible,
+  button.confirm-dialog__action--danger:focus-visible { outline-color: Highlight; }
 }

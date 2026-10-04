@@ -65,7 +65,11 @@ export function exportNotes(
 
 /** A card, when the caller has no translation loaded to name it from. */
 function defaultDescribe(node: BoardNode, words: CardWords): string {
-  if (node.kind === 'verse') return `${node.book_slug} ${node.chapter}:${node.verse}`;
+  if (node.kind === 'verse') {
+    const span =
+      node.endVerse !== undefined && node.endVerse !== node.verse ? `${node.verse}-${node.endVerse}` : `${node.verse}`;
+    return `${node.book_slug} ${node.chapter}:${span}`;
+  }
   return node.text?.split('\n')[0] || words.card;
 }
 
