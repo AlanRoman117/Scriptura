@@ -179,7 +179,20 @@ export function CanvasView({
 
   // The move/size and colour panel closes on Escape or a press outside it, and
   // gives focus back to the card button that opened it.
-  useEffect(() => setPanel(null), [activeId]);
+  // It belongs to the board it was opened on, and goes when another is shown.
+  //
+  // ⚠️ While rendering, and only when the board has changed — not
+  // `useEffect(() => setPanel(null), [activeId])`. Setting a state to the
+  // value it has, from an effect, is not free: React keeps the update in the
+  // queue at the effect's low priority, the next keystroke's render skips it
+  // as not yet due, and that commit finishes with work still queued. React
+  // counts such commits; fifty in a row and the next update throws (see
+  // `tests/reader/fast-typing.spec.ts`).
+  const [panelBoard, setPanelBoard] = useState(activeId);
+  if (panelBoard !== activeId) {
+    setPanelBoard(activeId);
+    setPanel(null);
+  }
   useDismissable(panel !== null, () => setPanel(null), panelEl);
   useReturnFocus(panel !== null, panel ? `[data-testid="card-${panel.mode}-${panel.id}"]` : undefined);
   useEffect(() => {

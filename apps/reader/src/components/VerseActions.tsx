@@ -110,8 +110,9 @@ export function VerseActions({
     const el = group.current;
     if (!el) return;
     const root = document.documentElement;
-    const write = () => root.style.setProperty('--actions-h', `${el.offsetHeight}px`);
+    const write = () => root.style.setProperty('--actions-h', heightOf(el));
     write();
+    // For what changes the row without drawing it again: the pane's width.
     const observer = new ResizeObserver(write);
     observer.observe(el);
     // Docked (position: fixed, on a phone): bring the verse up above the bar.
@@ -128,6 +129,17 @@ export function VerseActions({
       root.style.removeProperty('--actions-h');
     };
   }, [group]);
+
+  // ⚠️ And after every drawing of the row, in the same frame. An observer is
+  // told at the browser's next rendering opportunity, which is not promised
+  // before the reader's next key: a second verse made the row a group, twice
+  // as tall, and Tab came before the news of it. The pane still kept clear
+  // the height of a one-verse row, and the focused verse came to rest under
+  // the group's (macOS CI, where the opportunity came 300ms later).
+  useLayoutEffect(() => {
+    const el = group.current;
+    if (el) document.documentElement.style.setProperty('--actions-h', heightOf(el));
+  });
 
   return (
     <div
@@ -214,3 +226,6 @@ export function VerseActions({
     </div>
   );
 }
+
+/** The row's height, rounded up: a fraction of a pixel under it is still under it. */
+const heightOf = (el: HTMLElement): string => `${Math.ceil(el.getBoundingClientRect().height)}px`;

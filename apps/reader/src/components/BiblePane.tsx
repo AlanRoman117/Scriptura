@@ -138,6 +138,7 @@ export function BiblePane({
   const reader = useRef<HTMLDivElement>(null);
   const bar = useRef<HTMLElement>(null);
   const [stuck, setStuck] = useState(false);
+  const stuckNow = useRef(false);
 
   // On a phone the bar and the search box step aside as the reader scrolls
   // on, and the title strip is what stays (lib/recede.ts). They are unpinned,
@@ -153,6 +154,9 @@ export function BiblePane({
   const menusShown = receding.menus === 'shown';
   /** Whether the chapter is long enough to scroll past its menus. */
   const [canRecede, setCanRecede] = useState(true);
+  /** What `canRecede` was last set to, so it is set again only when it changes. */
+  const couldRecede = useRef(true);
+  const hasSearch = !!search;
 
   // The sticky offsets used to be constants (3.1rem for the bar, 2.9rem for
   // the search box). 44px controls and a text-size preference make both
@@ -181,7 +185,14 @@ export function BiblePane({
       target.style.setProperty('--head-h', `${headEl?.offsetHeight ?? 0}px`);
       target.style.setProperty('--pane-top', `${Math.max(0, Math.round(target.getBoundingClientRect().top))}px`);
       // A chapter too short to scroll past its own menus has nowhere to put them.
-      setCanRecede(target.scrollHeight - target.clientHeight >= barEl.offsetHeight + (searchEl?.offsetHeight ?? 0));
+      // ⚠️ Said only when it changes. Setting a state to the value it has is
+      // not always free: React cannot drop it while the component has other
+      // work waiting, and queues a render for it (see below).
+      const can = target.scrollHeight - target.clientHeight >= barEl.offsetHeight + (searchEl?.offsetHeight ?? 0);
+      if (can !== couldRecede.current) {
+        couldRecede.current = can;
+        setCanRecede(can);
+      }
     };
     write();
     const observer = new ResizeObserver(write);
@@ -201,7 +212,16 @@ export function BiblePane({
       observer.disconnect();
       window.removeEventListener('resize', write);
     };
-  }, [search, receding.menus]);
+    // ⚠️ Whether there is a search box, not the element App hands down, which
+    // is a new one on every render of the app. Answering to that, this ran
+    // after every keystroke anywhere, and each run queued a render to set
+    // `canRecede` to what it already was. React counts commits that finish
+    // with work still queued, and after fifty in a row the next state update
+    // throws "Maximum update depth exceeded": typed faster than the queue
+    // could drain, the fifty-first character of a note's title was thrown
+    // away with its handler (macOS CI, one run in five, since preview.6).
+    // `tests/reader/fast-typing.spec.ts`.
+  }, [hasSearch, receding.menus]);
 
   // ⚠️ Focus arriving in the pinned bars must not move the text. The pane's
   // scroll padding is for what scrolls under them, and a control in them is
@@ -239,10 +259,17 @@ export function BiblePane({
 
   // A selection left on verses you have navigated away from is stale: another
   // chapter or translation, a panel over the text, a comparison in its place.
-  const translation = bible.meta.id;
-  const covered = !!overlay;
-  const comparing = !!compare;
-  useEffect(() => setSelection(null), [book.slug, chapter, translation, covered, comparing]);
+  //
+  // ⚠️ Cleared while rendering, not in an effect. An effect runs after the new
+  // chapter is on screen, so for one render John 2 showed verses 1 and 2
+  // selected, with the row offering to quote them, because John 1's were. A
+  // slow machine made that render long enough to read (macOS CI did).
+  const scope = `${bible.meta.id}/${book.slug}/${chapter}/${overlay ? 'covered' : 'text'}/${compare ? 'compared' : 'read'}`;
+  const [scopeWas, setScopeWas] = useState(scope);
+  if (scopeWas !== scope) {
+    setScopeWas(scope);
+    setSelection(null);
+  }
 
   /** "John 1:3-5", "John 1:1, 14": the selection as it is cited. */
   const refOf = (verses: readonly number[]) => `${book.name} ${chapter}:${formatVerses(verses, order)}`;
@@ -348,7 +375,12 @@ export function BiblePane({
     const check = () => {
       const barHeight = parseFloat(getComputedStyle(node).top) || 0;
       const top = node.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-      setStuck(top <= barHeight + 1);
+      // Said only when it changes: this runs on every scroll event.
+      const is = top <= barHeight + 1;
+      if (is !== stuckNow.current) {
+        stuckNow.current = is;
+        setStuck(is);
+      }
     };
 
     check();

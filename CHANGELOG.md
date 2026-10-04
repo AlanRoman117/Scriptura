@@ -54,6 +54,12 @@ Keyboard line about Enter. They are listed in
 
 ### Fixed
 
+- A character could go missing from a note's title, a board's name or a long
+  passage in a note when it was typed faster than the page could settle
+  between keys, as a script, a dictation burst or a slow device can. A part
+  of the page that had nothing to do with the field asked to be drawn again
+  after every keystroke, and after fifty of those in a row the next keystroke
+  was thrown away. Present since preview.6; found by the tests on a Mac.
 - In Windows high contrast, the focus ring on the delete button of a
   confirmation takes the system's highlight colour. It kept the style's own
   colour there.

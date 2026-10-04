@@ -123,9 +123,24 @@ test.describe('a press adds a verse, and pressing it again removes it', () => {
     await open(page);
     await text(page, 1).click();
     await text(page, 2).click();
+    // ⚠️ Not for one render either. Cleared in an effect, the selection was
+    // still there when the new chapter was first drawn: John 2 showed verses
+    // 1 and 2 selected, with the row offering to quote them. Only a slow
+    // machine left that render on screen long enough for a read to catch it,
+    // so every change to the page is watched for it here.
+    await page.evaluate(() => {
+      const seen: string[] = [];
+      (window as unknown as { __stale: string[] }).__stale = seen;
+      const title = document.querySelector('[data-testid="chapter-title"]')!;
+      new MutationObserver(() => {
+        const open = document.querySelectorAll('.verse[data-open]').length;
+        if (open > 0 && /\b2$/.test(title.textContent ?? '')) seen.push(`${title.textContent}: ${open} selected`);
+      }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+    });
     await page.getByTestId('chapter-select').selectOption('2');
     await expect(page.getByTestId('chapter-title')).toContainText('2');
     expect(await selected(page)).toEqual([]);
+    expect(await page.evaluate(() => (window as unknown as { __stale: string[] }).__stale)).toEqual([]);
 
     await text(page, 1).click();
     await text(page, 2).click();
@@ -286,7 +301,7 @@ test.describe('from the keyboard, and to a screen reader', () => {
   test('the same news about another group is said again', async ({ page }) => {
     await open(page);
     await recordAnnouncements(page);
-    for (const pair of [[2, 3], [5, 6]]) {
+    for (const [i, pair] of [[2, 3], [5, 6]].entries()) {
       for (const n of pair) {
         await page.getByTestId(`verse-${n}`).focus();
         await page.keyboard.press('Enter');
@@ -294,8 +309,12 @@ test.describe('from the keyboard, and to a screen reader', () => {
       expect(await selected(page)).toEqual(pair);
       await page.keyboard.press('Escape');
       expect(await selected(page)).toEqual([]);
+      // Each is waited for: the words reach the region a frame after they
+      // are asked for, and a second group cleared before that frame is the
+      // same news in the same breath, which is rightly said once.
+      await expect.poll(() => announcements(page)).toHaveLength(i + 1);
     }
-    await expect.poll(() => announcements(page)).toEqual(['Selection cleared', 'Selection cleared']);
+    expect(await announcements(page)).toEqual(['Selection cleared', 'Selection cleared']);
   });
 
   // With a gap in the selection the row's first control is the button that
@@ -827,6 +846,37 @@ test.describe('the row of a group stays in reach', () => {
     for (let i = 0; i < 8; i++) await page.mouse.wheel(0, 250);
     await expect.poll(() => page.getByTestId('pane-bible').evaluate((el) => el.scrollTop)).toBeGreaterThan(1500);
     expect(await inPane(page)).toBe(false);
+  });
+
+  // The pane keeps clear the height the row publishes. Published only when an
+  // observer said the row had changed, it was a rendering opportunity behind:
+  // a second verse made the row a group, twice as tall, and a Tab pressed
+  // before the browser's next frame scrolled the focused verse under it. On
+  // macOS CI that frame came 300ms later. Here the observer is never told at
+  // all, so the height has to come from the drawing itself.
+  test('the pane knows the height of the row the moment it grows', async ({ page }) => {
+    await page.addInitScript(() => {
+      const Native = window.ResizeObserver;
+      window.ResizeObserver = class extends Native {
+        observe(target: Element, options?: ResizeObserverOptions) {
+          if (!target.classList.contains('swatches')) super.observe(target, options);
+        }
+      };
+    });
+    await open(page);
+    const heights = () =>
+      page.evaluate(() => ({
+        kept: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--actions-h')),
+        row: document.querySelector('[data-testid="verse-actions"]')!.getBoundingClientRect().height,
+      }));
+    await text(page, 1).click();
+    const one = await heights();
+    expect(one.kept).toBeGreaterThanOrEqual(one.row);
+    await text(page, 2).click();
+    await expect(page.getByTestId('verse-summary')).toBeVisible();
+    const group = await heights();
+    expect(group.row).toBeGreaterThan(one.row + 20);
+    expect(group.kept).toBeGreaterThanOrEqual(group.row);
   });
 
   // The row covers text while it is stuck: a verse reached with Tab must come

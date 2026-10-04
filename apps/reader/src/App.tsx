@@ -371,9 +371,15 @@ export function App() {
   const clearInserted = useCallback(() => setInserted(null), []);
 
   // A new chapter is a new action; the last confirmation has done its job.
-  useEffect(() => {
+  // While rendering, and only when the chapter has changed: from an effect,
+  // clearing what is already clear still leaves an update in React's queue,
+  // which comes due behind the next keystroke (tests/reader/fast-typing.spec.ts).
+  const place = `${position.bookSlug}/${position.chapter}`;
+  const [placeWas, setPlaceWas] = useState(place);
+  if (placeWas !== place) {
+    setPlaceWas(place);
     setInserted(null);
-  }, [position.bookSlug, position.chapter]);
+  }
 
   /**
    * Insert at the cursor, or append when the surface is not focused.

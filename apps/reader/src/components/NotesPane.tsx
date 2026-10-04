@@ -183,8 +183,15 @@ export function NotesPane({
    * switching to Live while previewing simply returns to writing.
    */
   const reading = editor === 'plain' && mode === 'read';
-  // Coming back to Plain text starts in writing, not in a preview left open before.
-  useEffect(() => setMode('write'), [editor]);
+  // Coming back to Plain text starts in writing, not in a preview left open
+  // before. While rendering, and only when the editor has changed: an effect
+  // that sets a state to the value it has leaves an update in React's queue
+  // that comes due behind the next keystroke (tests/reader/fast-typing.spec.ts).
+  const [modeEditor, setModeEditor] = useState(editor);
+  if (modeEditor !== editor) {
+    setModeEditor(editor);
+    setMode('write');
+  }
   /**
    * Where to leave the caret after a toolbar edit, once React has repainted,
    * and the text that edit produces — see the effect below for why the text
@@ -197,12 +204,29 @@ export function NotesPane({
   // The heading the cursor sits under, kept in view the way a code editor keeps
   // the enclosing function visible. A long note's structure is otherwise
   // invisible from inside it.
+  //
+  // ⚠️ Each is set only when it changes. This runs after every keystroke in
+  // the note, and nearly always finds what it found before. A state set to
+  // the value it has is not free when it comes from an effect: React keeps
+  // the update in its queue, the next keystroke's render skips it as not yet
+  // due, and that commit finishes with work still queued. React counts such
+  // commits, and after fifty in a row the next update throws
+  // (tests/reader/fast-typing.spec.ts).
+  const tracked = useRef<{ heading: string | null; link: string | null }>({ heading: null, link: null });
   const trackHeading = () => {
     const el = surface;
     if (!el.element()) return;
-    setHeading(headingAt(el.value, el.selectionStart));
+    const under = headingAt(el.value, el.selectionStart);
+    if (under !== tracked.current.heading) {
+      tracked.current.heading = under;
+      setHeading(under);
+    }
     // A textarea has nothing to click, so the cursor is how a link is picked.
-    setLink(linkAt(el.value, el.selectionStart));
+    const at = linkAt(el.value, el.selectionStart);
+    if (at !== tracked.current.link) {
+      tracked.current.link = at;
+      setLink(at);
+    }
   };
   useEffect(trackHeading, [active?.id, active?.body]);
 

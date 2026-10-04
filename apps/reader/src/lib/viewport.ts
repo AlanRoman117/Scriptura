@@ -34,7 +34,10 @@ export function useIsNarrow(): boolean {
   useEffect(() => {
     const query = window.matchMedia(`(max-width: ${NARROW - 1}px)`);
     const onChange = (e: MediaQueryListEvent) => setNarrow(e.matches);
-    setNarrow(query.matches);
+    // Only if it changed between the first render and now. A state set to the
+    // value it has is kept in React's queue all the same, and comes due
+    // behind the next keystroke (tests/reader/fast-typing.spec.ts).
+    if (query.matches !== window.innerWidth < NARROW) setNarrow(query.matches);
     query.addEventListener('change', onChange);
     return () => query.removeEventListener('change', onChange);
   }, []);
