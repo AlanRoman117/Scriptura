@@ -7,6 +7,13 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Security
+
+- Three packages used while the reader is built and tested are updated for
+  published advisories: `brace-expansion` (to 2.1.7 and 5.0.12),
+  `serialize-javascript` (to 7.1.2) and `fast-uri` (to 3.1.8). None of them is
+  part of the reader as it is served.
+
 ## [0.1.0-preview.6] - 2026-10-02
 
 The sixth preview makes room on a small phone, upright and on its side: the
