@@ -28,6 +28,12 @@ export interface BoardNode {
   book_slug?: string;
   chapter?: number;
   verse?: number;
+  /**
+   * `verse`: the last verse, when the card holds a run of them ("John 1:3-5").
+   * Absent for one verse, which is every card made before a group could be
+   * put on a board. Still an anchor, never the text.
+   */
+  endVerse?: number;
   /** The translation it was placed from — provenance, as with a link. */
   translation?: string;
   /** `note`: which note this card stands for. */
@@ -151,13 +157,20 @@ export function describeNode(
 ): { title: string; body: string } {
   if (node.kind === 'verse') {
     const book = ctx.bible?.book(node.book_slug ?? '');
-    const verse = book?.chapters
-      .find((c) => c.number === node.chapter)
-      ?.verses.find((v) => v.number === node.verse);
-    return {
-      title: `${book?.name ?? node.book_slug} ${node.chapter}:${node.verse}`,
-      body: verse?.text ?? words.verseMissing,
-    };
+    const verses = book?.chapters.find((c) => c.number === node.chapter)?.verses ?? [];
+    const last = node.endVerse !== undefined && node.endVerse !== node.verse ? node.endVerse : undefined;
+    // A run reads as the passage: each verse on its own line under its number.
+    // One verse is its text alone, as it always was.
+    //
+    // ⚠️ By number, not by where its ends sit in the chapter: a card made in
+    // one translation is read in another, which may leave a verse out. Acts
+    // 8:37-38 from the KJV, read in a critical text, still has verse 38.
+    const first = node.verse ?? 0;
+    const held = verses.filter((v) => v.number >= first && v.number <= (last ?? first));
+    const body =
+      held.length > 1 ? held.map((v) => `${v.number} ${v.text}`).join('\n') : held[0]?.text ?? words.verseMissing;
+    const span = last === undefined ? `${node.verse}` : `${node.verse}-${last}`;
+    return { title: `${book?.name ?? node.book_slug} ${node.chapter}:${span}`, body };
   }
   if (node.kind === 'note') {
     const note = ctx.notes.find((n) => n.id === node.noteId);

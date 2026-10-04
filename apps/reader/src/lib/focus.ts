@@ -200,19 +200,33 @@ export function useDismissable(
 ): void {
   const latest = useRef(close);
   latest.current = close;
-  const outside = options.outside ?? true;
-  const ignore = options.ignore;
+  // ⚠️ Read through a ref, not listed as dependencies. The verse actions turn
+  // outside-press closing off once a second verse is selected; as a
+  // dependency that re-ran the effect, which took the entry off the stack and
+  // pushed it back *on top* — above a surface that had opened later, whose
+  // Escape it then took.
+  const now = useRef({ outside: options.outside ?? true, ignore: options.ignore });
+  now.current = { outside: options.outside ?? true, ignore: options.ignore };
 
   useEffect(() => {
     if (!open) return;
     listen();
-    const entry: Entry = { ref, close: () => latest.current(), outside, ignore };
+    const entry: Entry = {
+      ref,
+      close: () => latest.current(),
+      get outside() {
+        return now.current.outside;
+      },
+      get ignore() {
+        return now.current.ignore;
+      },
+    };
     stack.push(entry);
     return () => {
       const at = stack.indexOf(entry);
       if (at !== -1) stack.splice(at, 1);
     };
-  }, [open, ref, outside, ignore]);
+  }, [open, ref]);
 }
 
 /** Test seam: what is on the stack right now. */
@@ -279,9 +293,24 @@ export function useRovingTabIndex(
       all[next].focus();
     };
 
+    // ⚠️ A control that arrives later is a second Tab stop until it is told
+    // otherwise: a button's own tabindex is 0. The verse actions gain their
+    // "Select 3-18" button when a selection gets a gap, and Tab then stopped
+    // twice in a row that is meant to be one stop. The stop stays where it
+    // was — on the control with focus, else the one that held it — so nothing
+    // moves under the reader. Only the list of children is watched: `assign`
+    // writes attributes, and must not answer itself.
+    const observer = new MutationObserver(() => {
+      const all = controls();
+      const focused = all.find((el) => el === document.activeElement);
+      assign(focused ?? all.find((el) => el.getAttribute('tabindex') === '0') ?? null);
+    });
+    observer.observe(root, { childList: true, subtree: true });
+
     root.addEventListener('focusin', onFocusIn);
     root.addEventListener('keydown', onKey);
     return () => {
+      observer.disconnect();
       root.removeEventListener('focusin', onFocusIn);
       root.removeEventListener('keydown', onKey);
     };

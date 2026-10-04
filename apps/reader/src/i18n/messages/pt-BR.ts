@@ -81,6 +81,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: 'Pressione um versículo, ou o número dele, para marcá-lo em uma de cinco cores. Cada cor é uma coleção: dê a ela o nome do assunto que você acompanha, e o painel **Marcas** lista os versículos na ordem da Bíblia. As marcas acompanham a passagem, não a tradução, então uma marca feita em uma tradução aparece em todas.',
       },
+      { p: 'Pressione mais versículos para agir sobre vários de uma vez, e pressione um deles de novo para deixá-lo de fora. Com versículos separados selecionados, **Selecionar** na linha de ações inclui todos os que ficam entre eles; segurar {{Shift}} ao pressionar um versículo faz o mesmo. **Citar** então os escreve na sua nota como uma só passagem, com uma só referência.' },
       { p: 'Nas configurações você pode acrescentar um símbolo a cada marca, para que a cor não seja o único sinal.' },
       { p: 'Nas configurações você também pode juntar os versículos em um só texto e ocultar os números. Pressionar uma frase continua escolhendo o versículo a que ela pertence.' },
     ],
@@ -114,7 +115,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} e {{Shift}}+{{Tab}} movem entre os controles. O primeiro toque oferece pular para o texto ou para as notas.',
           '{{Esc}} fecha o que abriu por último: um painel, as ações do versículo, as sugestões da pesquisa.',
-          '{{Enter}} no número de um versículo abre as ações dele; as setas movem entre elas.',
+          '{{Enter}} no número de um versículo o seleciona e abre as ações; as setas movem entre elas. {{Enter}} em outro número acrescenta esse versículo, e {{Shift}}+{{Enter}} inclui todos os versículos até ele.',
           'Na divisória entre os painéis, as setas, {{Home}} e {{End}} redimensionam; os dois botões pequenos fazem o mesmo.',
           'Em uma nota, {{Shift}}+{{Tab}} chega às ferramentas de formatação; as setas movem entre elas.',
           'Em um quadro, os cartões recebem o foco: as setas movem um cartão, {{Alt}} com uma seta muda o tamanho e {{Delete}} pede para removê-lo. Com o quadro em foco, as setas movem a vista e {{+}} e {{−}} dão zoom.',
@@ -246,8 +247,15 @@ export const ptBR = {
     settingsChip: 'Configurações — exibição, armazenamento, exportação e acesso do assistente',
     helpChip:
       'Ajuda — encontrar passagens, pesquisar, notas, marcas, quadros, teclado e o que significam as abreviações',
-    markVerse: (ref: string) => `Marcar ${ref}`,
-    markVerseIn: (ref: string, collection: string, colour: string) => `Marcar ${ref} — em ${collection} (${colour})`,
+    selectVerse: (ref: string) => `Selecionar ${ref}`,
+    selectVerseIn: (ref: string, collection: string, colour: string) => `Selecionar ${ref} — em ${collection} (${colour})`,
+    selection: (count: number, ref: string) =>
+      plural(count, {
+        one: `${num(count)} versículo selecionado: ${ref}`,
+        many: `${num(count)} de versículos selecionados: ${ref}`,
+        other: `${num(count)} versículos selecionados: ${ref}`,
+      }),
+    selectionCleared: 'Seleção removida',
     chapterMissing: (translation: string) => `Este capítulo não está em ${translation}.`,
     readingAnnounce: (translation: string) => `Lendo ${translation}`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -263,6 +271,33 @@ export const ptBR = {
     canvas: 'Ao quadro',
     canvasName: 'Ao quadro — colocar este versículo no quadro',
     close: (ref: string) => `Fechar as ações de ${ref}`,
+    groupMany: (count: number, ref: string) =>
+      plural(count, {
+        one: `Ações para ${num(count)} versículo: ${ref}`,
+        many: `Ações para ${num(count)} de versículos: ${ref}`,
+        other: `Ações para ${num(count)} versículos: ${ref}`,
+      }),
+    summary: (count: number, ref: string) =>
+      plural(count, {
+        one: `${num(count)} versículo · ${ref}`,
+        many: `${num(count)} de versículos · ${ref}`,
+        other: `${num(count)} versículos · ${ref}`,
+      }),
+    fill: (span: string) => `Selecionar ${span}`,
+    canvasNameMany: 'Ao quadro — colocar estes versículos no quadro',
+    clear: 'Remover a seleção',
+    marked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `${num(count)} versículo marcado como ${collection} (${colour})`,
+        many: `${num(count)} de versículos marcados como ${collection} (${colour})`,
+        other: `${num(count)} versículos marcados como ${collection} (${colour})`,
+      }),
+    unmarked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `${num(count)} versículo retirado de ${collection} (${colour})`,
+        many: `${num(count)} de versículos retirados de ${collection} (${colour})`,
+        other: `${num(count)} versículos retirados de ${collection} (${colour})`,
+      }),
   },
 
   insert: {

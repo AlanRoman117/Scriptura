@@ -159,7 +159,9 @@ test.describe('closing gives focus back', () => {
     await expect.poll(() => activeTestId(page)).toBe('verse-1');
   });
 
-  test('a press outside the verse closes its actions; a press on another verse moves them', async ({ page }) => {
+  // A press on another verse used to move the actions to it. It adds that
+  // verse now: several can be selected and acted on as one (verse-group.spec.ts).
+  test('a press outside the verse closes its actions; a press on another verse adds it', async ({ page }) => {
     await open(page);
     await page.getByTestId('verse-2').click();
     await expect(page.locator('.verse[data-verse="2"]')).toHaveAttribute('data-open', 'true');
@@ -169,8 +171,16 @@ test.describe('closing gives focus back', () => {
     await page.getByTestId('verse-3').click();
     await expect(page.locator('.verse[data-verse="3"]')).toHaveAttribute('data-open', 'true');
     await page.locator('.verse[data-verse="4"] .verse__text').click();
-    await expect(page.locator('.verse[data-verse="3"]')).not.toHaveAttribute('data-open', /./);
+    await expect(page.locator('.verse[data-verse="3"]')).toHaveAttribute('data-open', 'true');
     await expect(page.locator('.verse[data-verse="4"]')).toHaveAttribute('data-open', 'true');
+    // One row for the two of them.
+    await expect(page.getByTestId('verse-actions')).toHaveCount(1);
+
+    // A group is not thrown away by a stray press: Escape clears it.
+    await page.getByTestId('chapter-title').click();
+    await expect(page.locator('.verse[data-open]')).toHaveCount(2);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.verse[data-open]')).toHaveCount(0);
   });
 
   test('Escape closes only the surface that opened last', async ({ page }) => {

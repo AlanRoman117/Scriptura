@@ -21,6 +21,7 @@
  */
 import { parseReference } from '@scriptura/core/books';
 import type { Bible, LoadedBook } from '@scriptura/core/types';
+import { formatRuns, toRuns } from './selection';
 
 export interface VerseRef {
   book_slug: string;
@@ -46,6 +47,23 @@ export function formatRef(ref: VerseRef): string {
 }
 
 export const toWikiLink = (ref: VerseRef): string => `[[${formatRef(ref)}]]`;
+
+/**
+ * The links for several verses of one chapter: one per run of adjacent verses,
+ * on one line. `[[john 1:1@bsb]] [[john 1:14@bsb]]`.
+ *
+ * A list in one link (`[[john 1:1,14]]`) would need the reference grammar to
+ * grow, and that grammar is shared with the API and the search box. A link
+ * per run needs nothing new: each is a range the grammar already has, and
+ * each is followable from the cursor.
+ */
+export const toWikiLinks = (
+  ref: Pick<VerseRef, 'book_slug' | 'chapter' | 'translation'>,
+  runs: readonly (readonly [number, number])[]
+): string =>
+  runs
+    .map(([first, last]) => toWikiLink({ ...ref, verse: first, endVerse: last === first ? undefined : last }))
+    .join(' ');
 
 /** Split a link's contents into the reference and its optional translation. */
 export function splitQualifier(inner: string): { reference: string; translation?: string } {
@@ -99,6 +117,12 @@ export function linkAt(text: string, offset: number): string | null {
  * Markdown blockquote plus citation, and the attribution line when the licence
  * requires it — `vbl` is CC BY-SA 4.0, and a note that carries its text and is
  * later exported carries the obligation with it.
+ *
+ * Several verses are one block under one citation. They need not be a
+ * sequence: the citation lists the runs ("John 1:1, 14-16") and there is a
+ * link per run. With more than one verse each starts with its number in
+ * bold, so a block reads as the passage it is and a skipped stretch shows as
+ * a jump in the numbers. One verse is written as it always was.
  */
 export function quotePassage(
   bible: Bible,
@@ -107,27 +131,30 @@ export function quotePassage(
   verses: { number: number; text: string }[]
 ): string {
   const meta = bible.meta;
-  const span =
-    verses.length > 1
-      ? `${verses[0].number}-${verses[verses.length - 1].number}`
-      : `${verses[0].number}`;
+  // The chapter's own order decides what is adjacent: a translation that
+  // omits a verse still gives one run across the gap.
+  const order = book.chapters.find((c) => c.number === chapter)?.verses.map((v) => v.number) ?? [];
+  const at = (n: number) => (order.includes(n) ? order.indexOf(n) : Number.MAX_SAFE_INTEGER);
+  const quoted = [...verses].sort((a, b) => at(a.number) - at(b.number) || a.number - b.number);
+  const runs = toRuns(
+    quoted.map((v) => v.number),
+    order.length > 0 ? order : quoted.map((v) => v.number)
+  );
 
-  const body = verses.map((v) => `> ${v.text}`).join('\n>\n');
-  const citation = `> — ${book.name} ${chapter}:${span} (${meta.id.toUpperCase()})`;
+  const many = quoted.length > 1;
+  const body = quoted.map((v) => `> ${many ? `**${v.number}** ` : ''}${v.text}`).join('\n>\n');
+  const citation = `> — ${book.name} ${chapter}:${formatRuns(runs)} (${meta.id.toUpperCase()})`;
   const notice =
     meta.license !== 'public-domain' && meta.license !== 'cc0'
       ? `\n> ${meta.attribution}`
       : '';
 
-  return `${body}\n${citation}${notice}\n\n${toWikiLink({
-    book_slug: book.slug,
-    chapter,
-    verse: verses[0].number,
-    endVerse: verses.length > 1 ? verses[verses.length - 1].number : undefined,
-    // The citation says which version this text is; the link has to agree, or
-    // two quotes of one verse from two translations are indistinguishable.
-    translation: meta.id,
-  })}\n`;
+  // The citation says which version this text is; the links have to agree, or
+  // two quotes of one verse from two translations are indistinguishable.
+  return `${body}\n${citation}${notice}\n\n${toWikiLinks(
+    { book_slug: book.slug, chapter, translation: meta.id },
+    runs
+  )}\n`;
 }
 
 /**

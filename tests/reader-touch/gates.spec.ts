@@ -31,6 +31,12 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.locator('.verse[data-verse="2"] .verse__text').tap();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
   },
+  // Several verses selected: the docked row with its summary and the button
+  // that fills the gap between them.
+  'several verses selected': async (page) => {
+    for (const verse of [2, 3, 6]) await page.locator(`.verse[data-verse="${verse}"] .verse__text`).tap();
+    await expect(page.getByTestId('verse-fill')).toBeVisible();
+  },
   'a quote confirmed on the grip': async (page) => {
     await page.locator('.verse[data-verse="2"] .verse__text').tap();
     await page.getByTestId('quote-2').tap();
@@ -274,7 +280,7 @@ test.describe('text spacing (1.4.12)', () => {
  * another language. In these states the reading view also carries the offer of
  * Bibles in the language.
  */
-const TEXT_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'help', 'library', 'board', 'results', 'asked before deleting'];
+const TEXT_HEAVY = ['reading', 'verse actions docked', 'several verses selected', 'writing a note', 'settings', 'help', 'library', 'board', 'results', 'asked before deleting'];
 
 for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] as const) {
   test.describe(`in ${locale}`, () => {
