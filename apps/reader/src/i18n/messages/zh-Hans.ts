@@ -91,6 +91,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: '按一节经文或它的节号，就可以用五种颜色之一标记它。每种颜色都是一个合集：用你正在研读的主题为它命名，**标记**面板会按圣经顺序列出这些经文。标记跟随经文本身，而不是译本，所以在一个译本里做的标记，在所有译本里都会显示。',
       },
+      { p: '再按其他经文，就可以一次处理好几节；再按一次，就把那一节去掉。选中了不相连的经文时，操作栏里的**选择**会把它们之间的经文全部选上；按住 {{Shift}} 再按一节经文，效果相同。这时**引用**会把它们作为一段经文、用一个出处写进笔记。' },
       { p: '在设置里可以为每个标记加上符号，这样颜色就不是唯一的标识。' },
       { p: '在设置里还可以把经文连成一段来读，并隐藏节号。按一句话，仍会选中它所在的那一节。' },
     ],
@@ -124,7 +125,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} 和 {{Shift}}+{{Tab}} 在控件之间移动。第一次按会提示跳到经文或笔记。',
           '{{Esc}} 关闭最后打开的东西：面板、经文操作或搜索建议。',
-          '在节号上按 {{Enter}} 会打开该节的操作；方向键在其中移动。',
+          '在节号上按 {{Enter}} 会选中该节并打开操作；方向键在其中移动。在另一个节号上按 {{Enter}} 会加上那一节，按 {{Shift}}+{{Enter}} 则把到那里为止的经文全部选上。',
           '在两栏之间的分隔条上，方向键、{{Home}} 和 {{End}} 可以调整宽度；旁边的两个小按钮作用相同。',
           '在笔记中，{{Shift}}+{{Tab}} 可以到达格式工具；方向键在工具之间移动。',
           '在看板上，卡片可以获得焦点：方向键移动卡片，{{Alt}} 加方向键调整大小，{{Delete}} 会询问是否删除。焦点在看板本身时，方向键移动视图，{{+}} 和 {{−}} 缩放。',
@@ -245,9 +246,11 @@ export const zhHans = {
     marksChip: (count: number) => `标记（${num(count)}）— 你标记过的经文，按颜色分组`,
     settingsChip: '设置 — 显示、存储、导出与助手权限',
     helpChip: '帮助 — 查找经文、搜索、笔记、标记、看板、键盘，以及各种缩写的含义',
-    markVerse: (ref: string) => `标记${ref}`,
-    markVerseIn: (ref: string, collection: string, colour: string) =>
-      `标记${ref} — 在${withColour(collection, colour)}中`,
+    selectVerse: (ref: string) => `选择${ref}`,
+    selectVerseIn: (ref: string, collection: string, colour: string) =>
+      `选择${ref} — 在${withColour(collection, colour)}中`,
+    selection: (count: number, ref: string) => `已选${num(count)}节：${ref}`,
+    selectionCleared: '已取消选择',
     chapterMissing: (translation: string) => `${translation}中没有这一章。`,
     readingAnnounce: (translation: string) => `正在阅读${translation}`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -263,6 +266,15 @@ export const zhHans = {
     canvas: '加入看板',
     canvasName: '加入看板 — 把这节经文放到看板上',
     close: (ref: string) => `关闭${ref}的操作`,
+    groupMany: (count: number, ref: string) => `${num(count)}节经文的操作：${ref}`,
+    summary: (count: number, ref: string) => `${num(count)}节 · ${ref}`,
+    fill: (span: string) => `选择${span}`,
+    canvasNameMany: '加入看板 — 把这些经文放到看板上',
+    clear: '取消选择',
+    marked: (count: number, collection: string, colour: string) =>
+      `已把${num(count)}节经文标记为${withColour(collection, colour)}`,
+    unmarked: (count: number, collection: string, colour: string) =>
+      `已取消${num(count)}节经文的${withColour(collection, colour)}标记`,
   },
 
   insert: {

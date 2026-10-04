@@ -7,6 +7,52 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+For reviewers, new texts in every language: the row of verse actions when
+several verses are selected (its summary, its **Select** button and the names a
+screen reader says), a new paragraph in Help under Marks, and the changed
+Keyboard line about Enter. They are listed in
+`docs/plans/reader-i18n/README.md`.
+
+### Added
+
+- Several verses can be selected and acted on as one. Press a verse to add it
+  and press it again to take it out; the one row of actions applies to all of
+  them, and says which in words. **Quote** writes them into a note as one
+  passage under one reference, with a verse number before each verse, and
+  **Link** writes one link for a run of verses. The verses need not be next to
+  each other: John 1:1 and 1:14 are cited as "John 1:1, 14", with a link for
+  each.
+- A long passage without a press per verse: press the first verse and the
+  last, then **Select 3-18** in the row. Holding Shift while pressing a verse
+  does the same.
+- From the keyboard, Enter on a verse number adds or removes that verse and
+  Shift+Enter takes in every verse up to it. A screen reader hears each number
+  as a toggle, and hears what is selected when it changes.
+- A colour pressed for several verses marks them all, or clears them when all
+  already have it. The verses stay selected, and the same colour pressed again
+  puts each one back as it was, in the collection it came from if it had one.
+- **Canvas** puts a passage on the board as one card that holds the range.
+- Following a link to a range of verses points out the whole range, not only
+  its first verse.
+
+### Changed
+
+- Pressing a second verse adds it to the selection. It used to move the
+  actions to that verse; to act on a different verse, press the first again
+  to take it out, or close the row.
+- A selected verse is shown by an outline and a filled verse number as well as
+  a tint, so it does not depend on colour, and is visible in Windows high
+  contrast, where it was not before.
+- A verse number is named "Select John 1:2" to a screen reader. It was "Mark
+  John 1:2".
+
+### Security
+
+- Three packages used while the reader is built and tested are updated for
+  published advisories: `brace-expansion` (to 2.1.7 and 5.0.12),
+  `serialize-javascript` (to 7.1.2) and `fast-uri` (to 3.1.8). None of them is
+  part of the reader as it is served.
+
 ## [0.1.0-preview.6] - 2026-10-02
 
 The sixth preview makes room on a small phone, upright and on its side: the

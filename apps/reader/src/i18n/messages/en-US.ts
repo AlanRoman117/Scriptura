@@ -85,6 +85,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: 'Press a verse, or its number, to mark it in one of five colours. Each colour is a collection: name it for the subject you are following, and the **Marks** panel lists its verses in Bible order. Marks follow the passage, not the translation, so a mark made in one translation shows in all of them.',
       },
+      { p: 'Press more verses to act on several at once, and press one again to leave it out. With verses apart selected, **Select** in the row of actions takes in every verse between them; holding {{Shift}} while you press a verse does the same. **Quote** then writes them into your note as one passage under one reference.' },
       { p: 'In Settings you can add a symbol to every mark, so colour is not the only sign.' },
       { p: 'In Settings you can also run the verses together as one text and hide their numbers. Pressing a sentence still picks the verse it belongs to.' },
     ],
@@ -118,7 +119,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} and {{Shift}}+{{Tab}} move between controls. The first press offers to skip to the text or the notes.',
           '{{Escape}} closes whatever opened last: a panel, the verse actions, the search suggestions.',
-          '{{Enter}} on a verse number opens its actions; the arrow keys move along them.',
+          '{{Enter}} on a verse number selects it and opens the actions; the arrow keys move along them. {{Enter}} on another number adds that verse, and {{Shift}}+{{Enter}} takes in every verse up to it.',
           'On the divider between the panes, the arrow keys, {{Home}} and {{End}} resize; the two small buttons do the same.',
           'In a note, {{Shift}}+{{Tab}} reaches the formatting tools; the arrow keys move between them.',
           'On a board, cards take focus: the arrow keys move a card, {{Alt}} with an arrow resizes it, and {{Delete}} asks to remove it. With the board itself focused, the arrow keys move the view and {{+}} and {{−}} zoom.',
@@ -255,8 +256,13 @@ export const enUS = {
     settingsChip: 'Settings — display, storage, export, and assistant access',
     helpChip:
       'Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean',
-    markVerse: (ref: string) => `Mark ${ref}`,
-    markVerseIn: (ref: string, collection: string, colour: string) => `Mark ${ref} — in ${collection} (${colour})`,
+    /** A verse's number: a toggle that adds the verse to the selection or takes it out. */
+    selectVerse: (ref: string) => `Select ${ref}`,
+    selectVerseIn: (ref: string, collection: string, colour: string) => `Select ${ref} — in ${collection} (${colour})`,
+    /** Said when the selection changes and focus does not move to say it. */
+    selection: (count: number, ref: string) =>
+      plural(count, { one: `${num(count)} verse selected: ${ref}`, other: `${num(count)} verses selected: ${ref}` }),
+    selectionCleared: 'Selection cleared',
     chapterMissing: (translation: string) => `This chapter is not in ${translation}.`,
     readingAnnounce: (translation: string) => `Reading ${translation}`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -272,6 +278,26 @@ export const enUS = {
     canvas: 'Canvas',
     canvasName: 'Canvas — put this verse on the board',
     close: (ref: string) => `Close actions for ${ref}`,
+    /** The row's name when it holds several verses. */
+    groupMany: (count: number, ref: string) =>
+      plural(count, { one: `Actions for ${num(count)} verse: ${ref}`, other: `Actions for ${num(count)} verses: ${ref}` }),
+    /** Shown in the row while several are selected, so what it will act on is in words. */
+    summary: (count: number, ref: string) =>
+      plural(count, { one: `${num(count)} verse · ${ref}`, other: `${num(count)} verses · ${ref}` }),
+    /** The button that takes in every verse between the first and the last selected: "Select 3-18". */
+    fill: (span: string) => `Select ${span}`,
+    canvasNameMany: 'Canvas — put these verses on the board',
+    clear: 'Clear the selection',
+    marked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `Marked ${num(count)} verse as ${collection} (${colour})`,
+        other: `Marked ${num(count)} verses as ${collection} (${colour})`,
+      }),
+    unmarked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `Cleared ${collection} (${colour}) from ${num(count)} verse`,
+        other: `Cleared ${collection} (${colour}) from ${num(count)} verses`,
+      }),
   },
 
   insert: {

@@ -212,7 +212,8 @@ test.describe('column width', () => {
    */
   const actions = (page: Page) =>
     page.getByTestId('verse-actions').evaluate((row) => {
-      const verse = row.parentElement as HTMLElement;
+      // The row is its verse's next sibling.
+      const verse = row.previousElementSibling as HTMLElement;
       const style = getComputedStyle(verse);
       const px = (value: string) => parseFloat(value) || 0;
       const box = row.getBoundingClientRect();

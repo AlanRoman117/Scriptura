@@ -16,6 +16,7 @@ import {
   readSafely,
   writeSafely,
 } from './db';
+import { groupMarkNews, planGroupMark, type GroupMarks } from './selection';
 
 export interface Note {
   id: string;
@@ -186,6 +187,70 @@ export function toggleHighlight(
 
 export const deleteHighlight = (id: string): Promise<unknown> =>
   del(HIGHLIGHTS, id).catch(() => undefined);
+
+/** What a group's colour presses have done and not yet undone (lib/selection.ts). */
+export type GroupMarkHistory = GroupMarks<Highlight>;
+
+/**
+ * A colour pressed for several verses at once.
+ *
+ * - The colour just pressed, pressed again with nothing changed in between:
+ *   every verse goes back to what it held before that press (`undo`).
+ * - Otherwise every verse is put in that collection (`mark`) — unless every
+ *   one already is, in which case they are cleared (`clear`).
+ *
+ * ⚠️ Not `toggleHighlight` per verse. Each toggle clears a verse already in
+ * the colour, so a press meant to bring a passage into a collection would
+ * take out the verses that were in it.
+ *
+ * ⚠️ And the second press is an undo, not a clear. Marking moves a verse out
+ * of the collection it was in; clearing afterwards left it in none, so the
+ * press that was meant to take the colour back took the older mark with it.
+ *
+ * `history` is what the last call returned for this same selection, or null.
+ * `said` is what happened, to be told; null when no write went through.
+ */
+export function markVerses(
+  anchors: HighlightAnchor[],
+  color: HighlightColor,
+  existing: Highlight[],
+  history: GroupMarkHistory | null = null,
+  onFirstFailure?: Reporter
+): Promise<{
+  highlights: Highlight[];
+  action: 'mark' | 'clear' | 'undo';
+  said: { kind: 'marked' | 'cleared'; count: number } | null;
+  history: GroupMarkHistory | null;
+}> {
+  const ids = anchors.map(highlightId);
+  const current = new Map(existing.map((h) => [h.id, h]));
+  const now = ids.map((id) => current.get(id));
+  const { action, before, steps } = planGroupMark(ids, now, color, history);
+
+  const target: (Highlight | undefined)[] =
+    before ??
+    (action === 'clear'
+      ? ids.map(() => undefined)
+      : anchors.map((anchor, i): Highlight => ({ ...anchor, id: ids[i], color, created: now[i]?.created ?? Date.now() })));
+
+  const writes = target.map((wanted, i): Promise<boolean> => {
+    if (wanted) return writeSafely(HIGHLIGHTS, wanted.id, wanted, onFirstFailure);
+    return now[i] ? deleteHighlight(ids[i]).then(() => true) : Promise.resolve(true);
+  });
+
+  return Promise.all(writes).then((written) => {
+    // A verse whose write failed keeps what it had.
+    const final = target.map((wanted, i) => (written[i] ? wanted : now[i]));
+    const held = new Set(ids);
+    return {
+      highlights: [...existing.filter((h) => !held.has(h.id)), ...final.filter((h): h is Highlight => !!h)],
+      action,
+      said: groupMarkNews(now, final, color),
+      // A press that only half went through is not one to offer to undo.
+      history: written.every(Boolean) ? { ids, steps, after: final.map((h) => h?.color) } : null,
+    };
+  });
+}
 
 /* ── Export bookkeeping ─────────────────────────────────────────────────── */
 

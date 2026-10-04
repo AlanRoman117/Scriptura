@@ -83,6 +83,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: 'Appuyez sur un verset, ou sur son numéro, pour le marquer d’une des cinq couleurs. Chaque couleur est une collection : donnez-lui le nom du sujet que vous suivez, et le panneau **Marques** en liste les versets dans l’ordre de la Bible. Les marques suivent le passage, pas la traduction : une marque faite dans une traduction apparaît dans toutes.',
       },
+      { p: 'Appuyez sur d’autres versets pour agir sur plusieurs à la fois, et appuyez de nouveau sur l’un d’eux pour l’écarter. Quand des versets éloignés sont sélectionnés, **Sélectionner** dans la rangée d’actions prend tous les versets qui les séparent ; maintenir {{Maj}} en appuyant sur un verset fait de même. **Citer** les écrit alors dans votre note comme un seul passage, sous une seule référence.' },
       { p: 'Dans les Paramètres, vous pouvez ajouter un symbole à chaque marque, pour que la couleur ne soit pas le seul signe.' },
       { p: 'Dans les Paramètres, vous pouvez aussi lire les versets à la suite, comme un seul texte, et masquer leurs numéros. Appuyer sur une phrase choisit toujours le verset auquel elle appartient.' },
     ],
@@ -116,7 +117,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} et {{Maj}}+{{Tab}} passent d’une commande à l’autre. La première pression propose d’aller directement au texte ou aux notes.',
           '{{Échap}} ferme ce qui a été ouvert en dernier : un panneau, les actions d’un verset, les suggestions de recherche.',
-          '{{Entrée}} sur le numéro d’un verset ouvre ses actions ; les flèches passent de l’une à l’autre.',
+          '{{Entrée}} sur le numéro d’un verset le sélectionne et ouvre les actions ; les flèches passent de l’une à l’autre. {{Entrée}} sur un autre numéro ajoute ce verset, et {{Maj}}+{{Entrée}} prend tous les versets jusqu’à lui.',
           'Sur le séparateur entre les panneaux, les flèches, {{Début}} et {{Fin}} changent la largeur ; les deux petits boutons font de même.',
           'Dans une note, {{Maj}}+{{Tab}} atteint les outils de mise en forme ; les flèches passent de l’un à l’autre.',
           'Sur un tableau, les fiches prennent le focus : les flèches déplacent une fiche, {{Alt}} avec une flèche la redimensionne, et {{Suppr}} propose de la retirer. Quand le tableau lui-même a le focus, les flèches déplacent la vue et {{+}} et {{−}} zooment.',
@@ -246,9 +247,15 @@ const catalog = {
     settingsChip: 'Paramètres : affichage, stockage, exportation et accès des assistants',
     helpChip:
       'Aide : trouver un passage, rechercher, notes, marques, tableaux, clavier et sens des abréviations',
-    markVerse: (ref: string) => `Marquer ${ref}`,
-    markVerseIn: (ref: string, collection: string, colour: string) =>
-      `Marquer ${ref} : dans ${collection} (${colour})`,
+    selectVerse: (ref: string) => `Sélectionner ${ref}`,
+    selectVerseIn: (ref: string, collection: string, colour: string) =>
+      `Sélectionner ${ref} : dans ${collection} (${colour})`,
+    selection: (count: number, ref: string) =>
+      plural(count, {
+        one: `${num(count)} verset sélectionné : ${ref}`,
+        other: `${num(count)} versets sélectionnés : ${ref}`,
+      }),
+    selectionCleared: 'Sélection annulée',
     chapterMissing: (translation: string) => `Ce chapitre ne figure pas dans ${translation}.`,
     readingAnnounce: (translation: string) => `Lecture de ${translation}`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -264,6 +271,26 @@ const catalog = {
     canvas: 'Au tableau',
     canvasName: 'Au tableau : placer ce verset sur le tableau',
     close: (ref: string) => `Fermer les actions de ${ref}`,
+    groupMany: (count: number, ref: string) =>
+      plural(count, {
+        one: `Actions pour ${num(count)} verset : ${ref}`,
+        other: `Actions pour ${num(count)} versets : ${ref}`,
+      }),
+    summary: (count: number, ref: string) =>
+      plural(count, { one: `${num(count)} verset · ${ref}`, other: `${num(count)} versets · ${ref}` }),
+    fill: (span: string) => `Sélectionner ${span}`,
+    canvasNameMany: 'Au tableau : placer ces versets sur le tableau',
+    clear: 'Annuler la sélection',
+    marked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `${num(count)} verset marqué dans ${collection} (${colour})`,
+        other: `${num(count)} versets marqués dans ${collection} (${colour})`,
+      }),
+    unmarked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `${num(count)} verset retiré de ${collection} (${colour})`,
+        other: `${num(count)} versets retirés de ${collection} (${colour})`,
+      }),
   },
 
   insert: {

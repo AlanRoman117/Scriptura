@@ -94,3 +94,112 @@ test('read as running text without numbers, a tap on a sentence mid-line docks t
   await page.getByTestId('quote-3').tap();
   await expect(page.getByTestId('sheet-done')).toContainText('1:3');
 });
+
+/*
+ * Several verses under a thumb. A tap adds a verse and a second tap takes it
+ * out; the one docked row acts on all of them and says what it holds.
+ */
+test('more taps add verses to the one docked row, which says what it holds', async ({ page }) => {
+  await open(page);
+  for (const n of [2, 3, 7]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+  await expect(page.locator('.verse[data-open]')).toHaveCount(3);
+
+  const row = page.getByTestId('verse-actions');
+  await expect(row).toHaveCount(1);
+  expect(await row.evaluate((el) => getComputedStyle(el).position)).toBe('fixed');
+  await expect(page.getByTestId('verse-summary')).toHaveText('3 verses · John 1:2-3, 7');
+  await expect(page.getByTestId('verse-fill')).toHaveText('Select 2-7');
+
+  const rowBox = (await row.boundingBox())!;
+  const sheet = (await page.getByTestId('pane-notes').boundingBox())!;
+  expect(rowBox.y + rowBox.height).toBeLessThanOrEqual(sheet.y + 1);
+  for (const button of await row.locator('button').all()) {
+    const box = (await button.boundingBox())!;
+    expect.soft(box.width, await button.getAttribute('data-testid') ?? '').toBeGreaterThanOrEqual(44);
+    expect.soft(box.height, await button.getAttribute('data-testid') ?? '').toBeGreaterThanOrEqual(44);
+  }
+
+  // A second tap takes one out; the fill button takes in the rest.
+  await page.locator('.verse[data-verse="3"] .verse__text').tap();
+  await expect(page.getByTestId('verse-summary')).toHaveText('2 verses · John 1:2, 7');
+  await page.getByTestId('verse-fill').tap();
+  await expect(page.locator('.verse[data-open]')).toHaveCount(6);
+  await expect(page.getByTestId('verse-summary')).toHaveText('6 verses · John 1:2-7');
+});
+
+test('a group quoted with the notes folded away is confirmed as one on the grip', async ({ page }) => {
+  await open(page);
+  for (const n of [2, 3, 4]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+  await page.getByTestId('quote-2').tap();
+
+  await expect(page.getByTestId('pane-notes')).toHaveAttribute('data-sheet', 'peek');
+  await expect(page.getByTestId('verse-actions')).toHaveCount(0);
+  await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:2-4');
+  await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:2-4 in a new note');
+
+  await page.getByTestId('sheet-grip').tap();
+  const note = await noteValue(page.getByTestId('notes-surface'));
+  expect(note).toContain('> — John 1:2-4 (BSB)\n\n[[john 1:2-4@bsb]]');
+  expect(note.match(/— John/g)).toHaveLength(1);
+});
+
+// A finger that starts a scroll between two verses, or a tap that misses,
+// must not throw away a group chosen one verse at a time. (One verse still
+// closes on a tap elsewhere: "a tap marks the verse; a tap elsewhere closes
+// the row", above.)
+test('a tap elsewhere and a scroll with a finger both keep the group', async ({ page }) => {
+  await open(page);
+  for (const n of [2, 3]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+  await page.getByTestId('chapter-title').tap();
+  await expect(page.locator('.verse[data-open]')).toHaveCount(2);
+  const pane = page.getByTestId('pane-bible');
+  const before = await pane.evaluate((el) => el.scrollTop);
+
+  const cdp = await page.context().newCDPSession(page);
+  const [x, from, to] = [200, 520, 220];
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: from }] });
+  for (let i = 1; i <= 12; i++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: from + ((to - from) * i) / 12 }] });
+    await page.waitForTimeout(16);
+  }
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+
+  await expect.poll(() => pane.evaluate((el) => el.scrollTop)).toBeGreaterThan(before + 100);
+  await expect(page.locator('.verse[data-open]')).toHaveCount(2);
+  await expect(page.getByTestId('verse-summary')).toHaveText('2 verses · John 1:2-3');
+  // Still docked and still in reach.
+  const rowBox = (await page.getByTestId('verse-actions').boundingBox())!;
+  const sheet = (await page.getByTestId('pane-notes').boundingBox())!;
+  expect(rowBox.y + rowBox.height).toBeLessThanOrEqual(sheet.y + 1);
+});
+
+// One verse closes when the notes are opened. A group does not, and with the
+// sheet at full height its row, docked above the sheet, showed its last line
+// of buttons over the top of it — on a text that is covered and inert there.
+test('a group waits out of sight while the notes cover the text, and is back when they fold', async ({ page }) => {
+  await open(page);
+  for (const n of [1, 2, 4]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
+  const row = page.getByTestId('verse-actions');
+  await expect(row).toBeVisible();
+
+  // The grip moves with the sheet: it is pressed where it is once the sheet
+  // has stopped, or the tap lands where it was.
+  const grip = async (to: string) => {
+    await expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0);
+    const box = (await page.getByTestId('sheet-grip').boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator('[data-sheet]')).toHaveAttribute('data-sheet', to);
+  };
+  await grip('half');
+  // Half open, the text is still there to press, and so is the row.
+  await expect(row).toBeVisible();
+  await grip('full');
+  await expect(page.getByTestId('pane-bible')).toHaveAttribute('inert', '');
+  await expect(row).toBeHidden();
+
+  await grip('peek');
+  await expect(row).toBeVisible();
+  await expect(page.locator('.verse[data-open]')).toHaveCount(3);
+  await expect(page.getByTestId('verse-summary')).toHaveText('3 verses · John 1:1-2, 4');
+});

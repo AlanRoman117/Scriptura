@@ -79,6 +79,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: 'Presiona un versículo, o su número, para marcarlo con uno de cinco colores. Cada color es una colección: ponle el nombre del tema que estás siguiendo, y el panel **Marcas** muestra sus versículos en el orden de la Biblia. Las marcas siguen al pasaje, no a la traducción: una marca hecha en una traducción aparece en todas.',
       },
+      { p: 'Presiona más versículos para actuar sobre varios a la vez, y presiona uno de nuevo para dejarlo fuera. Con versículos separados seleccionados, **Seleccionar** en la fila de acciones incluye todos los que hay entre ellos; mantener {{Shift}} al presionar un versículo hace lo mismo. **Citar** los escribe entonces en tu nota como un solo pasaje, con una sola referencia.' },
       { p: 'En Configuración puedes agregar un símbolo a cada marca, para que el color no sea la única señal.' },
       { p: 'En Configuración también puedes unir los versículos en un solo texto y ocultar sus números. Al presionar una oración se sigue eligiendo el versículo al que pertenece.' },
     ],
@@ -112,7 +113,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} y {{Shift}}+{{Tab}} pasan de un control a otro. La primera vez ofrece saltar al texto o a las notas.',
           '{{Escape}} cierra lo último que se abrió: un panel, las acciones del versículo, las sugerencias de búsqueda.',
-          '{{Enter}} sobre el número de un versículo abre sus acciones; las flechas se mueven entre ellas.',
+          '{{Enter}} sobre el número de un versículo lo selecciona y abre las acciones; las flechas se mueven entre ellas. {{Enter}} sobre otro número agrega ese versículo, y {{Shift}}+{{Enter}} incluye todos los versículos hasta él.',
           'En el divisor entre los paneles, las flechas, {{Inicio}} y {{Fin}} cambian el tamaño; los dos botones pequeños hacen lo mismo.',
           'En una nota, {{Shift}}+{{Tab}} llega a las herramientas de formato; las flechas se mueven entre ellas.',
           'En un tablero, las tarjetas reciben el foco: las flechas mueven una tarjeta, {{Alt}} con una flecha cambia su tamaño y {{Supr}} pide quitarla. Con el foco en el tablero, las flechas mueven la vista y {{+}} y {{−}} hacen zoom.',
@@ -242,8 +243,14 @@ export const esMX = {
     settingsChip: 'Configuración: pantalla, almacenamiento, exportación y acceso de asistentes',
     helpChip:
       'Ayuda: encontrar pasajes, buscar, notas, marcas, tableros, teclado y el significado de las abreviaturas',
-    markVerse: (ref: string) => `Marcar ${ref}`,
-    markVerseIn: (ref: string, collection: string, colour: string) => `Marcar ${ref}: está en ${collection} (${colour})`,
+    selectVerse: (ref: string) => `Seleccionar ${ref}`,
+    selectVerseIn: (ref: string, collection: string, colour: string) => `Seleccionar ${ref}: está en ${collection} (${colour})`,
+    selection: (count: number, ref: string) =>
+      plural(count, {
+        one: `${num(count)} versículo seleccionado: ${ref}`,
+        other: `${num(count)} versículos seleccionados: ${ref}`,
+      }),
+    selectionCleared: 'Se quitó la selección',
     chapterMissing: (translation: string) => `Este capítulo no está en ${translation}.`,
     readingAnnounce: (translation: string) => `Leyendo ${translation}`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -259,6 +266,26 @@ export const esMX = {
     canvas: 'Al tablero',
     canvasName: 'Al tablero: pon este versículo en el tablero',
     close: (ref: string) => `Cerrar las acciones de ${ref}`,
+    groupMany: (count: number, ref: string) =>
+      plural(count, {
+        one: `Acciones para ${num(count)} versículo: ${ref}`,
+        other: `Acciones para ${num(count)} versículos: ${ref}`,
+      }),
+    summary: (count: number, ref: string) =>
+      plural(count, { one: `${num(count)} versículo · ${ref}`, other: `${num(count)} versículos · ${ref}` }),
+    fill: (span: string) => `Seleccionar ${span}`,
+    canvasNameMany: 'Al tablero: pon estos versículos en el tablero',
+    clear: 'Quitar la selección',
+    marked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `Se marcó ${num(count)} versículo en ${collection} (${colour})`,
+        other: `Se marcaron ${num(count)} versículos en ${collection} (${colour})`,
+      }),
+    unmarked: (count: number, collection: string, colour: string) =>
+      plural(count, {
+        one: `Se quitó ${num(count)} versículo de ${collection} (${colour})`,
+        other: `Se quitaron ${num(count)} versículos de ${collection} (${colour})`,
+      }),
   },
 
   insert: {

@@ -46,7 +46,7 @@ interface CanvasViewProps {
   /** The last thing put on a board from elsewhere, in words, until the next action. */
   inserted?: string | null;
   /** Open a card's passage in the reader. */
-  onGo: (bookSlug: string, chapter: number, verse?: number) => void;
+  onGo: (bookSlug: string, chapter: number, verse?: number, endVerse?: number) => void;
   /** Embed this board in the open note, where it renders as a diagram. */
   onAddToNote?: (boardId: string) => void;
   /** Open the help panel, in the Bible pane beside the board. */
@@ -1112,7 +1112,7 @@ export function CanvasView({
                         aria-label={words.open(label(node))}
                         onClick={(e) => {
                           e.stopPropagation();
-                          onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse);
+                          onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse, node.endVerse);
                         }}
                       >
                         ↗

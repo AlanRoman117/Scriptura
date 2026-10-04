@@ -87,6 +87,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
       {
         p: '節またはその番号を押すと、5色のいずれかでマークできます。色はそれぞれコレクションです。追っているテーマの名前を付けると、**マーク**パネルにその節が聖書の順に並びます。マークは訳ではなく箇所に付くので、ある訳で付けたマークはすべての訳に表示されます。',
       },
+      { p: 'ほかの節も押すと、複数の節をまとめて操作できます。もう一度押すと、その節は外れます。離れた節を選んでいるときは、操作の列にある**選択**で、その間の節がすべて選ばれます。{{Shift}} を押しながら節を押しても同じです。**引用**すると、ひとつの箇所として、ひとつの参照でノートに書き込まれます。' },
       { p: '設定で、すべてのマークに記号を付けることもできます。色だけに頼らずに区別できます。' },
       { p: '設定で、節を続けて一つの文章として表示し、節番号を隠すこともできます。文を押すと、その文を含む節が選ばれます。' },
     ],
@@ -120,7 +121,7 @@ const helpSections = (book: BookExample): HelpSection[] => [
         ul: [
           '{{Tab}} と {{Shift}}+{{Tab}} でコントロール間を移動します。最初に押すと、本文やノートへ直接移動する案内が出ます。',
           '{{Esc}} は、最後に開いたもの（パネル、節の操作、検索候補）を閉じます。',
-          '節の番号で {{Enter}} を押すと操作が開き、矢印キーで操作間を移動します。',
+          '節の番号で {{Enter}} を押すと、その節が選ばれて操作が開き、矢印キーで操作間を移動します。別の番号で {{Enter}} を押すとその節が加わり、{{Shift}}+{{Enter}} でそこまでの節がすべて選ばれます。',
           'パネルの間の仕切りでは、矢印キー、{{Home}}、{{End}} で幅を変えられます。横の2つの小さなボタンでも同じことができます。',
           'ノートでは、{{Shift}}+{{Tab}} で書式ツールに移動し、矢印キーでツール間を移動します。',
           'ボードではカードにフォーカスが移ります。矢印キーでカードを動かし、{{Alt}} と矢印キーでサイズを変え、{{Delete}} で削除の確認が出ます。ボード自体にフォーカスがあるときは、矢印キーで表示位置が動き、{{+}} と {{−}} でズームします。',
@@ -241,9 +242,11 @@ export const jaJP = {
     marksChip: (count: number) => `マーク（${num(count)}件）：マークした節を色ごとに表示`,
     settingsChip: '設定：表示、保存、エクスポート、アシスタントのアクセス',
     helpChip: 'ヘルプ：箇所の開き方、検索、ノート、マーク、ボード、キーボード、略語の意味',
-    markVerse: (ref: string) => `${ref}をマーク`,
-    markVerseIn: (ref: string, collection: string, colour: string) =>
-      `${ref}をマーク（${withColour(collection, colour)}にマーク済み）`,
+    selectVerse: (ref: string) => `${ref}を選択`,
+    selectVerseIn: (ref: string, collection: string, colour: string) =>
+      `${ref}を選択（${withColour(collection, colour)}にマーク済み）`,
+    selection: (count: number, ref: string) => `${num(count)}節を選択中：${ref}`,
+    selectionCleared: '選択を解除しました',
     chapterMissing: (translation: string) => `この章は${translation}にありません。`,
     readingAnnounce: (translation: string) => `${translation}を表示しています`,
     /** The button at the end of the chapter title, on a small screen: named for what a press will do. */
@@ -259,6 +262,15 @@ export const jaJP = {
     canvas: 'ボードへ',
     canvasName: 'ボードへ：この節をボードに加える',
     close: (ref: string) => `${ref}の操作を閉じる`,
+    groupMany: (count: number, ref: string) => `${num(count)}節の操作：${ref}`,
+    summary: (count: number, ref: string) => `${num(count)}節・${ref}`,
+    fill: (span: string) => `${span}を選択`,
+    canvasNameMany: 'ボードへ：これらの節をボードに加える',
+    clear: '選択を解除',
+    marked: (count: number, collection: string, colour: string) =>
+      `${num(count)}節を${withColour(collection, colour)}でマークしました`,
+    unmarked: (count: number, collection: string, colour: string) =>
+      `${num(count)}節の${withColour(collection, colour)}のマークを外しました`,
   },
 
   insert: {

@@ -89,7 +89,7 @@ test.describe('without verse numbers', () => {
     await expect(page.locator('html')).toHaveAttribute('data-verse-numbers', 'hidden');
     expect((await page.getByTestId('verse-2').boundingBox())!.width).toBeLessThanOrEqual(1);
     // In the accessibility tree by name: a screen reader still hears each verse begin.
-    await expect(page.getByRole('button', { name: 'Mark John 1:2', exact: true })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Select John 1:2', exact: true })).toHaveCount(1);
   });
 
   test('from the keyboard, a number shows while it has focus, and still opens the verse', async ({ page }) => {

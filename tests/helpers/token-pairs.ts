@@ -35,6 +35,8 @@ export const TEXT: [string, string][] = [
   ['--rubric', '--hover'],
   // The delete button's words on its fill.
   ['--paper', '--danger'],
+  // A selected verse's number, drawn as a pill.
+  ['--paper', '--ink'],
 ];
 
 /** A boundary, ring, rule or glyph against what surrounds it: 3:1 (1.4.11). */
@@ -52,8 +54,14 @@ export const NON_TEXT: [string, string][] = [
   ['--ink-soft', '--rule'],
   ['--focus', '--rule'],
   ['--accent', '--rule'],
-  // A focused verse number inside the verse being acted on.
+  // A focused verse number inside the verse being acted on, and inside a
+  // marked verse — which keeps its tint while it is selected.
   ['--focus', '--selection-wash'],
+  ...HIGHLIGHTS.map((h): [string, string] => ['--focus', `--hl-${h}`]),
+  // A selected verse's outline, against its wash and, on a marked verse,
+  // against that collection's tint. (--edge is too faint on the wash.)
+  ['--ink-soft', '--selection-wash'],
+  ...HIGHLIGHTS.map((h): [string, string] => ['--ink-soft', `--hl-${h}`]),
   // The glyph on each swatch, when Settings asks for one.
   ...HIGHLIGHTS.map((h): [string, string] => ['--sw-glyph', `--sw-${h}`]),
 ];
