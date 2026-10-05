@@ -7,6 +7,12 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Changed
+
+- The tools the reader is built and tested with are updated: Vite to 8.3.2,
+  tsx to 4.23.15, jest to 30.5.2, ts-jest to 29.4.14 and the Node type
+  definitions to 24.19.1. Nothing in how the reader behaves changes.
+
 ## [0.1.0-preview.7] - 2026-10-04
 
 The seventh preview lets you select several verses and act on them as one:
