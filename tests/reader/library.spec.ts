@@ -20,6 +20,36 @@ async function install(page: import('@playwright/test').Page, id: string) {
   await expect(page.getByTestId(`library-read-${id}`)).toBeVisible({ timeout: 60_000 });
 }
 
+/**
+ * Wait until the translation being read is the one the database says.
+ *
+ * The choice is written to IndexedDB after the chapter has changed on screen,
+ * so "the title says Juan 1" does not mean it is stored yet, and a reload any
+ * sooner can outrun the write: on a slow macOS runner the page came back in
+ * English. The same reason `notes.spec.ts` reads the database for a saved
+ * note rather than trusting the "Saved" label.
+ */
+async function choiceStored(page: import('@playwright/test').Page, id: string) {
+  await expect
+    .poll(
+      () =>
+        page.evaluate(
+          () =>
+            new Promise<string | null>((resolve) => {
+              const open = indexedDB.open('scriptura');
+              open.onsuccess = () => {
+                const req = open.result.transaction('settings').objectStore('settings').get('reading');
+                req.onsuccess = () => resolve((req.result as { active?: string } | undefined)?.active ?? null);
+                req.onerror = () => resolve(null);
+              };
+              open.onerror = () => resolve(null);
+            })
+        ),
+      { timeout: 10_000 }
+    )
+    .toBe(id);
+}
+
 test.describe('the library', () => {
   test('lists every translation, grouped by language, before anything is downloaded', async ({
     page,
@@ -80,6 +110,7 @@ test.describe('the library', () => {
     await install(page, 'rv1909');
     await page.getByTestId('library-read-rv1909').click();
     await expect(page.getByTestId('chapter-title')).toContainText('Juan 1');
+    await choiceStored(page, 'rv1909');
 
     await page.reload();
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
