@@ -7,6 +7,16 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Fixed
+
+- Dictating into a note drawn as it is written no longer loses characters.
+  Voice typing that delivers its words as fast keystrokes (Omarchy's Voxtype,
+  a thousand a second) reached the note with about half of them missing;
+  the editor had been redrawing the line and resetting the cursor after every
+  key, which the system's keyboard handling could not keep up with. A line the
+  browser types into is now left as it is, and the cursor is left where the
+  browser put it. The Plain text editor was never affected.
+
 ## [0.1.0-preview.8] - 2026-10-04
 
 The eighth preview changes nothing you can see or hear. It brings the tools

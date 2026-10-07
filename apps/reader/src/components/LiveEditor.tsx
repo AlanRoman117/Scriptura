@@ -1,7 +1,7 @@
 import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { tokenizeNote, lineKey, type LiveLine } from '../lib/livemd';
-import { buildLine, isDrawnLine, lineIndex, lineStarts, offsetOf, pointAt, readSelection, readText, widgetHost } from '../lib/livedom';
+import { buildLine, isDrawnLine, lineIndex, lineStarts, matchesLine, offsetOf, pointAt, readSelection, readText, widgetHost } from '../lib/livedom';
 import { History, type ChangeKind, type Snapshot } from '../lib/history';
 import { BOARD_FENCE } from '../lib/markdown';
 import type { NoteSurface } from '../lib/surface';
@@ -136,9 +136,10 @@ export function LiveEditor({
     const oldKeys = [...keys.current];
     const children = Array.from(el.children);
 
-    // Lines the browser touched since the last draw are stale whatever their key says.
+    // Lines the browser touched since the last draw.
     const records = [...touched.current, ...(observer.current?.takeRecords() ?? [])];
     touched.current = [];
+    const touchedLines = new Set<number>();
     for (const record of records) {
       // A board drawing itself into its host is not an edit.
       const target = record.target instanceof Element ? record.target : record.target.parentElement;
@@ -146,11 +147,22 @@ export function LiveEditor({
       let node: Node | null = record.target;
       while (node && node.parentNode !== el) node = node.parentNode;
       const index = node ? children.indexOf(node as Element) : -1;
-      if (index !== -1) oldKeys[index] = '';
+      if (index !== -1) touchedLines.add(index);
     }
 
     const boardAt = (i: number) => tokens[i].kind === 'fence' && tokens[i].fence?.lang === BOARD_FENCE && tokens[i].fence?.start === i;
     const build = (i: number) => buildLine(tokens[i], { widget: boardAt(i) });
+
+    // ⚠️ A touched line is kept when it is already what would be drawn, and
+    // rebuilt only when it is not. Its key is set to the *new* one — the key
+    // holds the text, and left as it was the diff below would rebuild it. Every
+    // touched line used to be rebuilt, and the selection written again,
+    // after every keystroke; dictation typing a thousand keys a second into
+    // the editor lost half of them to that churn, where a textarea lost none.
+    const aligned = children.length === tokens.length;
+    for (const i of touchedLines) {
+      oldKeys[i] = aligned && matchesLine(children[i], tokens[i], { widget: boardAt(i) }) ? nextKeys[i] : '';
+    }
 
     const foreign =
       children.length !== oldKeys.length ||
@@ -197,19 +209,33 @@ export function LiveEditor({
     );
   };
 
-  /** Puts the page's selection where `selection` says, if the editor has focus. */
+  /**
+   * Puts the page's selection where `selection` says, if the editor has focus.
+   *
+   * ⚠️ Only when it is not already there. Written every time, the selection
+   * went away and came back after every keystroke, which the browser reports
+   * to the system's input method as a change — one more per key than a
+   * textarea makes, and dictation lost keys to it. Compared by node and
+   * offset, not by reading the offsets back, which clones the note.
+   */
   const place = () => {
     const el = root.current;
-    if (!el || document.activeElement !== el) return;
+    if (!el || document.activeElement !== el || composing.current) return;
     markActive();
     const s = pointAt(el, starts.current, selection.current.start);
     const e = pointAt(el, starts.current, selection.current.end);
-    const range = document.createRange();
-    range.setStart(s.node, s.offset);
-    range.setEnd(e.node, e.offset);
     const current = document.getSelection();
-    current?.removeAllRanges();
-    current?.addRange(range);
+    const live = current && current.rangeCount === 1 ? current.getRangeAt(0) : null;
+    const same =
+      !!live && live.startContainer === s.node && live.startOffset === s.offset && live.endContainer === e.node && live.endOffset === e.offset;
+    let range = live;
+    if (!same || !range) {
+      range = document.createRange();
+      range.setStart(s.node, s.offset);
+      range.setEnd(e.node, e.offset);
+      current?.removeAllRanges();
+      current?.addRange(range);
+    }
     keepCaretInView(el, range);
   };
 
@@ -254,6 +280,8 @@ export function LiveEditor({
   };
 
   const undo = (forward: boolean) => {
+    // Not under an open composition: a redraw would pull the line out from under it.
+    if (composing.current) return;
     const step = forward ? history.current.redo(snapshot()) : history.current.undo(snapshot());
     if (!step) return;
     replace(step, null);
@@ -307,13 +335,15 @@ export function LiveEditor({
   // `inputType` and never sees Enter, undo or a deletion.
   const beforeInput = useRef<(event: InputEvent) => void>(() => {});
   beforeInput.current = (event: InputEvent) => {
-    if (event.isComposing || composing.current) return;
     const type = event.inputType;
+    // The browser's own undo would run under an open composition; the
+    // editor's waits for it to end.
     if (type === 'historyUndo' || type === 'historyRedo') {
       event.preventDefault();
       undo(type === 'historyRedo');
       return;
     }
+    if (event.isComposing || composing.current) return;
     if (type.startsWith('format')) {
       event.preventDefault();
       return;
@@ -456,7 +486,7 @@ export function LiveEditor({
         onFocus={() => {
           // Keyboard focus returns to where the caret was, as a textarea's does;
           // a press puts it where the press landed.
-          if (!pressing.current) place();
+          if (!pressing.current && !composing.current) place();
           pressing.current = false;
           markActive();
         }}
@@ -470,7 +500,7 @@ export function LiveEditor({
           const key = e.key.toLowerCase();
           if (key === 'z' || key === 'y') {
             e.preventDefault();
-            undo(key === 'y' || e.shiftKey);
+            if (!composing.current && !e.nativeEvent.isComposing) undo(key === 'y' || e.shiftKey);
           }
         }}
         onInput={(e) => {
