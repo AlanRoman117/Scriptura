@@ -7,6 +7,11 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.9] - 2026-10-06
+
+The ninth preview fixes dictation into a note. There are no new texts for
+reviewers.
+
 ### Fixed
 
 - Dictating into a note drawn as it is written no longer loses characters.
@@ -290,6 +295,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.9]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.9
 [0.1.0-preview.8]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.8
 [0.1.0-preview.7]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.7
 [0.1.0-preview.6]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.6
