@@ -25,13 +25,21 @@ export const isDrawnLine = (el: Element): boolean => drawn.has(el);
 
 const BLOCK = new Set(['DIV', 'P', 'LI', 'UL', 'OL', 'BLOCKQUOTE', 'PRE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
 
-/** One line of the note, as an element. `widget` asks for a host for a drawn board. */
-export function buildLine(line: LiveLine, { widget = false }: { widget?: boolean } = {}): HTMLElement {
-  const el = document.createElement('div');
+/** The classes a line is drawn with. One place, so the drawing and the matching cannot drift. */
+function classesOf(line: LiveLine): string[] {
   const classes = ['live-line', `live-line--${line.kind}`];
   if (line.level) classes.push(`live-line--h${line.level}`);
   if (line.fence?.lang === 'scriptura-board') classes.push('live-line--in-board');
-  el.className = classes.join(' ');
+  return classes;
+}
+
+/** The class a marked span is drawn with. */
+const classOfMarks = (marks: readonly string[]): string => marks.map((m) => `md-${m}`).join(' ');
+
+/** One line of the note, as an element. `widget` asks for a host for a drawn board. */
+export function buildLine(line: LiveLine, { widget = false }: { widget?: boolean } = {}): HTMLElement {
+  const el = document.createElement('div');
+  el.className = classesOf(line).join(' ');
   // Each line takes its direction from its own first strong character, so a
   // Hebrew or Arabic line runs right to left beside English or Japanese ones.
   // Not tied to the interface language: a note's language is its writer's.
@@ -43,7 +51,7 @@ export function buildLine(line: LiveLine, { widget = false }: { widget?: boolean
       continue;
     }
     const span = document.createElement('span');
-    span.className = s.marks.map((m) => `md-${m}`).join(' ');
+    span.className = classOfMarks(s.marks);
     span.textContent = s.text;
     el.append(span);
   }
@@ -58,6 +66,60 @@ export function buildLine(line: LiveLine, { widget = false }: { widget?: boolean
   }
   drawn.add(el);
   return el;
+}
+
+/**
+ * Whether a line the browser has edited is already what `buildLine` would
+ * draw for `line`, so it can be kept as it is.
+ *
+ * Strict on purpose: the same classes, one `<span>` holding one text node for
+ * each marked span, text nodes spelling each bare run, a `<br>` only on an
+ * empty line, nothing else. Compared span by span, never as the line's joined
+ * text, so a letter the browser put inside a marker's span — typing at the
+ * edge of `**` — is a mismatch and the line is drawn again.
+ *
+ * ⚠️ The reason this exists: an edited line used to be rebuilt after every
+ * keystroke, and the selection written again, whatever the browser had left.
+ * Dictation typing a thousand keys a second into the editor lost half of
+ * them (`tests/reader/live.spec.ts`, "a burst of keys").
+ */
+export function matchesLine(el: Element, line: LiveLine, { widget = false }: { widget?: boolean } = {}): boolean {
+  if (!drawn.has(el) || el.tagName !== 'DIV') return false;
+  const classes = Array.from(el.classList).filter((c) => c !== 'is-active');
+  const wanted = classesOf(line);
+  if (classes.length !== wanted.length || classes.some((c, i) => c !== wanted[i])) return false;
+
+  const nodes = Array.from(el.childNodes);
+  const host = widgetHost(el);
+  if (!!host !== widget) return false;
+  if (host) {
+    if (nodes[nodes.length - 1] !== host) return false;
+    nodes.pop();
+  }
+
+  if (line.spans.length === 0) return nodes.length === 1 && nodes[0] instanceof HTMLBRElement;
+
+  let at = 0;
+  for (const span of line.spans) {
+    if (span.marks.length === 0) {
+      // A bare run: one or more text nodes spelling it, none of them empty.
+      let text = '';
+      while (at < nodes.length && nodes[at].nodeType === Node.TEXT_NODE && text.length < span.text.length) {
+        const data = (nodes[at] as Text).data;
+        if (data === '') return false;
+        text += data;
+        at += 1;
+      }
+      if (text !== span.text) return false;
+      continue;
+    }
+    const node = nodes[at];
+    if (!(node instanceof HTMLSpanElement) || node.className !== classOfMarks(span.marks)) return false;
+    if (node.childNodes.length !== 1 || node.firstChild!.nodeType !== Node.TEXT_NODE) return false;
+    if ((node.firstChild as Text).data !== span.text) return false;
+    at += 1;
+  }
+  return at === nodes.length;
 }
 
 /** The host a board is drawn into, if this line has one. */

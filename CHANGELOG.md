@@ -7,6 +7,29 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.9] - 2026-10-06
+
+The ninth preview fixes dictation into a note. There are no new texts for
+reviewers.
+
+### Fixed
+
+- Dictating into a note drawn as it is written no longer loses characters.
+  Voice typing that delivers its words as fast keystrokes (Omarchy's Voxtype,
+  a thousand a second) reached the note with about half of them missing;
+  the editor had been redrawing the line and resetting the cursor after every
+  key, which the system's keyboard handling could not keep up with. A line the
+  browser types into is now left as it is, and the cursor is left where the
+  browser put it. The Plain text editor was never affected.
+
+### Security
+
+- `proxy-addr`, under Express in the example API server, is updated to 2.0.8
+  for GHSA-jqcg-44mw-7w3h, and `source-map-js`, used while the reader is
+  built, to 1.2.2 for GHSA-68fv-2mgg-jv7q. Neither is part of the reader as
+  it is served. A third advisory, in `sprintf-js` under the test coverage
+  tooling, has no fix short of a breaking downgrade and is left open.
+
 ## [0.1.0-preview.8] - 2026-10-04
 
 The eighth preview changes nothing you can see or hear. It brings the tools
@@ -280,6 +303,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.9]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.9
 [0.1.0-preview.8]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.8
 [0.1.0-preview.7]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.7
 [0.1.0-preview.6]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.6

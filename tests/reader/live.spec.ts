@@ -145,8 +145,11 @@ test.describe('the live editor', () => {
     }
     await cdp.send('Input.insertText', { text: '神' });
     await expect.poll(() => noteText(page)).toBe('**強調** 神');
+    // The commit lands in the bare run after the marks, which is what would be
+    // drawn, so the line is kept rather than drawn again.
+    await expect(surface.locator('.live-line').first()).toHaveAttribute('data-probe', 'kept');
 
-    // And once it ends, the line is drawn again, markers and all.
+    // Typing on, the line still reads right, markers and all.
     await page.keyboard.type('は愛');
     await expect.poll(() => noteText(page)).toBe('**強調** 神は愛');
     await expect(surface.locator('.md-strong:not(.md-mark)')).toHaveText('強調');
@@ -330,14 +333,21 @@ test.describe('the live editor', () => {
     }, note);
     await expect.poll(() => noteText(page)).toBe(note);
     await surface.evaluate((el) => (el as HTMLTextAreaElement).setSelectionRange(5, 5));
-    const timing = await page.evaluate(() => {
+    const timing = await page.evaluate(async () => {
       const el = document.getElementById('notes-surface')!;
       const first = el.children[1];
+      const typed = el.children[0];
       const started = performance.now();
       for (let i = 0; i < 20; i++) document.execCommand('insertText', false, 'x');
-      return { ms: (performance.now() - started) / 20, untouched: el.children[1] === first };
+      const ms = (performance.now() - started) / 20;
+      // The read-back runs in a microtask after the inserts: look after it.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return { ms, untouched: el.children[1] === first, kept: el.children[0] === typed };
     });
     expect(timing.untouched).toBe(true);
+    // The line typed into is kept as well: the x's land in the heading's own
+    // text, and what the browser left is what would be drawn.
+    expect(timing.kept).toBe(true);
     // Generous for a slow runner; a full redraw of 2,000 lines takes far longer.
     expect(timing.ms).toBeLessThan(50);
   });
@@ -362,5 +372,232 @@ test.describe('the live editor', () => {
     expect(result.same).toBe(true);
     expect(result.ms).toBeLessThan(2_000);
   });
-});
 
+  /*
+   * What the browser types, the editor keeps. A line the browser edited used
+   * to be removed and drawn again after every keystroke, and the selection
+   * written again with it, even when both were already exactly right. The
+   * browser reports each of those to the system's input method as a change —
+   * one more per key than a textarea makes — and dictation typing a thousand
+   * keys a second into the editor (Voxtype through `wtype`) lost half of them,
+   * while the same dictation into a textarea lost none. These hold the two
+   * things an engine depends on: the text node it is typing into stays, and
+   * the selection is not taken away and put back.
+   */
+  test.describe('a burst of keys', () => {
+    /** Counts the selection being taken away: what dictation cannot survive. */
+    const spyOnSelection = (page: Page) =>
+      page.evaluate(() => {
+        const w = window as unknown as { __resets: number };
+        w.__resets = 0;
+        const original = Selection.prototype.removeAllRanges;
+        Selection.prototype.removeAllRanges = function () {
+          w.__resets += 1;
+          return original.call(this);
+        };
+      });
+    const resets = (page: Page) => page.evaluate(() => (window as unknown as { __resets: number }).__resets);
+    /** Remembers a line and its text node, to see whether they survive. */
+    const stamp = (page: Page, line = 0, node: 'first' | 'last' = 'first') =>
+      page.evaluate(
+        ([i, which]) => {
+          const el = document.getElementById('notes-surface')!.children[i as number];
+          (window as unknown as { __stamp: unknown }).__stamp = { line: el, text: which === 'first' ? el.firstChild : el.lastChild };
+        },
+        [line, node]
+      );
+    const kept = (page: Page, line = 0, node: 'first' | 'last' = 'first') =>
+      page.evaluate(
+        ([i, which]) => {
+          const el = document.getElementById('notes-surface')!.children[i as number];
+          const s = (window as unknown as { __stamp: { line: Element; text: Node } }).__stamp;
+          return el === s.line && (which === 'first' ? el.firstChild : el.lastChild) === s.text;
+        },
+        [line, node]
+      );
+    const caret = (page: Page) =>
+      page.evaluate(() => {
+        const r = document.getSelection()!.getRangeAt(0);
+        const s = (window as unknown as { __stamp: { text: Node } }).__stamp;
+        return { inStamped: r.startContainer === s.text, offset: r.startOffset, collapsed: r.collapsed };
+      });
+
+    test('typing into a plain paragraph keeps its text node, and never takes the selection away', async ({ page }) => {
+      const surface = await open(page);
+      await surface.click();
+      await page.keyboard.type('In the beginning');
+      await stamp(page);
+      await spyOnSelection(page);
+      await page.keyboard.type(' was the Word');
+      await expect.poll(() => noteText(page)).toBe('In the beginning was the Word');
+      expect(await kept(page)).toBe(true);
+      expect(await resets(page)).toBe(0);
+      expect(await caret(page)).toEqual({ inStamped: true, offset: 29, collapsed: true });
+    });
+
+    // Keys sent without waiting for each to be handled, with a frame wanted
+    // between them, as a device's own typing arrives. Every one must land.
+    test('sixty keys fired at once all arrive, in order', async ({ page }) => {
+      const errors: string[] = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      const surface = await open(page);
+      await surface.click();
+      await page.evaluate(() => {
+        const again = () => requestAnimationFrame(again);
+        requestAnimationFrame(again);
+      });
+      const text = 'Doing a quick test for dictation to make sure it comes along right';
+      const cdp = await page.context().newCDPSession(page);
+      const sent: Promise<unknown>[] = [];
+      for (const ch of text) {
+        sent.push(cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', text: ch, key: ch, unmodifiedText: ch }));
+        sent.push(cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: ch }));
+      }
+      await Promise.all(sent);
+      await expect.poll(() => noteText(page)).toBe(text);
+      expect(errors).toEqual([]);
+    });
+
+    /*
+     * An input method, and dictation on macOS and Windows, compose a phrase,
+     * commit it, and revise earlier words by replacing a range of what was
+     * committed. Chromium lets a test drive exactly that through the DevTools
+     * protocol. The text must come out right, the line and its text node must
+     * survive every commit, and the selection must not be taken away.
+     */
+    test('a dictation-like session of compositions, commits and revisions', async ({ page }) => {
+      const surface = await open(page);
+      await surface.click();
+      await page.keyboard.type('Note: ');
+      await stamp(page);
+      await spyOnSelection(page);
+      const cdp = await page.context().newCDPSession(page);
+      const compose = (text: string, extra: Record<string, number> = {}) =>
+        cdp.send('Input.imeSetComposition', { text, selectionStart: text.length, selectionEnd: text.length, ...extra });
+
+      await compose('Hel');
+      await compose('Hello');
+      await cdp.send('Input.insertText', { text: 'Hello' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hello');
+      expect(await kept(page)).toBe(true);
+      expect(await resets(page)).toBe(0);
+      expect(await caret(page)).toEqual({ inStamped: true, offset: 11, collapsed: true });
+
+      await compose(' world');
+      await cdp.send('Input.insertText', { text: ' world' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hello world');
+      expect(await kept(page)).toBe(true);
+      expect(await resets(page)).toBe(0);
+
+      // Revising "Hello" to "Hallo" over the committed range.
+      await compose('Hallo', { replacementStart: 6, replacementEnd: 11 });
+      await cdp.send('Input.insertText', { text: 'Hallo' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hallo world');
+      expect(await kept(page)).toBe(true);
+      expect(await resets(page)).toBe(0);
+      expect(await caret(page)).toMatchObject({ inStamped: true, collapsed: true });
+
+      // Appending by range, as an engine does at the end of a phrase.
+      await compose('!', { replacementStart: 17, replacementEnd: 17 });
+      await cdp.send('Input.insertText', { text: '!' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hallo world!');
+      expect(await kept(page)).toBe(true);
+      expect(await resets(page)).toBe(0);
+
+      // "New line", then a phrase on it: the new line is drawn (a blank line
+      // becoming a paragraph), and from then on kept.
+      await page.keyboard.press('Enter');
+      await expect.poll(() => noteText(page)).toBe('Note: Hallo world!\n');
+      expect(await kept(page)).toBe(true);
+      await compose('Amen');
+      await cdp.send('Input.insertText', { text: 'Amen' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hallo world!\nAmen');
+      await stamp(page, 1);
+      const before = await resets(page);
+      await compose(' indeed');
+      await cdp.send('Input.insertText', { text: ' indeed' });
+      await expect.poll(() => noteText(page)).toBe('Note: Hallo world!\nAmen indeed');
+      expect(await kept(page, 1)).toBe(true);
+      expect(await resets(page)).toBe(before);
+    });
+
+    test('the editor\'s undo waits for an open composition to end', async ({ page }) => {
+      const surface = await open(page);
+      await surface.click();
+      await page.keyboard.type('Note: ');
+      await surface.locator('.live-line').first().evaluate((el) => ((el as HTMLElement).dataset.probe = 'kept'));
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Input.imeSetComposition', { text: 'か', selectionStart: 1, selectionEnd: 1 });
+      await page.keyboard.press('Control+z');
+      await expect(surface.locator('.live-line').first()).toHaveAttribute('data-probe', 'kept');
+      await cdp.send('Input.insertText', { text: '神' });
+      await expect.poll(() => noteText(page)).toBe('Note: 神');
+    });
+
+    /*
+     * Keeping a line is only right when it is what would be drawn. These are
+     * the edits that still need a redraw, and get one.
+     */
+    test('a line is still drawn again when the browser left it other than it would be drawn', async ({ page }) => {
+      const surface = await open(page);
+      await surface.click();
+
+      // Closing a bold run: the bare text node becomes marks and a strong span.
+      await page.keyboard.type('the **Word');
+      await stamp(page);
+      await page.keyboard.type('**');
+      await expect(surface.locator('.md-strong:not(.md-mark)')).toHaveText('Word');
+      expect(await kept(page)).toBe(false);
+
+      // A letter typed at the edge of a marker lands inside the marker's
+      // span, which tokenizes the same; it is moved out by the redraw.
+      await page.keyboard.type(' was');
+      await surface.evaluate((el) => (el as HTMLTextAreaElement).setSelectionRange(12, 12));
+      await page.keyboard.type('x');
+      await expect.poll(() => noteText(page)).toBe('the **Word**x was');
+      expect(await surface.locator('.md-mark').allTextContents()).toEqual(['**', '**']);
+      await expect(surface.locator('.md-strong:not(.md-mark)')).toHaveText('Word');
+
+      // A <br> the browser left on a line with text, and an empty line that
+      // lost the <br> that holds it open.
+      await surface.evaluate((el) => {
+        const field = el as unknown as HTMLTextAreaElement;
+        field.setSelectionRange(field.value.length, field.value.length);
+      });
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('Hello');
+      await surface.evaluate((el) => {
+        const last = el.children[1];
+        last.append(document.createElement('br'));
+        el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+      });
+      await expect.poll(() => surface.locator('.live-line').nth(1).locator('br').count()).toBe(0);
+      await expect.poll(() => noteText(page)).toBe('the **Word**x was\nHello');
+      await page.keyboard.press('Enter');
+      await surface.evaluate((el) => {
+        el.children[2].replaceChildren();
+        el.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+      });
+      await expect.poll(() => surface.locator('.live-line').nth(2).evaluate((el) => el.childNodes.length === 1 && el.firstChild?.nodeName === 'BR')).toBe(true);
+
+      // A paragraph becoming a heading.
+      await page.keyboard.type('Intro');
+      await stamp(page, 2);
+      const at = (await noteText(page)).lastIndexOf('Intro');
+      await surface.evaluate((el, at) => (el as HTMLTextAreaElement).setSelectionRange(at, at), at);
+      await page.keyboard.type('## ');
+      await expect(surface.locator('.live-line').nth(2)).toHaveClass(/live-line--h2/);
+      await expect(surface.locator('.live-line').nth(2).locator('.md-mark')).toHaveText('## ');
+      expect(await kept(page, 2)).toBe(false);
+
+      // Text the browser inserted with a line break of its own, outside any
+      // composition: the whole note is drawn again from what it left.
+      await surface.evaluate((el) => (el as HTMLTextAreaElement).setSelectionRange(0, 0));
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Input.insertText', { text: 'one\ntwo\n' });
+      await expect.poll(() => noteText(page)).toBe('one\ntwo\nthe **Word**x was\nHello\n## Intro');
+      expect(await surface.locator('.live-line').evaluateAll((els) => els.map((el) => el.className.includes('paragraph')).slice(0, 2))).toEqual([true, true]);
+      expect(await surface.locator('.live-line br').count()).toBe(0);
+    });
+  });
+});
