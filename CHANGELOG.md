@@ -22,6 +22,14 @@ reviewers.
   browser types into is now left as it is, and the cursor is left where the
   browser put it. The Plain text editor was never affected.
 
+### Security
+
+- `proxy-addr`, under Express in the example API server, is updated to 2.0.8
+  for GHSA-jqcg-44mw-7w3h, and `source-map-js`, used while the reader is
+  built, to 1.2.2 for GHSA-68fv-2mgg-jv7q. Neither is part of the reader as
+  it is served. A third advisory, in `sprintf-js` under the test coverage
+  tooling, has no fix short of a breaking downgrade and is left open.
+
 ## [0.1.0-preview.8] - 2026-10-04
 
 The eighth preview changes nothing you can see or hear. It brings the tools
