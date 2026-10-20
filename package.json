@@ -25,7 +25,9 @@
     "build:site": "node scripts/build-site.mjs",
     "test:site": "npm run build && node scripts/build-site.mjs --base /Scriptura/ --preview && SCRIPTURA_SITE_ONLY=1 playwright test --project=site",
     "test:reader": "playwright test --project=reader --project=reader-touch --project=reader-dev",
-    "review:screens": "playwright test --project=review"
+    "review:screens": "playwright test --project=review tests/review/screens.spec.ts",
+    "review:docs": "tsx scripts/language-review.ts",
+    "review:guide": "playwright test --project=review tests/review/guide.spec.ts && tsx scripts/language-review.ts --shrink"
   },
   "repository": {
     "type": "git",

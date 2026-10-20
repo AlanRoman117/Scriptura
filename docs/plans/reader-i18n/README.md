@@ -50,7 +50,8 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
 2. `tsc -b` now fails until the key is in `es-MX.ts`, `fr-FR.ts`, `ja-JP.ts`, `pt-BR.ts`, `zh-Hans.ts` and `zh-Hant.ts`. Add it to all six. The two Chinese files are written separately; converting one into the other is what the vocabulary test exists to catch.
 3. Read it in the component with `const { t } = useI18n()`. `tests/unit/i18n-strings.test.ts` fails on English written straight into a component.
 4. If a noun's gender changes the words, give each noun its own key, as `notes.new` and `canvas.new` do.
-5. Run `npm test` and `npm run test:reader`. Then run `npm run review:screens` and check the new text in all seven languages.
+5. Run `npm run review:docs`, which writes the new text into each reviewer's guide in `docs/human-language-review/`; `npm test` fails until it has been run.
+6. Run `npm test` and `npm run test:reader`. Then run `npm run review:screens` and check the new text in all seven languages.
 
 ## Tests
 
@@ -84,7 +85,9 @@ Each tag is built from subtags in the [IANA Language Subtag Registry](https://ww
 
 **Reviewers use the preview site: <https://alanroman117.github.io/Scriptura/>.** The site follows the browser's language, or Settings → Language. A notice on every page, and the first section of Help, link to a correction form in the reviewer's language (`.github/ISSUE_TEMPLATE/translation-*.yml`). The form fills in the language and the build. It needs a free GitHub account. A reviewer without one can send notes by any other route, and the corrections are applied the same way.
 
-Screenshots help a reviewer who cannot use the site. Generate them, then send each reviewer their folder and their catalog file:
+**Each reviewer has a guide: [`docs/human-language-review/`](../../human-language-review/README.md).** It starts with a quarter-hour first pass (the voice, the glossary below, numbers and plurals), then shows every screen with every text that belongs to it, English beside the translation, then says what to try on the site, and ends with room for their notes. It is written from the catalogs, so it is never behind the app.
+
+Full-window screenshots of every screen, desktop and phone, are also available for a reviewer who wants them:
 
 ```bash
 npm run review:screens     # writes review-screenshots/<language>/<device>-<screen>.png
@@ -167,13 +170,13 @@ is not the other's characters, a converter would have got it wrong.
 | Connection | Conexão | 连接 | 連接 |
 | Quote | Citar | 引用 | 引用 |
 | Link | Vincular | 链接 | 連結 |
-| Canvas (put on a board) | Para o quadro | 加入看板 | 加入看板 |
+| Canvas (put on a board) | Ao quadro | 加入看板 | 加入看板 |
 | Translation | Tradução | 译本 | 譯本 |
-| Scripture | Escrituras | 经文 | 經文 |
-| Passage | Passagem | 经文段落 | 經文段落 |
+| Scripture | Texto bíblico | 经文 | 經文 |
+| Passage | Passagem | 经文 | 經文 |
 | Book / chapter / verse | Livro / capítulo / versículo | 书卷 / 章 / 节 | 書卷 / 章 / 節 |
 | Search | Pesquisar | 搜索 | 搜尋 |
-| Whole words only | Somente palavras inteiras | 仅整词 | 僅完整字詞 |
+| Whole words only | Apenas palavras inteiras | 仅整词 | 僅完整字詞 |
 | Match case | Diferenciar maiúsculas | 区分大小写 | 區分大小寫 |
 | Settings | Configurações | 设置 | 設定 |
 | Help | Ajuda | 帮助 | 說明 |
