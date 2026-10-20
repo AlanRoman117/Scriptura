@@ -1,6 +1,6 @@
 {
   "name": "scriptura",
-  "version": "0.1.0-preview.9",
+  "version": "0.1.0-preview.10",
   "description": "Open Bible data ecosystem — multi-translation, multi-language, developer-first.",
   "private": true,
   "workspaces": [
@@ -25,7 +25,9 @@
     "build:site": "node scripts/build-site.mjs",
     "test:site": "npm run build && node scripts/build-site.mjs --base /Scriptura/ --preview && SCRIPTURA_SITE_ONLY=1 playwright test --project=site",
     "test:reader": "playwright test --project=reader --project=reader-touch --project=reader-dev",
-    "review:screens": "playwright test --project=review"
+    "review:screens": "playwright test --project=review tests/review/screens.spec.ts",
+    "review:docs": "tsx scripts/language-review.ts",
+    "review:guide": "playwright test --project=review tests/review/guide.spec.ts && tsx scripts/language-review.ts --shrink"
   },
   "repository": {
     "type": "git",
@@ -44,12 +46,12 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.19.1",
     "esbuild": "^0.28.2",
     "jest": "^30.5.2",
-    "ts-jest": "^29.4.14",
+    "ts-jest": "^29.4.15",
     "tsx": "^4.23.15",
     "typescript": "^5.9.0"
   },
