@@ -160,6 +160,8 @@ for (const locale of Object.keys(LOCALES) as Locale[]) {
       await page.getByTestId('settings-open').click();
 
       await page.getByTestId('help-open').click();
+      // The pane is still where the end of Settings left it; Help is pictured from its top.
+      await page.getByTestId('pane-bible').evaluate((el) => el.scrollTo(0, 0));
       await shoot(page, dir, '11-help', [BIBLE], 0);
     });
 

@@ -93,7 +93,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2 versículos · Juan 1:3-4 |
 | 5 verses selected | 5 versículos · Juan 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -169,7 +169,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove | Deshacer |
 | `common.remove` | Remove | Quitar |
 | `common.done` | Done | Listo |
-| `offer.title` | Bibles in American English | Biblias en español de México |
+| `offer.title` | Bibles in English | Biblias en español |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Estas traducciones están en tu idioma. Descarga una para leerla, con o sin conexión. |
 | `offer.downloadAndRead` | Download and read | Descargar y leer |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible | Descargar y leer Reina Valera 1909 |

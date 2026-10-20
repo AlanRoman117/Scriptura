@@ -93,7 +93,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2節・ヨハネによる福音書 1:3-4 |
 | 5 verses selected | 5節・ヨハネによる福音書 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -169,7 +169,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove | 元に戻す |
 | `common.remove` | Remove | 削除 |
 | `common.done` | Done | 完了 |
-| `offer.title` | Bibles in American English | 日本語 (日本)の聖書 |
+| `offer.title` | Bibles in English | 日本語の聖書 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | お使いの言語の訳があります。ダウンロードすると、オフラインでも読めます。 |
 | `offer.downloadAndRead` | Download and read | ダウンロードして読む |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible | ダウンロードして読む：文語訳聖書 (Classical) |

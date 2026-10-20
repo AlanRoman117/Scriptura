@@ -93,7 +93,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2 versets · JEAN 1:3-4 |
 | 5 verses selected | 5 versets · JEAN 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -169,7 +169,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove | Annuler le retrait |
 | `common.remove` | Remove | Retirer |
 | `common.done` | Done | Terminé |
-| `offer.title` | Bibles in American English | Bibles en français (France) |
+| `offer.title` | Bibles in English | Bibles en français |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Ces traductions sont dans votre langue. Téléchargez-en une pour la lire, en ligne ou hors ligne. |
 | `offer.downloadAndRead` | Download and read | Télécharger et lire |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible | Télécharger et lire Louis Segond 1910 |
@@ -333,7 +333,7 @@ One box does two things: a reference goes straight to the passage, anything else
 | `search.matchCaseHint` | Capital letters matter: God and god are different. | Les majuscules comptent : Dieu et dieu sont différents. |
 | `search.noMatches` | No matches | Aucun résultat |
 | `search.matches` | 1 match<br>1,382 matches | 1 résultat<br>1 382 résultats |
-| `search.showing` | ␣— showing 40 |  ; 40 affichés |
+| `search.showing` | ␣— showing 40 | ␣; 40 affichés |
 | `search.seeAll` | See all 1,382 | Voir les 1 382 |
 | `search.insert` | Insert John 1:2 into the open note | Insérer JEAN 1:2 dans la note ouverte |
 | `search.toCanvas`<br><sub>The name of a result's Canvas button: its visible word first (2.5.3).</sub> | Canvas — put John 1:2 on the board | Au tableau : placer JEAN 1:2 sur le tableau |

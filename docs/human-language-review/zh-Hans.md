@@ -57,7 +57,7 @@ These are the names of the app's own things. Each is used the same way on every 
 | Canvas (put on a board) | 加入看板 | |
 | Translation | 译本 | |
 | Scripture | 经文 | |
-| Passage | 经文段落 | |
+| Passage | 经文 | |
 | Book / chapter / verse | 书卷 / 章 / 节 | |
 | Search | 搜索 | |
 | Whole words only | 仅整词 | |
@@ -96,7 +96,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2节 · 约翰福音 1:3-4 |
 | 5 verses selected | 5节 · 约翰福音 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -172,7 +172,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove | 撤销 |
 | `common.remove` | Remove | 移除 |
 | `common.done` | Done | 完成 |
-| `offer.title` | Bibles in American English | 简体中文圣经 |
+| `offer.title` | Bibles in English | 中文圣经 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | 这些译本是你所用语言的译本。下载一个就可以阅读，联网或离线都可以。 |
 | `offer.downloadAndRead` | Download and read | 下载并阅读 |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible | 下载并阅读新标点和合本 |

@@ -75,7 +75,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2 verses · John 1:3-4 |
 | 5 verses selected | 5 verses · John 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -92,15 +92,14 @@ If time is short, these four screens matter most: they are the app on an ordinar
 
 The bar across the top chooses the book, the chapter and the translation, and opens Marks, Settings and Help. A reader whose language is not English is first offered a Bible in it.
 
-![What a new reader sees: the offer of a Bible in this language, over the English one the app arrives with.](img/en-US/01-first-visit.png)
+![What a new reader sees: the English Bible the app arrives with. A reader of English is offered nothing first.](img/en-US/01-first-visit.png)
 
-*What a new reader sees: the offer of a Bible in this language, over the English one the app arrives with.*
+*What a new reader sees: the English Bible the app arrives with. A reader of English is offered nothing first.*
 
 ![The same, on a phone, once a Bible in this language is open.](img/en-US/14-phone-reading.png)
 
 *The same, on a phone, once a Bible in this language is open.*
 
-- [ ] The offer reads as an invitation, and its buttons are clear about what they will do.
 - [ ] Nothing in the bar is cut short or squeezed, on the phone above all.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
@@ -151,7 +150,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove |
 | `common.remove` | Remove |
 | `common.done` | Done |
-| `offer.title` | Bibles in American English |
+| `offer.title` | Bibles in English |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. |
 | `offer.downloadAndRead` | Download and read |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible |

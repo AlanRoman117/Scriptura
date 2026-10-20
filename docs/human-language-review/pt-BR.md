@@ -54,13 +54,13 @@ These are the names of the app's own things. Each is used the same way on every 
 | Connection | Conexão | |
 | Quote | Citar | |
 | Link | Vincular | |
-| Canvas (put on a board) | Para o quadro | |
+| Canvas (put on a board) | Ao quadro | |
 | Translation | Tradução | |
-| Scripture | Escrituras | |
+| Scripture | Texto bíblico | |
 | Passage | Passagem | |
 | Book / chapter / verse | Livro / capítulo / versículo | |
 | Search | Pesquisar | |
-| Whole words only | Somente palavras inteiras | |
+| Whole words only | Apenas palavras inteiras | |
 | Match case | Diferenciar maiúsculas | |
 | Settings | Configurações | |
 | Help | Ajuda | |
@@ -96,7 +96,7 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 verses selected | 2 versículos · João 1:3-4 |
 | 5 verses selected | 5 versículos · João 1:3-7 |
 
-- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.
+- [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
 
 ---
@@ -172,7 +172,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.undoRemove` | Undo remove | Desfazer |
 | `common.remove` | Remove | Remover |
 | `common.done` | Done | Pronto |
-| `offer.title` | Bibles in American English | Bíblias em português (Brasil) |
+| `offer.title` | Bibles in English | Bíblias em português |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Estas traduções estão no seu idioma. Baixe uma para lê-la, com ou sem conexão. |
 | `offer.downloadAndRead` | Download and read | Baixar e ler |
 | `offer.downloadAndReadName` | Download and read Berean Standard Bible | Baixar e ler Bíblia Livre |

@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import { CATALOGS } from '../apps/reader/src/i18n/catalogs';
 import { formattersFor } from '../apps/reader/src/i18n/format';
-import { LOCALES, LOCALE_LABELS, type Locale } from '../apps/reader/src/i18n/locales';
+import { LOCALES, LOCALE_LABELS, primaryLanguage, type Locale } from '../apps/reader/src/i18n/locales';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT = join(ROOT, 'docs', 'human-language-review');
@@ -153,6 +153,8 @@ interface Section {
   pictures: [string, string][];
   /** What to look at in the pictures, beyond the words being right. */
   look: string[];
+  /** For the English guide, where English is shown something else: captions by picture, and its own checklist. */
+  english?: { captions?: Record<string, string>; look?: string[] };
   /** The top-level sections of the catalog whose texts belong here. */
   keys: string[];
 }
@@ -174,6 +176,10 @@ const TIERS: { title: string; note: string; sections: Section[] }[] = [
           'The offer reads as an invitation, and its buttons are clear about what they will do.',
           'Nothing in the bar is cut short or squeezed, on the phone above all.',
         ],
+        english: {
+          captions: { '01-first-visit': 'What a new reader sees: the English Bible the app arrives with. A reader of English is offered nothing first.' },
+          look: ['Nothing in the bar is cut short or squeezed, on the phone above all.'],
+        },
         keys: ['app', 'reader', 'panels', 'common', 'offer'],
       },
       {
@@ -446,7 +452,7 @@ function value(name: string, w: World): unknown {
     size: fmt.bytes(5_700_000),
     query: w.word,
     error: t.library.offline,
-    language: fmt.languageWord(w.locale),
+    language: fmt.languageWord(primaryLanguage(w.locale)), // as BibleOffer names it
     version: '0.1.0',
     level: 2,
     block: 3,
@@ -565,7 +571,7 @@ function cell(texts: string[]): string {
   return texts
     .map((text) =>
       text
-        .replace(/^ +| +$/g, (spaces) => '␣'.repeat(spaces.length))
+        .replace(/^[ \u00a0\u202f]+|[ \u00a0\u202f]+$/g, (spaces) => '␣'.repeat(spaces.length))
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/\{\{(.+?)\}\}/g, '<kbd>$1</kbd>')
@@ -724,7 +730,7 @@ export function guide(locale: Locale): string {
     ...[0, 1, 2, 5, 1382].map((n) => `| ${n} search ${n === 1 ? 'result' : 'results'} | ${count('matches', n)} |`),
     ...[1, 2, 5].map((n) => `| ${n} ${n === 1 ? 'verse' : 'verses'} selected | ${t.verseActions.summary(n, n === 1 ? `${them.bible.john} 1:3` : `${them.bible.john} 1:3-${n + 2}`)} |`),
     '',
-    '- [ ] Thousands are grouped, and the percentage is spaced, the way this language does it.',
+    '- [ ] Thousands are grouped, and the percentage is written, the way this language does it.',
     '- [ ] Every count above is grammatical, zero and one included.',
     '',
     '---',
@@ -742,9 +748,10 @@ export function guide(locale: Locale): string {
       n += 1;
       const texts = table(section.keys);
       say(`#### 2.${n} ${section.title}`, '', section.about, '');
-      for (const [file, caption] of section.pictures) picture(file, caption);
+      const english = locale === 'en-US' ? section.english : undefined;
+      for (const [file, caption] of section.pictures) picture(file, english?.captions?.[file] ?? caption);
       say(
-        ...section.look.map((item) => `- [ ] ${item}`),
+        ...(english?.look ?? section.look).map((item) => `- [ ] ${item}`),
         '- [ ] Every text in the table below is correct and sounds natural.',
         ...(section.pictures.length > 0 ? ['- [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.'] : []),
         '',

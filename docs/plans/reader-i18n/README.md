@@ -170,13 +170,13 @@ is not the other's characters, a converter would have got it wrong.
 | Connection | Conexão | 连接 | 連接 |
 | Quote | Citar | 引用 | 引用 |
 | Link | Vincular | 链接 | 連結 |
-| Canvas (put on a board) | Para o quadro | 加入看板 | 加入看板 |
+| Canvas (put on a board) | Ao quadro | 加入看板 | 加入看板 |
 | Translation | Tradução | 译本 | 譯本 |
-| Scripture | Escrituras | 经文 | 經文 |
-| Passage | Passagem | 经文段落 | 經文段落 |
+| Scripture | Texto bíblico | 经文 | 經文 |
+| Passage | Passagem | 经文 | 經文 |
 | Book / chapter / verse | Livro / capítulo / versículo | 书卷 / 章 / 节 | 書卷 / 章 / 節 |
 | Search | Pesquisar | 搜索 | 搜尋 |
-| Whole words only | Somente palavras inteiras | 仅整词 | 僅完整字詞 |
+| Whole words only | Apenas palavras inteiras | 仅整词 | 僅完整字詞 |
 | Match case | Diferenciar maiúsculas | 区分大小写 | 區分大小寫 |
 | Settings | Configurações | 设置 | 設定 |
 | Help | Ajuda | 帮助 | 說明 |
