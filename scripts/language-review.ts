@@ -572,6 +572,8 @@ function cell(texts: string[]): string {
     .map((text) =>
       text
         .replace(/^[ \u00a0\u202f]+|[ \u00a0\u202f]+$/g, (spaces) => '␣'.repeat(spaces.length))
+        // A backslash first, so the ones written below for Markdown are the only ones it reads.
+        .replace(/\\/g, '\\\\')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/\{\{(.+?)\}\}/g, '<kbd>$1</kbd>')
@@ -584,12 +586,6 @@ function cell(texts: string[]): string {
 const BAD = /undefined|\[object|NaN|\bnull\b/;
 
 /* ── A guide ───────────────────────────────────────────────────────────── */
-
-const slug = (title: string) =>
-  title
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N} -]/gu, '')
-    .replace(/ /g, '-');
 
 export function guide(locale: Locale): string {
   const language = LANGUAGES[locale];
@@ -927,6 +923,16 @@ function shrink() {
   }
 }
 
+/** A file's text, or null when there is none yet: read once, rather than checked for and then read. */
+function readIfThere(path: string): string | null {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  }
+}
+
 function main() {
   if (process.argv.includes('--shrink')) shrink();
   mkdirSync(OUT, { recursive: true });
@@ -935,7 +941,7 @@ function main() {
     const fresh = guide(locale);
     const missing = [...fresh.matchAll(/\]\((img\/[^)]+)\)/g)].map((match) => match[1]).filter((file) => !existsSync(join(OUT, file)));
     if (missing.length > 0) console.log(`${locale}: no picture yet for ${missing.join(', ')}. Run npm run review:guide.`);
-    writeFileSync(path, withTheirs(fresh, existsSync(path) ? readFileSync(path, 'utf8') : null));
+    writeFileSync(path, withTheirs(fresh, readIfThere(path)));
   }
   writeFileSync(join(OUT, 'README.md'), index());
   console.log(`Wrote ${LOCALES.length} guides to ${OUT}`);
