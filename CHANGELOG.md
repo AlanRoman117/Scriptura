@@ -7,6 +7,13 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.10] - 2026-10-19
+
+The tenth preview is for the people reviewing the interface languages: each
+of the seven now has a guide, written from the app's own texts, that shows
+every screen with every text that belongs to it. There are no new texts for
+reviewers, and the app reads as it did in the ninth preview.
+
 ### Added
 
 - A guide for the reviewer of each interface language, in
@@ -14,6 +21,20 @@ suffix and is published as a GitHub pre-release.
   screen with every text that belongs to it, what to try in the app, and room
   for notes. They are written from the app's own texts, and the tests fail
   when a text has changed and its guide has not been written again.
+
+### Changed
+
+- The tools the reader is built and tested with are updated: Playwright to
+  1.64.1 (the tests run in Chromium 156), ts-jest to 29.4.15, Vite to 8.3.4,
+  its React plugin to 6.1.2 and its PWA plugin to 2.0.0. Nothing in how the
+  reader behaves changes.
+
+### Security
+
+- `handlebars`, under ts-jest in the test tooling, is updated to 4.7.10 for
+  GHSA-p8wg-vrv2-v86f, GHSA-8r5x-fm3f-whwj and GHSA-xw65-4hp5-5hc7. It is not
+  part of the reader as it is served. The `sprintf-js` advisory noted in the
+  ninth preview still has no fix and stays open.
 
 ## [0.1.0-preview.9] - 2026-10-06
 
@@ -311,6 +332,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.10]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.10
 [0.1.0-preview.9]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.9
 [0.1.0-preview.8]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.8
 [0.1.0-preview.7]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.7
