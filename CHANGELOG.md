@@ -7,6 +7,14 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Added
+
+- A guide for the reviewer of each interface language, in
+  `docs/human-language-review/`: what to check first, a picture of every
+  screen with every text that belongs to it, what to try in the app, and room
+  for notes. They are written from the app's own texts, and the tests fail
+  when a text has changed and its guide has not been written again.
+
 ## [0.1.0-preview.9] - 2026-10-06
 
 The ninth preview fixes dictation into a note. There are no new texts for
