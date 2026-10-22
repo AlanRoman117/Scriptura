@@ -7,6 +7,19 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.11] - 2026-10-21
+
+The eleventh preview changes nothing you can see or hear, and has no new
+texts for reviewers. It closes the last open security advisory.
+
+### Security
+
+- `sprintf-js` (GHSA-hp3w-g68c-fv3c), left open in the ninth preview, is gone
+  from the project. It came in under the test coverage tooling, through an
+  old `js-yaml` that needed it only for a command-line tool nothing here runs.
+  That tooling now uses `js-yaml` 4.3.2, which does not depend on it. It was
+  never part of the reader as it is served.
+
 ## [0.1.0-preview.10] - 2026-10-19
 
 The tenth preview is for the people reviewing the interface languages: each
@@ -332,6 +345,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.11]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.11
 [0.1.0-preview.10]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.10
 [0.1.0-preview.9]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.9
 [0.1.0-preview.8]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.8
