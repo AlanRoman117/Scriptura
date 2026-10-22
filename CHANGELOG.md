@@ -7,6 +7,20 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.12] - 2026-10-22
+
+The twelfth preview changes nothing in the reader, and has no new texts for
+reviewers. The README says what the project is today: which languages are
+being reviewed, where each reviewer's guide is, and the current counts of
+translations and tests.
+
+### Changed
+
+- The README is brought up to date: the preview is for reviewers of six
+  interface languages, each with a guide in `docs/human-language-review/`,
+  whose scripts are now listed; all 14 translations are ingested; and the
+  test and static-build counts are current.
+
 ## [0.1.0-preview.11] - 2026-10-21
 
 The eleventh preview changes nothing you can see or hear, and has no new
@@ -345,6 +359,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.12]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.12
 [0.1.0-preview.11]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.11
 [0.1.0-preview.10]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.10
 [0.1.0-preview.9]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.9
