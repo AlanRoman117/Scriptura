@@ -12,7 +12,7 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 **The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.**
 
-**Try the reader:** <https://alanroman117.github.io/Scriptura/>. It is a preview, published for the people reviewing its Spanish, French and Japanese text; what changed is in [`CHANGELOG.md`](CHANGELOG.md).
+**Try the reader:** <https://alanroman117.github.io/Scriptura/>. It is a preview, published for the people reviewing its interface in Spanish, French, Japanese, Brazilian Portuguese and Chinese (both scripts); each reviewer has a guide in [`docs/human-language-review/`](docs/human-language-review/README.md). What changed is in [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
@@ -117,6 +117,8 @@ in them.
 | `npm run build:site` | The publishable site in `site/`: the reader plus the translation files it downloads. `-- --base /Scriptura/` builds it for a path, as GitHub Pages serves it; `-- --preview` marks it for translation reviewers |
 | `npm run test:site` | Builds the preview site for `/Scriptura/` and tests it the way Pages serves it: from files alone, under the path. `SITE_URL=… npx playwright test --project=site` (with `SCRIPTURA_SITE_ONLY=1`) runs the same checks against the live site |
 | `npm run review:screens` | Screenshots of every reader screen in every interface language, desktop and phone, into `review-screenshots/` for translation reviewers. Not a test |
+| `npm run review:docs` | Writes the reviewers' guides in `docs/human-language-review/` again from the interface text. `npm test` fails when they are behind |
+| `npm run review:guide` | Takes the guides' pictures again in Chromium, then writes the guides |
 | `npm run schema:gen` | Regenerates the JSON schemas under `data/schemas/` from the canonical types |
 
 The data tooling is Python, standard library only, and is invoked directly:
@@ -349,6 +351,7 @@ scriptura/
 │   ├── usage-examples.md
 │   ├── contributing.md
 │   ├── translations-status.md   # License verification log
+│   ├── human-language-review/   # A guide for each interface language's reviewer (generated)
 │   └── plans/                   # Work programmes: plan, conformance matrix, briefs
 │
 ├── AGENTS.md                    # Rules for automated contributors (CLAUDE.md is the authority)
@@ -442,17 +445,17 @@ data/{translation-id}/
 
 | Area | State |
 |---|---|
-| Translation data | **All 11 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
+| Translation data | **All 14 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
 | REST API | Runs locally; every route works in every language |
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
-| Static API build | Working — `npm run build:api` emits ~12.5k JSON files |
+| Static API build | Working — `npm run build:api -- --skip-verses` emits ~17.6k JSON files (chapters, without a file per verse) |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 471 jest, and 519 Playwright: 48 HTTP contract, 301 reader in Desktop Chrome, 149 reader on an emulated phone, 2 dev server, 19 on the published site |
+| Tests | 1,743 jest, and 1,182 Playwright: 48 HTTP contract, 650 reader in Desktop Chrome, 454 reader on an emulated phone, 2 dev server, 28 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes whose Markdown takes shape as it is written, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French, Japanese, Brazilian Portuguese and Chinese in both scripts, chosen from the browser or Settings — Chinese by script, so a Taiwanese browser gets Traditional — and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
-| Preview site | The reader and its translation files on GitHub Pages, published from `main` by `.github/workflows/pages.yml` once CI has passed — a preview for the translation reviewers |
+| Preview site | The reader and its translation files on GitHub Pages, published from `main` by `.github/workflows/pages.yml` once CI has passed — a preview for the translation reviewers, who each have a [guide](docs/human-language-review/README.md) |
 | Deployment | **AWS not built** — no infrastructure, no `deploy.yml` |
 
 The AWS hosting design (S3 + CloudFront with OAC, GitHub OIDC auth, Lambda for
@@ -536,3 +539,4 @@ The belief behind it is simple: the Bible has no copyright. The Word of God belo
 <p align="center">
   Built with ❤️ and conviction &nbsp;·&nbsp; Open source forever
 </p>
+
