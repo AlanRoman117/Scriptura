@@ -16,7 +16,7 @@
     "@scriptura/core": "0.1.0",
     "@scriptura/search": "0.1.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
