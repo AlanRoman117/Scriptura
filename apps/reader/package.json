@@ -15,7 +15,7 @@
     "@scriptura/compare": "0.1.0",
     "@scriptura/core": "0.1.0",
     "@scriptura/search": "0.1.0",
-    "react": "^19.3.0",
+    "react": "^19.3.1",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
