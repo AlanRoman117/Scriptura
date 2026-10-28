@@ -7,6 +7,41 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.13] - 2026-10-28
+
+The thirteenth preview brings the tools up to date, clears four security
+advisories, and fixes three controls whose names a screen reader or voice
+control used did not match what they show.
+
+For reviewers, three changed texts in every language, all heard rather than
+seen: the names of the H1–H3 buttons, the numbered-list button and the Marks
+button. They are listed in `docs/plans/reader-i18n/README.md`.
+
+### Fixed
+
+- Three controls are now named with the words they show, so someone using
+  voice control can say what they see (WCAG 2.5.3, Label in Name). The
+  heading buttons are "H1, heading 1" and so on, where they were "Heading 1";
+  the numbered-list button is "1. Numbered list"; and the Marks button's name
+  has its count as the button shows it, not in brackets. The newer
+  accessibility checker found them; the older one had passed them.
+
+### Changed
+
+- React and React DOM are updated to 19.3.1, Vite to 8.3.5, the
+  accessibility checker (axe) to 4.14.0 and the Node type definitions to
+  24.19.2.
+
+### Security
+
+- `body-parser` 2.4.0 (GHSA-27r3-jxmh-p828) and `qs` 6.17.0
+  (GHSA-6pq8-jhm2-2vcw), under Express in the example API server, and
+  `fast-uri` 3.1.9 (four advisories) and `serialize-javascript` 7.1.4
+  (GHSA-m5mm-p8h7-m29v), used while the reader is built. None is part of the
+  reader as it is served. A low advisory in `deepmerge`
+  (GHSA-gcqx-w48m-w2h4), under the build and test tooling, has no fixed
+  release yet.
+
 ## [0.1.0-preview.12] - 2026-10-22
 
 The twelfth preview changes nothing in the reader, and has no new texts for
@@ -359,6 +394,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.13]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.13
 [0.1.0-preview.12]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.12
 [0.1.0-preview.11]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.11
 [0.1.0-preview.10]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.10
