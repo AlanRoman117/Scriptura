@@ -146,7 +146,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.chapter` | Chapter | Chapitre |
 | `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | LSG1910 : Louis Segond 1910. Choisir ou ajouter une traduction |
 | `reader.marks` | Marks | Marques |
-| `reader.marksChip` | Marks (7) — verses you have marked, by colour | Marques (7) : les versets que vous avez marqués, par couleur |
+| `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | Marques 7 : les versets que vous avez marqués, par couleur |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | Paramètres : affichage, stockage, exportation et accès des assistants |
 | `reader.helpChip` | Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean | Aide : trouver un passage, rechercher, notes, marques, tableaux, clavier et sens des abréviations |
 | `reader.selectVerse`<br><sub>A verse's number: a toggle that adds the verse to the selection or takes it out.</sub> | Select John 1:2 | Sélectionner JEAN 1:2 |
@@ -274,7 +274,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.linkIn` | John 1:3-5 (KJV) | JEAN 1:3-5 (BSB) |
 | `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | JEAN 1:3-5 (BSB, non téléchargée) |
 | `tools.label` | Formatting | Mise en forme |
-| `tools.heading` | Heading 2 | Titre 2 |
+| `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | T2, titre 2 |
 | `tools.headingGlyph` | H2 | T2 |
 | `tools.bold` | Bold | Gras |
 | `tools.boldGlyph` | B | G |
@@ -282,7 +282,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.italicGlyph` | I | I |
 | `tools.code` | Code | Code |
 | `tools.bullets` | Bulleted list | Liste à puces |
-| `tools.numbers` | Numbered list | Liste numérotée |
+| `tools.numbers`<br><sub>The numbered-list button shows "1.", so its name starts with it, as the heading buttons' do (WCAG 2.5.3).</sub> | 1. Numbered list | 1. Liste numérotée |
 | `tools.quote` | Quote | Citation |
 | `tools.link` | Link to a passage | Lien vers un passage |
 | `insert.quoted` | Quoted John 1:3-5 | Citation de JEAN 1:3-5 ajoutée |

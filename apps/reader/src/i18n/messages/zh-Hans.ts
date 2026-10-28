@@ -243,7 +243,7 @@ export const zhHans = {
     chapter: '章',
     translationChip: (id: string, name: string) => `${id} — ${name}。选择或添加译本`,
     marks: '标记',
-    marksChip: (count: number) => `标记（${num(count)}）— 你标记过的经文，按颜色分组`,
+    marksChip: (count: number) => `标记 ${num(count)} — 你标记过的经文，按颜色分组`,
     settingsChip: '设置 — 显示、存储、导出与助手权限',
     helpChip: '帮助 — 查找经文、搜索、笔记、标记、看板、键盘，以及各种缩写的含义',
     selectVerse: (ref: string) => `选择${ref}`,
@@ -412,7 +412,7 @@ export const zhHans = {
 
   tools: {
     label: '格式',
-    heading: (level: number) => `${level}级标题`,
+    heading: (level: number) => `H${level}，${level}级标题`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '粗体',
     boldGlyph: 'B',
@@ -420,7 +420,7 @@ export const zhHans = {
     italicGlyph: 'I',
     code: '代码',
     bullets: '项目符号列表',
-    numbers: '编号列表',
+    numbers: '1. 编号列表',
     quote: '引用',
     link: '经文链接',
   },

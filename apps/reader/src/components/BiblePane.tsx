@@ -483,6 +483,8 @@ export function BiblePane({
           onClick={onToggleMarks}
         >
           <span className="reader__chip-label">{t.reader.marks}</span>
+          {/* Not drawn in a flex box, but read: without it the visible text is "Marks3", which the name cannot contain (2.5.3). */}
+          {' '}
           <span className="reader__chip-count" data-empty={markCount === 0 || undefined}>
             {fmt.number(markCount)}
           </span>

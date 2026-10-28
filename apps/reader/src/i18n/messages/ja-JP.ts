@@ -239,7 +239,7 @@ export const jaJP = {
     chapter: '章',
     translationChip: (id: string, name: string) => `${id}：${name}。訳を選ぶ、または追加する`,
     marks: 'マーク',
-    marksChip: (count: number) => `マーク（${num(count)}件）：マークした節を色ごとに表示`,
+    marksChip: (count: number) => `マーク ${num(count)}件：マークした節を色ごとに表示`,
     settingsChip: '設定：表示、保存、エクスポート、アシスタントのアクセス',
     helpChip: 'ヘルプ：箇所の開き方、検索、ノート、マーク、ボード、キーボード、略語の意味',
     selectVerse: (ref: string) => `${ref}を選択`,
@@ -407,7 +407,7 @@ export const jaJP = {
 
   tools: {
     label: '書式',
-    heading: (level: number) => `見出し${level}`,
+    heading: (level: number) => `H${level}、見出し${level}`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '太字',
     boldGlyph: 'B',
@@ -415,7 +415,7 @@ export const jaJP = {
     italicGlyph: 'I',
     code: 'コード',
     bullets: '箇条書き',
-    numbers: '番号付きリスト',
+    numbers: '1. 番号付きリスト',
     quote: '引用',
     link: '箇所へのリンク',
   },
