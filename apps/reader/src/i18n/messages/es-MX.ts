@@ -239,7 +239,7 @@ export const esMX = {
     chapter: 'Capítulo',
     translationChip: (id: string, name: string) => `${id}: ${name}. Elige o agrega una traducción`,
     marks: 'Marcas',
-    marksChip: (count: number) => `Marcas (${num(count)}): los versículos que marcaste, por color`,
+    marksChip: (count: number) => `Marcas ${num(count)}: los versículos que marcaste, por color`,
     settingsChip: 'Configuración: pantalla, almacenamiento, exportación y acceso de asistentes',
     helpChip:
       'Ayuda: encontrar pasajes, buscar, notas, marcas, tableros, teclado y el significado de las abreviaturas',
@@ -424,7 +424,7 @@ export const esMX = {
 
   tools: {
     label: 'Formato',
-    heading: (level: number) => `Título ${level}`,
+    heading: (level: number) => `T${level}, título ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Negrita',
     boldGlyph: 'N',
@@ -432,7 +432,7 @@ export const esMX = {
     italicGlyph: 'K',
     code: 'Código',
     bullets: 'Lista con viñetas',
-    numbers: 'Lista numerada',
+    numbers: '1. Lista numerada',
     quote: 'Cita',
     link: 'Enlazar a un pasaje',
   },

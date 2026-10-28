@@ -149,7 +149,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.chapter` | Chapter | 章 |
 | `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | CUVS — 新标点和合本。选择或添加译本 |
 | `reader.marks` | Marks | 标记 |
-| `reader.marksChip` | Marks (7) — verses you have marked, by colour | 标记（7）— 你标记过的经文，按颜色分组 |
+| `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | 标记 7 — 你标记过的经文，按颜色分组 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 设置 — 显示、存储、导出与助手权限 |
 | `reader.helpChip` | Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean | 帮助 — 查找经文、搜索、笔记、标记、看板、键盘，以及各种缩写的含义 |
 | `reader.selectVerse`<br><sub>A verse's number: a toggle that adds the verse to the selection or takes it out.</sub> | Select John 1:2 | 选择约翰福音 1:2 |
@@ -277,7 +277,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.linkIn` | John 1:3-5 (KJV) | 约翰福音 1:3-5（BSB） |
 | `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | 约翰福音 1:3-5（BSB — 尚未下载） |
 | `tools.label` | Formatting | 格式 |
-| `tools.heading` | Heading 2 | 2级标题 |
+| `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2，2级标题 |
 | `tools.headingGlyph` | H2 | H2 |
 | `tools.bold` | Bold | 粗体 |
 | `tools.boldGlyph` | B | B |
@@ -285,7 +285,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.italicGlyph` | I | I |
 | `tools.code` | Code | 代码 |
 | `tools.bullets` | Bulleted list | 项目符号列表 |
-| `tools.numbers` | Numbered list | 编号列表 |
+| `tools.numbers`<br><sub>The numbered-list button shows "1.", so its name starts with it, as the heading buttons' do (WCAG 2.5.3).</sub> | 1. Numbered list | 1. 编号列表 |
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 经文链接 |
 | `insert.quoted` | Quoted John 1:3-5 | 已引用约翰福音 1:3-5 |

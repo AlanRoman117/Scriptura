@@ -243,7 +243,7 @@ export const ptBR = {
     chapter: 'Capítulo',
     translationChip: (id: string, name: string) => `${id} — ${name}. Escolher ou adicionar uma tradução`,
     marks: 'Marcas',
-    marksChip: (count: number) => `Marcas (${num(count)}) — versículos que você marcou, por cor`,
+    marksChip: (count: number) => `Marcas ${num(count)} — versículos que você marcou, por cor`,
     settingsChip: 'Configurações — exibição, armazenamento, exportação e acesso do assistente',
     helpChip:
       'Ajuda — encontrar passagens, pesquisar, notas, marcas, quadros, teclado e o que significam as abreviações',
@@ -450,7 +450,7 @@ export const ptBR = {
 
   tools: {
     label: 'Formatação',
-    heading: (level: number) => `Título ${level}`,
+    heading: (level: number) => `T${level}, título ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Negrito',
     boldGlyph: 'N',
@@ -458,7 +458,7 @@ export const ptBR = {
     italicGlyph: 'I',
     code: 'Código',
     bullets: 'Lista com marcadores',
-    numbers: 'Lista numerada',
+    numbers: '1. Lista numerada',
     quote: 'Citação',
     link: 'Link para uma passagem',
   },

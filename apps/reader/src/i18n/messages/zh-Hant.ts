@@ -241,7 +241,7 @@ export const zhHant = {
     chapter: '章',
     translationChip: (id: string, name: string) => `${id} — ${name}。選擇或加入譯本`,
     marks: '標記',
-    marksChip: (count: number) => `標記（${num(count)}）— 你標記過的經文，按顏色分組`,
+    marksChip: (count: number) => `標記 ${num(count)} — 你標記過的經文，按顏色分組`,
     settingsChip: '設定 — 顯示、儲存空間、匯出與助理權限',
     helpChip: '說明 — 尋找經文、搜尋、筆記、標記、看板、鍵盤，以及各種縮寫的意思',
     selectVerse: (ref: string) => `選取${ref}`,
@@ -410,7 +410,7 @@ export const zhHant = {
 
   tools: {
     label: '格式',
-    heading: (level: number) => `${level}級標題`,
+    heading: (level: number) => `H${level}，${level}級標題`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '粗體',
     boldGlyph: 'B',
@@ -418,7 +418,7 @@ export const zhHant = {
     italicGlyph: 'I',
     code: '程式碼',
     bullets: '項目符號清單',
-    numbers: '編號清單',
+    numbers: '1. 編號清單',
     quote: '引用',
     link: '經文連結',
   },

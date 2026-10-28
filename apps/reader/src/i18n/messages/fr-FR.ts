@@ -243,7 +243,7 @@ const catalog = {
     chapter: 'Chapitre',
     translationChip: (id: string, name: string) => `${id} : ${name}. Choisir ou ajouter une traduction`,
     marks: 'Marques',
-    marksChip: (count: number) => `Marques (${num(count)}) : les versets que vous avez marqués, par couleur`,
+    marksChip: (count: number) => `Marques ${num(count)} : les versets que vous avez marqués, par couleur`,
     settingsChip: 'Paramètres : affichage, stockage, exportation et accès des assistants',
     helpChip:
       'Aide : trouver un passage, rechercher, notes, marques, tableaux, clavier et sens des abréviations',
@@ -429,7 +429,7 @@ const catalog = {
 
   tools: {
     label: 'Mise en forme',
-    heading: (level: number) => `Titre ${level}`,
+    heading: (level: number) => `T${level}, titre ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Gras',
     boldGlyph: 'G',
@@ -437,7 +437,7 @@ const catalog = {
     italicGlyph: 'I',
     code: 'Code',
     bullets: 'Liste à puces',
-    numbers: 'Liste numérotée',
+    numbers: '1. Liste numérotée',
     quote: 'Citation',
     link: 'Lien vers un passage',
   },
