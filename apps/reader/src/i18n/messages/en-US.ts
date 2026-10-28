@@ -252,7 +252,8 @@ export const enUS = {
     chapter: 'Chapter',
     translationChip: (id: string, name: string) => `${id} — ${name}. Choose or add a translation`,
     marks: 'Marks',
-    marksChip: (count: number) => `Marks (${num(count)}) — verses you have marked, by colour`,
+    /** The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3). */
+    marksChip: (count: number) => `Marks ${num(count)} — verses you have marked, by colour`,
     settingsChip: 'Settings — display, storage, export, and assistant access',
     helpChip:
       'Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean',
@@ -438,7 +439,8 @@ export const enUS = {
 
   tools: {
     label: 'Formatting',
-    heading: (level: number) => `Heading ${level}`,
+    /** Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3). */
+    heading: (level: number) => `H${level}, heading ${level}`,
     headingGlyph: (level: number) => `H${level}`,
     bold: 'Bold',
     boldGlyph: 'B',
@@ -446,7 +448,8 @@ export const enUS = {
     italicGlyph: 'I',
     code: 'Code',
     bullets: 'Bulleted list',
-    numbers: 'Numbered list',
+    /** The numbered-list button shows "1.", so its name starts with it, as the heading buttons' do (WCAG 2.5.3). */
+    numbers: '1. Numbered list',
     quote: 'Quote',
     link: 'Link to a passage',
   },

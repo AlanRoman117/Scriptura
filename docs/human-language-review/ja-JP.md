@@ -146,7 +146,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.chapter` | Chapter | 章 |
 | `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | BUNGO：文語訳聖書 (Classical)。訳を選ぶ、または追加する |
 | `reader.marks` | Marks | マーク |
-| `reader.marksChip` | Marks (7) — verses you have marked, by colour | マーク（7件）：マークした節を色ごとに表示 |
+| `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | マーク 7件：マークした節を色ごとに表示 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 設定：表示、保存、エクスポート、アシスタントのアクセス |
 | `reader.helpChip` | Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean | ヘルプ：箇所の開き方、検索、ノート、マーク、ボード、キーボード、略語の意味 |
 | `reader.selectVerse`<br><sub>A verse's number: a toggle that adds the verse to the selection or takes it out.</sub> | Select John 1:2 | ヨハネによる福音書 1:2を選択 |
@@ -274,7 +274,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.linkIn` | John 1:3-5 (KJV) | ヨハネによる福音書 1:3-5（BSB） |
 | `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | ヨハネによる福音書 1:3-5（BSB、未ダウンロード） |
 | `tools.label` | Formatting | 書式 |
-| `tools.heading` | Heading 2 | 見出し2 |
+| `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2、見出し2 |
 | `tools.headingGlyph` | H2 | H2 |
 | `tools.bold` | Bold | 太字 |
 | `tools.boldGlyph` | B | B |
@@ -282,7 +282,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.italicGlyph` | I | I |
 | `tools.code` | Code | コード |
 | `tools.bullets` | Bulleted list | 箇条書き |
-| `tools.numbers` | Numbered list | 番号付きリスト |
+| `tools.numbers`<br><sub>The numbered-list button shows "1.", so its name starts with it, as the heading buttons' do (WCAG 2.5.3).</sub> | 1. Numbered list | 1. 番号付きリスト |
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 箇所へのリンク |
 | `insert.quoted` | Quoted John 1:3-5 | ヨハネによる福音書 1:3-5を引用しました |
