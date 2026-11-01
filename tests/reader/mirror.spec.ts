@@ -19,6 +19,10 @@ import { storedBodies } from '../helpers/note';
  * No assertion waits for time to pass. The note edited is the last in the list,
  * so the rewrite-everything code has written every other file by the time this
  * one changes, and the writes counted then are the whole story.
+ *
+ * What a rename removes is here as well as in tests/unit/mirror.test.ts, because
+ * two of its guards are only real against real things: the record has to survive
+ * IndexedDB and a reload, and a stored handle has to be told from another folder's.
  */
 
 interface Harness {
@@ -27,6 +31,10 @@ interface Harness {
   failing: string[];
   refused: string[];
   lapsed: boolean;
+  /** Files the app removed, by name, in order. */
+  removed: string[];
+  /** The directory the picker hands out next. */
+  folder: string;
   /** Writes wait here while it is set. */
   hold: Promise<void> | null;
   open: number;
@@ -34,11 +42,28 @@ interface Harness {
 }
 
 const harness = (page: Page) => page.addInitScript(() => {
-  const h: Harness = { writes: [], failing: [], refused: [], lapsed: false, hold: null, open: 0, mostOpen: 0 };
+  const h: Harness = {
+    writes: [],
+    failing: [],
+    refused: [],
+    lapsed: false,
+    removed: [],
+    folder: 'mirror',
+    hold: null,
+    open: 0,
+    mostOpen: 0,
+  };
   const w = window as unknown as { __mirror: Harness; showDirectoryPicker: unknown };
   w.__mirror = h;
   w.showDirectoryPicker = async () =>
-    (await navigator.storage.getDirectory()).getDirectoryHandle('mirror', { create: true });
+    (await navigator.storage.getDirectory()).getDirectoryHandle(h.folder, { create: true });
+
+  const directory = FileSystemDirectoryHandle.prototype;
+  const removeEntry = directory.removeEntry;
+  directory.removeEntry = async function (this: FileSystemDirectoryHandle, ...args) {
+    await removeEntry.apply(this, args);
+    h.removed.push(args[0]);
+  };
 
   const file = FileSystemFileHandle.prototype;
   const createWritable = file.createWritable;
@@ -76,21 +101,94 @@ const clearWrites = (page: Page) =>
     (window as unknown as { __mirror: Harness }).__mirror.writes.length = 0;
   });
 
-const setHarness = (page: Page, change: Partial<Pick<Harness, 'failing' | 'lapsed'>>) =>
+const setHarness = (page: Page, change: Partial<Pick<Harness, 'failing' | 'lapsed' | 'folder'>>) =>
   page.evaluate((c) => {
     Object.assign((window as unknown as { __mirror: Harness }).__mirror, c);
   }, change);
 
-const fileText = (page: Page, name: string): Promise<string> =>
-  page.evaluate(async (wanted) => {
+const fileText = (page: Page, name: string, folder = 'mirror'): Promise<string> =>
+  page.evaluate(
+    async ([wanted, where]) => {
+      const root = await navigator.storage.getDirectory();
+      const dir = await root.getDirectoryHandle(where, { create: true });
+      const handle = await dir.getFileHandle(wanted).catch(() => null);
+      return handle ? (await handle.getFile()).text() : '';
+    },
+    [name, folder]
+  );
+
+/** Every file in the folder, from the folder itself rather than from the harness. */
+const fileNames = (page: Page, folder = 'mirror'): Promise<string[]> =>
+  page.evaluate(async (where) => {
     const root = await navigator.storage.getDirectory();
-    const dir = await root.getDirectoryHandle('mirror', { create: true });
-    const handle = await dir.getFileHandle(wanted).catch(() => null);
-    return handle ? (await handle.getFile()).text() : '';
-  }, name);
+    const dir = await root.getDirectoryHandle(where, { create: true });
+    const names: string[] = [];
+    for await (const name of (dir as unknown as { keys(): AsyncIterable<string> }).keys()) names.push(name);
+    return names.sort();
+  }, folder);
+
+/** A file the reader put there themselves, which the app has never heard of. */
+async function putFile(page: Page, name: string, text: string, folder = 'mirror') {
+  await page.evaluate(
+    async ([wanted, body, where]) => {
+      const root = await navigator.storage.getDirectory();
+      const dir = await root.getDirectoryHandle(where, { create: true });
+      const stream = await (await dir.getFileHandle(wanted, { create: true })).createWritable();
+      await stream.write(body);
+      await stream.close();
+    },
+    [name, text, folder]
+  );
+  // The app did not write it, so the harness's count must not say so.
+  await clearWrites(page);
+}
+
+const removals = (page: Page): Promise<string[]> =>
+  page.evaluate(() => (window as unknown as { __mirror: Harness }).__mirror.removed);
+
+/** The file recorded for a note, from the settings row beside the folder handle. */
+const recordedName = (page: Page, id: string): Promise<string | null> =>
+  page.evaluate(
+    (note) =>
+      new Promise<string | null>((resolve, reject) => {
+        const open = indexedDB.open('scriptura');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const get = open.result.transaction('settings').objectStore('settings').get('notesDirectoryFiles');
+          get.onerror = () => reject(get.error);
+          get.onsuccess = () => {
+            open.result.close();
+            resolve(get.result?.files?.[note] ?? null);
+          };
+        };
+      }),
+    id
+  );
+
+async function retitle(page: Page, id: string, title: string) {
+  await page.getByTestId('note-select').selectOption(id);
+  await page.getByTestId('note-title').fill(title);
+}
 
 const fileHas = (page: Page, name: string, text: string) =>
   expect.poll(() => fileText(page, name), { timeout: 15_000 }).toContain(text);
+
+const storedTitles = (page: Page): Promise<string[]> =>
+  page.evaluate(
+    () =>
+      new Promise<string[]>((resolve, reject) => {
+        const open = indexedDB.open('scriptura');
+        open.onerror = () => reject(open.error);
+        open.onsuccess = () => {
+          const all = open.result.transaction('notes').objectStore('notes').getAll();
+          all.onerror = () => reject(all.error);
+          all.onsuccess = () => {
+            open.result.close();
+            resolve((all.result as { title: string }[]).map((note) => note.title));
+          };
+        };
+      })
+  );
 
 const titled = (n: number, title = `Note ${String(n).padStart(3, '0')}`) => ({
   id: `note-${n}`,
@@ -126,9 +224,9 @@ async function openWith(page: Page, notes: ReturnType<typeof titled>[]) {
 }
 
 /** Choose the folder from Settings and wait out the full write it starts. */
-async function chooseFolder(page: Page, expected: number) {
+async function chooseFolder(page: Page, expected: number, button = 'Mirror to a folder') {
   await page.getByTestId('settings-open').click();
-  await page.getByRole('button', { name: 'Mirror to a folder' }).click();
+  await page.getByRole('button', { name: button }).click();
   await expect.poll(() => writes(page).then((w) => w.length), { timeout: 30_000 }).toBe(expected);
   await page.getByTestId('settings-close').click();
   await clearWrites(page);
@@ -284,4 +382,139 @@ test('two autosaves never write at once, and the newest text is what stays', asy
 
   await fileHas(page, 'Note 001.md', 'abcdef');
   expect(await page.evaluate(() => (window as unknown as { __mirror: Harness }).__mirror.mostOpen)).toBe(1);
+});
+
+test.describe('a rename', () => {
+  test('removes the file it replaced, and nothing else in the folder', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old'), titled(1, 'Other')]);
+    await putFile(page, 'my own file.md', 'the reader’s');
+    await chooseFolder(page, 2);
+
+    await retitle(page, 'note-0', 'New');
+
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['New.md', 'Other.md', 'my own file.md']);
+    expect(await fileText(page, 'New.md')).toContain('Body 0');
+    expect(await fileText(page, 'my own file.md')).toBe('the reader’s');
+    expect(await removals(page)).toEqual(['Old.md']);
+  });
+
+  test('twice in a row leaves one file, not a trail', async ({ page }) => {
+    await openWith(page, [titled(0, 'Ps')]);
+    await chooseFolder(page, 1);
+
+    await retitle(page, 'note-0', 'Psal');
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['Psal.md']);
+    await retitle(page, 'note-0', 'Psalm');
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['Psalm.md']);
+  });
+
+  test('two notes swapping titles keep both files', async ({ page }) => {
+    await openWith(page, [titled(0, 'First'), titled(1, 'Second')]);
+    await chooseFolder(page, 2);
+
+    // Through a third name, as a reader must. It is the moment each holds the other's.
+    await retitle(page, 'note-0', 'Passing');
+    await retitle(page, 'note-1', 'First');
+    await retitle(page, 'note-0', 'Second');
+
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['First.md', 'Second.md']);
+    await fileHas(page, 'First.md', 'Body 1');
+    await fileHas(page, 'Second.md', 'Body 0');
+  });
+
+  test('that fails to write keeps the old file', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old')]);
+    await chooseFolder(page, 1);
+
+    await setHarness(page, { failing: ['New.md'] });
+    await retitle(page, 'note-0', 'New');
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __mirror: Harness }).__mirror.refused.length), {
+        timeout: 15_000,
+      })
+      .toBeGreaterThan(0);
+
+    expect(await fileNames(page)).toContain('Old.md');
+    expect(await removals(page)).toEqual([]);
+  });
+
+  test('after a reload still removes the old file, because the record outlived the page', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old')]);
+    await chooseFolder(page, 1);
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('Old.md');
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+
+    await retitle(page, 'note-0', 'New');
+
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['New.md']);
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('New.md');
+  });
+
+  test('reaching a different folder removes nothing there: its record starts empty', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old')]);
+    await chooseFolder(page, 1);
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('Old.md');
+
+    // Permission has lapsed, so the rename reaches no folder and the record
+    // still says Old.md. Then a new folder, holding a file of that very name.
+    await setHarness(page, { lapsed: true });
+    await retitle(page, 'note-0', 'New');
+    await expect.poll(async () => (await storedTitles(page)).join(), { timeout: 15_000 }).toContain('New');
+    await putFile(page, 'Old.md', 'the reader’s, in the other folder', 'mirror-b');
+    await setHarness(page, { lapsed: false, folder: 'mirror-b' });
+    await chooseFolder(page, 1, 'Choose another folder');
+
+    await expect.poll(() => fileNames(page, 'mirror-b'), { timeout: 15_000 }).toEqual(['New.md', 'Old.md']);
+    expect(await fileText(page, 'Old.md', 'mirror-b')).toBe('the reader’s, in the other folder');
+    expect(await removals(page)).toEqual([]);
+    expect(await fileNames(page)).toEqual(['Old.md']);
+  });
+
+  test('with a damaged record removes nothing, and the record is whole again after', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old')]);
+    await chooseFolder(page, 1);
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('Old.md');
+
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('scriptura');
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const tx = open.result.transaction('settings', 'readwrite');
+            tx.objectStore('settings').put({ files: 'not what it should be' }, 'notesDirectoryFiles');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          };
+        })
+    );
+
+    await retitle(page, 'note-0', 'New');
+
+    await expect.poll(() => fileNames(page), { timeout: 15_000 }).toEqual(['New.md', 'Old.md']);
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('New.md');
+    expect(await removals(page)).toEqual([]);
+  });
+});
+
+test('deleting a note keeps its file, and forgets it', async ({ page }) => {
+  await openWith(page, [titled(0, 'Keep me'), titled(1, 'Other')]);
+  await chooseFolder(page, 2);
+  await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('Keep me.md');
+
+  await page.getByTestId('note-select').selectOption('note-0');
+  await page.getByTestId('note-delete').click();
+  await page.getByTestId('confirm-accept').click();
+  await expect(page.getByTestId('note-select').locator('option')).toHaveCount(1);
+
+  // Nothing writes until the next autosave, which is where the note is forgotten.
+  await typeIn(page, 'note-1', 'abc');
+  await fileHas(page, 'Other.md', 'abc');
+  await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe(null);
+
+  expect(await fileText(page, 'Keep me.md')).toContain('Body 0');
+  expect(await removals(page)).toEqual([]);
 });
