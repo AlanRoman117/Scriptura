@@ -1,6 +1,6 @@
-# Reader: the interface in every language the Bibles are in
+# Reader: the interface in seven languages
 
-The reader's interface speaks the seven languages of the Bibles it offers:
+The reader's interface speaks seven languages. Five are the languages of the Bibles it offers; Chinese has no Bible in the library since the withdrawal of 2026-11-01 (`docs/translations-status.md`), and its interface stays, over the bundled English Bible:
 
 | Tag | Picker label | Register | Quotes | Copy |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@ The reader's interface speaks the seven languages of the Bibles it offers:
 
 Each tag is built from subtags in the [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry), written in canonical case. The page's `lang` is always one of them, so a screen reader picks the right voice.
 
-**Chinese takes a script, not a region**, because that is what distinguishes the two: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau, and the Bible behind both is one translation in two character sets. The two catalogs are separate texts rather than a conversion — Taiwan writes 搜尋, 設定, 儲存, 匯出 and 說明 where the mainland writes 搜索, 设置, 保存, 导出 and 帮助, and quotes with 「」 rather than “ ”. `tests/unit/i18n.test.ts` fails if a mainland word reaches the traditional catalog in traditional characters.
+**Chinese takes a script, not a region**, because that is what distinguishes the two: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau. The two catalogs are separate texts rather than a conversion — Taiwan writes 搜尋, 設定, 儲存, 匯出 and 說明 where the mainland writes 搜索, 设置, 保存, 导出 and 帮助, and quotes with 「」 rather than “ ”. `tests/unit/i18n.test.ts` fails if a mainland word reaches the traditional catalog in traditional characters.
 
 **Release waits on the six reviews** in [Review](#review).
 
@@ -109,6 +109,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] Bible terms are the ones readers in that language expect (see the glossary).
 - [ ] The register is consistent: *tú* in Spanish, *vous* in French, です・ます in Japanese, *você* in Portuguese.
 - [ ] For Chinese: the characters and the words are the ones that script's readers use, and the punctuation is full-width.
+- [ ] `library.noLongerOffered` says plainly that a copy already downloaded stays until it is removed, and cannot be downloaded again. It is seen on the row of a translation the library has stopped offering, and in the question before removing it.
 - [ ] Sentences are short and plain (3.1.5 for interface text).
 - [ ] Nothing is cut off, overlaps or wraps badly in the screenshots.
 - [ ] Punctuation, numbers and plurals follow the language.

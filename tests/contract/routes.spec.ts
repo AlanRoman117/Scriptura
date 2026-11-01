@@ -68,7 +68,7 @@ test('GET chapter and verse have the documented shapes', async ({ request }) => 
 
 test('the same slug addresses every translation, in every language', async ({ request }) => {
   const texts = await Promise.all(
-    ['kjv', 'rv1909', 'lsg1910', 'bungo', 'ostervald'].map(async (id) =>
+    ['kjv', 'rv1909', 'lsg1910', 'bungo', 'blivre'].map(async (id) =>
       (await (await request.get(`/translations/${id}/john/3/16`)).json()).text
     )
   );

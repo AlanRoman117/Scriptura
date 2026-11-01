@@ -389,6 +389,8 @@ export const enUS = {
     download: 'Download',
     removeActive: (name: string) => `Remove ${name} — switch to another translation first`,
     removeFromDevice: (name: string) => `Remove ${name} from this device`,
+    /** Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it. */
+    noLongerOffered: 'No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again.',
     note: 'A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation.',
     progress: (name: string, percent: string) => `${name}: ${percent} downloaded`,
     downloaded: (name: string) => `${name} downloaded`,

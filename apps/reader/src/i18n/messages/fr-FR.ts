@@ -380,6 +380,7 @@ const catalog = {
     download: 'Télécharger',
     removeActive: (name: string) => `Retirer ${name} : passez d’abord à une autre traduction`,
     removeFromDevice: (name: string) => `Retirer ${name} de cet appareil`,
+    noLongerOffered: 'Elle n’est plus proposée. Cette copie reste sur cet appareil jusqu’à ce que vous la retiriez, et ne pourra plus être téléchargée.',
     note: 'Une traduction téléchargée reste sur cet appareil et peut être lue hors ligne. En retirer une ne touche jamais à vos notes ni à vos marques : elles appartiennent au passage, pas à une traduction.',
     progress: (name: string, percent: string) => `${name} : ${percent} téléchargés`,
     downloaded: (name: string) => `${name} téléchargée`,

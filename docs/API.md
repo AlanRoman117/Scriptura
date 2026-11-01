@@ -68,6 +68,10 @@ covered by a test, so they cannot rot.
 ]
 ```
 
+A translation can leave this list. `cuvs`, `cuvt` and `ostervald` were withdrawn
+on 2026-11-01 over their licences (`docs/translations-status.md`), and every route
+under them now answers 404.
+
 Also answered as `/translations.json`, the name the static tree gives it: the
 reader fetches this list directly, so the same string has to work against a
 live server and a static host (see the offline bundle below).

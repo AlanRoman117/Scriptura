@@ -62,8 +62,8 @@ describe('scripts without word separators', () => {
   });
 
   test('nor does a Chinese one — the same rule, reached through Han', () => {
-    // The Union Version is written without spaces too, so the exclusion that
-    // was added for Japanese is what keeps Chinese word mode honest.
+    // Chinese is written without spaces too, so the exclusion that was added
+    // for Japanese is what keeps Chinese word mode honest.
     expect(hasWordBoundaries('神')).toBe(false);
     expect(hasWordBoundaries('耶穌')).toBe(false);
     expect(hasWordBoundaries('约翰')).toBe(false);

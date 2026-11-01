@@ -7,22 +7,28 @@ import { join } from 'node:path';
  * The pictures in docs/human-language-review — not a test.
  *
  * One cropped screenshot for each section of a reviewer's guide, in each
- * interface language, with a Bible in that language open: a reviewer reads
- * "Juan 1:3-5" where a Spanish reader would, not "John". Cropped to the part
+ * interface language, with a Bible in that language open where the library has
+ * one: a reviewer reads "Juan 1:3-5" where a Spanish reader would, not "John".
+ * Chinese has none at present, so its pictures show the bundled KJV, which is
+ * what a reader of it sees. Cropped to the part
  * of the page a section is about, so the words are their real size where
  * GitHub shows the guide. `npm run review:guide` runs this and then writes
  * the guides around the pictures (scripts/language-review.ts).
  */
 
-/** Each interface language, the Bible a reader of it is offered first, and a word to search for in it. */
+/**
+ * Each interface language, the Bible a reader of it is offered first (`null`:
+ * none, so the bundled KJV stays open), and a word to search for in it.
+ * The same choices as `LANGUAGES` in scripts/language-review.ts.
+ */
 const LOCALES = {
   'en-US': { bible: null, other: 'bsb', word: 'light' },
   'es-MX': { bible: 'rv1909', other: 'kjv', word: 'luz' },
   'fr-FR': { bible: 'lsg1910', other: 'kjv', word: 'lumière' },
   'ja-JP': { bible: 'bungo', other: 'kjv', word: '光' },
   'pt-BR': { bible: 'blivre', other: 'kjv', word: 'luz' },
-  'zh-Hans': { bible: 'cuvs', other: 'kjv', word: '光' },
-  'zh-Hant': { bible: 'cuvt', other: 'kjv', word: '光' },
+  'zh-Hans': { bible: null, other: 'bsb', word: 'light' },
+  'zh-Hant': { bible: null, other: 'bsb', word: 'light' },
 } as const;
 type Locale = keyof typeof LOCALES;
 
@@ -139,8 +145,9 @@ for (const locale of Object.keys(LOCALES) as Locale[]) {
       await page.getByTestId('library-open').click();
       await shoot(page, dir, '08-translations', [BIBLE], 0);
 
-      // Beside another translation: the bundled English one, or for English a second English one.
-      if (locale === 'en-US') {
+      // Beside another translation: the bundled English one, or where that is the
+      // one open, a second English one.
+      if (LOCALES[locale].bible === null) {
         await page.getByTestId(`library-get-${other}`).click();
         await expect(page.getByTestId(`library-read-${other}`)).toBeVisible({ timeout: 90_000 });
       }

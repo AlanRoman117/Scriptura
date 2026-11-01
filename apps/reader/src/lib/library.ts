@@ -9,6 +9,7 @@
 import type { TranslationMeta } from '@scriptura/core/types';
 import { SETTINGS, TRANSLATIONS, del, get, keys, put } from './db';
 import { API_BASE, DEFAULT_TRANSLATION, type FullTranslation } from './api';
+import { outsideCatalog, storedEntry } from './stored';
 
 export { downloadPercent, formatBytes } from './units';
 
@@ -25,6 +26,14 @@ export interface CatalogEntry extends TranslationMeta {
    * is asked.
    */
   approxBytes?: number;
+  /**
+   * Set on a row built from a stored copy rather than from the catalog.
+   * `no-longer-offered`: a catalog was read and does not list it. Its stored
+   * licence and year are not repeated, since a wrong record of them is how a
+   * translation comes to be withdrawn. `catalog-unavailable`: no catalog could
+   * be read, so nothing can be said about whether it is offered.
+   */
+  storedOnly?: 'no-longer-offered' | 'catalog-unavailable';
 }
 
 interface CatalogFile {
@@ -61,6 +70,23 @@ export async function loadCatalog(): Promise<CatalogEntry[]> {
 
   return [...merged.values()];
 }
+
+/**
+ * A row for each stored translation the catalog does not list (lib/stored.ts).
+ *
+ * Reads each of those whole, since IndexedDB holds the metadata inside the
+ * Bible. There are normally none, and it is only asked when the library opens.
+ */
+export const storedOutsideCatalog = (catalog: CatalogEntry[], installed: string[]): Promise<CatalogEntry[]> =>
+  Promise.all(
+    outsideCatalog(catalog, installed).map(async (id) =>
+      storedEntry(
+        id,
+        await get<FullTranslation>(TRANSLATIONS, id).catch(() => undefined),
+        catalog.length > 0
+      )
+    )
+  );
 
 /** The ids currently held in IndexedDB, readable with the network off. */
 export const installedIds = (): Promise<string[]> =>

@@ -37,7 +37,12 @@ export const YOURS = '<!-- YOURS: everything below this line is kept when the gu
 interface Language {
   /** Its name in English, for the people who maintain the guides. */
   english: string;
-  /** The Bible the pictures are taken with, and whose book names the examples use. */
+  /**
+   * The Bible the pictures are taken with, and whose book names the examples
+   * use: the one the app offers this language first, or `kjv`, bundled with the
+   * app, where the library has none in it (`hasNoBible`). The same choices as
+   * `LOCALES` in tests/review/guide.spec.ts.
+   */
   bible: string;
   /** The other translation in the comparison picture. */
   other: string;
@@ -117,9 +122,10 @@ const LANGUAGES: Record<Locale, Language> = {
   },
   'zh-Hans': {
     english: 'Chinese (Simplified)',
-    bible: 'cuvs',
-    other: 'kjv',
-    word: '光',
+    // No Chinese Bible is offered since `cuvs` was withdrawn (docs/translations-status.md).
+    bible: 'kjv',
+    other: 'bsb',
+    word: 'light',
     form: 'translation-zh-hans.yml',
     voice: [
       'The reader is addressed as 你, in a plain, even tone.',
@@ -130,9 +136,10 @@ const LANGUAGES: Record<Locale, Language> = {
   },
   'zh-Hant': {
     english: 'Chinese (Traditional)',
-    bible: 'cuvt',
-    other: 'kjv',
-    word: '光',
+    // No Chinese Bible is offered since `cuvt` was withdrawn (docs/translations-status.md).
+    bible: 'kjv',
+    other: 'bsb',
+    word: 'light',
     form: 'translation-zh-hant.yml',
     voice: [
       'The reader is addressed as 你, in a plain, even tone.',
@@ -155,9 +162,14 @@ interface Section {
   look: string[];
   /** For the English guide, where English is shown something else: captions by picture, and its own checklist. */
   english?: { captions?: Record<string, string>; look?: string[] };
+  /** For a language the library has no Bible in, whose reader stays with the English one. */
+  noBible?: { about?: string; captions?: Record<string, string>; look?: string[] };
   /** The top-level sections of the catalog whose texts belong here. */
   keys: string[];
 }
+
+/** A language other than English that the library has no Bible in, so the guide must not promise it one. */
+const hasNoBible = (locale: Locale): boolean => locale !== 'en-US' && LANGUAGES[locale].bible === 'kjv';
 
 const TIERS: { title: string; note: string; sections: Section[] }[] = [
   {
@@ -178,6 +190,15 @@ const TIERS: { title: string; note: string; sections: Section[] }[] = [
         ],
         english: {
           captions: { '01-first-visit': 'What a new reader sees: the English Bible the app arrives with. A reader of English is offered nothing first.' },
+          look: ['Nothing in the bar is cut short or squeezed, on the phone above all.'],
+        },
+        noBible: {
+          about:
+            'The bar across the top chooses the book, the chapter and the translation, and opens Marks, Settings and Help. The library has no Bible in this language at present, so a new reader is offered nothing first and reads the English Bible the app arrives with. The texts of the offer are in the table below, for the day one is offered: they are not on the screen now.',
+          captions: {
+            '01-first-visit': 'What a new reader sees: the interface in this language, over the English Bible the app arrives with.',
+            '14-phone-reading': 'The same, on a phone.',
+          },
           look: ['Nothing in the bar is cut short or squeezed, on the phone above all.'],
         },
         keys: ['app', 'reader', 'panels', 'common', 'offer'],
@@ -272,6 +293,13 @@ const TIERS: { title: string; note: string; sections: Section[] }[] = [
           'The examples of references are ones that work in a Bible in this language.',
           'The names of keys (Enter, Shift, Escape) are how this language’s keyboards and manuals name them.',
         ],
+        noBible: {
+          look: [
+            'It reads well from start to finish as an explanation, not as a list of translated sentences.',
+            'The examples of references are in English, because the Bible they work in is: the one open in the pictures.',
+            'The names of keys (Enter, Shift, Escape) are how this language’s keyboards and manuals name them.',
+          ],
+        },
         keys: ['help'],
       },
     ],
@@ -591,6 +619,7 @@ export function guide(locale: Locale): string {
   const language = LANGUAGES[locale];
   const label = LOCALE_LABELS[locale];
   const source = locale === 'en-US';
+  const noBible = hasNoBible(locale);
   const [en, them] = [world('en-US'), world(locale)];
   const { glossary, register } = plan();
   const said = notes();
@@ -651,7 +680,9 @@ export function guide(locale: Locale): string {
     `- Names and numbers inside a text are examples: "${them.passage}", "${them.bible.name}", "${fmt.number(1382)}". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.`,
     '- A word in braces, such as `{count}`, is a place where the app puts a number or a name. Leave it as it is; it may move within the sentence.',
     '- `␣` marks a space at the start or end of a text that has to stay, and <kbd>Enter</kbd> is a key on the keyboard.',
-    `- The pictures were taken with ${source ? 'the Berean Standard Bible' : `the Bible "${them.bible.name}"`} open, so the names of books are that Bible's own.`,
+    noBible
+      ? `- The pictures were taken with the "${them.bible.name}" open, the English Bible the app arrives with, because the library has no Bible in ${language.english} at present. So the names of books are in English, as a reader of this language sees them today.`
+      : `- The pictures were taken with the Bible "${them.bible.name}" open, so the names of books are that Bible's own.`,
     '',
     '---',
     '',
@@ -743,8 +774,8 @@ export function guide(locale: Locale): string {
     for (const section of tier.sections) {
       n += 1;
       const texts = table(section.keys);
-      say(`#### 2.${n} ${section.title}`, '', section.about, '');
-      const english = locale === 'en-US' ? section.english : undefined;
+      const english = source ? section.english : noBible ? section.noBible : undefined;
+      say(`#### 2.${n} ${section.title}`, '', section.noBible?.about && noBible ? section.noBible.about : section.about, '');
       for (const [file, caption] of section.pictures) picture(file, english?.captions?.[file] ?? caption);
       say(
         ...(english?.look ?? section.look).map((item) => `- [ ] ${item}`),
@@ -778,7 +809,11 @@ export function guide(locale: Locale): string {
     '',
     'A picture shows words standing still. What you are looking for here is what only use can show: a word that does not fit its button, a message that arrives at the wrong moment, a sentence that is right alone and wrong after the one before it.',
     '',
-    ...(source ? [] : [`- [ ] Accept the Bible the app offers in your language, and read the first chapter of John.`]),
+    ...(source
+      ? []
+      : noBible
+        ? [`- [ ] Read the first chapter of John. It is in English: the library has no Bible in your language at present, so none is offered.`]
+        : [`- [ ] Accept the Bible the app offers in your language, and read the first chapter of John.`]),
     '- [ ] Press a verse, then two more. Read what the row says, then press **' + t.verseActions.quote + '**.',
     '- [ ] Read the note that was made, and the line beneath it.',
     '- [ ] Type a word into the search box and read the count. Open the full list of results.',
@@ -900,7 +935,7 @@ export function index(): string {
     '- **What a reviewer wrote is kept**: everything under `YOURS`, and every box they ticked whose words have not changed.',
     '- **When corrections come back**, apply them to the catalog file, run both commands, and mark the row in the plan.',
     '',
-    'The pictures are cropped to the part of the page a section is about, so the words are their real size where GitHub shows the guide. They are taken with a Bible in the reviewer\'s language open, the one the app offers a new reader first.',
+    'The pictures are cropped to the part of the page a section is about, so the words are their real size where GitHub shows the guide. They are taken with a Bible in the reviewer\'s language open, the one the app offers a new reader first. Where the library has none, as for Chinese at present, they are taken with the English Bible the app arrives with.',
     '',
   ].join('\n');
 }

@@ -375,6 +375,7 @@ export const esMX = {
     download: 'Descargar',
     removeActive: (name: string) => `Quitar ${name}: primero cambia a otra traducción`,
     removeFromDevice: (name: string) => `Quitar ${name} de este dispositivo`,
+    noLongerOffered: 'Ya no se ofrece. Esta copia se queda en este dispositivo hasta que la quites, y no se podrá volver a descargar.',
     note: 'Una traducción descargada se queda en este dispositivo y se puede leer sin conexión. Quitar una nunca toca tus notas ni tus marcas: ambas pertenecen al pasaje, no a una traducción.',
     progress: (name: string, percent: string) => `${name}: ${percent} descargado`,
     downloaded: (name: string) => `Se descargó ${name}`,

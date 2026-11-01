@@ -361,6 +361,7 @@ export const zhHant = {
     download: '下載',
     removeActive: (name: string) => `移除${name} — 請先切換到其他譯本`,
     removeFromDevice: (name: string) => `從本裝置上移除${name}`,
+    noLongerOffered: '此譯本已不再提供。這份副本會保留在本裝置上，直到你將它移除；移除後無法再次下載。',
     note: '下載後的譯本會存在本裝置上，可以離線閱讀。移除譯本不會影響你的筆記和標記：兩者都屬於經文本身，而不屬於某個譯本。',
     progress: (name: string, percent: string) => `${name}：已下載${percent}`,
     downloaded: (name: string) => `${name}已下載`,

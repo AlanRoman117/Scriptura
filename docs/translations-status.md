@@ -16,11 +16,8 @@ license before its data may be committed.**
 | `rv1909` | Reina Valera 1909 | es | Public domain | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | Complete |
 | `vbl` | Versión Biblia Libre | es | CC BY-SA 4.0 | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | Complete |
 | `lsg1910` | Louis Segond 1910 | fr | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
-| `ostervald` | Bible Ostervald (1867) | fr | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | Complete |
 | `bungo` | 文語訳聖書 (Classical) | ja | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | Complete |
 | `martin1744` | Bible Martin 1744 | fr | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | Complete |
-| `cuvs` | 新标点和合本 (Union Version, 1919) | zh-Hans | Public domain | [eBible `cmn-cu89s`](https://ebible.org/cmn-cu89s/) | `usfx` | Complete |
-| `cuvt` | 新標點和合本 (Union Version, 1919) | zh-Hant | Public domain | [eBible `cmn-cu89t`](https://ebible.org/cmn-cu89t/) | `usfx` | Complete |
 | `blivre` | Bíblia Livre | pt-BR | CC BY 4.0 | [eBible `porbr2018`](https://ebible.org/porbr2018/) | `usfx` | Complete |
 
 **Status key:**
@@ -40,9 +37,11 @@ Confirm any eBible id against [eBible's own index](https://ebible.org/Scriptures
 rather than constructing it by hand. Several plausible-looking guesses are
 wrong — `engasv` returns 404; the American Standard Version is `eng-asv`.
 
-Three translations originally filed as needing a bespoke source turned out to be
-on eBible already: `bsb` (`engbsb`, the post-2023 public-domain release),
-`ostervald` (`fra_fob`), and `asv` (`eng-asv`).
+Two translations originally filed as needing a bespoke source turned out to be
+on eBible already: `bsb` (`engbsb`, the post-2023 public-domain release) and `asv`
+(`eng-asv`). A third seemed to, `fra_fob` as the Ostervald of 1867, and was not
+that text: see [Withdrawn translations](#withdrawn-translations). An id on eBible
+says where a text can be had, not which edition it is.
 
 ### `bungo` — 文語訳聖書
 The originally planned source, `bible.salterrae.net`, **no longer resolves in
@@ -80,6 +79,38 @@ opens and closes before `Hag.1`). `scripts/ingest.py` handles it; see the
 `_osis_marker` notes in CLAUDE.md.
 
 
+## Withdrawn translations
+
+These were in this log as complete and public domain, and were removed from
+`data/` on **2026-11-01** when their records turned out to be wrong. Git history
+keeps them as they were.
+
+| ID | Recorded as | What it is | eBible source |
+|---|---|---|---|
+| `cuvs` | Chinese Union Version 1919, simplified, public domain | 新标点和合本, the 1988/89 United Bible Societies New Punctuation revision | `cmn-cu89s` |
+| `cuvt` | Chinese Union Version 1919, traditional, public domain | 新標點和合本, the same revision in traditional script | `cmn-cu89t` |
+| `ostervald` | Bible Ostervald 1867, public domain | The 1996 revision, listed elsewhere as "Copyright © 1996 Mission Baptiste Maranatha" | `fra_fob` |
+
+The signs, for whoever looks at a source like these again:
+
+- **`cuvs`/`cuvt`.** The names are the revision's: 吕便, where the 1919 text has 流便.
+  eBible's own file labels it "Chinese Union New Punctuation 1989", and the Hong
+  Kong Bible Society acts as copyright agent.
+- **`ostervald`.** A 1996 copyright notice from Mission Baptiste Maranatha is
+  attached to this text elsewhere, whatever year the file's own label gives.
+
+`scripts/validate.py` refuses the three ids, whole; the eBible ids, in a directory
+name or in `source_url`; and the names and notices above, in `name` or
+`attribution`. ⚠️ It blocks these sources and not the works they claimed to be: the
+Ostervald of 1867 and the Union Version of 1919 are themselves free, and either can
+be added under a new id from a source that really carries it.
+
+Readers keep what they downloaded. The reader still opens a stored copy, and its
+library draws a row from it, saying it is no longer offered and offering to remove
+it (`apps/reader/src/lib/stored.ts`, `tests/reader/withdrawn.spec.ts`). Nothing is
+deleted from a device without its owner's press. There is no Chinese Bible in the
+library until a text with a sound licence is found; the interface stays in Chinese.
+
 ## Forbidden translations
 
 `scripts/validate.py` actively blocks these — by directory id and by metadata
@@ -91,7 +122,9 @@ marker — and fails the build if either appears.
 | **口語訳聖書 / Kougo (1954/55)** | US copyright until 2049–2050 via URAA restoration. |
 | **개역한글판 / Korean Revised Version (1952/1961)** | Public domain in Korea since 2012; US copyright restored by the URAA until 2056. The same trap as Kougo — see below. |
 | **개역개정판 / NKRV (1998)** | Under copyright, Korean Bible Society. |
-| **和合本修訂版 / RCUV (2010), 新譯本 / CNV** | Revisions still under copyright. The 1919 和合本 itself is in the library as `cuvs`/`cuvt`. |
+| **和合本修訂版 / RCUV (2010), 新譯本 / CNV** | Revisions still under copyright. |
+| **新标点和合本 / 新標點和合本 (eBible `cmn-cu89s`, `cmn-cu89t`; formerly `cuvs`, `cuvt`)** | The 1988/89 United Bible Societies New Punctuation revision, for which the Hong Kong Bible Society acts as copyright agent. Not the 1919 Union Version it was recorded as: [withdrawn](#withdrawn-translations). |
+| **The 1996 revision of the Bible Ostervald (eBible `fra_fob`; formerly `ostervald`)** | "Copyright © 1996 Mission Baptiste Maranatha". Not the 1867 text it was recorded as: [withdrawn](#withdrawn-translations). |
 | **ARA, ARC 1995/2009, ACF, NVI, NTLH (Brazilian Portuguese)** | All under copyright — Sociedade Bíblica do Brasil and Sociedade Bíblica Trinitária. The library carries Bíblia Livre instead. |
 
 ### The Korean trap: the same shape, a different label

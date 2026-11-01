@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { chineseBible } from '../helpers/chinese-bible';
+import { returnWith } from '../helpers/stored-bible';
 
 /**
  * Language of parts (3.1.2): where the interface's language ends and a
@@ -155,10 +157,8 @@ test.describe('a Spanish Bible beside an English one, under an English interface
 test.describe('a Chinese Bible, in Vellum, under an English interface', () => {
   test('the book name carries its language, and keeps its own spacing', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('scriptura-display', JSON.stringify({ style: 'vellum' })));
-    await open(page);
-    await page.getByTestId('library-open').click();
-    await page.getByTestId('library-get-cuvs').click();
-    await page.getByTestId('library-read-cuvs').click({ timeout: 60_000 });
+    // No Chinese Bible is in the library at present, but a reader may hold one.
+    await returnWith(page, chineseBible('zhs', 'zh-Hans'), { active: 'zhs' });
     await expect(page.getByTestId('chapter-title')).toContainText('约翰福音');
 
     const book = page.locator('.chapter__book');

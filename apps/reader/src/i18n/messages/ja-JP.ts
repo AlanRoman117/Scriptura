@@ -358,6 +358,7 @@ export const jaJP = {
     download: 'ダウンロード',
     removeActive: (name: string) => `${name}を削除（先にほかの訳に切り替えてください）`,
     removeFromDevice: (name: string) => `${name}をこの端末から削除`,
+    noLongerOffered: '現在は提供していません。この端末のコピーは削除するまで残りますが、もう一度ダウンロードすることはできません。',
     note: 'ダウンロードした訳はこの端末に残り、オフラインで読めます。訳を削除しても、ノートやマークは消えません。どちらも訳ではなく箇所に付いているからです。',
     progress: (name: string, percent: string) => `${name}：${percent}をダウンロードしました`,
     downloaded: (name: string) => `${name}のダウンロードが完了しました`,

@@ -28,6 +28,12 @@ describe('which Bible a device opens on', () => {
     expect(openingOrder('web', ['rv1909', 'ylt'])).toEqual(['web', 'kjv', 'rv1909', 'ylt']);
   });
 
+  test('a stored translation the catalog no longer lists is opened all the same', () => {
+    // The order knows nothing of the catalog, and must not: nothing leaves a
+    // device, or stops opening, because the library stopped offering it.
+    expect(openingOrder('cuvs', ['kjv', 'cuvs'])[0]).toBe('cuvs');
+  });
+
   test('nothing is tried twice', () => {
     expect(openingOrder('kjv', ['kjv', 'bsb'])).toEqual(['kjv', 'bsb']);
   });
