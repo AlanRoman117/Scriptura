@@ -256,7 +256,13 @@ describe('runQuery and the narrowing it replaced, on every translation', () => {
     async (id) => {
       const bible = await loadTranslation(id);
       const corners = ['kjv', 'rv1909', 'bungo'].includes(id) ? CORNER_QUERIES : [];
-      const queries = [...WORD_QUERIES, ...corners, ...queriesFrom(bible, 16)];
+      // Every query on every Bible takes about a minute, in a suite that otherwise
+      // takes seconds. CI runs it all; on a laptop three scripts run in full and the
+      // rest get a light pass, so a daily `npm test` stays quick.
+      const queries =
+        process.env.CI || corners.length > 0
+          ? [...WORD_QUERIES, ...corners, ...queriesFrom(bible, 16)]
+          : WORD_QUERIES.slice(0, 4);
       const drifted: string[] = [];
 
       for (const query of queries) {
@@ -291,10 +297,13 @@ describe('runQuery and the narrowing it replaced, on every translation', () => {
    * that are not in canonical order, and all three tiers.
    */
   test('the comparison reached the cases that could drift', () => {
-    expect(seen.runs).toBeGreaterThan(2500);
-    expect(seen.found).toBeGreaterThan(1000);
-    expect(seen.multiTerm).toBeGreaterThan(500);
-    expect(seen.reordered).toBeGreaterThan(50);
+    // The floors are for the full run in CI; a laptop's lighter run need only have
+    // reached each kind of case.
+    const atLeast = (floor: number) => (process.env.CI ? floor : 0);
+    expect(seen.runs).toBeGreaterThan(atLeast(2500));
+    expect(seen.found).toBeGreaterThan(atLeast(1000));
+    expect(seen.multiTerm).toBeGreaterThan(atLeast(500));
+    expect(seen.reordered).toBeGreaterThan(atLeast(50));
     expect([...seen.tiers].sort()).toEqual([1, 2, 3]);
   });
 });

@@ -7,6 +7,23 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Changed
+
+- Typing a search of several words no longer stutters on a slower device. The
+  results and their order are unchanged.
+- Typing in a very long note is quicker, and finding the cursor no longer copies
+  the note on every key.
+- Typing and dragging stay quicker when a note shows a board, because card labels
+  are no longer measured again each time.
+- Typing on a heading line in the Plain text editor no longer queues an extra
+  redraw per key. The heading shown beside the note also stays right when you
+  switch editors or leave preview.
+- Moving or resizing a card on a large board writes to storage far less often,
+  and nothing is lost if you leave in the middle of a move.
+- Saving to a folder now writes only the notes you changed, not every note on
+  every save.
+- Express, in the example API server, is updated to 5.3.0.
+
 ## [0.1.0-preview.14] - 2026-11-01
 
 The fourteenth preview says plainly which Bible you are reading and corrects what
