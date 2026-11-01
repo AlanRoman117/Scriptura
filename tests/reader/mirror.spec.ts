@@ -169,6 +169,35 @@ test('two notes with one title keep their own files', async ({ page }) => {
   expect(await fileText(page, 'Psalm.md')).toContain('Body 0');
 });
 
+test('"T", "T" and "T (2)" are three files', async ({ page }) => {
+  await openWith(page, [titled(0, 'T'), titled(1, 'T'), titled(2, 'T (2)')]);
+  // Three files is the whole point: the old names were two, so this would wait
+  // for a third write that never came.
+  await chooseFolder(page, 3);
+
+  expect(await fileText(page, 'T.md')).toContain('Body 0');
+  expect(await fileText(page, 'T (3).md')).toContain('Body 1');
+  expect(await fileText(page, 'T (2).md')).toContain('Body 2');
+});
+
+test('a note edited and reloaded to the top of the list keeps its file', async ({ page }) => {
+  await openWith(page, [titled(0, 'Psalm'), titled(1, 'Psalm')]);
+  await chooseFolder(page, 2);
+  await typeIn(page, 'note-1', 'abc');
+  await fileHas(page, 'Psalm (2).md', 'abc');
+
+  // `listNotes` sorts by `updated`, so note 1 is now at the top of the list. Its
+  // first autosave after the reload is a full write, which is what would swap them.
+  await page.reload();
+  await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('note-select').locator('option').first()).toHaveAttribute('value', 'note-1');
+  await typeIn(page, 'note-1', 'xyz');
+
+  await fileHas(page, 'Psalm (2).md', 'abcxyz');
+  await fileHas(page, 'Psalm.md', 'Body 0');
+  expect(await fileText(page, 'Psalm.md')).not.toContain('abc');
+});
+
 test('a write that failed is made at the next autosave', async ({ page }) => {
   await openWith(page, [titled(0), titled(1), titled(2)]);
   await chooseFolder(page, 3);

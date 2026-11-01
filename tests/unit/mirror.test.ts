@@ -1,4 +1,4 @@
-import { filesToWrite, mirrorFiles, writeMirror, type MirrorFile } from '../../apps/reader/src/lib/export';
+import { fileKey, filesToWrite, mirrorFiles, writeMirror, type MirrorFile } from '../../apps/reader/src/lib/export';
 import { enUS } from '../../apps/reader/src/i18n/messages/en-US';
 import type { Note } from '../../apps/reader/src/lib/notes';
 
@@ -11,19 +11,39 @@ import type { Note } from '../../apps/reader/src/lib/notes';
  * tests/reader/mirror.spec.ts drives the same thing through the app.
  */
 
-const note = (id: string, title: string, body = `body of ${id}`): Note => ({
+const note = (id: string, title: string, body = `body of ${id}`, created = 1): Note => ({
   id,
   title,
   body,
-  created: 1,
+  created,
   updated: 1,
 });
+
+/** Which note holds which file, by id. */
+const owners = (files: Map<string, MirrorFile>) => new Map([...files.values()].map((f) => [f.note.id, f.name]));
 
 /** The next version of a note, as an edit makes one: a new object. */
 const edited = (n: Note, body: string): Note => ({ ...n, body, updated: n.updated + 1 });
 
-function fakeFolder() {
-  const files = new Map<string, string>();
+/**
+ * `foldNames` is a disk like those of Windows and macOS: one file for names that
+ * differ only by case or Unicode form. Folded here on its own terms, not with
+ * `fileKey`, so that a mistake there cannot hide itself.
+ */
+function fakeFolder({ foldNames = false } = {}) {
+  const on = (name: string) => (foldNames ? name.normalize('NFC').toLowerCase() : name);
+  const files = {
+    store: new Map<string, string>(),
+    get(name: string) {
+      return this.store.get(on(name));
+    },
+    set(name: string, text: string) {
+      this.store.set(on(name), text);
+    },
+    get size() {
+      return this.store.size;
+    },
+  };
   const writes: string[] = [];
   const failOpen = new Set<string>();
   const failClose = new Set<string>();
@@ -59,7 +79,7 @@ async function mirrored(notes: Note[]) {
 }
 
 describe('naming', () => {
-  test('counts over the whole list, in list order', () => {
+  test('a name is counted over the whole list, and the files come in list order', () => {
     const names = [...mirrorFiles([note('a', 'Psalm'), note('b', 'John'), note('c', 'Psalm')]).keys()];
     expect(names).toEqual(['Psalm.md', 'John.md', 'Psalm (2).md']);
   });
@@ -68,11 +88,154 @@ describe('naming', () => {
     expect([...mirrorFiles([note('abc', '')], { ...enUS.cards, untitledNote: '無題' }).keys()]).toEqual(['abc.md']);
   });
 
-  test('a title that lands on another note’s numbered name leaves one file, the later note’s', () => {
-    const third = note('c', 'Psalm (2)');
-    const files = mirrorFiles([note('a', 'Psalm'), note('b', 'Psalm'), third]);
-    expect([...files.keys()]).toEqual(['Psalm.md', 'Psalm (2).md']);
-    expect(files.get('Psalm (2).md')?.note).toBe(third);
+  test('a note nobody collides with has the name it always had', () => {
+    const notes = [note('a', 'John 3:16 / notes'), note('b', 'Psalm (2)'), note('c', 'Génesis 1'), note('d', '')];
+    expect([...mirrorFiles(notes).keys()]).toEqual(['John 3-16 - notes.md', 'Psalm (2).md', 'Génesis 1.md', 'd.md']);
+  });
+});
+
+/**
+ * Two notes in one file is a note silently lost, and only the file system knows
+ * it happened. So each of these counts the files as well as the names.
+ */
+describe('every note has a file of its own', () => {
+  const allKept = async (notes: Note[], foldNames = false) => {
+    const folder = fakeFolder({ foldNames });
+    await writeMirror(folder.handle, notes, new Map());
+    expect(folder.files.size).toBe(notes.length);
+    return folder;
+  };
+
+  test('"T", "T" and "T (2)", the three that used to share two files', async () => {
+    const [a, b, c] = [note('a', 'T'), note('b', 'T'), note('c', 'T (2)')];
+    expect(owners(mirrorFiles([a, b, c]))).toEqual(
+      new Map([
+        ['a', 'T.md'],
+        ['b', 'T (3).md'],
+        ['c', 'T (2).md'],
+      ])
+    );
+    const folder = await allKept([a, b, c]);
+    expect(folder.files.get('T.md')).toContain('body of a');
+    expect(folder.files.get('T (3).md')).toContain('body of b');
+    expect(folder.files.get('T (2).md')).toContain('body of c');
+  });
+
+  test('"T (2)" holds its name whichever order the list has, and however old it is', () => {
+    const [young, a, b] = [note('c', 'T (2)', 'x', 9), note('a', 'T', 'x', 1), note('b', 'T', 'x', 2)];
+    const old = { ...young, created: 0 };
+    for (const list of [[young, a, b], [a, b, young], [old, a, b]]) {
+      expect(owners(mirrorFiles(list)).get('c')).toBe('T (2).md');
+      expect(new Set(mirrorFiles(list).keys()).size).toBe(3);
+    }
+  });
+
+  test('titles that differ only by case are two files, each spelled as it was written', async () => {
+    const notes = [note('a', 'Psalm'), note('b', 'PSALM'), note('c', 'psalm')];
+    expect(owners(mirrorFiles(notes))).toEqual(
+      new Map([
+        ['a', 'Psalm.md'],
+        ['b', 'PSALM (2).md'],
+        ['c', 'psalm (3).md'],
+      ])
+    );
+    const folder = await allKept(notes, true);
+    expect(folder.files.get('Psalm.md')).toContain('body of a');
+  });
+
+  test('a numbered name is checked against other titles by case too', async () => {
+    await allKept([note('a', 'T'), note('b', 'T'), note('c', 't (2)')], true);
+  });
+
+  test('case and Unicode form together are one name on a disk that folds them', async () => {
+    const nfc = 'caf\u00e9';
+    const nfd = 'CAFE\u0301';
+    expect(nfc).not.toBe(nfd.toLowerCase());
+    const folder = await allKept([note('a', nfc), note('b', nfd)], true);
+    expect(folder.files.get(`${nfc}.md`)).toContain('body of a');
+  });
+
+  test('NFC against NFD in the title itself, and in a name that came from an id', () => {
+    const [nfc, nfd] = ['caf\u00e9', 'cafe\u0301'];
+    expect(mirrorFiles([note('a', nfc), note('b', nfd)]).size).toBe(2);
+    // An untitled note's id goes in unnormalised, so only the comparison can see it.
+    const files = mirrorFiles([note('a', nfc), note(nfd, '')]);
+    expect(new Set([...files.keys()].map((name) => name.normalize('NFC'))).size).toBe(2);
+  });
+
+  test('fileKey folds what the disks fold', () => {
+    expect(fileKey('Psalm.md')).toBe(fileKey('pSALM.MD'));
+    expect(fileKey('caf\u00e9.md')).toBe(fileKey('CAFE\u0301.md'));
+    expect(fileKey('Stra\u00dfe.md')).toBe(fileKey('STRASSE.md'));
+    expect(fileKey('\u0391\u03a3')).toBe(fileKey('\u03b1\u03c3'));
+    expect(fileKey('\u0391\u03a3')).toBe(fileKey('\u03b1\u03c2'));
+    expect(fileKey('Psalm.md')).not.toBe(fileKey('Psalms.md'));
+  });
+});
+
+/**
+ * A name must not move because of something that has nothing to do with it. The
+ * list is sorted by `updated` on load (`listNotes`) and a new note goes on top,
+ * so the list's order is the one thing here that cannot decide.
+ */
+describe('a name stays put', () => {
+  const [a, b, c] = [note('a', 'T', 'x', 1), note('b', 'T', 'x', 2), note('c', 'T', 'x', 3)];
+
+  test('whatever order the list is in', () => {
+    const before = owners(mirrorFiles([a, b, c]));
+    expect(before.get('a')).toBe('T.md');
+    expect(owners(mirrorFiles([c, b, a]))).toEqual(before);
+    expect(owners(mirrorFiles([b, c, a]))).toEqual(before);
+  });
+
+  test('when another note is edited and the list sorts it to the top', async () => {
+    const list = [a, b, c];
+    const folder = await mirrored(list);
+    const before = owners(mirrorFiles(list));
+
+    const newest = edited(c, 'typed in the youngest');
+    const sorted = [newest, a, b];
+
+    expect(owners(mirrorFiles(sorted))).toEqual(before);
+    await writeMirror(folder.handle, sorted, folder.known);
+    expect(folder.writes).toEqual([before.get('c')]);
+    expect(folder.files.get('T.md')).toContain('x');
+    expect(folder.files.get('T.md')).not.toContain('typed in the youngest');
+  });
+
+  test('when a new note with the same title goes on top', async () => {
+    const list = [a, b];
+    const folder = await mirrored(list);
+    const fresh = note('z', 'T', 'new', 9);
+
+    await writeMirror(folder.handle, [fresh, a, b], folder.known);
+
+    expect(folder.writes).toEqual(['T (3).md']);
+    expect(folder.files.get('T (3).md')).toContain('new');
+  });
+
+  test('when only one of the notes in a collision is in the batch', async () => {
+    const [x, y, z] = [note('x', 'T'), note('y', 'T'), note('z', 'T (2)')];
+    const folder = await mirrored([x, y, z]);
+    const named = owners(mirrorFiles([x, y, z]));
+
+    // What the autosave saved is one note. The name comes from the whole list.
+    await writeMirror(folder.handle, [x, edited(y, 'in the batch'), z], folder.known);
+
+    expect(folder.writes).toEqual([named.get('y')]);
+    expect(folder.files.get(named.get('y')!)).toContain('in the batch');
+    expect(folder.files.get(named.get('z')!)).toContain('body of z');
+  });
+
+  test('two notes of one age are ordered by id, not by the locale', () => {
+    const list = [note('b', 'T'), note('Z', 'T'), note('a', 'T')];
+    expect(owners(mirrorFiles(list)).get('Z')).toBe('T.md');
+  });
+
+  test('a note without a stored age still gets one answer', () => {
+    const undated = { ...note('b', 'T'), created: undefined as unknown as number };
+    const dated = note('a', 'T', 'x', 5);
+    expect(owners(mirrorFiles([undated, dated]))).toEqual(owners(mirrorFiles([dated, undated])));
   });
 });
 
@@ -152,11 +315,11 @@ describe('what a rewrite of everything used to bring along', () => {
     expect(folder.files.get('Gone.md')).toContain('body of c');
   });
 
-  test('a new note at the top with a title in use takes the first file', async () => {
-    const a = note('a', 'Psalm');
+  test('a note older than the holder of a name takes it, and the holder moves along', async () => {
+    const a = note('a', 'Psalm', 'body of a', 2);
     const folder = await mirrored([a]);
 
-    await writeMirror(folder.handle, [note('z', 'Psalm'), a], folder.known);
+    await writeMirror(folder.handle, [note('z', 'Psalm', 'body of z', 1), a], folder.known);
 
     expect(folder.writes.sort()).toEqual(['Psalm (2).md', 'Psalm.md']);
     expect(folder.files.get('Psalm.md')).toContain('body of z');

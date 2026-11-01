@@ -149,25 +149,76 @@ export interface MirrorFile {
 }
 
 /**
+ * What a file name is once a disk has had its say.
+ *
+ * Windows and macOS keep "Psalm.md" and "psalm.md" as one file, and macOS also
+ * one file for the two Unicode spellings of "é", so comparing the strings as
+ * they are lets two notes overwrite each other there and nowhere else. Upper
+ * then lower is the nearest JavaScript has to case folding: lower alone leaves
+ * "ß" apart from "SS" and a Greek word's final "ς" apart from "σ". It treats a
+ * few pairs as one that a given disk would keep apart, and the price of that is
+ * a " (2)"; the price of the reverse is a lost note.
+ */
+export const fileKey = (name: string): string =>
+  name.normalize('NFD').toUpperCase().toLowerCase().normalize('NFC');
+
+/** Oldest first, by what never changes: not the list's order, and not `updated`. */
+function byAge(a: Note, b: Note): number {
+  // A note from before `created` was stored still needs a place, and NaN would
+  // make the sort's order depend on the order it was handed.
+  const age = (Number(a.created) || 0) - (Number(b.created) || 0);
+  if (age) return age;
+  return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+}
+
+/**
  * Which note belongs in which file, as of this list.
  *
- * Always over the whole list, however few notes are about to be written:
- * "Title (2).md" means "the second note with this title in list order", so one
- * note's file can only be known by walking the notes before it. Keyed by file
- * because a note titled "Title (2)" can land on another note's "Title (2).md";
- * the later one then holds the file, as it did when every note was rewritten.
+ * Always over the whole list, however few notes are about to be written: a
+ * note's number depends on who else wants its name. In list order if it could
+ * be, but the list is sorted by `updated` when it loads and a new note goes on
+ * top, so counting down it moved " (2)" from one note to the other whenever
+ * either was edited and the page reloaded. The oldest note of a name keeps it,
+ * and no edit can change who that is.
+ *
+ * Two passes, so that a note titled "T (2)" holds that name against the second
+ * of two notes titled "T". The dedupe once appended " (2)" without looking, and
+ * those two shared a file: whichever was written last silently replaced the
+ * other. A note nobody collides with has exactly the name it has always had.
+ *
+ * Returned in list order, the order the files are then written in.
  */
 export function mirrorFiles(notes: Note[], words: CardWords = enUS.cards): Map<string, MirrorFile> {
+  // An untitled note is named by its id here, not by the word "Untitled": the
+  // folder outlives a change of language, and a new name would leave a second
+  // copy of the same note behind.
+  const baseOf = (note: Note) => safeFilename(note.title, note.id);
+  const taken = new Set<string>();
+  const names = new Map<Note, string>();
+  const unnamed: Note[] = [];
+  for (const note of [...notes].sort(byAge)) {
+    const name = `${baseOf(note)}.md`;
+    if (taken.has(fileKey(name))) {
+      unnamed.push(note);
+    } else {
+      taken.add(fileKey(name));
+      names.set(note, name);
+    }
+  }
+  // Where each name's count got to, because this runs on every autosave and
+  // starting again from 2 is quadratic in notes sharing a title.
+  const counts = new Map<string, number>();
+  for (const note of unnamed) {
+    const base = baseOf(note);
+    let n = counts.get(fileKey(base)) ?? 2;
+    while (taken.has(fileKey(`${base} (${n}).md`))) n++;
+    counts.set(fileKey(base), n + 1);
+    taken.add(fileKey(`${base} (${n}).md`));
+    names.set(note, `${base} (${n}).md`);
+  }
   const files = new Map<string, MirrorFile>();
-  const seen = new Map<string, number>();
   for (const note of notes) {
-    // An untitled note is named by its id here, not by the word "Untitled":
-    // the folder outlives a change of language, and a new name would leave a
-    // second copy of the same note behind.
-    const base = safeFilename(note.title, note.id);
-    const n = (seen.get(base) ?? 0) + 1;
-    seen.set(base, n);
-    const name = `${base}${n > 1 ? ` (${n})` : ''}.md`;
+    const name = names.get(note)!;
     files.set(name, { name, note, heading: note.title || words.untitledNote });
   }
   return files;
@@ -183,7 +234,7 @@ export function mirrorFiles(notes: Note[], words: CardWords = enUS.cards): Map<s
  * This one comparison is what brings the rest back without any caller asking:
  * - A failed write records nothing, nor does a lapsed permission, so the note
  *   still differs at the next autosave and is written then.
- * - A rename, a deletion or a new note can move other notes along "Title (2)",
+ * - A rename, a deletion or an older note can move other notes along "Title (2)",
  *   so those notes differ from what their new file holds and follow.
  * - A change of language differs only for untitled notes, the only text it
  *   alters, so those are all it rewrites. The rest would be identical bytes.
