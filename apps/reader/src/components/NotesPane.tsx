@@ -229,7 +229,27 @@ export function NotesPane({
       setLink(at);
     }
   };
-  useEffect(trackHeading, [active?.id, active?.body]);
+  // ⚠️ Set where the key lands, not only from the effect further down. A
+  // heading typed into changes with every key, so no check for "the same
+  // value" helps, and from an effect it comes after the commit, at default
+  // priority: the same queued render as above. 89 of 114 keys of a burst
+  // arrived with one still pending, and at typing speed NotesPane drew 1.82
+  // times per key; set in the textarea's onChange, as the live editor's
+  // onCaret does, that is 0 of 114 and 1.02.
+  //
+  // React's onSelect does not see everything that moves a textarea's caret:
+  // in Chromium it hears only keys and the mouse, one step behind a key held
+  // down and not at all for a caret placed by a script, a quote kept at the
+  // caret among them. `selectionchange` hears them all. A document listener,
+  // as in the live editor, and the live editor has no textarea to follow.
+  useEffect(() => {
+    const onSelectionChange = () => {
+      if (textarea.current && document.activeElement === textarea.current) trackHeading();
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ⚠️ The selection is restored only on the render that carries the edited
   // text. This effect runs after every render, and an unrelated update — the
@@ -249,6 +269,15 @@ export function NotesPane({
     el.setSelectionRange(pending.start, pending.end);
     trackHeading();
   });
+
+  // What no event on the field reports: the text changed from outside, or
+  // another note, or a new field with its own caret (a switch of editor, or
+  // back from the preview, neither of which had this run before). After the
+  // effect above, or a tool's edit is read with the caret where writing the
+  // text left it, at the end of the note under another heading, and the
+  // heading is set away and back again in one go.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(trackHeading, [active?.id, active?.body, editor, reading]);
 
   const linkLabel = link ? describeLink?.(link) : null;
 
@@ -467,7 +496,10 @@ export function NotesPane({
                 placeholder={t.notes.placeholder}
                 spellCheck
                 value={active.body}
-                onChange={(e) => onChange(active.id, { body: e.target.value })}
+                onChange={(e) => {
+                  onChange(active.id, { body: e.target.value });
+                  trackHeading();
+                }}
                 onKeyUp={trackHeading}
                 onClick={trackHeading}
                 onSelect={trackHeading}
