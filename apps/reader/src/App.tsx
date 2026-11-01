@@ -610,6 +610,8 @@ export function App() {
     );
     const ok = results.every(Boolean);
     setSaving(ok ? 'saved' : 'failed');
+    // The whole list, not the batch: names depend on it (lib/export.ts), and
+    // mirrorNotes writes only what differs from what it last put in the folder.
     if (ok && mirroringNow.current) void mirrorNotes(notesNow.current, wordsNow.current.cards);
   }, []);
 

@@ -111,6 +111,9 @@ export async function chooseNotesFolder(): Promise<boolean> {
   try {
     const handle = await picker({ mode: 'readwrite' });
     await put(SETTINGS, DIR_HANDLE, handle);
+    // Nothing is known about a folder just chosen, even the same one again, so
+    // the write that follows is a full one.
+    inFolder = new Map();
     return true;
   } catch {
     // The user dismissing the picker is not an error.
@@ -137,12 +140,25 @@ async function notesFolder(): Promise<DirectoryHandle | null> {
 
 export const mirroring = (): Promise<boolean> => notesFolder().then((h) => h !== null);
 
-/** Write every note into the chosen folder as `.md`. Best-effort by design. */
-export async function mirrorNotes(notes: Note[], words: CardWords = enUS.cards): Promise<number> {
-  const folder = await notesFolder();
-  if (!folder) return 0;
+/** One note's place in the folder: the file it belongs in, and what fills it. */
+export interface MirrorFile {
+  name: string;
+  note: Note;
+  /** Read apart from the note because it alone follows the interface language. */
+  heading: string;
+}
 
-  let written = 0;
+/**
+ * Which note belongs in which file, as of this list.
+ *
+ * Always over the whole list, however few notes are about to be written:
+ * "Title (2).md" means "the second note with this title in list order", so one
+ * note's file can only be known by walking the notes before it. Keyed by file
+ * because a note titled "Title (2)" can land on another note's "Title (2).md";
+ * the later one then holds the file, as it did when every note was rewritten.
+ */
+export function mirrorFiles(notes: Note[], words: CardWords = enUS.cards): Map<string, MirrorFile> {
+  const files = new Map<string, MirrorFile>();
   const seen = new Map<string, number>();
   for (const note of notes) {
     // An untitled note is named by its id here, not by the word "Untitled":
@@ -151,17 +167,102 @@ export async function mirrorNotes(notes: Note[], words: CardWords = enUS.cards):
     const base = safeFilename(note.title, note.id);
     const n = (seen.get(base) ?? 0) + 1;
     seen.set(base, n);
+    const name = `${base}${n > 1 ? ` (${n})` : ''}.md`;
+    files.set(name, { name, note, heading: note.title || words.untitledNote });
+  }
+  return files;
+}
+
+/**
+ * The files whose text differs from what this page last put there.
+ *
+ * Compared by note object, without rendering anything: a note is replaced, never
+ * changed in place, whenever it is edited (React state), so the same object
+ * means the same text and this costs a pointer check per note on every autosave.
+ *
+ * This one comparison is what brings the rest back without any caller asking:
+ * - A failed write records nothing, nor does a lapsed permission, so the note
+ *   still differs at the next autosave and is written then.
+ * - A rename, a deletion or a new note can move other notes along "Title (2)",
+ *   so those notes differ from what their new file holds and follow.
+ * - A change of language differs only for untitled notes, the only text it
+ *   alters, so those are all it rewrites. The rest would be identical bytes.
+ * - A file left behind by a rename or a deletion is never in this list, so it
+ *   stays on disk. Nothing here has ever removed a file.
+ */
+export function filesToWrite(files: Map<string, MirrorFile>, inFolder: Map<string, MirrorFile>): MirrorFile[] {
+  return [...files.values()].filter((file) => {
+    const had = inFolder.get(file.name);
+    return had?.note !== file.note || had.heading !== file.heading;
+  });
+}
+
+/**
+ * Write what changed, and record each file once its write has really finished.
+ * Returns the files written, which is not the number of notes.
+ */
+export async function writeMirror(
+  folder: Pick<FileSystemDirectoryHandle, 'getFileHandle'>,
+  notes: Note[],
+  inFolder: Map<string, MirrorFile>,
+  words: CardWords = enUS.cards
+): Promise<number> {
+  let written = 0;
+  for (const file of filesToWrite(mirrorFiles(notes, words), inFolder)) {
     try {
-      const file = await folder.getFileHandle(`${base}${n > 1 ? ` (${n})` : ''}.md`, {
-        create: true,
-      });
-      const stream = await file.createWritable();
-      await stream.write(toMarkdown(note, words));
+      const handle = await folder.getFileHandle(file.name, { create: true });
+      const stream = await handle.createWritable();
+      await stream.write(toMarkdown(file.note, words));
       await stream.close();
+      inFolder.set(file.name, file);
       written++;
     } catch {
-      // One unwritable note must not abort the rest of the mirror.
+      // One unwritable note must not abort the rest of the mirror. It is not
+      // recorded, so the next autosave tries it again.
     }
   }
   return written;
+}
+
+/**
+ * What this page knows it put in the folder.
+ *
+ * In memory on purpose. Recording it in IndexedDB would add a write per autosave
+ * to a fix that removes writes, and a record that outlived the page would claim
+ * to know a folder another tab or an earlier failure has since left behind. So
+ * the first autosave after a page load still writes every note, once. The price
+ * is that a file deleted or edited on disk comes back only at that next load,
+ * at the note's next edit, or when a folder is chosen.
+ */
+let inFolder = new Map<string, MirrorFile>();
+
+/**
+ * One mirror at a time. Nothing waits for `mirrorNotes`, so two autosaves can
+ * overlap when the disk is slow: an older write closing last would leave old
+ * text in a file recorded as holding the new, and no later autosave would look.
+ */
+let mirrorQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Bring the chosen folder up to date with `notes`. Best-effort by design.
+ *
+ * Takes the whole list, and writes only what changed. It used to rewrite every
+ * note on every autosave: 3 keystrokes in 1 of 100 notes were 1 IndexedDB put
+ * (5 KB) and 100 files (508 KB), every 600 ms pause, on the reader's disk and
+ * battery. That is now 1 file.
+ *
+ * Returns the files this call wrote: 0 when none had changed, or when there is
+ * no folder or no permission. It does not say the folder is up to date.
+ */
+export function mirrorNotes(notes: Note[], words: CardWords = enUS.cards): Promise<number> {
+  const turn = mirrorQueue.then(async () => {
+    // Taken before the folder is read. A folder chosen in between replaces the
+    // record, so this turn's writes cannot be credited to the new folder.
+    const record = inFolder;
+    const folder = await notesFolder();
+    return folder ? writeMirror(folder, notes, record, words) : 0;
+  });
+  // A rejected turn must not stop the turns after it.
+  mirrorQueue = turn.catch(() => 0);
+  return turn;
 }
