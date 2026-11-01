@@ -123,7 +123,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 48 texts of this part**
+**The 50 texts of this part**
 
 | Key | English | Français (France) |
 |---|---|---|
@@ -166,6 +166,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.untitledNote` | Untitled | Sans titre |
 | `common.untitledBoard` | Untitled board | Tableau sans titre |
 | `common.source` | King James Version source | Source de Louis Segond 1910 |
+| `common.licence` | King James Version licence | Licence de Louis Segond 1910 |
+| `common.opensInNewTab` | (opens in a new tab) | (s’ouvre dans un nouvel onglet) |
 | `common.undoRemove` | Undo remove | Annuler le retrait |
 | `common.remove` | Remove | Retirer |
 | `common.done` | Done | Terminé |
@@ -399,7 +401,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 32 texts of this part**
+**The 34 texts of this part**
 
 | Key | English | Français (France) |
 |---|---|---|
@@ -409,6 +411,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.used` | 11.8 MB of 1.9 GB used | 11,8 Mo utilisés sur 1,9 Go |
 | `library.about` | about 5.4 MB | environ 5,4 Mo |
 | `library.licences.public-domain` | Public domain | Domaine public |
+| `library.licences.cc-by-3.0-br` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
 | `library.licences.cc-by-4.0` | CC BY 4.0 | CC BY 4.0 |
 | `library.licences.cc-by-sa-4.0` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `library.licences.cc0` | CC0 | CC0 |
@@ -422,6 +425,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.download` | Download | Télécharger |
 | `library.removeActive` | Remove King James Version — switch to another translation first | Retirer Louis Segond 1910 : passez d’abord à une autre traduction |
 | `library.removeFromDevice` | Remove King James Version from this device | Retirer Louis Segond 1910 de cet appareil |
+| `library.noLongerOffered`<br><sub>Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it.</sub> | No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again. | Elle n’est plus proposée. Cette copie reste sur cet appareil jusqu’à ce que vous la retiriez, et ne pourra plus être téléchargée. |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | Une traduction téléchargée reste sur cet appareil et peut être lue hors ligne. En retirer une ne touche jamais à vos notes ni à vos marques : elles appartiennent au passage, pas à une traduction. |
 | `library.progress` | King James Version: 50% downloaded | Louis Segond 1910 : 50 % téléchargés |
 | `library.downloaded` | King James Version downloaded | Louis Segond 1910 téléchargée |
@@ -543,7 +547,7 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 76 texts of this part**
+**The 78 texts of this part**
 
 | Key | English | Français (France) |
 |---|---|---|
@@ -592,16 +596,18 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 | `help.meaning` | Meaning | Signification |
 | `help.terms.1.1` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `help.terms.1.2` | Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms. | Creative Commons Attribution – Partage dans les mêmes conditions 4.0 : une licence libre qui demande de citer la source et de partager les modifications aux mêmes conditions. |
-| `help.terms.2.1` | CC0 | CC0 |
-| `help.terms.2.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | Creative Commons Zéro : l’auteur a renoncé à tous ses droits ; le texte est libre d’utilisation. |
-| `help.terms.3.1` | OT | OT |
-| `help.terms.3.2` | Old Testament. | Ancien Testament (en anglais, Old Testament). |
-| `help.terms.4.1` | NT | NT |
-| `help.terms.4.2` | New Testament. | Nouveau Testament. |
-| `help.terms.5.1` | PWA | PWA |
-| `help.terms.5.2` | Progressive web app: a website you can install and use offline. | Application web progressive : un site web que l’on peut installer et utiliser hors ligne. |
-| `help.terms.6.1` | WCAG | WCAG |
-| `help.terms.6.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | Règles pour l’accessibilité des contenus web, la norme selon laquelle cette application est évaluée. |
+| `help.terms.2.1` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
+| `help.terms.2.2` | Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source. | Creative Commons Attribution 3.0 Brésil : une licence libre qui demande de citer les auteurs et la source. |
+| `help.terms.3.1` | CC0 | CC0 |
+| `help.terms.3.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | Creative Commons Zéro : l’auteur a renoncé à tous ses droits ; le texte est libre d’utilisation. |
+| `help.terms.4.1` | OT | OT |
+| `help.terms.4.2` | Old Testament. | Ancien Testament (en anglais, Old Testament). |
+| `help.terms.5.1` | NT | NT |
+| `help.terms.5.2` | New Testament. | Nouveau Testament. |
+| `help.terms.6.1` | PWA | PWA |
+| `help.terms.6.2` | Progressive web app: a website you can install and use offline. | Application web progressive : un site web que l’on peut installer et utiliser hors ligne. |
+| `help.terms.7.1` | WCAG | WCAG |
+| `help.terms.7.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | Règles pour l’accessibilité des contenus web, la norme selon laquelle cette application est évaluée. |
 | `help.glossaryHeading` | Words used here | Mots employés ici |
 | `help.glossary.1.1` | Collection | Collection |
 | `help.glossary.1.2` | Every verse you mark in one colour. Name a colour for the subject you are following, and the Marks panel lists those verses in Bible order. | Tous les versets que vous marquez d’une couleur. Donnez à une couleur le nom du sujet que vous suivez, et le panneau Marques liste ces versets dans l’ordre de la Bible. |

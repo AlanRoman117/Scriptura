@@ -7,6 +7,22 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+For reviewers, new texts in every language: a licence link's words in the
+translation's footer, and the words for a Bible no longer offered. They are
+listed in `docs/plans/reader-i18n/README.md`.
+
+### Removed
+
+- **Three translations are withdrawn:** both Chinese Union Version Bibles
+  (`cuvs`, `cuvt`) and the Bible Ostervald (`ostervald`). We had recorded them as
+  public domain texts of 1919 and 1867, on a source's label. They are the 1988/89
+  and 1996 revisions, for which others claim copyright. `scripts/validate.py` now
+  refuses those sources, and `docs/translations-status.md` gives the evidence.
+  A reader who has one on their device keeps it, and can still read or remove it.
+  There is no Chinese Bible for now, and the interface stays in Chinese. The 1867
+  Ostervald was assessed as a replacement and not added, because the available
+  transcription departs from the printing it copies.
+
 ### Changed
 
 - The chapter now says which Bible you are reading, in full, under its title:
@@ -19,6 +35,15 @@ suffix and is published as a GitHub pre-release.
   the United Kingdom; `docs/translations-status.md` says what applies there.
 - The button that shows the translation has an arrow, like the book and
   chapter menus beside it, so it is clear that it opens a list.
+- **Bible Martin:** 2 Chronicles and Job are now Martin's own text. The source
+  we used carried a different Bible in those two books. Its attribution now names
+  Pierre Roques's 1744 revision.
+- **Bíblia Livre** is recorded under CC BY 3.0 Brasil, as its authors state, in
+  place of the 4.0 eBible lists. **Bíblia Livre and Versión Biblia Libre** now
+  credit their authors, link their licences, and say what we leave out of their
+  text. Bibles already on a device get the corrected words.
+- The King James Version shows a one-line note on its status in the United
+  Kingdom.
 - Every picture in the interface is now drawn by the app instead of by the
   system's fonts: the settings gear, the arrows, the close and check marks, and
   the shapes on marked verses. They look the same on every system and follow

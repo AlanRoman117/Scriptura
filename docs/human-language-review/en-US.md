@@ -25,7 +25,7 @@ Part 1 alone already tells us a great deal. If you can give only a quarter of an
 - Names and numbers inside a text are examples: "John 1:3-5", "King James Version", "1,382". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.
 - A word in braces, such as `{count}`, is a place where the app puts a number or a name. Leave it as it is; it may move within the sentence.
 - `␣` marks a space at the start or end of a text that has to stay, and <kbd>Enter</kbd> is a key on the keyboard.
-- The pictures were taken with the Berean Standard Bible open, so the names of books are that Bible's own.
+- The pictures were taken with the Bible "King James Version" open, so the names of books are that Bible's own.
 
 ---
 
@@ -40,7 +40,7 @@ The text is meant to be written in this register: **plain, second person**, with
 - [ ] One word for one thing, everywhere: a note is always a note, a board always a board.
 - [ ] American spelling and punctuation.
 
-- [ ] **A decision for you:** 17 texts use British spelling (colour, licence, colours, behaviour) in an interface labelled English (United States). Either they change, or the label does. They are: `reader.marksChip`, `marks.hint`, `marks.empty`, `library.licences.custom-free`, `settings.markers`, `help.sections.marks.blocks.1.p`, `help.sections.marks.blocks.3.p`, `help.sections.boards.blocks.2.p`, `help.terms.1.2`, `help.glossary.1.2`, `help.accessibility.1`, `canvas.colour`, `canvas.colourPanel`, `canvas.colourTitle`, `canvas.colours`, `canvas.noColour`, `canvas.uncoloured`.
+- [ ] **A decision for you:** 19 texts use British spelling (licence, colour, colours, behaviour) in an interface labelled English (United States). Either they change, or the label does. They are: `common.licence`, `reader.marksChip`, `marks.hint`, `marks.empty`, `library.licences.custom-free`, `settings.markers`, `help.sections.marks.blocks.1.p`, `help.sections.marks.blocks.3.p`, `help.sections.boards.blocks.2.p`, `help.terms.1.2`, `help.terms.2.2`, `help.glossary.1.2`, `help.accessibility.1`, `canvas.colour`, `canvas.colourPanel`, `canvas.colourTitle`, `canvas.colours`, `canvas.noColour`, `canvas.uncoloured`.
 
 ### 1.2 The words used everywhere
 
@@ -104,7 +104,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 48 texts of this part**
+**The 50 texts of this part**
 
 | Key | Text |
 |---|---|
@@ -147,6 +147,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.untitledNote` | Untitled |
 | `common.untitledBoard` | Untitled board |
 | `common.source` | King James Version source |
+| `common.licence` | King James Version licence |
+| `common.opensInNewTab` | (opens in a new tab) |
 | `common.undoRemove` | Undo remove |
 | `common.remove` | Remove |
 | `common.done` | Done |
@@ -380,7 +382,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 32 texts of this part**
+**The 34 texts of this part**
 
 | Key | Text |
 |---|---|
@@ -390,6 +392,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.used` | 11.8 MB of 1.9 GB used |
 | `library.about` | about 5.4 MB |
 | `library.licences.public-domain` | Public domain |
+| `library.licences.cc-by-3.0-br` | CC BY 3.0 Brasil |
 | `library.licences.cc-by-4.0` | CC BY 4.0 |
 | `library.licences.cc-by-sa-4.0` | CC BY-SA 4.0 |
 | `library.licences.cc0` | CC0 |
@@ -403,6 +406,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.download` | Download |
 | `library.removeActive` | Remove King James Version — switch to another translation first |
 | `library.removeFromDevice` | Remove King James Version from this device |
+| `library.noLongerOffered`<br><sub>Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it.</sub> | No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again. |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. |
 | `library.progress` | King James Version: 50% downloaded |
 | `library.downloaded` | King James Version downloaded |
@@ -524,7 +528,7 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 76 texts of this part**
+**The 78 texts of this part**
 
 | Key | Text |
 |---|---|
@@ -573,16 +577,18 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 | `help.meaning` | Meaning |
 | `help.terms.1.1` | CC BY-SA 4.0 |
 | `help.terms.1.2` | Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms. |
-| `help.terms.2.1` | CC0 |
-| `help.terms.2.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. |
-| `help.terms.3.1` | OT |
-| `help.terms.3.2` | Old Testament. |
-| `help.terms.4.1` | NT |
-| `help.terms.4.2` | New Testament. |
-| `help.terms.5.1` | PWA |
-| `help.terms.5.2` | Progressive web app: a website you can install and use offline. |
-| `help.terms.6.1` | WCAG |
-| `help.terms.6.2` | Web Content Accessibility Guidelines, the standard this app is measured against. |
+| `help.terms.2.1` | CC BY 3.0 Brasil |
+| `help.terms.2.2` | Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source. |
+| `help.terms.3.1` | CC0 |
+| `help.terms.3.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. |
+| `help.terms.4.1` | OT |
+| `help.terms.4.2` | Old Testament. |
+| `help.terms.5.1` | NT |
+| `help.terms.5.2` | New Testament. |
+| `help.terms.6.1` | PWA |
+| `help.terms.6.2` | Progressive web app: a website you can install and use offline. |
+| `help.terms.7.1` | WCAG |
+| `help.terms.7.2` | Web Content Accessibility Guidelines, the standard this app is measured against. |
 | `help.glossaryHeading` | Words used here |
 | `help.glossary.1.1` | Collection |
 | `help.glossary.1.2` | Every verse you mark in one colour. Name a colour for the subject you are following, and the Marks panel lists those verses in Bible order. |

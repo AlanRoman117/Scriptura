@@ -126,7 +126,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 48 texts of this part**
+**The 50 texts of this part**
 
 | Key | English | Português (Brasil) |
 |---|---|---|
@@ -169,6 +169,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.untitledNote` | Untitled | Sem título |
 | `common.untitledBoard` | Untitled board | Quadro sem título |
 | `common.source` | King James Version source | Fonte de Bíblia Livre |
+| `common.licence` | King James Version licence | Licença de Bíblia Livre |
+| `common.opensInNewTab` | (opens in a new tab) | (abre em uma nova aba) |
 | `common.undoRemove` | Undo remove | Desfazer |
 | `common.remove` | Remove | Remover |
 | `common.done` | Done | Pronto |
@@ -402,7 +404,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 32 texts of this part**
+**The 34 texts of this part**
 
 | Key | English | Português (Brasil) |
 |---|---|---|
@@ -412,6 +414,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.used` | 11.8 MB of 1.9 GB used | 11,8 MB de 1,9 GB em uso |
 | `library.about` | about 5.4 MB | cerca de 5,4 MB |
 | `library.licences.public-domain` | Public domain | Domínio público |
+| `library.licences.cc-by-3.0-br` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
 | `library.licences.cc-by-4.0` | CC BY 4.0 | CC BY 4.0 |
 | `library.licences.cc-by-sa-4.0` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `library.licences.cc0` | CC0 | CC0 |
@@ -425,6 +428,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.download` | Download | Baixar |
 | `library.removeActive` | Remove King James Version — switch to another translation first | Remover Bíblia Livre — mude para outra tradução antes |
 | `library.removeFromDevice` | Remove King James Version from this device | Remover Bíblia Livre deste dispositivo |
+| `library.noLongerOffered`<br><sub>Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it.</sub> | No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again. | Não é mais oferecida. Esta cópia fica neste dispositivo até você removê-la, e não poderá ser baixada de novo. |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | Uma tradução baixada fica neste dispositivo e pode ser lida offline. Removê-la nunca mexe nas suas notas nem nas suas marcas: as duas pertencem à passagem, não a uma tradução. |
 | `library.progress` | King James Version: 50% downloaded | Bíblia Livre: 50% baixado |
 | `library.downloaded` | King James Version downloaded | Bíblia Livre foi baixada |
@@ -546,7 +550,7 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 76 texts of this part**
+**The 78 texts of this part**
 
 | Key | English | Português (Brasil) |
 |---|---|---|
@@ -595,16 +599,18 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 | `help.meaning` | Meaning | Significado |
 | `help.terms.1.1` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `help.terms.1.2` | Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms. | Creative Commons Atribuição–CompartilhaIgual 4.0: uma licença livre que pede que você credite a fonte e compartilhe as mudanças nos mesmos termos. |
-| `help.terms.2.1` | CC0 | CC0 |
-| `help.terms.2.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | Creative Commons Zero: o autor abriu mão de todos os direitos; o texto é livre para usar. |
-| `help.terms.3.1` | OT | OT |
-| `help.terms.3.2` | Old Testament. | Antigo Testamento (em inglês, Old Testament). |
-| `help.terms.4.1` | NT | NT |
-| `help.terms.4.2` | New Testament. | Novo Testamento. |
-| `help.terms.5.1` | PWA | PWA |
-| `help.terms.5.2` | Progressive web app: a website you can install and use offline. | Progressive web app: um site que você pode instalar e usar offline. |
-| `help.terms.6.1` | WCAG | WCAG |
-| `help.terms.6.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | Web Content Accessibility Guidelines, o padrão pelo qual este app é medido. |
+| `help.terms.2.1` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
+| `help.terms.2.2` | Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source. | Creative Commons Atribuição 3.0 Brasil: uma licença livre que pede que você credite os autores e a fonte. |
+| `help.terms.3.1` | CC0 | CC0 |
+| `help.terms.3.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | Creative Commons Zero: o autor abriu mão de todos os direitos; o texto é livre para usar. |
+| `help.terms.4.1` | OT | OT |
+| `help.terms.4.2` | Old Testament. | Antigo Testamento (em inglês, Old Testament). |
+| `help.terms.5.1` | NT | NT |
+| `help.terms.5.2` | New Testament. | Novo Testamento. |
+| `help.terms.6.1` | PWA | PWA |
+| `help.terms.6.2` | Progressive web app: a website you can install and use offline. | Progressive web app: um site que você pode instalar e usar offline. |
+| `help.terms.7.1` | WCAG | WCAG |
+| `help.terms.7.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | Web Content Accessibility Guidelines, o padrão pelo qual este app é medido. |
 | `help.glossaryHeading` | Words used here | Palavras usadas aqui |
 | `help.glossary.1.1` | Collection | Coleção |
 | `help.glossary.1.2` | Every verse you mark in one colour. Name a colour for the subject you are following, and the Marks panel lists those verses in Bible order. | Todos os versículos que você marca em uma cor. Dê a uma cor o nome do assunto que você acompanha, e o painel Marcas lista esses versículos na ordem da Bíblia. |

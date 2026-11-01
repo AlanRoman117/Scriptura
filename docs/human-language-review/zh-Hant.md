@@ -22,10 +22,10 @@ Part 1 alone already tells us a great deal. If you can give only a quarter of an
 
 - Each row is one text. **Key** is its name in the program, **English** is the original, and **中文（繁體）** is what is being reviewed.
 - The small print under a key, where there is some, is the programmer's own note on that text. It often says whether the text is shown on the screen or only spoken by a screen reader, which a blind reader uses.
-- Names and numbers inside a text are examples: "約翰福音 1:3-5", "新標點和合本", "1,382". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.
+- Names and numbers inside a text are examples: "John 1:3-5", "King James Version", "1,382". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.
 - A word in braces, such as `{count}`, is a place where the app puts a number or a name. Leave it as it is; it may move within the sentence.
 - `␣` marks a space at the start or end of a text that has to stay, and <kbd>Enter</kbd> is a key on the keyboard.
-- The pictures were taken with the Bible "新標點和合本" open, so the names of books are that Bible's own.
+- The pictures were taken with the "King James Version" open, the English Bible the app arrives with, because the library has no Bible in Chinese (Traditional) at present. So the names of books are in English, as a reader of this language sees them today.
 
 ---
 
@@ -92,9 +92,9 @@ How the app writes a number, a percentage and a size in this language, and how o
 | 2 search results | 2筆結果 |
 | 5 search results | 5筆結果 |
 | 1382 search results | 1,382筆結果 |
-| 1 verse selected | 1節 · 約翰福音 1:3 |
-| 2 verses selected | 2節 · 約翰福音 1:3-4 |
-| 5 verses selected | 5節 · 約翰福音 1:3-7 |
+| 1 verse selected | 1節 · John 1:3 |
+| 2 verses selected | 2節 · John 1:3-4 |
+| 5 verses selected | 5節 · John 1:3-7 |
 
 - [ ] Thousands are grouped, and the percentage is written, the way this language does it.
 - [ ] Every count above is grammatical, zero and one included.
@@ -111,22 +111,21 @@ If time is short, these four screens matter most: they are the app on an ordinar
 
 #### 2.1 The first visit, and reading a chapter
 
-The bar across the top chooses the book, the chapter and the translation, and opens Marks, Settings and Help. A reader whose language is not English is first offered a Bible in it.
+The bar across the top chooses the book, the chapter and the translation, and opens Marks, Settings and Help. The library has no Bible in this language at present, so a new reader is offered nothing first and reads the English Bible the app arrives with. The texts of the offer are in the table below, for the day one is offered: they are not on the screen now.
 
-![What a new reader sees: the offer of a Bible in this language, over the English one the app arrives with.](img/zh-Hant/01-first-visit.png)
+![What a new reader sees: the interface in this language, over the English Bible the app arrives with.](img/zh-Hant/01-first-visit.png)
 
-*What a new reader sees: the offer of a Bible in this language, over the English one the app arrives with.*
+*What a new reader sees: the interface in this language, over the English Bible the app arrives with.*
 
-![The same, on a phone, once a Bible in this language is open.](img/zh-Hant/14-phone-reading.png)
+![The same, on a phone.](img/zh-Hant/14-phone-reading.png)
 
-*The same, on a phone, once a Bible in this language is open.*
+*The same, on a phone.*
 
-- [ ] The offer reads as an invitation, and its buttons are clear about what they will do.
 - [ ] Nothing in the bar is cut short or squeezed, on the phone above all.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 48 texts of this part**
+**The 50 texts of this part**
 
 | Key | English | 中文（繁體） |
 |---|---|---|
@@ -137,9 +136,9 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | 跳到經文 |
 | `app.skipToNotes` | Skip to notes | 跳到筆記 |
 | `app.skipToBoard` | Skip to the canvas | 跳到看板 |
-| `app.title` | John 1 · KJV · Scriptura | 約翰福音1 · CUVT · Scriptura |
-| `app.passageTitle` | John 1 · KJV | 約翰福音1 · CUVT |
-| `app.boardTitle` | John 1 · Boards | 約翰福音 1 · 看板 |
+| `app.title` | John 1 · KJV · Scriptura | John1 · KJV · Scriptura |
+| `app.passageTitle` | John 1 · KJV | John1 · KJV |
+| `app.boardTitle` | John 1 · Boards | John 1 · 看板 |
 | `app.opened` | Settings opened | 已開啟設定面板 |
 | `app.closed` | Settings closed | 已關閉設定面板 |
 | `app.boardSaveFailed` | Could not save the board — export your notes | 無法儲存看板 — 請匯出你的筆記 |
@@ -147,17 +146,17 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | 經文 |
 | `reader.book` | Book | 書卷 |
 | `reader.chapter` | Chapter | 章 |
-| `reader.translationChip` | KJV — King James Version. Choose or add a translation | CUVT — 新標點和合本。選擇或加入譯本 |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | KJV — King James Version。選擇或加入譯本 |
 | `reader.marks` | Marks | 標記 |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | 標記 7 — 你標記過的經文，按顏色分組 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 設定 — 顯示、儲存空間、匯出與助理權限 |
 | `reader.helpChip` | Help — finding passages, searching, notes, marks, boards, keyboard, and what the abbreviations mean | 說明 — 尋找經文、搜尋、筆記、標記、看板、鍵盤，以及各種縮寫的意思 |
-| `reader.selectVerse`<br><sub>A verse's number: a toggle that adds the verse to the selection or takes it out.</sub> | Select John 1:2 | 選取約翰福音 1:2 |
-| `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | 選取約翰福音 1:2 — 在琥珀中 |
-| `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 已選取1節：約翰福音 1:3<br>已選取3節：約翰福音 1:3-5 |
+| `reader.selectVerse`<br><sub>A verse's number: a toggle that adds the verse to the selection or takes it out.</sub> | Select John 1:2 | 選取John 1:2 |
+| `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | 選取John 1:2 — 在琥珀中 |
+| `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 已選取1節：John 1:3<br>已選取3節：John 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | 已取消選取 |
-| `reader.chapterMissing` | This chapter is not in King James Version. | 新標點和合本中沒有這一章。 |
-| `reader.readingAnnounce` | Reading King James Version | 正在閱讀新標點和合本 |
+| `reader.chapterMissing` | This chapter is not in King James Version. | King James Version中沒有這一章。 |
+| `reader.readingAnnounce` | Reading King James Version | 正在閱讀King James Version |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | 顯示閱讀選單 |
 | `reader.hideMenus` | Hide the reading menus | 隱藏閱讀選單 |
 | `panels.marks` | Marks | 標記 |
@@ -168,14 +167,16 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | 取消 |
 | `common.untitledNote` | Untitled | 無標題 |
 | `common.untitledBoard` | Untitled board | 無標題看板 |
-| `common.source` | King James Version source | 新標點和合本的來源 |
+| `common.source` | King James Version source | King James Version的來源 |
+| `common.licence` | King James Version licence | King James Version的授權條款 |
+| `common.opensInNewTab` | (opens in a new tab) | （會在新分頁中開啟） |
 | `common.undoRemove` | Undo remove | 復原 |
 | `common.remove` | Remove | 移除 |
 | `common.done` | Done | 完成 |
 | `offer.title` | Bibles in English | 中文聖經 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | 這些譯本是你所用語言的譯本。下載一個就可以閱讀，連上網路或離線都可以。 |
 | `offer.downloadAndRead` | Download and read | 下載並閱讀 |
-| `offer.downloadAndReadName` | Download and read King James Version | 下載並閱讀新標點和合本 |
+| `offer.downloadAndReadName` | Download and read King James Version | 下載並閱讀King James Version |
 | `offer.allTranslations` | All translations | 全部譯本 |
 | `offer.notNow` | Not now | 暫時不用 |
 
@@ -204,15 +205,15 @@ Pressing a verse selects it and opens a row of actions: five colours to mark it 
 
 | Key | English | 中文（繁體） |
 |---|---|---|
-| `verseActions.group` | Actions for John 1:2 | 約翰福音 1:2的操作 |
+| `verseActions.group` | Actions for John 1:2 | John 1:2的操作 |
 | `verseActions.mark` | Mark as Amber (amber) | 標記為琥珀 |
 | `verseActions.quote` | Quote | 引用 |
 | `verseActions.link` | Link | 連結 |
 | `verseActions.canvas` | Canvas | 加入看板 |
 | `verseActions.canvasName` | Canvas — put this verse on the board | 加入看板 — 把這節經文放到看板上 |
-| `verseActions.close` | Close actions for John 1:2 | 關閉約翰福音 1:2的操作 |
-| `verseActions.groupMany`<br><sub>The row's name when it holds several verses.</sub> | Actions for 1 verse: John 1:3<br>Actions for 3 verses: John 1:3-5 | 1節經文的操作：約翰福音 1:3<br>3節經文的操作：約翰福音 1:3-5 |
-| `verseActions.summary`<br><sub>Shown in the row while several are selected, so what it will act on is in words.</sub> | 1 verse · John 1:3<br>3 verses · John 1:3-5 | 1節 · 約翰福音 1:3<br>3節 · 約翰福音 1:3-5 |
+| `verseActions.close` | Close actions for John 1:2 | 關閉John 1:2的操作 |
+| `verseActions.groupMany`<br><sub>The row's name when it holds several verses.</sub> | Actions for 1 verse: John 1:3<br>Actions for 3 verses: John 1:3-5 | 1節經文的操作：John 1:3<br>3節經文的操作：John 1:3-5 |
+| `verseActions.summary`<br><sub>Shown in the row while several are selected, so what it will act on is in words.</sub> | 1 verse · John 1:3<br>3 verses · John 1:3-5 | 1節 · John 1:3<br>3節 · John 1:3-5 |
 | `verseActions.fill`<br><sub>The button that takes in every verse between the first and the last selected: "Select 3-18".</sub> | Select 3-18 | 選取3-18 |
 | `verseActions.canvasNameMany` | Canvas — put these verses on the board | 加入看板 — 把這些經文放到看板上 |
 | `verseActions.clear` | Clear the selection | 取消選取 |
@@ -269,13 +270,13 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.title` | Note title | 筆記標題 |
 | `notes.body` | Note body | 筆記內文 |
 | `notes.placeholder` | Write here… | 在這裡寫… |
-| `notes.goTo` | Go to John 1:3-5 | 前往約翰福音 1:3-5 |
+| `notes.goTo` | Go to John 1:3-5 | 前往John 1:3-5 |
 | `notes.noneOpen` | No note open. | 沒有開啟中的筆記。 |
 | `notes.saveFailed` | Could not save — export your notes | 無法儲存 — 請匯出你的筆記 |
 | `notes.saving` | Saving… | 正在儲存… |
 | `notes.saved` | Saved | 已儲存 |
-| `notes.linkIn` | John 1:3-5 (BSB) | 約翰福音 1:3-5（KJV） |
-| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | 約翰福音 1:3-5（KJV — 尚未下載） |
+| `notes.linkIn` | John 1:3-5 (BSB) | John 1:3-5（BSB） |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | John 1:3-5（BSB — 尚未下載） |
 | `tools.label` | Formatting | 格式 |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2，2級標題 |
 | `tools.headingGlyph` | H2 | H2 |
@@ -288,19 +289,19 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.numbers`<br><sub>The numbered-list button shows "1.", so its name starts with it, as the heading buttons' do (WCAG 2.5.3).</sub> | 1. Numbered list | 1. 編號清單 |
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 經文連結 |
-| `insert.quoted` | Quoted John 1:3-5 | 已引用約翰福音 1:3-5 |
-| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | 已引用約翰福音 1:3-5（CUVT） |
-| `insert.linked` | Linked John 1:3-5 | 已連結約翰福音 1:3-5 |
-| `insert.addedBoard` | Added the board “John 1” | 已加入看板「約翰福音 1」 |
-| `insert.addedToBoard` | Added John 1:3-5 to “John 1” | 已把約翰福音 1:3-5加入看板「約翰福音 1」 |
-| `insert.alreadyOnBoard` | John 1:3-5 is already on “John 1” | 約翰福音 1:3-5已經在「約翰福音 1」上了 |
-| `insert.inNewNote` | Quoted John 1:3-5 in a new note | 已引用約翰福音 1:3-5，在新筆記中 |
-| `insert.inNote` | Quoted John 1:3-5 in “John 1” | 已引用約翰福音 1:3-5，在「約翰福音 1」中 |
-| `insert.inUntitledNote` | Quoted John 1:3-5 in an untitled note | 已引用約翰福音 1:3-5，在無標題筆記中 |
+| `insert.quoted` | Quoted John 1:3-5 | 已引用John 1:3-5 |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | 已引用John 1:3-5（KJV） |
+| `insert.linked` | Linked John 1:3-5 | 已連結John 1:3-5 |
+| `insert.addedBoard` | Added the board “John 1” | 已加入看板「John 1」 |
+| `insert.addedToBoard` | Added John 1:3-5 to “John 1” | 已把John 1:3-5加入看板「John 1」 |
+| `insert.alreadyOnBoard` | John 1:3-5 is already on “John 1” | John 1:3-5已經在「John 1」上了 |
+| `insert.inNewNote` | Quoted John 1:3-5 in a new note | 已引用John 1:3-5，在新筆記中 |
+| `insert.inNote` | Quoted John 1:3-5 in “John 1” | 已引用John 1:3-5，在「John 1」中 |
+| `insert.inUntitledNote` | Quoted John 1:3-5 in an untitled note | 已引用John 1:3-5，在無標題筆記中 |
 | `insert.studyBoard` | Study board | 研讀看板 |
 | `preview.empty` | Nothing written yet. | 還沒有寫任何內容。 |
 | `preview.editHere` | Edit here (block 3) | 在此編輯（第3段） |
-| `preview.goTo` | Go to John 1:3-5 | 前往約翰福音 1:3-5 |
+| `preview.goTo` | Go to John 1:3-5 | 前往John 1:3-5 |
 
 #### 2.4 Search
 
@@ -324,10 +325,10 @@ One box does two things: a reference goes straight to the passage, anything else
 | Key | English | 中文（繁體） |
 |---|---|---|
 | `search.label` | Search or go to a reference | 搜尋或前往某處經文 |
-| `search.placeholder` | Search, or go to "John 3:16" | 搜尋，或前往「約翰福音 3:16」 |
+| `search.placeholder` | Search, or go to "John 3:16" | 搜尋，或前往「John 3:16」 |
 | `search.hint` | Enter opens the passage, or every match. Down arrow moves into the suggestions. | Enter 開啟該處經文，或顯示全部結果。下方向鍵進入建議清單。 |
 | `search.suggestions` | Suggestions | 建議 |
-| `search.goTo` | Go to John 1:2 | 前往約翰福音 1:2 |
+| `search.goTo` | Go to John 1:2 | 前往John 1:2 |
 | `search.close` | Close suggestions | 關閉建議 |
 | `search.matching` | Matching | 比對方式 |
 | `search.wholeWords` | Whole words only | 僅完整字詞 |
@@ -338,21 +339,21 @@ One box does two things: a reference goes straight to the passage, anything else
 | `search.matches` | 1 match<br>1,382 matches | 1筆結果<br>1,382筆結果 |
 | `search.showing` | ␣— showing 40 | （顯示40筆） |
 | `search.seeAll` | See all 1,382 | 檢視全部1,382筆 |
-| `search.insert` | Insert John 1:2 into the open note | 把約翰福音 1:2插入開啟中的筆記 |
-| `search.toCanvas`<br><sub>The name of a result's Canvas button: its visible word first (2.5.3).</sub> | Canvas — put John 1:2 on the board | 加入看板 — 把約翰福音 1:2放到看板上 |
+| `search.insert` | Insert John 1:2 into the open note | 把John 1:2插入開啟中的筆記 |
+| `search.toCanvas`<br><sub>The name of a result's Canvas button: its visible word first (2.5.3).</sub> | Canvas — put John 1:2 on the board | 加入看板 — 把John 1:2放到看板上 |
 | `search.weakBelow` | Below: inside a longer word | 以下：出現在較長的詞語中 |
-| `search.announceNone` | No matches for “light” | 沒有「光」的結果 |
-| `search.announceCount` | 1 match for “light”<br>1,382 matches for “light” | 「光」有1筆結果<br>「光」有1,382筆結果 |
+| `search.announceNone` | No matches for “light” | 沒有「light」的結果 |
+| `search.announceCount` | 1 match for “light”<br>1,382 matches for “light” | 「light」有1筆結果<br>「light」有1,382筆結果 |
 | `results.label` | Search results | 搜尋結果 |
-| `results.heading`<br><sub>`{count}` is replaced by the total, in its own element.</sub> | {count} match for “light”<br>{count} matches for “light” | 「光」有{count}筆結果<br>「光」有{count}筆結果 |
+| `results.heading`<br><sub>`{count}` is replaced by the total, in its own element.</sub> | {count} match for “light”<br>{count} matches for “light” | 「light」有{count}筆結果<br>「light」有{count}筆結果 |
 | `results.close` | Close search results | 關閉搜尋結果 |
 | `results.filter` | Filter by book | 按書卷篩選 |
 | `results.allBooks` | All books | 全部書卷 |
-| `results.weakBelow` | Below: “light” inside a longer word | 以下：「光」出現在較長的詞語中 |
-| `results.insert` | Quote John 1:2 into the open note | 把約翰福音 1:2引用到開啟中的筆記 |
+| `results.weakBelow` | Below: “light” inside a longer word | 以下：「light」出現在較長的詞語中 |
+| `results.insert` | Quote John 1:2 into the open note | 把John 1:2引用到開啟中的筆記 |
 | `results.insertTitle` | Quote into the open note | 引用到開啟中的筆記 |
 | `results.showing` | Showing 100 of 1,382 | 顯示1,382筆中的100筆 |
-| `results.inBook` | ␣in John | ，在約翰福音中 |
+| `results.inBook` | ␣in John | ，在John中 |
 | `results.more` | Show 100 more | 再顯示100筆 |
 
 ### The panels
@@ -381,7 +382,7 @@ Each of the five colours is a collection of the verses marked with it, and can b
 | `marks.hint` | Each colour is a running list. Name one for the subject you are tracking. | 每種顏色都是一份持續的清單。用你正在研讀的主題為它命名。 |
 | `marks.nameFor` | Name for the amber collection | 琥珀合集的名稱 |
 | `marks.empty` | Nothing marked in this colour yet. | 這種顏色下還沒有標記。 |
-| `marks.remove` | Remove the mark on John 1:2 | 移除約翰福音 1:2上的標記 |
+| `marks.remove` | Remove the mark on John 1:2 | 移除John 1:2上的標記 |
 | `marks.removed` | Mark removed. Undo is available in the Marks bar. | 標記已移除。可以在標記列中復原。 |
 | `marks.restored` | Mark restored | 標記已還原 |
 
@@ -402,7 +403,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 32 texts of this part**
+**The 34 texts of this part**
 
 | Key | English | 中文（繁體） |
 |---|---|---|
@@ -412,6 +413,7 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.used` | 11.8 MB of 1.9 GB used | 已用11.8 MB，共1.9 GB |
 | `library.about` | about 5.4 MB | 約5.4 MB |
 | `library.licences.public-domain` | Public domain | 公共領域 |
+| `library.licences.cc-by-3.0-br` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
 | `library.licences.cc-by-4.0` | CC BY 4.0 | CC BY 4.0 |
 | `library.licences.cc-by-sa-4.0` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `library.licences.cc0` | CC0 | CC0 |
@@ -421,23 +423,24 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | 閱讀 |
 | `library.compare` | Compare | 對照 |
 | `library.compareTitle` | Show beside the translation you are reading | 與你正在讀的譯本並排顯示 |
-| `library.downloading` | Downloading King James Version | 正在下載新標點和合本 |
+| `library.downloading` | Downloading King James Version | 正在下載King James Version |
 | `library.download` | Download | 下載 |
-| `library.removeActive` | Remove King James Version — switch to another translation first | 移除新標點和合本 — 請先切換到其他譯本 |
-| `library.removeFromDevice` | Remove King James Version from this device | 從本裝置上移除新標點和合本 |
+| `library.removeActive` | Remove King James Version — switch to another translation first | 移除King James Version — 請先切換到其他譯本 |
+| `library.removeFromDevice` | Remove King James Version from this device | 從本裝置上移除King James Version |
+| `library.noLongerOffered`<br><sub>Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it.</sub> | No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again. | 此譯本已不再提供。這份副本會保留在本裝置上，直到你將它移除；移除後無法再次下載。 |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | 下載後的譯本會存在本裝置上，可以離線閱讀。移除譯本不會影響你的筆記和標記：兩者都屬於經文本身，而不屬於某個譯本。 |
-| `library.progress` | King James Version: 50% downloaded | 新標點和合本：已下載50% |
-| `library.downloaded` | King James Version downloaded | 新標點和合本已下載 |
-| `library.failed` | King James Version: No connection — try again when you are online. | 新標點和合本：沒有網路連線 — 連上網路後再試。 |
+| `library.progress` | King James Version: 50% downloaded | King James Version：已下載50% |
+| `library.downloaded` | King James Version downloaded | King James Version已下載 |
+| `library.failed` | King James Version: No connection — try again when you are online. | King James Version：沒有網路連線 — 連上網路後再試。 |
 | `library.failedOnline` | The download did not finish. Try again later. | 下載沒有完成。請稍後再試。 |
 | `library.offline` | No connection — try again when you are online. | 沒有網路連線 — 連上網路後再試。 |
 | `compare.label` | Translations side by side | 譯本並排對照 |
 | `compare.compared` | Translations compared | 對照中的譯本 |
-| `compare.stop` | Stop comparing BSB | 停止對照KJV |
+| `compare.stop` | Stop comparing BSB | 停止對照BSB |
 | `compare.verse` | Verse | 節 |
 | `compare.verseBefore` | Verse␣ | 節␣ |
-| `compare.missing` | Not in BSB | KJV中沒有 |
-| `compare.quote` | Quote BSB verse 16 | 引用KJV第16節 |
+| `compare.missing` | Not in BSB | BSB中沒有 |
+| `compare.quote` | Quote BSB verse 16 | 引用BSB第16節 |
 
 #### 2.7 Settings
 
@@ -541,12 +544,12 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 *The top of Help.*
 
 - [ ] It reads well from start to finish as an explanation, not as a list of translated sentences.
-- [ ] The examples of references are ones that work in a Bible in this language.
+- [ ] The examples of references are in English, because the Bible they work in is: the one open in the pictures.
 - [ ] The names of keys (Enter, Shift, Escape) are how this language’s keyboards and manuals name them.
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 76 texts of this part**
+**The 78 texts of this part**
 
 | Key | English | 中文（繁體） |
 |---|---|---|
@@ -554,9 +557,9 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 | `help.close` | Close help | 關閉說明 |
 | `help.sections.finding.heading` | Finding a passage | 尋找經文 |
 | `help.sections.finding.blocks.1.p` | Type a reference in the search box and press Enter. All of these work: | 在搜尋框中輸入經文出處，然後按 Enter。下面這些寫法都可以： |
-| `help.sections.finding.blocks.2.ul.1` | `John 3:16` — one verse. | `約翰福音 3:16` — 一節經文。 |
-| `help.sections.finding.blocks.2.ul.2` | `John 3:16-18` — a range of verses. | `約翰福音 3:16-18` — 一段經文。 |
-| `help.sections.finding.blocks.2.ul.3` | `John 3` — a whole chapter. | `約翰福音 3` — 整章。 |
+| `help.sections.finding.blocks.2.ul.1` | `John 3:16` — one verse. | `John 3:16` — 一節經文。 |
+| `help.sections.finding.blocks.2.ul.2` | `John 3:16-18` — a range of verses. | `John 3:16-18` — 一段經文。 |
+| `help.sections.finding.blocks.2.ul.3` | `John 3` — a whole chapter. | `John 3` — 整章。 |
 | `help.sections.finding.blocks.2.ul.4` | `Juan 3:16` or `Jean 3:16` — the book name in the translation you are reading. | `Juan 3:16` 或 `Jean 3:16` — 你正在讀的譯本裡的書卷名。 |
 | `help.sections.finding.blocks.2.ul.5` | `Jhn 3:16` — an abbreviation. `43 3:16` — the book number. | `Jhn 3:16` — 簡稱。`43 3:16` — 書卷編號。 |
 | `help.sections.finding.blocks.3.p` | You can also pick the book and chapter from the two menus in the bar. | 也可以用工具列上的兩個選單挑選書卷和章。 |
@@ -595,16 +598,18 @@ The longest text in the app, and the one a reader turns to when stuck. It includ
 | `help.meaning` | Meaning | 意思 |
 | `help.terms.1.1` | CC BY-SA 4.0 | CC BY-SA 4.0 |
 | `help.terms.1.2` | Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms. | 創用 CC 姓名標示-相同方式分享 4.0：一種自由授權條款，要求標示來源，並以相同方式分享修改。 |
-| `help.terms.2.1` | CC0 | CC0 |
-| `help.terms.2.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | 創用 CC 零：作者放棄了全部權利，文字可以自由使用。 |
-| `help.terms.3.1` | OT | OT |
-| `help.terms.3.2` | Old Testament. | 舊約（英文 Old Testament）。 |
-| `help.terms.4.1` | NT | NT |
-| `help.terms.4.2` | New Testament. | 新約（英文 New Testament）。 |
-| `help.terms.5.1` | PWA | PWA |
-| `help.terms.5.2` | Progressive web app: a website you can install and use offline. | 漸進式網頁應用程式：可以安裝並離線使用的網站。 |
-| `help.terms.6.1` | WCAG | WCAG |
-| `help.terms.6.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | 《網頁內容無障礙指引》，本應用程式依此衡量自己。 |
+| `help.terms.2.1` | CC BY 3.0 Brasil | CC BY 3.0 Brasil |
+| `help.terms.2.2` | Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source. | 創用 CC 姓名標示 3.0 巴西：一種自由授權條款，要求標示作者和來源。 |
+| `help.terms.3.1` | CC0 | CC0 |
+| `help.terms.3.2` | Creative Commons Zero: the author has waived all rights; the text is free to use. | 創用 CC 零：作者放棄了全部權利，文字可以自由使用。 |
+| `help.terms.4.1` | OT | OT |
+| `help.terms.4.2` | Old Testament. | 舊約（英文 Old Testament）。 |
+| `help.terms.5.1` | NT | NT |
+| `help.terms.5.2` | New Testament. | 新約（英文 New Testament）。 |
+| `help.terms.6.1` | PWA | PWA |
+| `help.terms.6.2` | Progressive web app: a website you can install and use offline. | 漸進式網頁應用程式：可以安裝並離線使用的網站。 |
+| `help.terms.7.1` | WCAG | WCAG |
+| `help.terms.7.2` | Web Content Accessibility Guidelines, the standard this app is measured against. | 《網頁內容無障礙指引》，本應用程式依此衡量自己。 |
 | `help.glossaryHeading` | Words used here | 這裡用到的詞 |
 | `help.glossary.1.1` | Collection | 合集 |
 | `help.glossary.1.2` | Every verse you mark in one colour. Name a colour for the subject you are following, and the Marks panel lists those verses in Bible order. | 你用同一種顏色標記的所有經文。用你正在研讀的主題為一種顏色命名，標記面板就會按聖經順序列出這些經文。 |
@@ -651,16 +656,16 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `canvas.more`<br><sub>Beside the Bible, the button the less-used board actions fold behind.</sub> | More | 更多 |
 | `canvas.startOne` | Start one | 新增一個 |
 | `canvas.label` | Boards | 看板 |
-| `canvas.heading` | Board: John 1 | 看板：約翰福音 1 |
+| `canvas.heading` | Board: John 1 | 看板：John 1 |
 | `canvas.noneOpenHeading` | none open | 未開啟任何看板 |
 | `canvas.picker` | Board | 看板 |
 | `canvas.showMenus` | Show the board menus | 顯示看板選單 |
 | `canvas.hideMenus` | Hide the board menus | 隱藏看板選單 |
 | `canvas.name` | Board name | 看板名稱 |
 | `canvas.none` | No boards yet | 還沒有看板 |
-| `canvas.undo` | Undo: put back John 1:1<br>Undo: put back the connection John 1:1 → John 1:14 | 復原：還原約翰福音 1:1<br>復原：還原連接約翰福音 1:1 → 約翰福音 1:14 |
-| `canvas.putBack` | John 1:1 put back<br>The connection John 1:1 → John 1:14 put back | 已還原約翰福音 1:1<br>已還原連接約翰福音 1:1 → 約翰福音 1:14 |
-| `canvas.removed` | John 1:1 removed. Undo is in the board's bar.<br>The connection John 1:1 → John 1:14 removed. Undo is in the board's bar. | 已移除卡片：約翰福音 1:1。可以在看板工具列中復原。<br>已移除連接：約翰福音 1:1 → 約翰福音 1:14。可以在看板工具列中復原。 |
+| `canvas.undo` | Undo: put back John 1:1<br>Undo: put back the connection John 1:1 → John 1:14 | 復原：還原John 1:1<br>復原：還原連接John 1:1 → John 1:14 |
+| `canvas.putBack` | John 1:1 put back<br>The connection John 1:1 → John 1:14 put back | 已還原John 1:1<br>已還原連接John 1:1 → John 1:14 |
+| `canvas.removed` | John 1:1 removed. Undo is in the board's bar.<br>The connection John 1:1 → John 1:14 removed. Undo is in the board's bar. | 已移除卡片：John 1:1。可以在看板工具列中復原。<br>已移除連接：John 1:1 → John 1:14。可以在看板工具列中復原。 |
 | `canvas.addCard` | Add card | 加入卡片 |
 | `canvas.addNote` | Add note | 加入筆記 |
 | `canvas.addNoteName` | Add note — put the newest note on the board | 加入筆記 — 把最新的一則筆記放到看板上 |
@@ -681,34 +686,34 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `canvas.viewRight` | Move the view right | 檢視右移 |
 | `canvas.help` | Help — boards, keyboard, and what the abbreviations mean | 說明 — 看板、鍵盤，以及各種縮寫的意思 |
 | `canvas.noConnections` | No connections yet. Press ⇢ on a card, then the card it leads to. | 還沒有連接。先在一張卡片上按 ⇢，再按它指向的卡片。 |
-| `canvas.removeConnection` | Remove the connection John 1:1 → John 1:14 | 移除連接約翰福音 1:1 → 約翰福音 1:14 |
+| `canvas.removeConnection` | Remove the connection John 1:1 → John 1:14 | 移除連接John 1:1 → John 1:14 |
 | `canvas.missingCard` | a missing card | 一張已不存在的卡片 |
-| `canvas.edge` | John 1:1 → John 1:14 | 約翰福音 1:1 → 約翰福音 1:14 |
+| `canvas.edge` | John 1:1 → John 1:14 | John 1:1 → John 1:14 |
 | `canvas.frame` | Board canvas, 1 card<br>Board canvas, 4 cards | 看板畫布，1張卡片<br>看板畫布，4張卡片 |
 | `canvas.frameHint` | Arrow keys move the view; plus and minus zoom. Each card takes focus: arrow keys move it, and Alt with an arrow resizes it. | 方向鍵移動檢視，加號和減號縮放。每張卡片都可以取得焦點：方向鍵移動卡片，Alt 加方向鍵調整大小。 |
 | `canvas.verseCard` | Verse card | 經文卡片 |
 | `canvas.noteCard` | Note card | 筆記卡片 |
 | `canvas.card` | Card | 卡片 |
-| `canvas.cardName` | Verse card: John 1:1, Amber (amber)<br>Verse card: John 1:1 | 經文卡片：約翰福音 1:1，琥珀<br>經文卡片：約翰福音 1:1 |
+| `canvas.cardName` | Verse card: John 1:1, Amber (amber)<br>Verse card: John 1:1 | 經文卡片：John 1:1，琥珀<br>經文卡片：John 1:1 |
 | `canvas.colourName` | Amber (amber) | 琥珀 |
 | `canvas.cardTitle` | Card title | 卡片標題 |
 | `canvas.cardTitlePlaceholder` | Card | 卡片 |
 | `canvas.cardText` | Card text | 卡片文字 |
 | `canvas.cardTextPlaceholder` | Write here… | 在這裡寫… |
-| `canvas.cardBody` | John 1:1 — text | 約翰福音 1:1 — 文字 |
-| `canvas.connect` | Connect John 1:1 to another card | 把約翰福音 1:1連到另一張卡片 |
+| `canvas.cardBody` | John 1:1 — text | John 1:1 — 文字 |
+| `canvas.connect` | Connect John 1:1 to another card | 把John 1:1連到另一張卡片 |
 | `canvas.connectPrompt` | Choose the card to connect to: press it, or Enter on it. Escape cancels. | 選擇要連到的卡片：按一下它，或在它上面按 Enter。Esc 取消。 |
-| `canvas.connected` | Connected John 1:1 to John 1:14 | 已把約翰福音 1:1連到約翰福音 1:14 |
-| `canvas.open` | Open John 1:1 in the reader | 在閱讀中開啟約翰福音 1:1 |
-| `canvas.colour` | Colour: Amber (amber). Change the colour of John 1:1<br>Colour: none. Change the colour of John 1:1 | 顏色：琥珀。變更約翰福音 1:1的顏色<br>顏色：無。變更約翰福音 1:1的顏色 |
-| `canvas.adjust` | Move or resize John 1:1 without dragging | 不用拖曳也能移動或調整約翰福音 1:1 |
-| `canvas.takeOff` | Take John 1:1 off the board | 把約翰福音 1:1從看板上移除 |
+| `canvas.connected` | Connected John 1:1 to John 1:14 | 已把John 1:1連到John 1:14 |
+| `canvas.open` | Open John 1:1 in the reader | 在閱讀中開啟John 1:1 |
+| `canvas.colour` | Colour: Amber (amber). Change the colour of John 1:1<br>Colour: none. Change the colour of John 1:1 | 顏色：琥珀。變更John 1:1的顏色<br>顏色：無。變更John 1:1的顏色 |
+| `canvas.adjust` | Move or resize John 1:1 without dragging | 不用拖曳也能移動或調整John 1:1 |
+| `canvas.takeOff` | Take John 1:1 off the board | 把John 1:1從看板上移除 |
 | `canvas.empty` | Nothing on this board yet. Add a card here, or use **Canvas** beside a verse while reading. | 這個看板上還什麼都沒有。可以在這裡加入卡片，或在閱讀時用經文旁邊的**加入看板**。 |
-| `canvas.adjustPanel` | Move and resize John 1:1 | 移動並調整約翰福音 1:1 |
-| `canvas.colourPanel` | Colour of John 1:1 | 約翰福音 1:1的顏色 |
+| `canvas.adjustPanel` | Move and resize John 1:1 | 移動並調整John 1:1 |
+| `canvas.colourPanel` | Colour of John 1:1 | John 1:1的顏色 |
 | `canvas.adjustTitle` | Move and resize | 移動與調整 |
 | `canvas.colourTitle` | Colour | 顏色 |
-| `canvas.panelTitle` | Move and resize: John 1:1 | 移動與調整：約翰福音 1:1 |
+| `canvas.panelTitle` | Move and resize: John 1:1 | 移動與調整：John 1:1 |
 | `canvas.move` | Move | 移動 |
 | `canvas.moveLeft` | Move left | 左移 |
 | `canvas.moveUp` | Move up | 上移 |
@@ -721,10 +726,10 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `canvas.taller` | Taller | 更高 |
 | `canvas.colours` | Colours | 顏色 |
 | `canvas.noColour` | No colour | 無顏色 |
-| `canvas.moved` | John 1:1: moved to 320, 180 | 約翰福音 1:1：已移動到 320，180 |
-| `canvas.resized` | John 1:1: 280 wide, 180 tall | 約翰福音 1:1：寬 280，高 180 |
-| `canvas.coloured` | John 1:1: Amber (amber) | 約翰福音 1:1：琥珀 |
-| `canvas.uncoloured` | John 1:1: no colour | 約翰福音 1:1：無顏色 |
+| `canvas.moved` | John 1:1: moved to 320, 180 | John 1:1：已移動到 320，180 |
+| `canvas.resized` | John 1:1: 280 wide, 180 tall | John 1:1：寬 280，高 180 |
+| `canvas.coloured` | John 1:1: Amber (amber) | John 1:1：琥珀 |
+| `canvas.uncoloured` | John 1:1: no colour | John 1:1：無顏色 |
 | `canvas.noneOpen` | No board open. | 沒有開啟中的看板。 |
 | `cards.verseMissing` | Not in this translation. | 這個譯本中沒有。 |
 | `cards.untitledNote` | Untitled note | 無標題筆記 |
@@ -735,8 +740,8 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.emptyBoard` | _Empty board._ | _空看板_ |
 | `cards.connections` | Connections | 連接 |
 | `cards.missingCard` | (missing card) | （已不存在的卡片） |
-| `embed.scrolls` | Board: John 1, scrolls sideways | 看板：約翰福音 1，可左右捲動 |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | 看板：約翰福音 1，1張卡片<br>看板：約翰福音 1，4張卡片 |
+| `embed.scrolls` | Board: John 1, scrolls sideways | 看板：John 1，可左右捲動 |
+| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | 看板：John 1，1張卡片<br>看板：John 1，4張卡片 |
 | `embed.empty` | This board is empty. | 這個看板是空的。 |
 | `embed.missing` | A board was embedded here, but it no longer exists. | 這裡曾嵌入一個看板，但它已經不存在了。 |
 | `embed.open` | Open board | 開啟看板 |
@@ -760,30 +765,30 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 |---|---|---|
 | `confirm.permanent` | You cannot undo this. | 此動作無法復原。 |
 | `confirm.undoable` | You can undo this until your next change. | 在你做出下一次變更之前都可以復原。 |
-| `confirm.note.title` | Delete the note “John 1”? | 要刪除筆記「約翰福音 1」嗎？ |
+| `confirm.note.title` | Delete the note “John 1”? | 要刪除筆記「John 1」嗎？ |
 | `confirm.note.gone` | It will be deleted from this device. | 它將從本裝置上刪除。 |
 | `confirm.note.keepCopy` | To keep a copy, export your notes first. | 想保留副本的話，請先匯出筆記。 |
 | `confirm.note.action` | Delete note | 刪除筆記 |
-| `confirm.note.done` | Deleted the note “John 1” | 已刪除筆記「約翰福音 1」 |
-| `confirm.board.title` | Delete the board “John 1”? | 要刪除看板「約翰福音 1」嗎？ |
+| `confirm.note.done` | Deleted the note “John 1” | 已刪除筆記「John 1」 |
+| `confirm.board.title` | Delete the board “John 1”? | 要刪除看板「John 1」嗎？ |
 | `confirm.board.cards` | The board and its card will be deleted.<br>The board and its 4 cards will be deleted. | 看板及其1張卡片都會被刪除。<br>看板及其4張卡片都會被刪除。 |
 | `confirm.board.empty` | The board is empty. | 這個看板是空的。 |
 | `confirm.board.kept` | Your notes are not changed. | 你的筆記不會改變。 |
 | `confirm.board.action` | Delete board | 刪除看板 |
-| `confirm.board.done` | Deleted the board “John 1” | 已刪除看板「約翰福音 1」 |
-| `confirm.card.title` | Remove John 1:1 from the board? | 要把約翰福音 1:1從看板上移除嗎？ |
+| `confirm.board.done` | Deleted the board “John 1” | 已刪除看板「John 1」 |
+| `confirm.card.title` | Remove John 1:1 from the board? | 要把John 1:1從看板上移除嗎？ |
 | `confirm.card.connections` | Its connection is removed too.<br>Its 3 connections are removed too. | 它的1條連接也會一併移除。<br>它的3條連接也會一併移除。 |
 | `confirm.card.noteKept` | The note itself is not changed. | 筆記本身不會改變。 |
 | `confirm.card.action` | Remove card | 移除卡片 |
-| `confirm.mark.title` | Remove the mark on John 1:2? | 要移除約翰福音 1:2上的標記嗎？ |
+| `confirm.mark.title` | Remove the mark on John 1:2? | 要移除John 1:2上的標記嗎？ |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | 這節經文將離開合集「琥珀」。 |
 | `confirm.mark.action` | Remove mark | 移除標記 |
-| `confirm.translation.title` | Remove King James Version from this device? | 要從本裝置上移除新標點和合本嗎？ |
+| `confirm.translation.title` | Remove King James Version from this device? | 要從本裝置上移除King James Version嗎？ |
 | `confirm.translation.frees` | This frees about 5.4 MB. | 這會釋出大約5.4 MB的空間。 |
 | `confirm.translation.kept` | Your notes and marks are not changed. | 你的筆記和標記不會改變。 |
 | `confirm.translation.again` | You can download it again when you are online. | 連上網路時可以再次下載。 |
 | `confirm.translation.action` | Remove translation | 移除譯本 |
-| `confirm.translation.done` | Removed King James Version from this device | 已從本裝置上移除新標點和合本 |
+| `confirm.translation.done` | Removed King James Version from this device | 已從本裝置上移除King James Version |
 
 #### 2.11 Notices
 
@@ -834,7 +839,7 @@ The names of the two panes, the tabs that choose between notes and a board, and 
 | `layout.notes` | Notes | 筆記 |
 | `layout.expandNotes` | Expand notes | 展開筆記 |
 | `layout.collapseNotes` | Collapse notes | 收合筆記 |
-| `layout.gripWithNews` | Expand notes, Quoted John 1:3-5 | 展開筆記，已引用約翰福音 1:3-5 |
+| `layout.gripWithNews` | Expand notes, Quoted John 1:3-5 | 展開筆記，已引用John 1:3-5 |
 | `layout.sheetHint` | Drag, or use the up and down arrow keys, to make the notes taller or shorter. | 拖曳，或用上下方向鍵，可以讓筆記區更高或更矮。 |
 | `layout.notesMoreRoom` | Give the notes more room | 給筆記更多空間 |
 | `layout.bibleMoreRoom` | Give the Bible more room | 給聖經更多空間 |
@@ -882,11 +887,11 @@ The app follows your browser's language. If it does not open in 中文（繁體�
 
 A picture shows words standing still. What you are looking for here is what only use can show: a word that does not fit its button, a message that arrives at the wrong moment, a sentence that is right alone and wrong after the one before it.
 
-- [ ] Accept the Bible the app offers in your language, and read the first chapter of John.
+- [ ] Read the first chapter of John. It is in English: the library has no Bible in your language at present, so none is offered.
 - [ ] Press a verse, then two more. Read what the row says, then press **引用**.
 - [ ] Read the note that was made, and the line beneath it.
 - [ ] Type a word into the search box and read the count. Open the full list of results.
-- [ ] Type a reference, such as "約翰福音 3:16", and press <kbd>Enter</kbd>.
+- [ ] Type a reference, such as "John 3:16", and press <kbd>Enter</kbd>.
 - [ ] Mark a verse with a colour, then open **標記** and give that colour a name.
 - [ ] Open **譯本**: download another Bible, compare it with yours, then remove it and read the question it asks.
 - [ ] Open **設定** and read it from top to bottom, changing each choice once.
