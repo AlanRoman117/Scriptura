@@ -14,6 +14,16 @@ import { noteValue, storedBodies, switchEditor, usePlainEditor } from '../helper
 
 const BODY = '# Opening\n\nfirst text\n\n## Middle\n\nsecond text\n\n## Last\n\nthird text';
 
+/**
+ * The key that takes the caret to the end of a note, on this system.
+ *
+ * ⚠️ Not `ControlOrMeta+End`. That alias is right for Cmd+A and Cmd+Z, but macOS
+ * binds nothing to Cmd+End, so on a Mac the caret stayed where it was and the
+ * heading was right not to change. Ubuntu passed; macOS did not. See `caretAt` in
+ * study.spec.ts for the same trap with Home.
+ */
+const END_OF_NOTE = process.platform === 'darwin' ? 'Meta+ArrowDown' : 'Control+End';
+
 async function openNote(page: Page, body = BODY) {
   await usePlainEditor(page);
   await page.goto('/');
@@ -164,7 +174,7 @@ test.describe('the heading over the plain editor follows the caret', () => {
   test('undo and redo', async ({ page }) => {
     await openNote(page);
     await caretAt(page, 'first text');
-    await page.keyboard.press('ControlOrMeta+End');
+    await page.keyboard.press(END_OF_NOTE);
     await expect(shown(page)).toHaveText('Last');
     await page.keyboard.press('Enter');
     await page.keyboard.type('## Added');
@@ -319,7 +329,7 @@ test.describe('the heading over the plain editor follows the caret', () => {
 
     // Moved in the live editor, then back to a textarea.
     await surface.click();
-    await page.keyboard.press('ControlOrMeta+End');
+    await page.keyboard.press(END_OF_NOTE);
     await expect(shown(page)).toHaveText('Last');
     await switchEditor(page, 'plain');
     await expect(surface).toHaveJSProperty('tagName', 'TEXTAREA');
@@ -352,7 +362,7 @@ test.describe('the heading over the plain editor follows the caret', () => {
   test('an input method composition', async ({ page }) => {
     const surface = await openNote(page, '## ');
     await surface.focus();
-    await page.keyboard.press('ControlOrMeta+End');
+    await page.keyboard.press(END_OF_NOTE);
     const cdp = await page.context().newCDPSession(page);
 
     await cdp.send('Input.imeSetComposition', { text: 'か', selectionStart: 1, selectionEnd: 1 });
