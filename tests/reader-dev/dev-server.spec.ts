@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 /**
  * The dev server must actually work.
  *
- * Every other reader spec runs against a production build, because that is
+ * Every other spec of the app runs against a production build, because that is
  * where the service worker lives. That left a real hole: `vite build` runs the
  * @scriptura/* CommonJS output through Rollup's commonjs plugin, but the dev
  * server does not pre-bundle *linked* workspace dependencies by default. It

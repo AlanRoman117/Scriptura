@@ -43,7 +43,10 @@ interface CanvasViewProps {
   onSelect: (id: string) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
-  onChange: (board: Board) => void;
+  /** `continuous`: a drag or a held key, with more of the same coming, so the save may trail behind. */
+  onChange: (board: Board, continuous?: boolean) => void;
+  /** The drag or the held key has ended: save what it left, now. */
+  onSettle: () => void;
   /** The last thing put on a board from elsewhere, in words, until the next action. */
   inserted?: string | null;
   /** Open a card's passage in the reader. */
@@ -103,6 +106,7 @@ export function CanvasView({
   onCreate,
   onDelete,
   onChange,
+  onSettle,
   inserted = null,
   onGo,
   onAddToNote,
@@ -257,9 +261,9 @@ export function CanvasView({
   }, [activeId]);
 
   const patch = useCallback(
-    (next: Partial<Pick<Board, 'name' | 'nodes' | 'edges'>>) => {
+    (next: Partial<Pick<Board, 'name' | 'nodes' | 'edges'>>, continuous = false) => {
       if (!board) return;
-      onChange({ ...board, ...next, updated: Date.now() });
+      onChange({ ...board, ...next, updated: Date.now() }, continuous);
       // Any other change ends the chance to undo a removal: putting back an
       // old set of cards over newer work would be a second loss (3.3.6).
       setUndo(null);
@@ -288,24 +292,24 @@ export function CanvasView({
 
   /* ── moving and sizing, by key and by button ─────────────────────────── */
 
-  const moveCard = (id: string, dx: number, dy: number) => {
+  const moveCard = (id: string, dx: number, dy: number, continuous = false) => {
     const node = board?.nodes.find((n) => n.id === id);
     if (!board || !node) return;
     // Clamped at the origin: a card moved past the top-left is off the plane
     // in the one direction panning back from is least obvious.
     const x = Math.max(0, node.x + dx);
     const y = Math.max(0, node.y + dy);
-    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) });
+    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, x, y } : n)) }, continuous);
     announce(words.moved(label(node), Math.round(x), Math.round(y)));
   };
 
-  const resizeCard = (id: string, dw: number, dh: number) => {
+  const resizeCard = (id: string, dw: number, dh: number, continuous = false) => {
     const node = board?.nodes.find((n) => n.id === id);
     if (!board || !node) return;
     const size = cardSize(node);
     const w = Math.max(CARD_MIN_W, size.w + dw);
     const h = Math.max(CARD_MIN_H, size.h + dh);
-    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, w, h } : n)) });
+    patch({ nodes: board.nodes.map((n) => (n.id === id ? { ...n, w, h } : n)) }, continuous);
     announce(words.resized(label(node), Math.round(w), Math.round(h)));
   };
 
@@ -355,8 +359,11 @@ export function CanvasView({
     // arrow is the browser's back and forward in a page that does not claim it.
     e.preventDefault();
     e.stopPropagation();
-    if (e.altKey) resizeCard(node.id, d[0], d[1]);
-    else moveCard(node.id, d[0], d[1]);
+    // A held key is a drag by other means: 60 repeats wrote 60 whole boards,
+    // and 21 now (median of 3, 500 cards). A single press is not: the first
+    // step of a hold is written at once, and so is every separate tap.
+    if (e.altKey) resizeCard(node.id, d[0], d[1], e.repeat);
+    else moveCard(node.id, d[0], d[1], e.repeat);
   };
 
   const onFrameKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -511,10 +518,11 @@ export function CanvasView({
       // plane in the one direction panning back from is least obvious.
       const x = Math.max(0, (e.clientX - box.left - pan.x) / zoom - held.dx);
       const y = Math.max(0, (e.clientY - box.top - pan.y) / zoom - held.dy);
-      patch({ nodes: board.nodes.map((n) => (n.id === held.id ? { ...n, x, y } : n)) });
+      patch({ nodes: board.nodes.map((n) => (n.id === held.id ? { ...n, x, y } : n)) }, true);
     },
     onEnd: () => {
       drag.current = null;
+      onSettle();
     },
   });
 
@@ -537,10 +545,11 @@ export function CanvasView({
       // right for both. The floors keep the header and every action inside.
       const w = Math.max(CARD_MIN_W, sizing.w + (e.clientX - sizing.x) / zoom);
       const h = Math.max(CARD_MIN_H, sizing.h + (e.clientY - sizing.y) / zoom);
-      patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) });
+      patch({ nodes: board.nodes.map((n) => (n.id === sizing.id ? { ...n, w, h } : n)) }, true);
     },
     onEnd: () => {
       resize.current = null;
+      onSettle();
     },
   });
 
@@ -1040,6 +1049,7 @@ export function CanvasView({
                   style={{ left: node.x, top: node.y, width: size.w, height: size.h }}
                   onClick={() => connecting && connect(node.id)}
                   onKeyDown={onCardKey(node)}
+                  onKeyUp={onSettle}
                 >
                   <header className="card__grip" data-node-id={node.id} {...cardDrag}>
                     {node.color && (

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { noteValue, usePlainEditor } from '../helpers/note';
 
 /**
  * Typing fast must not lose a character.
@@ -42,7 +43,10 @@ async function watchReact(page: Page) {
       onCommitFiberRoot(_id: number, root: unknown) {
         w.__root = root;
       },
-      onPostCommitFiberRoot() {},
+      // Once a commit's effects have run: what they left queued.
+      onPostCommitFiberRoot(_id: number, root: { pendingLanes: number }) {
+        ((w.__afterEffects ??= []) as number[]).push(root.pendingLanes);
+      },
       onCommitFiberUnmount() {},
       onScheduleFiberRoot() {},
       setStrictMode() {},
@@ -108,6 +112,69 @@ test.describe('a keystroke leaves nothing queued behind it', () => {
       await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', SHORT);
       expect(await queued()).toEqual(Array.from(SHORT, () => 0));
     });
+
+    // Where the heading under the caret really does change on every key, so
+    // no guard on "the same value" can help. It has to change in the key's own
+    // render: found by measuring, with a render queued behind 89 of 114 keys
+    // in a burst on a heading line in the plain editor.
+    test(`on a heading line, ${editor} editor`, async ({ page }) => {
+      if (editor === 'plain') await usePlainEditor(page);
+      await watchReact(page);
+      await open(page);
+      await page.getByTestId('note-new').click();
+      const queued = await queuedAfterEachKey(page);
+      await page.getByTestId('notes-surface').click();
+      const line = `## ${SHORT}`;
+      await page.keyboard.type(line);
+      await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', line);
+      await expect(page.getByTestId('notes-heading')).toHaveText(SHORT);
+      expect(await queued()).toEqual(Array.from(line, () => 0));
+    });
+  }
+
+  // And a link appearing under the caret, which is tracked along with it.
+  test('as a link closes under the caret, plain editor', async ({ page }) => {
+    await usePlainEditor(page);
+    await watchReact(page);
+    await open(page);
+    await page.getByTestId('note-new').click();
+    const queued = await queuedAfterEachKey(page);
+    await page.getByTestId('notes-surface').click();
+    const line = 'see [[psalms 23:1]]';
+    await page.keyboard.type(line);
+    await expect(page.getByTestId('notes-follow-link')).toBeVisible();
+    expect(await queued()).toEqual(Array.from(line, () => 0));
+  });
+
+  // A tool's edit sends the caret to the end of the note for a moment, when
+  // React writes the text. Tracking that caret, under another heading, and
+  // then the one the tool put back, sets the heading to the value it had.
+  for (const editor of ['live', 'plain'] as const) {
+    test(`a formatting tool that moves no heading, ${editor} editor`, async ({ page }) => {
+      if (editor === 'plain') await usePlainEditor(page);
+      await watchReact(page);
+      await open(page);
+      await page.getByTestId('note-new').click();
+      const surface = page.getByTestId('notes-surface');
+      await surface.click();
+      await page.keyboard.type('## Middle');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('text');
+      await page.keyboard.press('Enter');
+      await page.keyboard.type('## Last');
+      await page.keyboard.press('ArrowUp');
+      await expect(page.getByTestId('notes-heading')).toHaveText('Middle');
+
+      await page.evaluate(() => {
+        (window as unknown as { __afterEffects: number[] }).__afterEffects = [];
+      });
+      await page.getByTestId('tool-bold').click();
+      await expect.poll(() => noteValue(surface)).toContain('**');
+      await expect(page.getByTestId('notes-heading')).toHaveText('Middle');
+      const after = await page.evaluate(() => (window as unknown as { __afterEffects: number[] }).__afterEffects);
+      expect(after.length).toBeGreaterThan(0);
+      expect(after.filter((lanes) => lanes !== 0)).toEqual([]);
+    });
   }
 });
 
@@ -145,6 +212,21 @@ test.describe('typed faster than the page can rest', () => {
     await page.getByTestId('notes-surface').click();
     await page.keyboard.type(passage);
     await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', passage);
+    expect(errors).toEqual([]);
+  });
+
+  test('a long heading typed into a note arrives whole', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const heading = `## ${'In the beginning was the Word, and the Word was with God. '.repeat(5).trim()}`;
+    await usePlainEditor(page);
+    await open(page);
+    await page.getByTestId('note-new').click();
+    await wantFrames(page);
+    await page.getByTestId('notes-surface').click();
+    await page.keyboard.type(heading);
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', heading);
+    await expect(page.getByTestId('notes-heading')).toHaveText(heading.slice(3));
     expect(errors).toEqual([]);
   });
 

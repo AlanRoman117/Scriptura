@@ -11,8 +11,9 @@ import { useI18n } from '../i18n';
  * build was fetched, so the app could change underneath someone mid-sentence
  * (2.2.4, 3.2.5). Now the new version waits. This notice says so, once, and
  * offers Reload or Later. Reload saves the note edits still inside the
- * autosave delay before it reloads, so the last words typed are never the
- * price of an update. Later hides the notice for this visit.
+ * autosave delay, and a board still being moved, before it reloads, so the
+ * last words typed are never the price of an update. Later hides the notice
+ * for this visit.
  *
  * Mounted beside <App/> in main.tsx, like the announcer, so it is there in
  * every state of the app, the board included, and registers exactly once.

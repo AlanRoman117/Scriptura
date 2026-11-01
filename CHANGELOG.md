@@ -7,6 +7,40 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.15] - 2026-11-01
+
+The fifteenth preview makes the reader lighter on your device, from a measured
+review of the notes, the board and the Bible pane. Nothing looks different, and
+there are no new texts for reviewers. If you save your notes to a folder, that is
+more careful now too.
+
+### Fixed
+
+- Notes with similar titles no longer overwrite each other in the folder you save
+  to. "T", another "T" and "T (2)" could share a file, and so could titles
+  differing only by capital letters on Windows and macOS. Each note now has a file
+  of its own. A note whose name collided may change filename once.
+- Renaming a note no longer leaves old files in your folder. The app removes only
+  a file it wrote for that same note. Deleting a note still leaves its file there,
+  as a safety net.
+
+### Changed
+
+- Typing a search of several words no longer stutters on a slower device. The
+  results and their order are unchanged.
+- Typing in a very long note is quicker, and finding the cursor no longer copies
+  the note on every key.
+- Typing and dragging stay quicker when a note shows a board, because card labels
+  are no longer measured again each time.
+- Typing on a heading line in the Plain text editor no longer queues an extra
+  redraw per key. The heading shown beside the note also stays right when you
+  switch editors or leave preview.
+- Moving or resizing a card on a large board writes to storage far less often,
+  and nothing is lost if you leave in the middle of a move.
+- Saving to a folder now writes only the notes you changed, not every note on
+  every save.
+- Express, in the example API server, is updated to 5.3.0.
+
 ## [0.1.0-preview.14] - 2026-11-01
 
 The fourteenth preview says plainly which Bible you are reading and corrects what
@@ -451,6 +485,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.15]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.15
 [0.1.0-preview.14]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.14
 [0.1.0-preview.13]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.13
 [0.1.0-preview.12]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.12

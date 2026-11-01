@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { join } from 'node:path';
+import { boardWrites, forgetBoardWrites, storedBoards, watchBoardWrites } from '../helpers/board';
 import { serveStatic, type StaticServer } from '../helpers/static-server';
 
 /**
@@ -128,5 +129,51 @@ test.describe('a new version waits for the reader (2.2.4, 3.2.5)', () => {
     await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 'Written just before the update.');
     await expect(page.getByTestId('update-notice')).toHaveCount(0);
+  });
+
+  test('Reload saves a board moved a moment ago, before the page starts to go', async ({ page }) => {
+    await watchBoardWrites(page);
+    // Whether the write came before the page was on its way out, since going
+    // saves it too: this survives the reload, and the record of writes does not.
+    await page.addInitScript(() => {
+      window.addEventListener('pagehide', () => sessionStorage.setItem('left', '1'), { capture: true });
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (value: unknown, key?: IDBValidKey) {
+        if (this.name === 'boards' && !sessionStorage.getItem('left')) sessionStorage.setItem('wroteBeforeLeaving', '1');
+        return put.call(this, value, key);
+      };
+    });
+    await newVersionArrives(page);
+    await page.getByTestId('verse-1').click();
+    await page.getByTestId('canvas-1').click();
+    await page.getByTestId('side-board').click();
+    const card = page.locator('.card').first();
+    await expect(card).toBeVisible();
+    await expect.poll(() => storedBoards(page).then((b) => b.length)).toBe(1);
+
+    // A held key: one step written at once, the rest held back.
+    await card.focus();
+    await forgetBoardWrites(page);
+    await page.keyboard.down('ArrowRight');
+    await expect.poll(() => boardWrites(page).then((w) => w.length)).toBe(1);
+    await forgetBoardWrites(page);
+    await page.keyboard.down('ArrowRight');
+    await page.keyboard.down('ArrowRight');
+    // From 40, three steps of 10.
+    await expect.poll(() => card.evaluate((el: HTMLElement) => parseFloat(el.style.left))).toBe(70);
+    expect(await boardWrites(page)).toEqual([]);
+
+    await page.evaluate(() => {
+      sessionStorage.removeItem('left');
+      sessionStorage.removeItem('wroteBeforeLeaving');
+      (window as unknown as { __before: boolean }).__before = true;
+    });
+    await page.getByTestId('update-reload').click();
+    await page.waitForFunction(() => !(window as unknown as { __before?: boolean }).__before, null, { timeout: 30_000 });
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.keyboard.up('ArrowRight');
+
+    expect(await page.evaluate(() => sessionStorage.getItem('wroteBeforeLeaving'))).toBe('1');
+    expect((await storedBoards(page))[0].nodes[0].x).toBe(70);
   });
 });
