@@ -98,6 +98,12 @@ interface Position {
 
 /** Long enough not to write on every keystroke, short enough to lose nothing. */
 const AUTOSAVE_MS = 600;
+// A board is written whole, 80 KB at 500 cards, and a drag wrote it on every
+// move. At this delay a 60-move drag writes 15 times, not 60 (median of 3,
+// 4.8 MB down to 1.2 MB). What it saves is disk: the time in `put` falls only
+// from 29 to 6ms against about 1600ms of rendering, so it does not make a drag
+// measurably smoother. Short, so a crash mid-drag costs little.
+const BOARD_SAVE_MS = 150;
 /** A search is announced once the typing has paused, not per keystroke. */
 const ANNOUNCE_SEARCH_MS = 400;
 
@@ -604,22 +610,64 @@ export function App() {
     );
     const ok = results.every(Boolean);
     setSaving(ok ? 'saved' : 'failed');
+    // The whole list, not the batch: names depend on it (lib/export.ts), and
+    // mirrorNotes writes only what differs from what it last put in the folder.
     if (ok && mirroringNow.current) void mirrorNotes(notesNow.current, wordsNow.current.cards);
   }, []);
+
+  /** Boards a drag or a held key has changed and the store has not caught up with. */
+  const pendingBoards = useRef(new Map<string, Board>());
+  const boardTimer = useRef<number | null>(null);
+
+  const writeBoard = useCallback(
+    (board: Board) =>
+      saveBoard(board, (_store, err) => {
+        console.error('Saving the board failed:', err);
+        // The notes footer says this for notes; boards had no voice at all.
+        announce(wordsNow.current.app.boardSaveFailed, { assertive: true });
+      }),
+    []
+  );
+
+  /** Write every board still held back, now. The timer calls it; so does whatever ends a gesture or the page. */
+  const flushBoardSaves = useCallback(async () => {
+    if (boardTimer.current !== null) {
+      window.clearTimeout(boardTimer.current);
+      boardTimer.current = null;
+    }
+    const batch = [...pendingBoards.current.values()];
+    pendingBoards.current.clear();
+    await Promise.all(batch.map(writeBoard));
+  }, [writeBoard]);
 
   // The update notice flushes before it reloads; a phone putting the tab in
   // the background, where the system may discard it, flushes too.
   useEffect(() => {
-    setPendingFlush(flushSaves);
-    const onHidden = () => {
-      if (document.visibilityState === 'hidden') void flushSaves();
+    const flushAll = async () => {
+      await Promise.all([flushSaves(), flushBoardSaves()]);
     };
+    setPendingFlush(flushAll);
+    const onHidden = () => {
+      if (document.visibilityState === 'hidden') void flushAll();
+    };
+    // Not every way out of a page turns it hidden first (Safari, navigating
+    // away), and a board is held back for a moment mid-drag.
+    const onPageHide = () => void flushBoardSaves();
     document.addEventListener('visibilitychange', onHidden);
+    window.addEventListener('pagehide', onPageHide);
     return () => {
       setPendingFlush(null);
       document.removeEventListener('visibilitychange', onHidden);
+      window.removeEventListener('pagehide', onPageHide);
     };
-  }, [flushSaves]);
+  }, [flushSaves, flushBoardSaves]);
+
+  // Another board or the notes tab: the gesture is over as far as the reader
+  // can tell, even if no pointer or key said so. In an effect so that every
+  // way of changing either counts; it sets no state.
+  useEffect(() => {
+    void flushBoardSaves();
+  }, [boardId, side, flushBoardSaves]);
 
   const changeNote = useCallback(
     (id: string, patch: Partial<Pick<Note, 'title' | 'body'>>) => {
@@ -747,14 +795,27 @@ export function App() {
     [clearProposal]
   );
 
-  const changeBoard = useCallback((board: Board) => {
-    setBoards((current) => current.map((b) => (b.id === board.id ? board : b)));
-    void saveBoard(board, (_store, err) => {
-      console.error('Saving the board failed:', err);
-      // The notes footer says this for notes; boards had no voice at all.
-      announce(wordsNow.current.app.boardSaveFailed, { assertive: true });
-    });
-  }, []);
+  /**
+   * A change to a board. The screen always follows at once; `continuous` says
+   * more of the same is coming, so the store can wait for it.
+   */
+  const changeBoard = useCallback(
+    (board: Board, continuous = false) => {
+      setBoards((current) => current.map((b) => (b.id === board.id ? board : b)));
+      if (continuous) {
+        pendingBoards.current.set(board.id, board);
+        // Started once and not pushed back by the next move: a debounce would
+        // write nothing at all for as long as the pointer kept moving.
+        boardTimer.current ??= window.setTimeout(() => void flushBoardSaves(), BOARD_SAVE_MS);
+        return;
+      }
+      // This board is newer than anything held back for it. Written later, the
+      // held one would put the old board over it.
+      pendingBoards.current.delete(board.id);
+      void writeBoard(board);
+    },
+    [flushBoardSaves, writeBoard]
+  );
 
   const createBoard = useCallback(() => {
     const board = newBoard();
@@ -764,6 +825,8 @@ export function App() {
   }, []);
 
   const deleteBoard = useCallback((id: string) => {
+    // Or the timer would write it back after it was deleted.
+    pendingBoards.current.delete(id);
     void removeBoard(id);
     setBoards((current) => {
       const next = current.filter((b) => b.id !== id);
@@ -822,6 +885,7 @@ export function App() {
           : [next, ...current]
       );
       setBoardId(next.id);
+      pendingBoards.current.delete(next.id);
       void saveBoard(next);
 
       // The board is out of sight, so this is the only sign anything happened.
@@ -1177,11 +1241,12 @@ export function App() {
       onSelect={setBoardId}
       onCreate={createBoard}
       onDelete={deleteBoard}
-      onChange={(next) => {
+      onChange={(next, continuous) => {
         // The reader's own edit: the confirmation has done its job.
         setInserted(null);
-        changeBoard(next);
+        changeBoard(next, continuous);
       }}
+      onSettle={flushBoardSaves}
       onHelp={() => {
         setMarksOpen(false);
         setLibraryOpen(false);

@@ -353,24 +353,81 @@ test.describe('the live editor', () => {
   });
 
   /*
+   * The caret's offset was found by cloning everything before it and reading
+   * the clone back, twice per key: 4,100 dead nodes per key on a 50,000
+   * character note. A count, not a clock, so no runner's speed can excuse it.
+   * That the walk gives the clone's answer is `live-offset.spec.ts`.
+   */
+  test('finding the caret copies nothing of the note', async ({ page }) => {
+    const surface = await open(page);
+    await surface.click();
+    await page.keyboard.type('In the beginning');
+    await page.keyboard.press('Enter');
+    await page.evaluate(() => {
+      const w = window as unknown as { __clones: number };
+      w.__clones = 0;
+      const original = Range.prototype.cloneContents;
+      Range.prototype.cloneContents = function () {
+        w.__clones += 1;
+        return original.call(this);
+      };
+    });
+
+    await page.keyboard.type('was the **Word**');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('and the Word');
+    // A selection with two ends, each its own question.
+    await page.keyboard.press('Shift+ArrowLeft');
+    await page.keyboard.press('Shift+ArrowLeft');
+
+    const expected = 'In the beginning\nwas the **Word**\nand the Word';
+    await expect.poll(() => noteText(page)).toBe(expected);
+    await expect
+      .poll(() => surface.evaluate((el) => [(el as HTMLTextAreaElement).selectionStart, (el as HTMLTextAreaElement).selectionEnd]))
+      .toEqual([expected.length - 2, expected.length]);
+    expect(await page.evaluate(() => (window as unknown as { __clones: number }).__clones)).toBe(0);
+  });
+
+  /*
    * The browser's own multi-line insertion (dictation, a keyboard's text
    * replacement) fires an input event per line and per break. Read back and
    * redrawn on every one, 400 lines took four seconds; once per burst, a
    * fraction of one.
+   *
+   * Counted, not timed: this was a limit of two seconds, and it failed at 2,158ms
+   * with the machine's load at 56, which says nothing about the editor. A read-back
+   * has to ask where the selection is and a redraw has to put it back, so the times
+   * the page is asked are the read-backs, on any machine.
    */
   test("the browser's own multi-line insert is read back once, not per line", async ({ page }) => {
     const surface = await open(page);
     await surface.click();
     const result = await page.evaluate(async () => {
+      const el = document.getElementById('notes-surface') as unknown as HTMLTextAreaElement;
       const text = Array.from({ length: 400 }, (_, i) => `Line ${i} **b**`).join('\n');
-      const started = performance.now();
+      let events = 0;
+      (el as unknown as HTMLElement).addEventListener('input', () => {
+        events += 1;
+      });
+      let reads = 0;
+      const getSelection = Document.prototype.getSelection;
+      Document.prototype.getSelection = function (this: Document) {
+        reads += 1;
+        return getSelection.call(this);
+      };
       document.execCommand('insertText', false, text);
       await Promise.resolve();
-      const el = document.getElementById('notes-surface') as unknown as HTMLTextAreaElement;
-      return { ms: performance.now() - started, same: el.value === text };
+      Document.prototype.getSelection = getSelection;
+      return { events, reads, same: el.value === text };
     });
     expect(result.same).toBe(true);
-    expect(result.ms).toBeLessThan(2_000);
+    // Without a burst to gather there is nothing to prove.
+    expect(result.events).toBeGreaterThanOrEqual(400);
+    // 2 here, its own read and the redraw's, and 1,598 with the read-back planted
+    // per event. The room above 2 is for the editor asking again for a good reason;
+    // it is not room for anything that grows with the lines.
+    expect(result.reads).toBeGreaterThan(0);
+    expect(result.reads).toBeLessThanOrEqual(5);
   });
 
   /*
