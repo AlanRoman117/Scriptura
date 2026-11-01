@@ -7,6 +7,13 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.14] - 2026-11-01
+
+The fourteenth preview says plainly which Bible you are reading and corrects what
+we said about the Bibles themselves. A review of every translation found three
+that were not what we had recorded, so they are withdrawn, and two whose licences
+we were not fully meeting, which are now met.
+
 For reviewers, new texts in every language: a licence link's words in the
 translation's footer, and the words for a Bible no longer offered. They are
 listed in `docs/plans/reader-i18n/README.md`.
@@ -49,6 +56,13 @@ listed in `docs/plans/reader-i18n/README.md`.
   the shapes on marked verses. They look the same on every system and follow
   each style's colours. They are copied from Lucide, with no new dependency;
   the licence is in `LICENSE-lucide.txt` beside the app.
+
+### Security
+
+- `glob` and `minimatch`, used by the build and test tooling, are held at 14.0.3
+  and 11.0.3 by an npm override, for GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249.
+  Neither is part of the reader as it is served. A low advisory in `deepmerge`
+  (GHSA-gcqx-w48m-w2h4), under the same tooling, has no fixed release yet.
 
 ## [0.1.0-preview.13] - 2026-10-28
 
@@ -437,6 +451,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.14]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.14
 [0.1.0-preview.13]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.13
 [0.1.0-preview.12]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.12
 [0.1.0-preview.11]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.11

@@ -447,12 +447,12 @@ data/{translation-id}/
 | Translation data | **All 11 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
 | REST API | Runs locally; every route works in every language |
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
-| Static API build | Working — `npm run build:api -- --skip-verses` emits ~17.6k JSON files (chapters, without a file per verse) |
+| Static API build | Working — `npm run build:api -- --skip-verses` emits ~13.8k JSON files (chapters, without a file per verse) |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
 | Tests | 1,827 jest, and 1,220 Playwright: 49 HTTP contract, 681 reader in Desktop Chrome, 458 reader on an emulated phone, 2 dev server, 30 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes whose Markdown takes shape as it is written, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French, Japanese, Brazilian Portuguese and Chinese in both scripts, chosen from the browser or Settings — Chinese by script, so a Taiwanese browser gets Traditional — and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
-| Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
+| Security | `npm audit` shows only a low advisory in `deepmerge`, which has no fix yet; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
 | Preview site | The reader and its translation files on GitHub Pages, published from `main` by `.github/workflows/pages.yml` once CI has passed — a preview for the translation reviewers, who each have a [guide](docs/human-language-review/README.md) |
 | Deployment | **AWS not built** — no infrastructure, no `deploy.yml` |
