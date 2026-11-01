@@ -377,7 +377,7 @@ All translations in this repository are independently verified to be public doma
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
 | `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
-| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744), except [2 Chronicles and Job](docs/translations-status.md#martin1744--bible-david-martin-1744) | ✅ |
 | `cuvs` | 新标点和合本 (Union Version, 1919) | Chinese, simplified 🇨🇳 | Public domain | [eBible.org `cmn-cu89s`](https://ebible.org/cmn-cu89s/) | ✅ |
 | `cuvt` | 新標點和合本 (Union Version, 1919) | Chinese, traditional 🇹🇼 | Public domain | [eBible.org `cmn-cu89t`](https://ebible.org/cmn-cu89t/) | ✅ |
 | `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 4.0 | [eBible.org `porbr2018`](https://ebible.org/porbr2018/) | ✅ |
