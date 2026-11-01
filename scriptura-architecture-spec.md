@@ -37,7 +37,7 @@ scriptura/
 │   ├── bsb/                     # Berean Standard Bible — Public domain (2023)
 │   ├── vbl/                     # Versión Biblia Libre (Spanish) — CC BY-SA 4.0
 │   ├── lsg1910/                 # Louis Segond 1910 (French) — Public domain
-│   ├── ostervald/               # Bible Ostervald 1867 (French) — Public domain
+│   ├── blivre/                  # Bíblia Livre (Brazilian Portuguese) — CC BY 4.0
 │   ├── bungo/                   # 文語訳 (Japanese Classical) — Public domain
 │   └── martin1744/              # Bible Martin 1744 (French) — Public domain
 ├── packages/
@@ -152,9 +152,16 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 | Value | Meaning |
 |---|---|
 | `public-domain` | No restrictions anywhere |
+| `cc-by-3.0-br` | Attribution required (`blivre`, on its authors' own statement) |
+| `cc-by-4.0` | Attribution required (no translation uses it today) |
 | `cc-by-sa-4.0` | Attribution + ShareAlike required |
 | `cc0` | Explicit public domain dedication |
 | `custom-free` | Free with conditions (e.g. RVG — no modification, no sale) |
+
+Optional metadata beside these: `license_url` (the licence's address, required by
+`validate.py` for a `cc-by*` value), `attribution_lang` (when the attribution's
+language is not the Bible's) and `rights_notice` (one line in English saying where
+`license` does not hold; `kjv` has one for the UK).
 
 ---
 
@@ -405,9 +412,9 @@ A `[[link]]` follows the same rule: drawn, it opens its passage on a tap or a Ct
 
 ### The reader's interface languages
 
-The interface speaks the seven languages of the Bibles the library offers: English (United States), Español (México), Français (France), 日本語 (日本), Português (Brasil), 中文（简体） and 中文（繁體）. The page's `lang` is always one of those BCP 47 tags, built from the IANA registry and set by an inline script before the app runs, so a screen reader starts in the right voice (3.1.1). The first of the browser's languages the app has decides, a setting overrides it, and nothing detected means English. A reader in another language whose Bible is not yet installed is offered every Bible in that language, and nothing downloads without a press.
+The interface speaks seven languages: English (United States), Español (México), Français (France), 日本語 (日本), Português (Brasil), 中文（简体） and 中文（繁體）. The library offers Bibles in the first five. It has none in Chinese since the withdrawal of 2026-11-01 (`docs/translations-status.md`), so a reader in Chinese has the interface over the bundled English Bible until a Chinese text with a sound licence is found. The page's `lang` is always one of those BCP 47 tags, built from the IANA registry and set by an inline script before the app runs, so a screen reader starts in the right voice (3.1.1). The first of the browser's languages the app has decides, a setting overrides it, and nothing detected means English. A reader in another language whose Bible is not yet installed is offered every Bible in that language, and nothing downloads without a press.
 
-Chinese is tagged by script rather than by region, because the script is the difference: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau, and the Bible behind both is one translation in two character sets. A browser reporting `zh-TW`, `zh-HK` or `zh-MO` therefore gets Traditional, and one reporting `zh` alone gets Simplified. The two catalogs are written separately: Taiwan and the mainland choose different words for the same thing, so a conversion of characters alone would leave mainland vocabulary in traditional strokes. A reader in Chinese is offered both Bibles, with the one matching their own script first.
+Chinese is tagged by script rather than by region, because the script is the difference: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau,. A browser reporting `zh-TW`, `zh-HK` or `zh-MO` therefore gets Traditional, and one reporting `zh` alone gets Simplified. The two catalogs are written separately: Taiwan and the mainland choose different words for the same thing, so a conversion of characters alone would leave mainland vocabulary in traditional strokes. A language published in two scripts is offered in both, with the reader's own first; a Chinese interface is offered nothing while the library has no Chinese Bible.
 
 | Concern | Where | What it does |
 |---|---|---|
@@ -490,12 +497,20 @@ type Verse {
 | `rv1909` | Reina Valera 1909 | Spanish | Public domain | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | ✅ |
 | `vbl` | Versión Biblia Libre | Spanish | CC BY-SA 4.0 | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | ✅ |
 | `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | ✅ |
-| `ostervald` | Bible Ostervald (1867) | French | Public domain | [eBible `fra_fob`](https://ebible.org/fra_fob/) | `usfx` | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | ✅ |
 | `martin1744` | Bible Martin 1744 | French | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | ✅ |
+| `blivre` | Bíblia Livre | Brazilian Portuguese | CC BY 4.0 | [eBible `porbr2018`](https://ebible.org/porbr2018/) | `usfx` | ✅ |
 
 All eleven translations carry the full 66-book Protestant canon and pass
 `scripts/validate.py --strict` with zero errors and zero warnings.
+
+`cuvs`, `cuvt` and `ostervald` were withdrawn on 2026-11-01: eBible's `cmn-cu89s`,
+`cmn-cu89t` and `fra_fob` were recorded as texts of 1919 and 1867 but carry
+in-copyright revisions of 1988/89 and 1996. `scripts/validate.py` refuses those
+sources and ids, and `docs/translations-status.md` has the reasons. A reader who
+downloaded one keeps it: the library draws a row for any stored translation the
+catalog does not list (`apps/reader/src/lib/stored.ts`), from which it can still
+be read and be removed. Nothing is deleted from a device without its owner's press.
 
 A translation with no data has **no `data/` directory at all** — an empty
 `books/` is a validation error, so the directory is created by the first
@@ -680,7 +695,7 @@ Per-verse files produce a very large object count (~31k per full translation); `
 
 | Phase | Feature |
 |---|---|
-| v1 | Core loader + search + REST API + translation data ✅ (all 14 ingested, in 6 languages) |
+| v1 | Core loader + search + REST API + translation data ✅ (all 11 ingested, in 5 languages) |
 | v1.1 | GraphQL layer + additional translations |
 | v2 | `compare` package — side-by-side diff for study Bible UI ✅ |
 | v2.1 | Cross-reference data (Open Scriptures) |

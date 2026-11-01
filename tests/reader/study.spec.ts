@@ -156,11 +156,11 @@ test.describe('getting scripture into a note', () => {
 
     const body = page.getByTestId('notes-surface');
     await expect.poll(() => noteValue(body)).toContain('> In the beginning was the Word');
-    await expect.poll(() => noteValue(body)).toContain('— John 1:1 (BSB)');
+    await expect.poll(() => noteValue(body)).toContain('— John 1:1 (KJV)');
     // The slug so it resolves in any translation, and the translation so a
     // quote from one version is distinguishable from a quote of the same verse
     // from another.
-    await expect.poll(() => noteValue(body)).toContain('[[john 1:1@bsb]]');
+    await expect.poll(() => noteValue(body)).toContain('[[john 1:1@kjv]]');
   });
 
   test('Link inserts just the reference, and leaves a line to write on', async ({ page }) => {
@@ -169,7 +169,7 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('verse-3').click();
     await page.getByTestId('link-3').click();
     // The trailing blank line is the point: you insert, then write about it.
-    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '[[john 1:3@bsb]]\n\n');
+    await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', '[[john 1:3@kjv]]\n\n');
   });
 
   test('the cursor lands on the blank line after an insertion', async ({ page }) => {
@@ -185,7 +185,7 @@ test.describe('getting scripture into a note', () => {
 
     // So typing continues below the quote rather than inside it.
     await page.keyboard.type('This is the claim.');
-    await expect.poll(() => noteValue(surface)).toContain('[[john 1:1@bsb]]\n\nThis is the claim.');
+    await expect.poll(() => noteValue(surface)).toContain('[[john 1:1@kjv]]\n\nThis is the claim.');
   });
 
   test('two insertions do not run together', async ({ page }) => {
@@ -196,7 +196,7 @@ test.describe('getting scripture into a note', () => {
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
     await expect(page.getByTestId('notes-surface')).toHaveJSProperty('value', 
-      '[[john 1:1@bsb]]\n\n[[john 1:2@bsb]]\n\n'
+      '[[john 1:1@kjv]]\n\n[[john 1:2@kjv]]\n\n'
     );
   });
 
@@ -230,19 +230,19 @@ test.describe('knowing that it worked', () => {
     await page.getByTestId('quote-1').click();
     // The Quote button went with the actions row, so the confirmation is where
     // the quote went: the note's status line…
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:1');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted John 1:1');
     // …and the announcer, which also names the note. The mark is decoration;
     // the words are what is said.
     await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:1 in an untitled note');
 
     await page.getByTestId('verse-2').click();
     await page.getByTestId('link-2').click();
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Linked John 1:2');
+    await expect(page.getByTestId('note-done')).toHaveText('Linked John 1:2');
     await expect(page.getByTestId('announcer')).toHaveText('Linked John 1:2 in an untitled note');
 
     await page.getByTestId('search-input').fill('In the beginning God created');
     await page.getByTestId('search-panel').locator('.search__insert').first().click();
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Genesis 1:1');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted Genesis 1:1');
   });
 
   test('the same quote twice is announced twice', async ({ page }) => {
@@ -265,7 +265,7 @@ test.describe('knowing that it worked', () => {
     for (let quotes = 1; quotes <= 2; quotes++) {
       await page.getByTestId('verse-1').click();
       await page.getByTestId('quote-1').click();
-      await expect.poll(async () => (await noteValue(surface)).split('[[john 1:1@bsb]]').length - 1).toBe(quotes);
+      await expect.poll(async () => (await noteValue(surface)).split('[[john 1:1@kjv]]').length - 1).toBe(quotes);
     }
     await expect
       .poll(() =>
@@ -374,11 +374,11 @@ test.describe('following a link back', () => {
     await open(page);
     await page.getByTestId('note-new').click();
     const body = page.getByTestId('notes-surface');
-    await body.fill('[[john 3:16@kjv]]');
+    await body.fill('[[john 3:16@bsb]]');
     await caretAt(page, 'john 3:16');
 
     // Honest rather than silently landing in a different version.
-    await expect(page.getByTestId('notes-follow-link')).toContainText('KJV — not downloaded');
+    await expect(page.getByTestId('notes-follow-link')).toContainText('BSB — not downloaded');
   });
 });
 

@@ -6,6 +6,7 @@ import type { CatalogEntry } from '../../apps/reader/src/lib/library';
 const entry = (id: string, language: string): CatalogEntry =>
   ({ id, language, name: id.toUpperCase() }) as CatalogEntry;
 
+/** The library as it stands: no Chinese Bible since 2026-11-01. */
 const CATALOG = [
   entry('bsb', 'en'),
   entry('kjv', 'en'),
@@ -13,10 +14,10 @@ const CATALOG = [
   entry('vbl', 'es'),
   entry('lsg1910', 'fr'),
   entry('bungo', 'ja'),
-  entry('cuvs', 'zh-Hans'),
-  entry('cuvt', 'zh-Hant'),
   entry('blivre', 'pt-BR'),
 ];
+/** A language published in two scripts, as Chinese was and may be again. */
+const WITH_CHINESE = [...CATALOG, entry('zhs', 'zh-Hans'), entry('zht', 'zh-Hant')];
 const ids = (list: CatalogEntry[]) => list.map((e) => e.id);
 
 describe('offerFor', () => {
@@ -33,15 +34,26 @@ describe('offerFor', () => {
     expect(ids(offerFor('pt-BR', CATALOG, ['bsb'], []))).toEqual(['blivre']);
   });
 
-  test('Chinese is offered both scripts, the reader’s own first', () => {
-    // One translation in two character sets: either is readable, so neither is
-    // withheld, and the order is the whole of the preference.
-    expect(ids(offerFor('zh-Hans', CATALOG, ['bsb'], []))).toEqual(['cuvs', 'cuvt']);
-    expect(ids(offerFor('zh-Hant', CATALOG, ['bsb'], []))).toEqual(['cuvt', 'cuvs']);
+  test('a Chinese interface is offered nothing while the library has no Chinese Bible', () => {
+    expect(offerFor('zh-Hans', CATALOG, ['kjv'], [])).toEqual([]);
+    expect(offerFor('zh-Hant', CATALOG, ['kjv'], [])).toEqual([]);
+    // Holding a withdrawn one changes nothing: there is still nothing to offer.
+    expect(offerFor('zh-Hans', CATALOG, ['kjv', 'cuvs'], [])).toEqual([]);
   });
 
-  test('either Chinese Bible answers the offer for both', () => {
-    expect(offerFor('zh-Hant', CATALOG, ['bsb', 'cuvs'], [])).toEqual([]);
+  test('a withdrawn French Bible on the device does not stand in for the French ones offered', () => {
+    expect(ids(offerFor('fr-FR', CATALOG, ['kjv', 'ostervald'], []))).toEqual(['lsg1910']);
+  });
+
+  test('a language in two scripts is offered both, the reader’s own first', () => {
+    // Either is readable, so neither is withheld, and the order is the whole of
+    // the preference.
+    expect(ids(offerFor('zh-Hans', WITH_CHINESE, ['bsb'], []))).toEqual(['zhs', 'zht']);
+    expect(ids(offerFor('zh-Hant', WITH_CHINESE, ['bsb'], []))).toEqual(['zht', 'zhs']);
+  });
+
+  test('either script answers the offer for both', () => {
+    expect(offerFor('zh-Hant', WITH_CHINESE, ['bsb', 'zhs'], [])).toEqual([]);
   });
 
   test('English is offered nothing: the bundled Bible is English', () => {

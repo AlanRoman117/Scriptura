@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import type { LineStyle } from '../lib/mdedit';
 import { useRovingTabIndex } from '../lib/focus';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 interface EditorToolbarProps {
   onHeading: (level: number) => void;
@@ -75,7 +76,7 @@ export function EditorToolbar({ onHeading, onWrap, onLineStyle, onLink }: Editor
         1.
       </button>
       <button type="button" className="tools__button" data-testid="tool-quote" aria-label={t.tools.quote} onClick={() => onLineStyle('quote')}>
-        ❝
+        <Icon name="quote" />
       </button>
       <span className="tools__rule" aria-hidden="true" />
       <button type="button" className="tools__button" data-testid="tool-link" aria-label={t.tools.link} onClick={onLink}>

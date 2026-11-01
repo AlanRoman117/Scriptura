@@ -169,10 +169,10 @@ test.describe('the live editor', () => {
     await page.keyboard.type('Before');
     await page.getByTestId('verse-1').click();
     await page.getByTestId('quote-1').click();
-    await expect.poll(() => noteText(page)).toMatch(/^Before\n\n> In the beginning was the Word[\s\S]*\[\[john 1:1@bsb\]\]\n\n$/);
+    await expect.poll(() => noteText(page)).toMatch(/^Before\n\n> In the beginning was the Word[\s\S]*\[\[john 1:1@kjv\]\]\n\n$/);
     // The caret was handed back on the blank line after the quote.
     await page.keyboard.type('The claim.');
-    await expect.poll(() => noteText(page)).toMatch(/\[\[john 1:1@bsb\]\]\n\nThe claim\.$/);
+    await expect.poll(() => noteText(page)).toMatch(/\[\[john 1:1@kjv\]\]\n\nThe claim\.$/);
     await expect(surface.locator('.live-line--quote').first()).toBeVisible();
     // Off the caret's line, a quote shows its words and not its `>`.
     await expect.poll(() => markerShown(surface.locator('.live-line--quote').first().locator('.md-mark'))).toBe(false);

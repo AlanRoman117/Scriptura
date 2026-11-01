@@ -158,6 +158,8 @@ const catalog = {
     untitledNote: 'Sans titre',
     untitledBoard: 'Tableau sans titre',
     source: (name: string) => `Source de ${name}`,
+    licence: (name: string) => `Licence de ${name}`,
+    opensInNewTab: '(s’ouvre dans un nouvel onglet)',
     undoRemove: 'Annuler le retrait',
     remove: 'Retirer',
     done: 'Terminé',
@@ -366,6 +368,7 @@ const catalog = {
     about: (size: string) => `environ ${size}`,
     licences: {
       'public-domain': 'Domaine public',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -380,6 +383,7 @@ const catalog = {
     download: 'Télécharger',
     removeActive: (name: string) => `Retirer ${name} : passez d’abord à une autre traduction`,
     removeFromDevice: (name: string) => `Retirer ${name} de cet appareil`,
+    noLongerOffered: 'Elle n’est plus proposée. Cette copie reste sur cet appareil jusqu’à ce que vous la retiriez, et ne pourra plus être téléchargée.',
     note: 'Une traduction téléchargée reste sur cet appareil et peut être lue hors ligne. En retirer une ne touche jamais à vos notes ni à vos marques : elles appartiennent au passage, pas à une traduction.',
     progress: (name: string, percent: string) => `${name} : ${percent} téléchargés`,
     downloaded: (name: string) => `${name} téléchargée`,
@@ -595,6 +599,7 @@ const catalog = {
     meaning: 'Signification',
     terms: [
       ['CC BY-SA 4.0', 'Creative Commons Attribution – Partage dans les mêmes conditions 4.0 : une licence libre qui demande de citer la source et de partager les modifications aux mêmes conditions.'],
+      ['CC BY 3.0 Brasil', 'Creative Commons Attribution 3.0 Brésil : une licence libre qui demande de citer les auteurs et la source.'],
       ['CC0', 'Creative Commons Zéro : l’auteur a renoncé à tous ses droits ; le texte est libre d’utilisation.'],
       ['OT', 'Ancien Testament (en anglais, Old Testament).'],
       ['NT', 'Nouveau Testament.'],

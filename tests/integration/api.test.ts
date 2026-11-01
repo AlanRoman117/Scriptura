@@ -4,7 +4,8 @@ import { join, relative } from 'node:path';
 import { createRouter } from '@scriptura/api';
 import { compareVerse } from '@scriptura/compare';
 import { lookup } from '@scriptura/search';
-import { clearCache, getDataDir, listTranslations } from '@scriptura/core';
+import { clearCache, getDataDir, listTranslations, setDataDir } from '@scriptura/core';
+import { chineseBible, writeBible } from '../helpers/chinese-bible';
 
 /**
  * Integration tests against the real `data/` corpus.
@@ -65,6 +66,13 @@ describe('GET /translations', () => {
     expect(suffixed.status).toBe(200);
     expect(suffixed.body).toEqual(bare.body);
   });
+
+  test.each(['cuvs', 'cuvt', 'ostervald'])('%s, withdrawn on 2026-11-01, is neither listed nor served', async (id) => {
+    const list = (await get('/translations')).body as Array<{ id: string }>;
+    expect(list.map((t) => t.id)).not.toContain(id);
+    expect((await get(`/translations/${id}`)).status).toBe(404);
+    expect((await get(`/translations/${id}/john/3/16`)).status).toBe(404);
+  });
 });
 
 describe('GET /translations/:id', () => {
@@ -109,9 +117,6 @@ describe('book addressing', () => {
     ['slug against Spanish', '/translations/rv1909/genesis/1/1'],
     ['slug against French', '/translations/lsg1910/song-of-solomon/1/1'],
     ['slug against Japanese', '/translations/bungo/john/3/16'],
-    ['Chinese localized name', '/translations/cuvs/约翰福音/3/16'],
-    ['traditional Chinese localized name', '/translations/cuvt/約翰福音/3/16'],
-    ['slug against Chinese', '/translations/cuvs/john/3/16'],
     ['Portuguese localized name', '/translations/blivre/João/3/16'],
     ['accented Portuguese name', '/translations/blivre/Gênesis/1/1'],
   ])('resolves by %s', async (_label, path) => {
@@ -121,7 +126,7 @@ describe('book addressing', () => {
   });
 
   test('the same slug works across every language', async () => {
-    const paths = ['kjv', 'rv1909', 'lsg1910', 'bungo', 'ostervald'].map(
+    const paths = ['kjv', 'rv1909', 'lsg1910', 'bungo', 'blivre'].map(
       (id) => `/translations/${id}/john/3/16`
     );
     const bodies = await Promise.all(paths.map(async (p) => (await get(p)).body));
@@ -129,6 +134,40 @@ describe('book addressing', () => {
     expect(texts.every((t) => t.length > 0)).toBe(true);
     // Five different languages, so five distinct strings.
     expect(new Set(texts).size).toBe(5);
+  });
+});
+
+// No Chinese Bible is in the library at present. Names in Han still have to
+// resolve when one is, so this stands up a small one of each script.
+describe('a Chinese Bible, from a small fixture', () => {
+  let dataDir: string;
+
+  beforeAll(() => {
+    dataDir = mkdtempSync(join(tmpdir(), 'scriptura-chinese-'));
+    writeBible(dataDir, chineseBible('zhs', 'zh-Hans'));
+    writeBible(dataDir, chineseBible('zht', 'zh-Hant'));
+    setDataDir(dataDir);
+    clearCache();
+  });
+
+  afterAll(() => {
+    setDataDir(undefined);
+    clearCache();
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  test.each([
+    ['Chinese localized name', '/translations/zhs/约翰福音/3/1'],
+    ['traditional Chinese localized name', '/translations/zht/約翰福音/3/1'],
+    ['slug against Chinese', '/translations/zhs/john/3/1'],
+  ])('resolves by %s', async (_label, path) => {
+    const res = await get(path);
+    expect(res.status).toBe(200);
+    expect((res.body as { text: string }).text.length).toBeGreaterThan(0);
+  });
+
+  test('one script does not answer to the other’s name', async () => {
+    expect((await get('/translations/zhs/約翰福音/3/1')).status).toBe(404);
   });
 });
 

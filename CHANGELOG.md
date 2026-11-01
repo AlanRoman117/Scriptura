@@ -7,6 +7,63 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.14] - 2026-11-01
+
+The fourteenth preview says plainly which Bible you are reading and corrects what
+we said about the Bibles themselves. A review of every translation found three
+that were not what we had recorded, so they are withdrawn, and two whose licences
+we were not fully meeting, which are now met.
+
+For reviewers, new texts in every language: a licence link's words in the
+translation's footer, and the words for a Bible no longer offered. They are
+listed in `docs/plans/reader-i18n/README.md`.
+
+### Removed
+
+- **Three translations are withdrawn:** both Chinese Union Version Bibles
+  (`cuvs`, `cuvt`) and the Bible Ostervald (`ostervald`). We had recorded them as
+  public domain texts of 1919 and 1867, on a source's label. They are the 1988/89
+  and 1996 revisions, for which others claim copyright. `scripts/validate.py` now
+  refuses those sources, and `docs/translations-status.md` gives the evidence.
+  A reader who has one on their device keeps it, and can still read or remove it.
+  There is no Chinese Bible for now, and the interface stays in Chinese. The 1867
+  Ostervald was assessed as a replacement and not added, because the available
+  transcription departs from the printing it copies.
+
+### Changed
+
+- The chapter now says which Bible you are reading, in full, under its title:
+  "Berean Standard Bible", where the button alone said "BSB". The name is the
+  Bible's own, in its language, so there are no new texts for reviewers.
+- The Bible the app opens on is now the King James Version, the one most
+  readers of the Bible in English know by name, in place of the Berean Standard
+  Bible, which stays one download away. A device already reading the Berean
+  Standard Bible stays on it. The King James Version is public domain outside
+  the United Kingdom; `docs/translations-status.md` says what applies there.
+- The button that shows the translation has an arrow, like the book and
+  chapter menus beside it, so it is clear that it opens a list.
+- **Bible Martin:** 2 Chronicles and Job are now Martin's own text. The source
+  we used carried a different Bible in those two books. Its attribution now names
+  Pierre Roques's 1744 revision.
+- **Bíblia Livre** is recorded under CC BY 3.0 Brasil, as its authors state, in
+  place of the 4.0 eBible lists. **Bíblia Livre and Versión Biblia Libre** now
+  credit their authors, link their licences, and say what we leave out of their
+  text. Bibles already on a device get the corrected words.
+- The King James Version shows a one-line note on its status in the United
+  Kingdom.
+- Every picture in the interface is now drawn by the app instead of by the
+  system's fonts: the settings gear, the arrows, the close and check marks, and
+  the shapes on marked verses. They look the same on every system and follow
+  each style's colours. They are copied from Lucide, with no new dependency;
+  the licence is in `LICENSE-lucide.txt` beside the app.
+
+### Security
+
+- `glob` and `minimatch`, used by the build and test tooling, are held at 14.0.3
+  and 11.0.3 by an npm override, for GHSA-3g3m-2fjr-6pw4 and GHSA-g3hv-75wg-m249.
+  Neither is part of the reader as it is served. A low advisory in `deepmerge`
+  (GHSA-gcqx-w48m-w2h4), under the same tooling, has no fixed release yet.
+
 ## [0.1.0-preview.13] - 2026-10-28
 
 The thirteenth preview brings the tools up to date, clears four security
@@ -394,6 +451,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.14]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.14
 [0.1.0-preview.13]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.13
 [0.1.0-preview.12]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.12
 [0.1.0-preview.11]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.11

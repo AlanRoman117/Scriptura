@@ -15,6 +15,31 @@ async function open(page: Page) {
   await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
 }
 
+// The interface stays in Chinese, in both scripts, with no Chinese Bible in the
+// library: the bundled English one is what such a reader reads.
+for (const [browser, label] of [['zh-CN', '中文（简体）'], ['zh-TW', '中文（繁體）']] as const) {
+  test.describe(`a ${browser} browser, with no Chinese Bible to offer`, () => {
+    test.use({ locale: browser });
+
+    test('gets the interface in its script and the bundled Bible, and is offered nothing', async ({ page }) => {
+      await open(page);
+      await expect(page.locator('html')).toHaveAttribute('lang', browser === 'zh-CN' ? 'zh-Hans' : 'zh-Hant');
+      await expect(page.getByTestId('library-open')).toHaveText('KJV');
+      await expect(page.getByTestId('chapter')).toContainText('In the beginning was the Word');
+      await expect(page.getByTestId('bible-offer')).toHaveCount(0);
+
+      // The language can still be chosen, under its own name.
+      await page.getByTestId('settings-open').click();
+      await expect(page.getByTestId('pref-language').locator('option', { hasText: label })).toHaveCount(1);
+      await page.getByTestId('settings-close').click();
+
+      // And the library heads no Chinese language it does not have.
+      await page.getByTestId('library-open').click();
+      await expect(page.getByTestId('library-panel').locator('.library__language')).toHaveCount(5);
+    });
+  });
+}
+
 test.describe('a Spanish browser', () => {
   test.use({ locale: 'es-MX' });
 

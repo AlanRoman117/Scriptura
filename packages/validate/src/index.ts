@@ -9,7 +9,7 @@ export interface ValidationError {
   message: string;
 }
 
-const VALID_LICENSES = ['public-domain', 'cc-by-sa-4.0', 'cc0', 'custom-free'];
+const VALID_LICENSES = ['public-domain', 'cc-by-3.0-br', 'cc-by-4.0', 'cc-by-sa-4.0', 'cc0', 'custom-free'];
 
 /**
  * Validate a single translation directory.

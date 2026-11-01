@@ -92,13 +92,13 @@ test.describe('a board', () => {
     await open(page);
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Added John 1:1 to “Study board”');
+    await expect(page.getByTestId('note-done')).toHaveText('Added John 1:1 to “Study board”');
     await expect(page.getByTestId('announcer')).toHaveText('Added John 1:1 to “Study board”');
 
     // Asking twice changes nothing, and says that instead of saying nothing.
     await page.getByTestId('verse-1').click();
     await page.getByTestId('canvas-1').click();
-    await expect(page.getByTestId('note-done')).toHaveText('✓ John 1:1 is already on “Study board”');
+    await expect(page.getByTestId('note-done')).toHaveText('John 1:1 is already on “Study board”');
   });
 
   test('cards can be moved, and stay where they are put', async ({ page }) => {
@@ -478,7 +478,7 @@ test.describe('connections in words, and removals that can be taken back (1.1.1,
     await connected(page);
     await page.getByTestId('board-connections').click();
     const list = page.locator('#board-connections-list');
-    await expect(list).toContainText('John 1:1 (BSB) → John 1:3 (BSB)');
+    await expect(list).toContainText('John 1:1 (KJV) → John 1:3 (KJV)');
 
     await list.getByRole('button', { name: /Remove the connection John 1:1/ }).click();
     await expect(page.locator('.canvas__edges line')).toHaveCount(0);
@@ -492,7 +492,7 @@ test.describe('connections in words, and removals that can be taken back (1.1.1,
   test('removing a card asks first, and puts back the card and its connections on undo', async ({ page }) => {
     const ids = await connected(page);
     await page.getByTestId(`card-remove-${ids[0]}`).click();
-    const dialog = page.getByRole('alertdialog', { name: 'Remove John 1:1 (BSB) from the board?' });
+    const dialog = page.getByRole('alertdialog', { name: 'Remove John 1:1 (KJV) from the board?' });
     // It says what goes with the card, and that it can come back.
     await expect(page.getByTestId('confirm-body').locator('p')).toHaveText([
       'Its connection is removed too.',

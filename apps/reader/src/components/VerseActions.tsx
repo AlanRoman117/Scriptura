@@ -11,6 +11,7 @@ import type { SwatchState } from '../lib/selection';
 import { useRovingTabIndex } from '../lib/focus';
 import { prefersReducedMotion } from '../lib/prefs';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 interface VerseActionsProps {
   /** "John 1:2", or "John 1:3-5", or "John 1:1, 14": what the row will act on. */
@@ -189,7 +190,7 @@ export function VerseActions({
             onClick={() => onHighlight(color)}
           >
             <span className="swatch__disc" data-color={color} aria-hidden="true">
-              <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
+              <span className="swatch__glyph"><Icon name={HIGHLIGHT_GLYPHS[color]} /></span>
             </span>
           </button>
         ))}
@@ -220,7 +221,7 @@ export function VerseActions({
           aria-label={many ? t.verseActions.clear : t.verseActions.close(reference)}
           onClick={onClose}
         >
-          ✕
+          <Icon name="x" />
         </button>
       </span>
     </div>

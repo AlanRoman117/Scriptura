@@ -29,6 +29,8 @@ import {
 import { VerseActions } from './VerseActions';
 import { MaximizeButton } from './PaneControl';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
+import { AttributionLine, RightsNotice } from './Attribution';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -407,6 +409,7 @@ export function BiblePane({
 
   const meta = bible.meta;
   const separator = verseSeparator(meta.language);
+  const owed = requiresAttribution(meta);
 
   // For each collection: all of the selected verses, some, or none.
   const marks = new Map(highlights.map((h) => [h.id, h.color]));
@@ -472,6 +475,9 @@ export function BiblePane({
           onClick={onToggleLibrary}
         >
           {meta.id.toUpperCase()}
+          {/* A tester did not know this button changes the Bible: book and
+              chapter beside it show an arrow, and this looked like Marks. */}
+          <Icon name={libraryOpen ? 'chevron-up' : 'chevron-down'} />
         </button>
         <button
           type="button"
@@ -498,7 +504,7 @@ export function BiblePane({
           aria-label={t.reader.settingsChip}
           onClick={onToggleSettings}
         >
-          ⚙
+          <Icon name="settings" />
         </button>
         {/* Help lives here in every state (3.2.6), after the other chips. */}
         <button
@@ -558,10 +564,20 @@ export function BiblePane({
               disabled={menusShown && !canRecede}
               onClick={toggleMenus}
             >
-              <span className="menus__glyph" aria-hidden="true">{menusShown ? '▴' : '▾'}</span>
+              <Icon name={menusShown ? 'chevron-up' : 'chevron-down'} className="menus__glyph" />
             </button>
           )}
         </div>
+        {/* Which Bible this is, in words: "BSB" says nothing to someone new to
+            translations. Outside the pinned strip, so it costs no reading room
+            once the chapter scrolls, and not in a comparison, whose columns
+            each name their own. The name comes from the Bible, in its language
+            (3.1.2), so it is no text of ours to translate. */}
+        {!compare && (
+          <p className="chapter__translation" data-testid="chapter-translation" lang={bible.meta.language}>
+            {meta.name}
+          </p>
+        )}
         {compare ? (
           compare
         ) : current ? (
@@ -604,7 +620,7 @@ export function BiblePane({
                       name already says the collection in words. */}
                   {mark && (
                     <span className="verse__marker" data-color={mark.color} aria-hidden="true">
-                      {HIGHLIGHT_GLYPHS[mark.color]}
+                      <Icon name={HIGHLIGHT_GLYPHS[mark.color]} />
                     </span>
                   )}
                   {/* The verse number is the keyboard path to the same action.
@@ -695,15 +711,24 @@ export function BiblePane({
         )}
       </article>
 
-      {/* CC BY-SA obliges the notice where the material appears, so it sits with
-          the text rather than in an About page. Public-domain texts show nothing. */}
-      {requiresAttribution(meta) && (
+      {/* A licence obliges the credit where the material appears, so it sits
+          with the text rather than in an About page. Public-domain texts show
+          nothing, unless their metadata says where that does not hold; that
+          note is about the text, so it goes while a panel covers the text. A
+          comparison gives every column's own, this Bible's among them. */}
+      {!compare && owed && (
         <footer className="attribution" data-testid="attribution">
-          {meta.attribution} ·{' '}
-          {/* The link's own text says whose source (2.4.9). */}
-          <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            {t.common.source(meta.name)}
-          </a>
+          <AttributionLine meta={meta} />
+          {meta.rights_notice && (
+            <span className="attribution__line">
+              <RightsNotice text={meta.rights_notice} />
+            </span>
+          )}
+        </footer>
+      )}
+      {!compare && !owed && !overlay && meta.rights_notice && (
+        <footer className="attribution" data-testid="translation-footer">
+          <RightsNotice text={meta.rights_notice} />
         </footer>
       )}
     </div>

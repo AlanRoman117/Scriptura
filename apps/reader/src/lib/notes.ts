@@ -47,12 +47,12 @@ export type HighlightColor = (typeof HIGHLIGHT_COLORS)[number];
  * the Marks panel. Distinct shapes rather than letters, so they read the same
  * in every language the text is in.
  */
-export const HIGHLIGHT_GLYPHS: Record<HighlightColor, string> = {
-  amber: '●',
-  rose: '▲',
-  sky: '■',
-  mint: '◆',
-  violet: '★',
+export const HIGHLIGHT_GLYPHS: Record<HighlightColor, 'circle' | 'triangle' | 'square' | 'diamond' | 'star'> = {
+  amber: 'circle',
+  rose: 'triangle',
+  sky: 'square',
+  mint: 'diamond',
+  violet: 'star',
 };
 
 /**

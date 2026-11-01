@@ -153,7 +153,7 @@ test.describe('reads are answered', () => {
     const { isError, text } = await call(page, 'scriptura_read_passage', { reference: 'John 3:16' });
     expect(isError).toBe(false);
     expect(text).toContain('For God so loved the world');
-    expect(text).toContain('(BSB)');
+    expect(text).toContain('(KJV)');
   });
 
   test('an unresolvable reference is an error, not an invention', async ({ page }) => {

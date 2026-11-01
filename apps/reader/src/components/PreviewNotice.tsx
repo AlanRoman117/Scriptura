@@ -4,6 +4,7 @@ import { rich } from '../i18n/rich';
 import { feedbackUrl } from '../lib/feedback';
 import { settleFocus } from '../lib/focus';
 import { PREVIEW, VERSION, hidePreview, previewHidden } from '../lib/preview';
+import { Icon } from './Icon';
 
 /**
  * Says this is a preview, and where a correction goes.
@@ -36,7 +37,7 @@ export function PreviewNotice() {
           rel="noopener noreferrer"
         >
           <span className="preview-notice__words">{t.previewBuild.reportShort}</span>
-          <span aria-hidden="true">↗</span>
+          <Icon name="arrow-up-right" />
           <span className="visually-hidden"> {t.previewBuild.newTab}</span>
         </a>
         <button

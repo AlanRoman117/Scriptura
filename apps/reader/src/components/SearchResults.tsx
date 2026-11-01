@@ -4,6 +4,7 @@ import type { Bible, SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions } from '../lib/search';
 import { useI18n } from '../i18n';
 import { withSlots } from '../i18n/rich';
+import { Icon } from './Icon';
 
 interface SearchResultsProps {
   bible: Bible;
@@ -98,7 +99,7 @@ export function SearchResults({
           onClick={onClose}
           aria-label={t.results.close}
         >
-          ✕
+          <Icon name="x" />
         </button>
       </header>
 

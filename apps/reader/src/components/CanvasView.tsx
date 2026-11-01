@@ -31,6 +31,7 @@ import { useConfirm, type ConfirmRequest } from './ConfirmDialog';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import type { Removed } from '../i18n/types';
+import { Icon } from './Icon';
 
 interface CanvasViewProps {
   bible: Bible;
@@ -809,7 +810,7 @@ export function CanvasView({
               >
                 {words.more}
                 <span className="canvas__more-caret" aria-hidden="true">
-                  {more ? '▴' : '▾'}
+                  <Icon name={more ? 'chevron-up' : 'chevron-down'} />
                 </span>
               </button>
               <div
@@ -867,16 +868,16 @@ export function CanvasView({
                     the view goes, so the plane moves the other way. */}
                 <div className="canvas__zoom canvas__pan" role="group" aria-label={words.moveView}>
                   <button type="button" data-testid="pan-left" aria-label={words.viewLeft} onClick={() => panBy(PAN_BUTTON_STEP, 0)}>
-                    ←
+                    <Icon name="arrow-left" />
                   </button>
                   <button type="button" data-testid="pan-up" aria-label={words.viewUp} onClick={() => panBy(0, PAN_BUTTON_STEP)}>
-                    ↑
+                    <Icon name="arrow-up" />
                   </button>
                   <button type="button" data-testid="pan-down" aria-label={words.viewDown} onClick={() => panBy(0, -PAN_BUTTON_STEP)}>
-                    ↓
+                    <Icon name="arrow-down" />
                   </button>
                   <button type="button" data-testid="pan-right" aria-label={words.viewRight} onClick={() => panBy(-PAN_BUTTON_STEP, 0)}>
-                    →
+                    <Icon name="arrow-right" />
                   </button>
                 </div>
               </div>
@@ -946,7 +947,7 @@ export function CanvasView({
             aria-label={menusShown ? words.hideMenus : words.showMenus}
             onClick={() => (menusShown ? receding.hide() : receding.show())}
           >
-            <span className="menus__glyph" aria-hidden="true">{menusShown ? '▴' : '▾'}</span>
+            <Icon name={menusShown ? 'chevron-up' : 'chevron-down'} className="menus__glyph" />
           </button>
         </div>
       )}
@@ -1043,7 +1044,7 @@ export function CanvasView({
                   <header className="card__grip" data-node-id={node.id} {...cardDrag}>
                     {node.color && (
                       <span className="swatch__glyph card__glyph" aria-hidden="true">
-                        {HIGHLIGHT_GLYPHS[node.color]}
+                        <Icon name={HIGHLIGHT_GLYPHS[node.color]} />
                       </span>
                     )}
                     {node.kind === 'text' ? (
@@ -1115,7 +1116,7 @@ export function CanvasView({
                         if (next) announce(words.connectPrompt);
                       }}
                     >
-                      ⇢
+                      <Icon name="move-right" />
                     </button>
                     {node.kind === 'verse' && (
                       <button
@@ -1128,7 +1129,7 @@ export function CanvasView({
                           onGo(node.book_slug ?? '', node.chapter ?? 1, node.verse, node.endVerse);
                         }}
                       >
-                        ↗
+                        <Icon name="arrow-up-right" />
                       </button>
                     )}
                     <button
@@ -1155,11 +1156,11 @@ export function CanvasView({
                         setPanel({ id: node.id, mode: 'adjust' });
                       }}
                     >
-                      ✥
+                      <Icon name="move" />
                     </button>
                     {/* Asks first, and can be undone after (3.3.6). */}
                     <ConfirmButton
-                      label="✕"
+                      label={<Icon name="x" />}
                       className="card__action card__action--danger"
                       data-testid={`card-remove-${node.id}`}
                       aria-label={words.takeOff(label(node))}
@@ -1200,16 +1201,16 @@ export function CanvasView({
                 <>
                   <div className="canvas__panel-row" role="group" aria-label={words.move}>
                     <button type="button" className="canvas__action" data-testid="adjust-left" aria-label={words.moveLeft} onClick={() => moveCard(panelNode.id, -BUTTON_STEP, 0)}>
-                      ←
+                      <Icon name="arrow-left" />
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-up" aria-label={words.moveUp} onClick={() => moveCard(panelNode.id, 0, -BUTTON_STEP)}>
-                      ↑
+                      <Icon name="arrow-up" />
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-down" aria-label={words.moveDown} onClick={() => moveCard(panelNode.id, 0, BUTTON_STEP)}>
-                      ↓
+                      <Icon name="arrow-down" />
                     </button>
                     <button type="button" className="canvas__action" data-testid="adjust-right" aria-label={words.moveRight} onClick={() => moveCard(panelNode.id, BUTTON_STEP, 0)}>
-                      →
+                      <Icon name="arrow-right" />
                     </button>
                   </div>
                   <div className="canvas__panel-row" role="group" aria-label={words.size}>
@@ -1240,7 +1241,7 @@ export function CanvasView({
                       onClick={() => colourCard(panelNode.id, color)}
                     >
                       <span className="swatch__disc" data-color={color} aria-hidden="true">
-                        <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
+                        <span className="swatch__glyph"><Icon name={HIGHLIGHT_GLYPHS[color]} /></span>
                       </span>
                     </button>
                   ))}
@@ -1288,7 +1289,7 @@ export function CanvasView({
       {inserted && (
         <p className="canvas__status done" data-testid="canvas-done">
           <span className="done__check" aria-hidden="true">
-            ✓
+            <Icon name="check" />
           </span>{' '}
           {inserted}
         </p>

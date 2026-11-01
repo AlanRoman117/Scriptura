@@ -1,6 +1,7 @@
 import { fileSystemAccessSupported } from '../lib/export';
 import { settleFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 export type Persistence = 'persisted' | 'denied' | 'unsupported' | 'unknown';
 
@@ -79,7 +80,7 @@ export function DurabilityBanner({
           }}
           aria-label={t.durability.dismiss}
         >
-          ×
+          <Icon name="x" />
         </button>
       </div>
     </aside>

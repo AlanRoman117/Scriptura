@@ -242,7 +242,7 @@ test.describe('a collection is never told by colour alone (1.4.1)', () => {
     await page.getByTestId('pref-markers').check();
     await page.getByTestId('settings-close').click();
     await expect(marker).toBeVisible();
-    await expect(marker).toHaveText('■');
+    await expect(marker.locator('svg[data-icon="square"]')).toBeVisible();
 
     // And the swatches carry the same shapes.
     await page.getByTestId('verse-1').click();
@@ -383,7 +383,7 @@ test.describe('colours as collections', () => {
 
   test('a mark is keyed on the passage, not the translation it was made in', async ({ page }) => {
     // This is what lets a colour stay a collection once Stage 4 can switch
-    // translations: `bsb:john:1:1` would empty every list on the switch.
+    // translations: `kjv:john:1:1` would empty every list on the switch.
     await open(page);
     await mark(page, 1, 'violet');
     await expect.poll(() => storedIds(page)).toContain('john:1:1');

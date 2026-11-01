@@ -1,5 +1,9 @@
 import { search, lookup } from '@scriptura/search';
-import { clearCache } from '@scriptura/core';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { clearCache, setDataDir } from '@scriptura/core';
+import { chineseBible, writeBible } from '../helpers/chinese-bible';
 
 /**
  * Search semantics, pinned down.
@@ -143,13 +147,32 @@ describe('scripts without word separators', () => {
     expect(strict.map((r) => r.ref)).toEqual(loose.map((r) => r.ref));
   });
 
-  // Chinese is written without spaces too, and the Union Version is the text
-  // most of its readers will search.
-  test.each(['神', '耶穌', '約翰'])('word mode is a no-op for %s in Chinese', async (query) => {
-    const loose = await search('cuvt', query);
-    const strict = await search('cuvt', query, { mode: 'word' });
-    expect(loose.length).toBeGreaterThan(50);
-    expect(strict.map((r) => r.ref)).toEqual(loose.map((r) => r.ref));
+  // Chinese is written without spaces too. No Chinese Bible is in the library at
+  // present, so a small one stands in: each query sits inside a longer run of
+  // Han, where a whole-word rule would find nothing.
+  describe('in Chinese', () => {
+    let dataDir: string;
+
+    beforeAll(() => {
+      dataDir = mkdtempSync(join(tmpdir(), 'scriptura-chinese-'));
+      writeBible(dataDir, chineseBible('zht', 'zh-Hant'));
+      setDataDir(dataDir);
+      clearCache();
+    });
+
+    afterAll(() => {
+      setDataDir(undefined);
+      clearCache();
+      rmSync(dataDir, { recursive: true, force: true });
+    });
+
+    test.each(['神', '耶穌', '約翰'])('word mode is a no-op for %s', async (query) => {
+      const loose = await search('zht', query);
+      const strict = await search('zht', query, { mode: 'word' });
+      // In two sentences of each of four chapters.
+      expect(loose.length).toBe(8);
+      expect(strict.map((r) => r.ref)).toEqual(loose.map((r) => r.ref));
+    });
   });
 
   test('so a Japanese result set keeps canonical order', async () => {

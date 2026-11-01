@@ -58,7 +58,7 @@ test.describe('the library', () => {
     await page.getByTestId('library-open').click();
 
     const panel = page.getByTestId('library-panel');
-    await expect(panel.locator('.library__item')).toHaveCount(14);
+    await expect(panel.locator('.library__item')).toHaveCount(11);
     // Grouped by language, and headed by its *name*: metadata.json stores an
     // ISO code, and "en / es / fr / ja" is correct data but a useless heading.
     await expect(panel.locator('.library__language')).toHaveText([
@@ -66,17 +66,15 @@ test.describe('the library', () => {
       'English',
       'French',
       'Japanese',
-      'Simplified Chinese',
       'Spanish',
-      'Traditional Chinese',
     ]);
 
     // The bundled one is already here and is what we are reading.
-    await expect(page.getByTestId('library-read-bsb')).toBeDisabled();
-    await expect(page.getByTestId('library-bsb')).toContainText('Reading');
+    await expect(page.getByTestId('library-read-kjv')).toBeDisabled();
+    await expect(page.getByTestId('library-kjv')).toContainText('Reading');
     // Everything else is an offer, with its weight stated up front.
-    await expect(page.getByTestId('library-get-kjv')).toBeVisible();
-    await expect(page.getByTestId('library-kjv')).toContainText(/~\d+\.\d+ MB/);
+    await expect(page.getByTestId('library-get-bsb')).toBeVisible();
+    await expect(page.getByTestId('library-bsb')).toContainText(/~\d+\.\d+ MB/);
   });
 
   test('the bundled translation cannot be removed', async ({ page }) => {
@@ -84,7 +82,7 @@ test.describe('the library', () => {
     // which is the one state this app exists to survive.
     await open(page);
     await page.getByTestId('library-open').click();
-    await expect(page.getByTestId('library-remove-bsb')).toHaveCount(0);
+    await expect(page.getByTestId('library-remove-kjv')).toHaveCount(0);
   });
 
   test('a translation downloads, becomes readable, and changes the text', async ({ page }) => {
@@ -122,18 +120,18 @@ test.describe('the library', () => {
     await page.getByTestId('note-new').click();
     await page.getByTestId('note-title').fill('Kept');
 
-    await install(page, 'kjv');
+    await install(page, 'bsb');
     // A multi-megabyte download is not thrown away by one slip: it asks, and
     // says the notes stay.
-    await page.getByTestId('library-remove-kjv').click();
-    const dialog = page.getByRole('alertdialog', { name: /^Remove King James Version .*from this device\?$/ });
+    await page.getByTestId('library-remove-bsb').click();
+    const dialog = page.getByRole('alertdialog', { name: /^Remove Berean Standard Bible .*from this device\?$/ });
     await expect(dialog).toBeVisible();
     await expect(page.getByTestId('confirm-body')).toContainText('Your notes and marks are not changed.');
     await dialog.getByRole('button', { name: 'Remove translation' }).click();
-    await expect(page.getByTestId('library-get-kjv')).toBeVisible();
+    await expect(page.getByTestId('library-get-bsb')).toBeVisible();
     // Focus takes the place of the button that went, and the removal is said.
-    await expect(page.getByTestId('library-get-kjv')).toBeFocused();
-    await expect(page.getByTestId('announcer')).toContainText(/^Removed King James Version .*from this device$/);
+    await expect(page.getByTestId('library-get-bsb')).toBeFocused();
+    await expect(page.getByTestId('announcer')).toContainText(/^Removed Berean Standard Bible .*from this device$/);
 
     await expect(page.getByTestId('note-title')).toHaveValue('Kept');
   });
@@ -147,12 +145,12 @@ test.describe('the library', () => {
 
     await page.getByTestId('library-open').click();
     // The catalogue ships with the app, so the shelf is never blank.
-    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(14);
+    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(11);
 
-    await page.getByTestId('library-get-kjv').click();
-    await expect(page.getByTestId('library-error-kjv')).toContainText(/connection/i);
+    await page.getByTestId('library-get-bsb').click();
+    await expect(page.getByTestId('library-error-bsb')).toContainText(/connection/i);
     // And the row is still offerable once the network is back.
-    await expect(page.getByTestId('library-get-kjv')).toBeEnabled();
+    await expect(page.getByTestId('library-get-bsb')).toBeEnabled();
   });
 });
 
@@ -186,7 +184,7 @@ test.describe('reading two translations at once', () => {
     await expect(page.getByTestId('compare')).toBeVisible();
 
     // No drop control on the translation being read — it is the primary text.
-    await expect(page.getByTestId('compare-drop-bsb')).toHaveCount(0);
+    await expect(page.getByTestId('compare-drop-kjv')).toHaveCount(0);
     await page.getByTestId('compare-drop-rv1909').click();
     await expect(page.getByTestId('compare')).toHaveCount(0);
     await expect(page.getByTestId('chapter-title')).toContainText('John 1');
@@ -206,7 +204,7 @@ test.describe('reading two translations at once', () => {
     // quote is distinguishable from the same verse quoted from another column.
     await expect(body).toContainText('[[john 1:1@rv1909]]');
     // Which column it came from is the point of quoting from a comparison.
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Juan 1:1 (RV1909)');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted Juan 1:1 (RV1909)');
   });
 
   test('a CC BY 4.0 translation shows its notice beside the text', async ({ page }) => {
@@ -218,7 +216,7 @@ test.describe('reading two translations at once', () => {
     await page.getByTestId('library-read-blivre').click();
 
     await expect(page.getByTestId('chapter-title')).toContainText('João 1');
-    await expect(page.getByTestId('attribution')).toContainText(/CC BY 4\.0/i);
+    await expect(page.getByTestId('attribution')).toContainText('CC BY 3.0 Brasil');
     await expect(page.getByTestId('attribution')).toContainText('Bíblia Livre');
   });
 
@@ -253,10 +251,10 @@ test.describe('a link back to the version it quoted', () => {
 
     // Two quotes of John 1:1, and two links that say which is which.
     const body = page.getByTestId('notes-surface');
-    await expect(body).toContainText('[[john 1:1@bsb]]');
+    await expect(body).toContainText('[[john 1:1@kjv]]');
     await expect(body).toContainText('[[john 1:1@rv1909]]');
 
-    // Following the BSB one goes back to BSB, from inside RV1909.
+    // Following the KJV one goes back to KJV, from inside RV1909.
     //
     // Placed by offset rather than by arrow keys: ArrowDown in a textarea moves
     // by *visual* line, so it lands somewhere different whenever the wrapping
@@ -264,13 +262,13 @@ test.describe('a link back to the version it quoted', () => {
     // synthesised `select` does not reach it.
     await body.click();
     await body.evaluate((el: HTMLTextAreaElement) => {
-      const at = el.value.indexOf('[[john 1:1@bsb]]');
+      const at = el.value.indexOf('[[john 1:1@kjv]]');
       el.setSelectionRange(at + 2, at + 2);
     });
     await page.keyboard.press('ArrowRight');
 
     const follow = page.getByTestId('notes-follow-link');
-    await expect(follow).toContainText('(BSB)');
+    await expect(follow).toContainText('(KJV)');
     await follow.click();
     await expect(page.getByTestId('chapter-title')).toContainText('John 1');
   });
