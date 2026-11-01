@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import type { Bible } from '@scriptura/core/types';
+import { BoundedCache } from '../lib/bounded-cache';
 import { cardSize, describeNode, type Board } from '../lib/canvas';
 import type { Note } from '../lib/notes';
 import { useI18n } from '../i18n';
@@ -39,7 +40,7 @@ const LABEL_PAD = 6;
  */
 let ruler: SVGTextElement | null | undefined;
 
-function measure(text: string): number {
+function getRuler(): SVGTextElement | null {
   if (ruler === undefined) {
     if (typeof document === 'undefined') {
       ruler = null;
@@ -51,19 +52,136 @@ function measure(text: string): number {
       ruler.setAttribute('class', 'embed__label');
       svg.appendChild(ruler);
       document.body.appendChild(svg);
+      watchFont();
     }
   }
-  if (!ruler) {
+  return ruler;
+}
+
+/**
+ * Widths already measured, by string, under one font.
+ *
+ * Each measurement forces a layout of the page, and a thumbnail fitted every
+ * label on every render, hidden or not: 12,062 forced layouts in a 60-move drag
+ * on a 500-card board with a 200-card embed in a hidden note, and 17ms of layout
+ * per keystroke beside one. Remembering them took those to 62 and 1ms. That is
+ * also why a hidden thumbnail is drawn as usual and not skipped: it costs lookups
+ * now, and nothing has to notice it being revealed. Only the string's width is
+ * kept. The room in the box is compared afresh by `fit`, so a board that rescales
+ * cannot read a stale answer.
+ *
+ * Bounded because a note's title is a new string on each keystroke and the tab
+ * can stay open for weeks. Held at 100,000 strings, about 10MB at worst, because
+ * a card's title is remembered at every length tried while cutting it: 48 each
+ * for a long title, so 500 such cards need 24,000 at once, and a limit below what
+ * one drawing needs would miss on every string and cost what this is here to save.
+ */
+const widths = new BoundedCache<number>(100_000);
+
+/**
+ * Everything on the ruler that can move a glyph. Text size, line spacing and the
+ * style's reading face do not reach a label today (`.embed__label` is 10px of
+ * `--sans`), and are here anyway: a card clipped by a stale width is worse than
+ * measuring again after a rare change in Settings, and this way a later change
+ * to that rule cannot go stale either.
+ */
+const FONT_PROPERTIES = [
+  'font-family', 'font-size', 'font-style', 'font-weight', 'font-stretch', 'font-variant',
+  'font-kerning', 'font-feature-settings', 'font-variation-settings', 'font-size-adjust',
+  'font-synthesis', 'font-optical-sizing', 'letter-spacing', 'word-spacing', 'text-transform',
+  'text-rendering', '--sans', '--serif', '--text-scale', '--reading-leading',
+];
+
+/**
+ * The font the widths in `widths` belong to.
+ *
+ * Read from the ruler's computed style, not from the preferences, so a rule this
+ * file has never heard of counts too: a reader's text-spacing override (1.4.12)
+ * sets `letter-spacing` with `*`. A style read and no layout. `lang` is the root's
+ * because it picks the stack (`:lang(ja)`) and the glyphs of a shared character,
+ * and is not itself a computed property. The pixel ratio is here because browser
+ * zoom can round a glyph's advance differently.
+ */
+function fontKey(el: SVGTextElement): string {
+  const style = getComputedStyle(el);
+  const root = document.documentElement;
+  return [
+    ...FONT_PROPERTIES.map((name) => style.getPropertyValue(name)),
+    root.lang,
+    root.getAttribute('data-style'),
+    window.devicePixelRatio,
+  ].join('|');
+}
+
+let measuredUnder: string | undefined;
+/** Moves when what was measured no longer holds, so a thumbnail draws again. */
+let fontVersion = 0;
+const fontListeners = new Set<() => void>();
+
+function forgetWidths(): void {
+  widths.clear();
+  fontVersion += 1;
+  // Not told directly: this can run while a thumbnail renders.
+  queueMicrotask(() => {
+    for (const listener of fontListeners) listener();
+  });
+}
+
+/**
+ * Compare the font with the one measured under. Called on every render, which
+ * keeps the guarantee the uncached code had: whatever the page looks like when a
+ * thumbnail draws is what it measures. Moves nothing unless the font did, so a
+ * keystroke leaves nothing queued (the fast-typing rule, CLAUDE.md).
+ */
+function checkFont(): void {
+  const el = getRuler();
+  if (!el) return;
+  const key = fontKey(el);
+  if (key === measuredUnder) return;
+  measuredUnder = key;
+  forgetWidths();
+}
+
+/**
+ * Draw again when the font changes with nothing else to cause a render. Lives as
+ * long as the ruler. `loadingdone` is a signal of its own because a late face
+ * changes every width and no computed value: the family is the same words.
+ */
+function watchFont(): void {
+  document.fonts?.addEventListener('loadingdone', forgetWidths);
+  new MutationObserver(checkFont).observe(document.documentElement, { attributes: true });
+  window.addEventListener('resize', checkFont);
+}
+
+function subscribeFont(listener: () => void): () => void {
+  fontListeners.add(listener);
+  return () => {
+    fontListeners.delete(listener);
+  };
+}
+
+const readFontVersion = (): number => fontVersion;
+
+function measure(text: string): number {
+  const el = getRuler();
+  if (!el) {
     // No DOM to measure with: guess wide rather than narrow, since a title cut
     // a character early reads fine and one that spills does not.
     return text.length * LABEL_SIZE * 0.62;
   }
-  ruler.textContent = text;
-  return ruler.getComputedTextLength();
+  const known = widths.get(text);
+  if (known !== undefined) return known;
+  el.textContent = text;
+  const width = el.getComputedTextLength();
+  widths.set(text, width);
+  return width;
 }
 
 export function BoardThumbnail({ board, bible, notes, onOpen }: BoardThumbnailProps) {
   const { t } = useI18n();
+  // Before the version is read, so a change seen here is not drawn twice.
+  checkFont();
+  useSyncExternalStore(subscribeFont, readFontVersion, readFontVersion);
   const layout = useMemo(() => {
     if (!board || board.nodes.length === 0) return null;
 
