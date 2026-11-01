@@ -30,6 +30,7 @@ import { VerseActions } from './VerseActions';
 import { MaximizeButton } from './PaneControl';
 import { useI18n } from '../i18n';
 import { Icon } from './Icon';
+import { AttributionLine, RightsNotice } from './Attribution';
 
 interface BiblePaneProps {
   bible: Bible;
@@ -408,6 +409,7 @@ export function BiblePane({
 
   const meta = bible.meta;
   const separator = verseSeparator(meta.language);
+  const owed = requiresAttribution(meta);
 
   // For each collection: all of the selected verses, some, or none.
   const marks = new Map(highlights.map((h) => [h.id, h.color]));
@@ -709,15 +711,24 @@ export function BiblePane({
         )}
       </article>
 
-      {/* CC BY-SA obliges the notice where the material appears, so it sits with
-          the text rather than in an About page. Public-domain texts show nothing. */}
-      {requiresAttribution(meta) && (
+      {/* A licence obliges the credit where the material appears, so it sits
+          with the text rather than in an About page. Public-domain texts show
+          nothing, unless their metadata says where that does not hold; that
+          note is about the text, so it goes while a panel covers the text. A
+          comparison gives every column's own, this Bible's among them. */}
+      {!compare && owed && (
         <footer className="attribution" data-testid="attribution">
-          {meta.attribution} ·{' '}
-          {/* The link's own text says whose source (2.4.9). */}
-          <a href={meta.source_url} target="_blank" rel="noreferrer noopener">
-            {t.common.source(meta.name)}
-          </a>
+          <AttributionLine meta={meta} />
+          {meta.rights_notice && (
+            <span className="attribution__line">
+              <RightsNotice text={meta.rights_notice} />
+            </span>
+          )}
+        </footer>
+      )}
+      {!compare && !owed && !overlay && meta.rights_notice && (
+        <footer className="attribution" data-testid="translation-footer">
+          <RightsNotice text={meta.rights_notice} />
         </footer>
       )}
     </div>

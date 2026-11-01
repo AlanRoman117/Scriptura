@@ -498,6 +498,7 @@ function value(name: string, w: World): unknown {
 const SPECIAL: Record<string, (w: World) => unknown[][]> = {
   'app.title': (w) => [[w.t.app.passageTitle(w.bible.john, 1, w.bible.id)]],
   'common.source': (w) => [[w.bible.name]],
+  'common.licence': (w) => [[w.bible.name]],
   'reader.translationChip': (w) => [[w.bible.id, w.bible.name]],
   'reader.marksChip': () => [[7]],
   'reader.selection': (w) => [[1, `${w.bible.john} 1:3`], [3, w.passage]],

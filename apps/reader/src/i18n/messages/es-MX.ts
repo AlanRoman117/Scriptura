@@ -154,6 +154,8 @@ export const esMX = {
     untitledNote: 'Sin título',
     untitledBoard: 'Tablero sin título',
     source: (name: string) => `Fuente de ${name}`,
+    licence: (name: string) => `Licencia de ${name}`,
+    opensInNewTab: '(se abre en una pestaña nueva)',
     undoRemove: 'Deshacer',
     remove: 'Quitar',
     done: 'Listo',
@@ -361,6 +363,7 @@ export const esMX = {
     about: (size: string) => `unos ${size}`,
     licences: {
       'public-domain': 'Dominio público',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -592,6 +595,7 @@ export const esMX = {
     meaning: 'Significado',
     terms: [
       ['CC BY-SA 4.0', 'Creative Commons Atribución-CompartirIgual 4.0: una licencia libre que pide citar la fuente y compartir los cambios con las mismas condiciones.'],
+      ['CC BY 3.0 Brasil', 'Creative Commons Atribución 3.0 Brasil: una licencia libre que pide citar a los autores y la fuente.'],
       ['CC0', 'Creative Commons Cero: el autor renunció a todos sus derechos; el texto es de uso libre.'],
       ['OT', 'Antiguo Testamento (en inglés, Old Testament).'],
       ['NT', 'Nuevo Testamento.'],

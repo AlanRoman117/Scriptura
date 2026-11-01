@@ -64,7 +64,8 @@ test('navigating book and chapter changes the text', async ({ page }) => {
 
 test('a public-domain translation shows no attribution notice', async ({ page }) => {
   // kjv is public domain. The notice is a CC BY-SA obligation, not decoration,
-  // so it must not appear where it is not owed.
+  // so it must not appear where it is not owed. Its UK note is another matter,
+  // and a plain public-domain Bible shows no footer at all: licences.spec.ts.
   await expect(page.getByTestId('attribution')).toHaveCount(0);
 });
 

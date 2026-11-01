@@ -367,7 +367,7 @@ All translations in this repository are independently verified to be public doma
 
 | ID | Name | Language | License | Primary source | Ingested |
 |---|---|---|---|---|---|
-| `kjv` | King James Version | English 🇬🇧 | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | ✅ |
+| `kjv` | King James Version | English 🇬🇧 | Public domain, [except in the UK](docs/translations-status.md#the-king-james-version-in-the-united-kingdom) | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | ✅ |
 | `web` | World English Bible | English 🇺🇸 | Public domain | [eBible.org `engwebp`](https://ebible.org/find/details.php?id=engwebp) | ✅ |
 | `asv` | American Standard Version (1901) | English 🇺🇸 | Public domain | [eBible.org `eng-asv`](https://ebible.org/eng-asv/) | ✅ |
 | `ylt` | Young's Literal Translation | English 🇬🇧 | Public domain | [eBible.org `engylt`](https://ebible.org/engylt/) | ✅ |
@@ -377,7 +377,7 @@ All translations in this repository are independently verified to be public doma
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
 | `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
-| `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 4.0 | [eBible.org `porbr2018`](https://ebible.org/porbr2018/) | ✅ |
+| `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 3.0 Brasil | [The authors' licence file](https://github.com/blivre/BibliaLivre/blob/master/LICENCA.md) | ✅ |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
@@ -508,7 +508,7 @@ This repository is licensed under the **Apache License 2.0** — see [`LICENSE`]
 
 Apache 2.0 was chosen over MIT for one specific reason: it includes an explicit **patent grant**. Any contributor who holds a patent covering code they contribute cannot later sue users of this project for infringement. For an open project intended to serve developers everywhere with no strings attached, that protection matters.
 
-Individual Bible translations in `data/` carry their own licenses as documented in each `metadata.json`. All are either public domain or an explicitly open license (CC BY-SA 4.0 or CC0). No translation under a restrictive or proprietary license is included.
+Individual Bible translations in `data/` carry their own licenses as documented in each `metadata.json`. All are public domain or under an explicitly open license: `vbl` is CC BY-SA 4.0 and `blivre` is CC BY 3.0 Brasil, and both require attribution. The King James Version is public domain outside the UK; in the UK, rights are vested in the Crown, as [the log](docs/translations-status.md#the-king-james-version-in-the-united-kingdom) explains. No translation under a restrictive or proprietary license is included.
 
 ---
 

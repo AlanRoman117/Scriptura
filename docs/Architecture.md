@@ -146,9 +146,16 @@ The filename prefix (`43-john.json`) encodes the canonical book number and an En
 | Value | Meaning |
 |---|---|
 | `public-domain` | No restrictions anywhere |
+| `cc-by-3.0-br` | Attribution required (`blivre`, on its authors' own statement) |
+| `cc-by-4.0` | Attribution required (no translation uses it today) |
 | `cc-by-sa-4.0` | Attribution + ShareAlike required |
 | `cc0` | Explicit public domain dedication |
 | `custom-free` | Free with conditions (e.g. RVG — no modification, no sale) |
+
+Optional metadata beside these: `license_url` (the licence's address, required by
+`validate.py` for a `cc-by*` value), `attribution_lang` (when the attribution's
+language is not the Bible's) and `rights_notice` (one line in English saying where
+`license` does not hold; `kjv` has one for the UK).
 
 ---
 

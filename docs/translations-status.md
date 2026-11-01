@@ -9,16 +9,16 @@ license before its data may be committed.**
 | ID | Name | Language | License | Verified source | Parser | Status |
 |---|---|---|---|---|---|---|
 | `kjv` | King James Version | en | Public domain, [except in the UK](#the-king-james-version-in-the-united-kingdom) | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | `aruljohn` | Complete |
-| `web` | World English Bible | en | Public domain | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | Complete |
-| `asv` | American Standard Version (1901) | en | Public domain | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | Complete |
-| `ylt` | Young's Literal Translation | en | Public domain | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | Complete |
-| `bsb` | Berean Standard Bible | en | Public domain (2023) | [eBible `engbsb`](https://ebible.org/engbsb/) | `usfx` | Complete |
-| `rv1909` | Reina Valera 1909 | es | Public domain | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | Complete |
-| `vbl` | Versión Biblia Libre | es | CC BY-SA 4.0 | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | Complete |
-| `lsg1910` | Louis Segond 1910 | fr | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
+| `web` | World English Bible | en | [Public domain by dedication](#web--world-english-bible) | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | Complete |
+| `asv` | American Standard Version (1901) | en | [Public domain](#asv--american-standard-version) | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | Complete |
+| `ylt` | Young's Literal Translation | en | [Public domain](#ylt--youngs-literal-translation) | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | Complete |
+| `bsb` | Berean Standard Bible | en | [Public domain (2023)](#bsb--berean-standard-bible) | [Berean terms](https://berean.bible/terms.htm); text from [eBible `engbsb`](https://ebible.org/engbsb/) | `usfx` | Complete |
+| `rv1909` | Reina Valera 1909 | es | [Public domain](#rv1909--reina-valera-1909) | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | Complete |
+| `vbl` | Versión Biblia Libre | es | [CC BY-SA 4.0](#vbl--versión-biblia-libre) | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | Complete |
+| `lsg1910` | Louis Segond 1910 | fr | [Public domain](#lsg1910--louis-segond-1910) | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
 | `bungo` | 文語訳聖書 (Classical) | ja | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | `sword` | Complete |
 | `martin1744` | Bible Martin 1744 | fr | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | `sword` | Complete |
-| `blivre` | Bíblia Livre | pt-BR | CC BY 4.0 | [eBible `porbr2018`](https://ebible.org/porbr2018/) | `usfx` | Complete |
+| `blivre` | Bíblia Livre | pt-BR | [CC BY 3.0 Brasil](#blivre--bíblia-livre) | [The authors' licence file](https://github.com/blivre/BibliaLivre/blob/master/LICENCA.md); text from [eBible `porbr2018`](https://ebible.org/porbr2018/) | `usfx` | Complete |
 
 **Status key:**
 - **Complete** — all 66 books ingested; passes `scripts/validate.py --strict` with zero warnings
@@ -32,6 +32,9 @@ entry in `scripts/ingest.py`'s `TRANSLATIONS` registry and by its row above.
 
 ## Verification notes
 
+An aggregator's "Public Domain" label is a starting point, not proof: each row
+below rests on the work's own history or on its rights holder's own statement.
+
 ### eBible source IDs
 Confirm any eBible id against [eBible's own index](https://ebible.org/Scriptures/translations.csv)
 rather than constructing it by hand. Several plausible-looking guesses are
@@ -42,6 +45,109 @@ on eBible already: `bsb` (`engbsb`, the post-2023 public-domain release) and `as
 (`eng-asv`). A third seemed to, `fra_fob` as the Ostervald of 1867, and was not
 that text: see [Withdrawn translations](#withdrawn-translations). An id on eBible
 says where a text can be had, not which edition it is.
+
+### `vbl` — Versión Biblia Libre
+CC BY-SA 4.0, version 5.2 of October 2025. Checked 2026-11-01 against
+[Free Bible Version](https://www.freebibleversion.org/), eBible's
+[copyright page](https://ebible.org/spavbl/copyright.htm) and the front matter in
+`spavbl_usfx.zip`; our verses match that file exactly under `parse_usfx`.
+
+Our import drops the 4,499 footnotes, the 118 Psalm superscriptions, the front
+matter and the Strong's tags, and the attribution discloses the first three
+(§3 asks that changes be indicated, not itemised). ShareAlike applies to any
+adaptation: see `docs/API.md`.
+
+Open questions, being put to Free Bible Ministry (info@freebibleministry.org):
+
+- **Who holds the copyright.** eBible and its metadata name Jonathan Gallagher
+  and Shelly Barrios de Avila, with © 2018-2020 and a "Nuevo Testamento" title
+  that predates the whole Bible. The front matter says "Derechos de autor
+  Jonathan Gallagher 2025" and lists both as translators. The project's site
+  names no holder. The attribution credits both, which is the safer error.
+- **"El texto no debe ser cambiado".** The front matter's foreword sets that
+  condition, while its copyright line grants CC BY-SA ("4:0 Unported") and
+  speaks of derivatives and "los cambios realizados". The licence is what we
+  rely on, but dropping notes and superscriptions may not be what the foreword
+  had in mind.
+- **The editors.** The front matter also names Gustavo Sanabria and Rebeca
+  Põldaas (eBible: "Rebekah"). CC BY-SA credits anyone designated to receive
+  attribution; whether they are is part of the question.
+
+### `blivre` — Bíblia Livre
+**We record CC BY 3.0 Brasil, not eBible's 4.0.** The authors' own
+[`LICENCA.md`](https://github.com/blivre/BibliaLivre/blob/master/LICENCA.md) is
+that licence's full text, and their
+[README](https://github.com/blivre/BibliaLivre) and
+[site](https://sites.google.com/site/biblialivre/perguntas-e-respostas/posso-usar-a-bíblia-livre)
+name it. [eBible's page](https://ebible.org/porbr2018/copyright.htm) repeats the
+authors' credit with "4.0 Brasil" and `by/4.0/br/`; Creative Commons has no 4.0
+national versions, and that address redirects to the international deed. The
+authors' words bind until they confirm otherwise, and **the version question is
+being put to them.**
+
+The site asks for the translators' names, the source (the site itself) and the
+licence, so the attribution holds all three and `source_url` is the site, though
+the proposed wording left the address out and the text comes from eBible. The
+site also asks to be told of any reproduction, "não para pedir autorização": a
+request, not a condition, and answered by the same letter.
+
+Our verses match eBible's file exactly under `parse_usfx`, which changes the text
+in these ways, all disclosed in the attribution: 1,290 notes and 115 Psalm titles
+dropped; the marking of 6,030 supplied words (`<add>`) dropped, keeping the words;
+and **166 citations (`<rq>`) merged into verses**, so Matthew 1:23 ends "Isaías
+7:14". That last is a data fault to fix in a later re-import. No brackets were
+removed: the file's verse text has none. eBible's copy is dated February 2018 and
+the authors have since released 2025.1.0, which we do not carry.
+
+### `asv` — American Standard Version
+© 1901 Thomas Nelson & Sons, renewed 1929 by the International Council of
+Religious Education. Under the 1909 Act's two 28-year terms the US copyright ended
+in 1957. That is the basis, not eBible's label. We use eBible's e-text, without
+its 16 footnotes, its Strong's tags or its 116 Psalm titles.
+
+### `ylt` — Young's Literal Translation
+The third edition (G. A. Young & Co., Edinburgh, 1898), revised by the publishers
+after Young's death in 1888. The reviser is unnamed, and eBible's page credits
+Young alone and labels it public domain. The term has expired on any known basis:
+even a reviser living to the 1950s would be out of term by now. The reviser's
+identity remains unverified.
+
+### `rv1909` — Reina Valera 1909
+First published Madrid, British and Foreign Bible Society, 1909; the revisers are
+undocumented. The text is public domain by age. A "REINA-VALERA 1909" design mark
+is reported registered in the US (Reg. 3390776, United Bible Societies
+Association; not checked at the USPTO). We use the name descriptively, with no
+logo and no claim of endorsement.
+
+### `lsg1910` — Louis Segond 1910
+The British and Foreign Bible Society's 1910 revision of Segond (d. 1885); the
+preface does not name the revisers. The basis is age, not eBible's "not
+copyrighted" label.
+
+Known data faults, for a later re-import: 15 verses contain section headings or
+cross-references (Genesis 29:14 runs on "Léa et Rachel V. 15-30: cf. Os 12:13").
+Separately, 465 verses differ from eBible's file of 30 October 2026, all in spacing
+alone: it has since separated words run together in our copy ("Maisaprès", Ezra 5:12).
+
+### `web` — World English Bible
+Edition `engwebp`. Public domain [by dedication](https://ebible.org/eng-web/webfaq.htm),
+which is stronger than a label: the editors dedicate it, CC0 included. The name is
+a trademark, limited to faithful copies: anyone who changes the text or
+punctuation must stop calling it the World English Bible.
+
+That condition is why this needs fixing: our import drops the Psalm titles and
+runs Psalm 119's 21 Hebrew-letter headings into the verses before them (119:8 ends
+"BETH"), and 11 verses lag eBible's file of 29 October 2026. All for a later
+re-import.
+
+### `bsb` — Berean Standard Bible
+[Dedicated to the public domain](https://berean.bible/terms.htm) on 30 April 2023.
+The publisher asks that text varying from the official one not use the Berean
+name, a request rather than a licence term; US Reg. 7773706 is reported for the
+name (not checked at the USPTO). Our import drops the Psalm titles and footnotes
+and runs 6 headings into the Song of Songs, to be re-imported later. Our verses
+match eBible's file of 29 October 2026 exactly under `parse_usfx`, so any lag would
+be eBible's behind the publisher; that is unchecked.
 
 ### `bungo` — 文語訳聖書
 The originally planned source, `bible.salterrae.net`, **no longer resolves in
@@ -57,7 +163,19 @@ printings, and Japan Bible Society prints a `©1887, 1917, 1982` notice on its
 own 文語訳 edition. Reprints do not restart a copyright term and typographic
 arrangement is not protectable in either the US or Japan, so the risk is low —
 but if those mid-century printings introduced substantive editorial revisions,
-that thin layer is an unknown.
+that thin layer is an unknown. **That question is open with Japan Bible Society.**
+The module's `.conf` gives those printings (OT 1953, NT 1950) and `TextSource`
+only; the digitiser is unknown.
+
+Outside the US, the reasoning is the same age with a different rule. In Japan the
+1887 and 1917 texts are out of term: an institution's work ran from publication,
+and the 2018 extension revived nothing already expired. In the UK a work from
+outside the EEA by a non-EEA author lasts no longer than in its country of origin
+(CDPA 1988 s.12(6)), so the Japanese answer carries over. This is reasoning, not a
+ruling. It would need revisiting if a named reviser's own term turned out to count.
+
+Our import omits the Psalm superscriptions (`<title type="psalm">`) and the
+furigana (`gloss`, about 248,000 in the Old Testament alone).
 
 ### `martin1744` — Bible David Martin 1744
 Published 1744; David Martin died 1721. Public domain worldwide by age, with no
@@ -177,8 +295,19 @@ redistribute this text in the UK, check
 first: limited non-commercial quotation is allowed, and larger uses need written
 permission.
 
+The reader shows this in one line of plain text, `rights_notice` in
+`metadata.json`, beside the text and in a comparison. `license` stays
+`public-domain`, whose values have no qualified form.
+
 Still open in this row: it cites `aruljohn/Bible-kjv`, whose README states no
 edition, source or rights, so it does not yet meet this log's rule of a primary
-source. That repository carries an MIT licence (2019, Arul John), and the edition
-behind `year: 1769` is undeclared. `license` stays `public-domain` in
-`metadata.json`, whose values have no qualified form.
+source, and the edition behind `year: 1769` is undeclared.
+
+**The repository's MIT licence (© 2019 Arul John) is recorded here and not in
+`metadata.json`.** Its grant covers "this software and associated documentation
+files". We took only verse text, which is not Arul John's to license, and
+re-serialised it into our own schema, keeping none of his files. Showing MIT beside
+the text would claim a licence on the King James that nobody can give. `license`
+and `attribution` describe the text, so a licence on a packaging we did not keep
+does not belong in them. Should the packaging be held to matter, the credit is
+this paragraph.

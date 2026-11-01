@@ -2,9 +2,10 @@
   "id": "blivre",
   "name": "Bíblia Livre",
   "language": "pt-BR",
-  "license": "cc-by-4.0",
-  "attribution": "Bíblia Livre © 2018 Diego Santos, Mario Sérgio, Marco Teles — CC BY 4.0",
-  "source_url": "https://ebible.org/porbr2018/",
+  "license": "cc-by-3.0-br",
+  "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio, e Marco Teles, https://sites.google.com/site/biblialivre/, fevereiro de 2018. Licença CC BY 3.0 Brasil: https://creativecommons.org/licenses/by/3.0/br/. Modificado pela Scriptura: removidas as notas, os títulos dos Salmos e a marcação das palavras acrescentadas; 166 citações incorporadas aos versículos.",
+  "license_url": "https://creativecommons.org/licenses/by/3.0/br/",
+  "source_url": "https://sites.google.com/site/biblialivre/",
   "year": 2018,
   "testament": "both",
   "book_count": 66

@@ -1,5 +1,5 @@
 /** Accepted license values for translation metadata. */
-export type License = 'public-domain' | 'cc-by-4.0' | 'cc-by-sa-4.0' | 'cc0' | 'custom-free';
+export type License = 'public-domain' | 'cc-by-3.0-br' | 'cc-by-4.0' | 'cc-by-sa-4.0' | 'cc0' | 'custom-free';
 
 /** Testament identifier. */
 export type Testament = 'OT' | 'NT';
@@ -11,6 +11,21 @@ export interface TranslationMeta {
   language: string;
   license: License;
   attribution: string;
+  /**
+   * The language `attribution` is written in, when it is not the Bible's own:
+   * a screen reader takes its voice from this (3.1.2).
+   */
+  attribution_lang?: string;
+  /**
+   * The licence itself, for a licence that asks for its address to travel with
+   * the work (CC BY-SA 4.0 §3(a)(1)(C), CC BY 3.0 Brasil §4(a)).
+   */
+  license_url?: string;
+  /**
+   * One line, in English, saying where `license` does not hold. It states a
+   * fact about rights and never grants anything, so it is shown as plain text.
+   */
+  rights_notice?: string;
   source_url: string;
   year: number;
   testament: 'both' | Testament;

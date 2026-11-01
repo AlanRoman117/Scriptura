@@ -176,6 +176,7 @@ TRANSLATIONS = {
         "language": "en",
         "license": "public-domain",
         "attribution": "King James Version — Public Domain",
+        "rights_notice": "Public domain outside the UK; in the UK, rights are vested in the Crown and administered by Cambridge University Press.",
         "source_url": "https://github.com/aruljohn/Bible-kjv",
         "year": 1769,
         "source": "aruljohn",
@@ -204,7 +205,9 @@ TRANSLATIONS = {
         "name": "Versión Biblia Libre",
         "language": "es",
         "license": "cc-by-sa-4.0",
-        "attribution": "Versión Biblia Libre (Free Bible Version) — CC BY-SA 4.0",
+        "attribution": "Versión Biblia Libre (Free Bible Version) v5.2 (Oct 2025) © Jonathan Gallagher, Shelly Barrios de Avila. CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/ . Scriptura omits footnotes, Psalm superscriptions and front matter; not endorsed by the licensor.",
+        "attribution_lang": "en",
+        "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
         "source_url": "https://ebible.org/find/details.php?id=spavbl",
         "year": 2025,
         "source": "usfx",
@@ -253,9 +256,14 @@ TRANSLATIONS = {
     # has the reasons.
     # --- Brazilian Portuguese ---
     #
-    # A modern Brazilian text, updated from Almeida's 1819 translation. CC BY
-    # 4.0, so the attribution travels with every quotation — the same duty the
-    # Spanish VBL carries.
+    # A modern Brazilian text, updated from Almeida's 1819 translation, so the
+    # attribution travels with every quotation — the same duty the Spanish VBL
+    # carries.
+    #
+    # ⚠️ eBible says CC BY 4.0; the authors' licence file, README and site say
+    # CC BY 3.0 Brasil. Theirs binds until they say otherwise (see
+    # docs/translations-status.md). The text still comes from eBible, by
+    # `ebible_id`; `source_url` is the address the authors ask to be credited.
     #
     # ⚠️ The Bibles Brazilian churches read today — ARA, ARC 1995/2009, ACF,
     # NVI, NTLH — are all under copyright and are refused by validate.py. The
@@ -265,9 +273,10 @@ TRANSLATIONS = {
     "blivre": {
         "name": "Bíblia Livre",
         "language": "pt-BR",
-        "license": "cc-by-4.0",
-        "attribution": "Bíblia Livre © 2018 Diego Santos, Mario Sérgio, Marco Teles — CC BY 4.0",
-        "source_url": "https://ebible.org/porbr2018/",
+        "license": "cc-by-3.0-br",
+        "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio, e Marco Teles, https://sites.google.com/site/biblialivre/, fevereiro de 2018. Licença CC BY 3.0 Brasil: https://creativecommons.org/licenses/by/3.0/br/. Modificado pela Scriptura: removidas as notas, os títulos dos Salmos e a marcação das palavras acrescentadas; 166 citações incorporadas aos versículos.",
+        "license_url": "https://creativecommons.org/licenses/by/3.0/br/",
+        "source_url": "https://sites.google.com/site/biblialivre/",
         "year": 2018,
         "source": "usfx",
         "ebible_id": "porbr2018",
@@ -841,6 +850,8 @@ def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict
         "language": entry["language"],
         "license": entry["license"],
         "attribution": entry["attribution"],
+        # Optional, and absent rather than empty: most translations have none.
+        **{key: entry[key] for key in ("attribution_lang", "license_url", "rights_notice") if key in entry},
         "source_url": entry["source_url"],
         "year": entry["year"],
         "testament": coverage,

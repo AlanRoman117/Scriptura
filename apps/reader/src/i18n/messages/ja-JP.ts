@@ -162,6 +162,8 @@ export const jaJP = {
     untitledNote: '無題',
     untitledBoard: '無題のボード',
     source: (name: string) => `${name}の出典`,
+    licence: (name: string) => `${name}のライセンス`,
+    opensInNewTab: '（新しいタブで開きます）',
     undoRemove: '元に戻す',
     remove: '削除',
     done: '完了',
@@ -344,6 +346,7 @@ export const jaJP = {
     about: (size: string) => `約${size}`,
     licences: {
       'public-domain': 'パブリックドメイン',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -573,6 +576,7 @@ export const jaJP = {
     meaning: '意味',
     terms: [
       ['CC BY-SA 4.0', 'クリエイティブ・コモンズ 表示-継承 4.0：出典を示し、変更を同じ条件で共有することを求める自由なライセンス。'],
+      ['CC BY 3.0 Brasil', 'クリエイティブ・コモンズ 表示 3.0 ブラジル：著者と出典を示すことを求める自由なライセンス。'],
       ['CC0', 'クリエイティブ・コモンズ・ゼロ：著作者がすべての権利を放棄しており、自由に使えます。'],
       ['OT', '旧約聖書（英語の Old Testament）。'],
       ['NT', '新約聖書（英語の New Testament）。'],
