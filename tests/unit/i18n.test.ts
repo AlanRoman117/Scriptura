@@ -34,8 +34,8 @@ const REGISTRY = {
     pt: 'Portuguese',
     zh: 'Chinese',
   },
-  // A Bible's tag says which script it is written in where that is the whole
-  // difference: one Chinese translation, two character sets.
+  // Chinese interface tags say which script they are written in, because that
+  // is the whole difference; a Chinese Bible's tag would too.
   script: { Hans: 'Han (Simplified variant)', Hant: 'Han (Traditional variant)' },
   region: { US: 'United States', MX: 'Mexico', FR: 'France', JP: 'Japan', BR: 'Brazil' },
 } as const;
@@ -49,6 +49,15 @@ const REGISTRY = {
  * below, so the list cannot be forgotten.
  */
 const INTERFACE_PENDING = new Set<string>();
+
+/**
+ * Interface languages with no Bible in the library at present, named rather
+ * than assumed. Chinese is here since `cuvs` and `cuvt` were withdrawn on
+ * 2026-11-01: the interface stayed, and its readers get the bundled English
+ * Bible. It leaves when a Chinese Bible with a sound licence arrives; a stale
+ * entry fails the test below.
+ */
+const BIBLE_PENDING = new Set<string>(['zh']);
 
 const DATA = fileURLToPath(new URL('../../data/', import.meta.url));
 const metadataLanguages = readdirSync(DATA, { withFileTypes: true })
@@ -78,12 +87,14 @@ describe('language tags', () => {
     if (locale.region) expect(Object.keys(REGISTRY.region)).toContain(locale.region);
   });
 
-  test('every interface has a Bible, and every Bible an interface or a place in the pending list', () => {
+  test('every interface has a Bible or a place in its pending list, and every Bible an interface or a place in its own', () => {
     const bibles = new Set(metadataLanguages.map(([, tag]) => primaryLanguage(tag)));
     const interfaces = new Set(LOCALES.map(primaryLanguage));
 
     expect(new Set(Object.keys(LANGUAGE_TO_LOCALE))).toEqual(interfaces);
-    for (const language of interfaces) expect(bibles).toContain(language);
+    for (const language of interfaces) {
+      expect(bibles.has(language) || BIBLE_PENDING.has(language)).toBe(true);
+    }
     for (const language of bibles) {
       expect(interfaces.has(language) || INTERFACE_PENDING.has(language)).toBe(true);
     }
@@ -92,6 +103,10 @@ describe('language tags', () => {
     for (const language of INTERFACE_PENDING) {
       expect(interfaces).not.toContain(language);
       expect(bibles).toContain(language);
+    }
+    for (const language of BIBLE_PENDING) {
+      expect(interfaces).toContain(language);
+      expect(bibles).not.toContain(language);
     }
   });
 

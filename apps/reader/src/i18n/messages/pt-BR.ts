@@ -400,6 +400,7 @@ export const ptBR = {
     download: 'Baixar',
     removeActive: (name: string) => `Remover ${name} — mude para outra tradução antes`,
     removeFromDevice: (name: string) => `Remover ${name} deste dispositivo`,
+    noLongerOffered: 'Não é mais oferecida. Esta cópia fica neste dispositivo até você removê-la, e não poderá ser baixada de novo.',
     note: 'Uma tradução baixada fica neste dispositivo e pode ser lida offline. Removê-la nunca mexe nas suas notas nem nas suas marcas: as duas pertencem à passagem, não a uma tradução.',
     progress: (name: string, percent: string) => `${name}: ${percent} baixado`,
     downloaded: (name: string) => `${name} foi baixada`,

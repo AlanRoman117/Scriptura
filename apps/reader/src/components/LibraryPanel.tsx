@@ -111,6 +111,7 @@ export function LibraryPanel({
               const busy = downloads[t.id];
               const isActive = t.id === active;
               const comparing = compareWith.includes(t.id);
+              const withdrawn = t.storedOnly === 'no-longer-offered';
 
               return (
                 <li className="library__item" key={t.id} data-testid={`library-${t.id}`}>
@@ -120,11 +121,21 @@ export function LibraryPanel({
                       {isActive && <span className="library__badge">{words.library.reading}</span>}
                       {comparing && <span className="library__badge">{words.library.comparing}</span>}
                     </span>
-                    <span className="library__detail">
-                      {t.id.toUpperCase()} · {words.library.licences[t.license] ?? t.license}
-                      {t.year ? ` · ${t.year}` : ''}
-                      {t.approxBytes ? ` · ~${fmt.bytes(t.approxBytes)}` : ''}
-                    </span>
+                    {withdrawn ? (
+                      <>
+                        <span className="library__detail">{t.id.toUpperCase()}</span>
+                        <span className="library__detail" data-testid={`library-no-longer-offered-${t.id}`}>
+                          {words.library.noLongerOffered}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="library__detail">
+                        {t.id.toUpperCase()}
+                        {t.license ? ` · ${words.library.licences[t.license] ?? t.license}` : ''}
+                        {t.year ? ` · ${t.year}` : ''}
+                        {t.approxBytes ? ` · ~${fmt.bytes(t.approxBytes)}` : ''}
+                      </span>
+                    )}
                     {busy?.error && (
                       <span className="library__error" role="alert" data-testid={`library-error-${t.id}`}>
                         {busy.error}
@@ -194,11 +205,18 @@ export function LibraryPanel({
                               body: [
                                 ...(t.approxBytes ? [words.confirm.translation.frees(fmt.bytes(t.approxBytes))] : []),
                                 words.confirm.translation.kept,
-                                words.confirm.translation.again,
+                                // Removing it may be for good, and this is the question that has to say so.
+                                ...(withdrawn
+                                  ? [words.library.noLongerOffered]
+                                  : t.storedOnly
+                                    ? []
+                                    : [words.confirm.translation.again]),
                               ],
                               action: words.confirm.translation.action,
                               onConfirm: () => onRemove(t.id),
-                              focusAfter: { to: [`[data-testid="library-get-${t.id}"]`] },
+                              focusAfter: t.storedOnly
+                                ? { gone: '[data-testid="library-close"]' }
+                                : { to: [`[data-testid="library-get-${t.id}"]`] },
                               done: words.confirm.translation.done(t.name),
                             }}
                           />

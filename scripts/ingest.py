@@ -240,35 +240,17 @@ TRANSLATIONS = {
         "source": "usfx",
         "ebible_id": "engbsb",
     },
-    # --- Chinese: the Union Version of 1919, in both scripts ---
+    # --- Chinese: none for now ---
     #
-    # One translation, two character sets: the text Chinese Protestantism has
-    # read for a century. eBible publishes each as public domain, and the 1919
-    # publication puts it there in the United States, on the mainland (50 years
-    # for a corporate work), in Hong Kong and in Taiwan alike.
-    #
-    # ⚠️ The revision — 和合本修訂版 (RCUV, 2010) — is a different, copyrighted
-    # work, as are 新譯本 (CNV) and 現代中文譯本. scripts/validate.py refuses them.
-    "cuvs": {
-        "name": "新标点和合本",
-        "language": "zh-Hans",
-        "license": "public-domain",
-        "attribution": "Chinese Union Version (1919), simplified script — Public Domain",
-        "source_url": "https://ebible.org/cmn-cu89s/",
-        "year": 1919,
-        "source": "usfx",
-        "ebible_id": "cmn-cu89s",
-    },
-    "cuvt": {
-        "name": "新標點和合本",
-        "language": "zh-Hant",
-        "license": "public-domain",
-        "attribution": "Chinese Union Version (1919), traditional script — Public Domain",
-        "source_url": "https://ebible.org/cmn-cu89t/",
-        "year": 1919,
-        "source": "usfx",
-        "ebible_id": "cmn-cu89t",
-    },
+    # `cuvs` and `cuvt` were withdrawn on 2026-11-01. eBible's cmn-cu89s and
+    # cmn-cu89t were filed here as the Union Version of 1919, public domain, but
+    # they carry the 1988/89 New Punctuation revision (新标点和合本), for which the
+    # Hong Kong Bible Society acts as copyright agent: its names are the
+    # revision's (吕便, not 流便) and eBible's own file calls it "Chinese Union New
+    # Punctuation 1989". The real 1919 text would need another source and another
+    # id. 和合本修訂版 (RCUV, 2010), 新譯本 (CNV) and 現代中文譯本 are copyrighted too.
+    # scripts/validate.py refuses the ids and the markers; docs/translations-status.md
+    # has the reasons.
     # --- Brazilian Portuguese ---
     #
     # A modern Brazilian text, updated from Almeida's 1819 translation. CC BY
@@ -320,16 +302,10 @@ TRANSLATIONS = {
         "sword_module": "frebdm1744",
         "book_names": "FR_BOOK_NAMES",
     },
-    "ostervald": {
-        "name": "Bible Ostervald",
-        "language": "fr",
-        "license": "public-domain",
-        "attribution": "Bible Ostervald 1867 — Domaine public",
-        "source_url": "https://ebible.org/fra_fob/",
-        "year": 1867,
-        "source": "usfx",
-        "ebible_id": "fra_fob",
-    },
+    # `ostervald` was withdrawn on 2026-11-01: eBible's fra_fob, filed here as
+    # the public-domain text of 1867, is the 1996 revision, listed elsewhere as
+    # "Copyright © 1996 Mission Baptiste Maranatha". scripts/validate.py refuses
+    # that source, not the name: the 1867 text itself is free.
     "bungo": {
         "name": "文語訳聖書 (Classical)",
         "language": "ja",
@@ -646,13 +622,15 @@ JA_BOOK_NAMES = {
 # FreBDM1744 embeds only x-usfm-toc1, the long form — "Le Saint Evangile de
 # Notre Seigneur Jésus-Christ selon Saint Matthieu" — and leaves the short
 # toc2/toc3 empty. Those titles are authentic but unusable as picker labels, and
-# they would read oddly beside the other two French translations in a
+# they would read oddly beside the other French translations in a
 # side-by-side view. (The source also carries a typo, "Le Livre deJosué".)
 #
-# These are the standard short French names, taken from the committed
-# `data/ostervald/` corpus (eBible `fra_fob`), so all three French translations
-# agree. Same role as JA_BOOK_NAMES: display metadata keyed off CANONICAL_BOOKS'
-# USFM codes, defining no numbering — not a canon definition.
+# These are the standard short French names of the books, a list of titles that
+# carries none of any translation's text, so that the French translations agree.
+# (They were copied from `ostervald` before its withdrawal, and martin1744's
+# committed books still carry them.) Same role as JA_BOOK_NAMES: display metadata
+# keyed off CANONICAL_BOOKS' USFM codes, defining no numbering — not a canon
+# definition.
 FR_BOOK_NAMES = {
     "GEN": "Genèse", "EXO": "Exode", "LEV": "Lévitique", "NUM": "Nombres",
     "DEU": "Deutéronome", "JOS": "Josué", "JDG": "Juges", "RUT": "Ruth",

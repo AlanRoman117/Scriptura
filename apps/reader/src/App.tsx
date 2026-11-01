@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Bible } from '@scriptura/core/types';
 import { Layout, type Maximized, type SheetPosition, type Side } from './components/Layout';
 import { BiblePane } from './components/BiblePane';
@@ -7,12 +7,14 @@ import { DurabilityBanner, type Persistence } from './components/DurabilityBanne
 import { PreviewNotice } from './components/PreviewNotice';
 import { DEFAULT_TRANSLATION, loadTranslation, type LoadStage } from './lib/translation';
 import { openingOrder } from './lib/opening';
+import { outsideCatalog } from './lib/stored';
 import { requestPersistence, storageEstimate } from './lib/db';
 import {
   MAX_COMPARE,
   downloadTranslation,
   installedIds,
   loadCatalog,
+  storedOutsideCatalog,
   loadPrefs,
   removeTranslation,
   savePrefs,
@@ -156,7 +158,10 @@ export function App() {
 
   const [translationId, setTranslationId] = useState(DEFAULT_TRANSLATION);
   const [catalog, setCatalog] = useState<CatalogEntry[]>([]);
+  const [catalogRead, setCatalogRead] = useState(false);
   const [installed, setInstalled] = useState<string[]>([]);
+  /** Rows for stored translations the catalog does not list (lib/stored.ts). */
+  const [storedRows, setStoredRows] = useState<CatalogEntry[]>([]);
   const [downloads, setDownloads] = useState<Record<string, DownloadState>>({});
   const [storage, setStorage] = useState<{ usage: number; quota: number } | null>(null);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -285,7 +290,11 @@ export function App() {
       }
     });
 
-    void loadCatalog().then((c) => !cancelled && setCatalog(c));
+    void loadCatalog().then((c) => {
+      if (cancelled) return;
+      setCatalog(c);
+      setCatalogRead(true);
+    });
     void installedIds().then((ids) => !cancelled && setInstalled(ids));
     void storageEstimate().then((e) => !cancelled && setStorage(e));
 
@@ -473,6 +482,24 @@ export function App() {
     },
     [bible, position, translationId, insertIntoNote, runsOf]
   );
+
+  // Only for the library: each row outside the catalog costs reading that Bible.
+  useEffect(() => {
+    if (!libraryOpen || !catalogRead) return;
+    let cancelled = false;
+    void storedOutsideCatalog(catalog, installed).then((rows) => !cancelled && setStoredRows(rows));
+    return () => {
+      cancelled = true;
+    };
+  }, [libraryOpen, catalogRead, catalog, installed]);
+
+  // For the library alone. Help keeps the catalog, its table being of what is
+  // offered. Filtered here so a row goes as soon as its copy does, rather than
+  // standing for a moment with a Download button for something not downloadable.
+  const libraryRows = useMemo(() => {
+    const outside = outsideCatalog(catalog, installed);
+    return [...catalog, ...storedRows.filter((row) => outside.includes(row.id))];
+  }, [catalog, installed, storedRows]);
 
   // Compared translations are read from IndexedDB — they are only offerable
   // once installed — so this never touches the network.
@@ -1305,7 +1332,7 @@ export function App() {
                 />
               ) : libraryOpen ? (
                 <LibraryPanel
-                  catalog={catalog}
+                  catalog={libraryRows}
                   installed={installed}
                   active={translationId}
                   compareWith={compareWith}

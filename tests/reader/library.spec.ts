@@ -58,7 +58,7 @@ test.describe('the library', () => {
     await page.getByTestId('library-open').click();
 
     const panel = page.getByTestId('library-panel');
-    await expect(panel.locator('.library__item')).toHaveCount(14);
+    await expect(panel.locator('.library__item')).toHaveCount(11);
     // Grouped by language, and headed by its *name*: metadata.json stores an
     // ISO code, and "en / es / fr / ja" is correct data but a useless heading.
     await expect(panel.locator('.library__language')).toHaveText([
@@ -66,9 +66,7 @@ test.describe('the library', () => {
       'English',
       'French',
       'Japanese',
-      'Simplified Chinese',
       'Spanish',
-      'Traditional Chinese',
     ]);
 
     // The bundled one is already here and is what we are reading.
@@ -147,7 +145,7 @@ test.describe('the library', () => {
 
     await page.getByTestId('library-open').click();
     // The catalogue ships with the app, so the shelf is never blank.
-    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(14);
+    await expect(page.getByTestId('library-panel').locator('.library__item')).toHaveCount(11);
 
     await page.getByTestId('library-get-bsb').click();
     await expect(page.getByTestId('library-error-bsb')).toContainText(/connection/i);

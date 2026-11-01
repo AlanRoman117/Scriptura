@@ -363,6 +363,7 @@ export const zhHans = {
     download: '下载',
     removeActive: (name: string) => `移除${name} — 请先切换到其他译本`,
     removeFromDevice: (name: string) => `从本设备上移除${name}`,
+    noLongerOffered: '此译本已不再提供。这份副本会保留在本设备上，直到你将它移除；移除后无法再次下载。',
     note: '下载后的译本保存在本设备上，可以离线阅读。移除译本不会影响你的笔记和标记：两者都属于经文本身，而不属于某个译本。',
     progress: (name: string, percent: string) => `${name}：已下载${percent}`,
     downloaded: (name: string) => `${name}已下载`,

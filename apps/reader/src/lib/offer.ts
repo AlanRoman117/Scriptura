@@ -42,9 +42,11 @@ export function offerFor(
   const inLanguage = catalog.filter((entry) => primaryLanguage(entry.language) === language);
   if (inLanguage.some((entry) => installed.includes(entry.id))) return [];
 
-  // Chinese is one translation in two scripts, so both are offered — but the
-  // reader's own script goes first. `sort` is stable, so the rest keep library
-  // order, and a language whose interface names no script keeps it entirely.
+  // A language published in two scripts is offered in both, since either is
+  // readable, with the reader's own first. No Chinese Bible is in the library at
+  // present, so a Chinese interface is offered nothing; this is for when one is
+  // back. `sort` is stable, so the rest keep library order, and a language whose
+  // interface names no script keeps it entirely.
   const want = scriptOf(locale);
   if (!want) return inLanguage;
   return [...inLanguage].sort(
