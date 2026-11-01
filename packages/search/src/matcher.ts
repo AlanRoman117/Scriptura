@@ -210,3 +210,82 @@ export function searchBible(
 
   return results.sort((a, b) => b.score - a.score);
 }
+
+/**
+ * Search for every term of a query at once: all of `required` must match, none
+ * of `excluded` may appear. Does no I/O.
+ *
+ * One pass over the folded index, because this runs on every keystroke in the
+ * reader. Scanning for the first term and then re-folding each candidate's text
+ * for the rest cost two normalizes and a regex on some 20,000 verses per extra
+ * term. On a 4x CPU throttle the last key of `in the beginning` went from 127 to
+ * 36ms and of `the -love` from 80 to 33ms, and neither is a long task any more.
+ *
+ * What this must return is what a scan for `required[0]` narrowed term by term
+ * would, and three things about that are easy to lose:
+ *
+ * - ⚠️ A result keeps its **worst** term's score, but among equal scores the one
+ *   whose **first** term scored better still comes first, and only then
+ *   canonical order. The narrowing sorted by the first term and then re-sorted
+ *   stably, so in the KJV `in the beginning` puts Mark 13:8 before Proverbs 1:7,
+ *   inside the 40 the dropdown shows. Sorting canonically changes no count and no
+ *   score, only the order of about a third of the multi-word queries the parity
+ *   test runs (`tests/unit/search-terms.test.ts`), which is why a count won't show it.
+ * - ⚠️ The blank-query guard belongs to the first term alone. A later term that
+ *   folds to nothing (a bare combining accent) matches no verse, so the search
+ *   finds nothing; it is not skipped. One that folds to a space, which a space
+ *   quoted between two accents does, matches every verse with a space in it.
+ * - Exclusion is deliberately substring even in word mode: asking to drop `love`
+ *   should also drop `loveth`, or the term reads as a promise it does not keep.
+ */
+export function searchBibleTerms(
+  bible: Bible,
+  required: readonly string[],
+  excluded: readonly string[] = [],
+  options: MatchOptions = {}
+): SearchResult[] {
+  const { mode = 'substring', caseSensitive = false } = options;
+  const fold = caseSensitive ? foldDiacritics : foldText;
+
+  const [first, ...rest] = required.map(fold);
+  if (first === undefined || !first.trim()) return [];
+  const dropped = excluded.map(fold);
+
+  /** Decides whether a term counts, and how well. */
+  const scoreOf = (folded: string, needle: string): number => {
+    const score = matchScore(folded, needle);
+    return mode === 'word' && score !== SCORE_WHOLE_WORD ? SCORE_NONE : score;
+  };
+
+  // By the first term's score, canonical within each: the order the final sort
+  // has to start from. Buckets rather than a second sort key, so a query that
+  // finds every verse carries no wrapper object for each of them.
+  const byFirstScore: SearchResult[][] = [[], [], [], []];
+  verses: for (const v of searchIndex(bible, caseSensitive)) {
+    const firstScore = scoreOf(v.folded, first);
+    if (firstScore === SCORE_NONE) continue;
+
+    let worst = firstScore;
+    for (const needle of rest) {
+      const score = scoreOf(v.folded, needle);
+      if (score === SCORE_NONE) continue verses;
+      worst = Math.min(worst, score);
+    }
+    for (const needle of dropped) if (v.folded.includes(needle)) continue verses;
+
+    byFirstScore[firstScore].push({
+      ref: `${v.book} ${v.chapter}:${v.verse}`,
+      book: v.book,
+      book_slug: v.bookSlug,
+      chapter: v.chapter,
+      verse: v.verse,
+      text: v.text,
+      score: worst,
+    });
+  }
+
+  return byFirstScore
+    .reverse()
+    .flat()
+    .sort((a, b) => b.score - a.score);
+}
