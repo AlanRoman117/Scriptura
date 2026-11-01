@@ -68,6 +68,10 @@ covered by a test, so they cannot rot.
 ]
 ```
 
+A translation can leave this list. `cuvs`, `cuvt` and `ostervald` were withdrawn
+on 2026-11-01 over their licences (`docs/translations-status.md`), and every route
+under them now answers 404.
+
 Also answered as `/translations.json`, the name the static tree gives it: the
 reader fetches this list directly, so the same string has to work against a
 live server and a static host (see the offline bundle below).
@@ -136,9 +140,24 @@ reader PWA uses exactly those URLs.
 ```
 
 **`license` and `attribution` are on every text payload**, not just the
-translation endpoint. `vbl` is CC BY-SA 4.0 — the only non-public-domain
-translation — and a client that caches chapters offline still owes the notice.
-Treat `license !== 'public-domain' && license !== 'cc0'` as "must display".
+translation endpoint. `vbl` is CC BY-SA 4.0 and `blivre` is CC BY 3.0 Brasil, and
+a client that caches chapters offline still owes the notice. Treat
+`license !== 'public-domain' && license !== 'cc0'` as "must display".
+
+**`vbl` is ShareAlike.** If you adapt its text, you must license your adaptation
+under CC BY-SA 4.0 or a compatible licence, say that you changed it, and not imply
+that the licensor endorses it.
+
+Three more fields are optional, and absent rather than empty where they do not
+apply. They appear with the metadata (`/translations`, `/translations/:id`,
+`full.json`), not on chapter and verse payloads, whose `attribution` already
+states a licence's address in words.
+
+| Field | Meaning |
+|---|---|
+| `license_url` | The licence itself. Present on every Creative Commons text. |
+| `attribution_lang` | The language of `attribution`, when it is not the Bible's. |
+| `rights_notice` | One line in English saying where `license` does not hold. On `kjv`, the UK. It states a fact and grants nothing. |
 
 ### `GET /translations/kjv/john/3/16`
 

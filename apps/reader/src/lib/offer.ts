@@ -2,7 +2,7 @@
  * Which Bibles to offer a reader whose interface is not in English.
  *
  * A reader whose browser is in Spanish gets a Spanish interface, but the
- * bundled Bible is English (BSB). So when the interface language has Bibles
+ * bundled Bible is English (KJV). So when the interface language has Bibles
  * in the library and none of them is on this device yet, the reader is
  * offered every one of them. Nothing downloads without a press, and "Not now"
  * is remembered for that language on this device.
@@ -42,9 +42,11 @@ export function offerFor(
   const inLanguage = catalog.filter((entry) => primaryLanguage(entry.language) === language);
   if (inLanguage.some((entry) => installed.includes(entry.id))) return [];
 
-  // Chinese is one translation in two scripts, so both are offered — but the
-  // reader's own script goes first. `sort` is stable, so the rest keep library
-  // order, and a language whose interface names no script keeps it entirely.
+  // A language published in two scripts is offered in both, since either is
+  // readable, with the reader's own first. No Chinese Bible is in the library at
+  // present, so a Chinese interface is offered nothing; this is for when one is
+  // back. `sort` is stable, so the rest keep library order, and a language whose
+  // interface names no script keeps it entirely.
   const want = scriptOf(locale);
   if (!want) return inLanguage;
   return [...inLanguage].sort(

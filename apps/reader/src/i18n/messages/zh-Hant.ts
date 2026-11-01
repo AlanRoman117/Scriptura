@@ -164,6 +164,8 @@ export const zhHant = {
     untitledNote: '無標題',
     untitledBoard: '無標題看板',
     source: (name: string) => `${name}的來源`,
+    licence: (name: string) => `${name}的授權條款`,
+    opensInNewTab: '（會在新分頁中開啟）',
     undoRemove: '復原',
     remove: '移除',
     done: '完成',
@@ -347,6 +349,7 @@ export const zhHant = {
     about: (size: string) => `約${size}`,
     licences: {
       'public-domain': '公共領域',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -361,6 +364,7 @@ export const zhHant = {
     download: '下載',
     removeActive: (name: string) => `移除${name} — 請先切換到其他譯本`,
     removeFromDevice: (name: string) => `從本裝置上移除${name}`,
+    noLongerOffered: '此譯本已不再提供。這份副本會保留在本裝置上，直到你將它移除；移除後無法再次下載。',
     note: '下載後的譯本會存在本裝置上，可以離線閱讀。移除譯本不會影響你的筆記和標記：兩者都屬於經文本身，而不屬於某個譯本。',
     progress: (name: string, percent: string) => `${name}：已下載${percent}`,
     downloaded: (name: string) => `${name}已下載`,
@@ -573,6 +577,7 @@ export const zhHant = {
     meaning: '意思',
     terms: [
       ['CC BY-SA 4.0', '創用 CC 姓名標示-相同方式分享 4.0：一種自由授權條款，要求標示來源，並以相同方式分享修改。'],
+      ['CC BY 3.0 Brasil', '創用 CC 姓名標示 3.0 巴西：一種自由授權條款，要求標示作者和來源。'],
       ['CC0', '創用 CC 零：作者放棄了全部權利，文字可以自由使用。'],
       ['OT', '舊約（英文 Old Testament）。'],
       ['NT', '新約（英文 New Testament）。'],

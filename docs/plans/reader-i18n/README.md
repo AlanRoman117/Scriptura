@@ -1,6 +1,6 @@
-# Reader: the interface in every language the Bibles are in
+# Reader: the interface in seven languages
 
-The reader's interface speaks the seven languages of the Bibles it offers:
+The reader's interface speaks seven languages. Five are the languages of the Bibles it offers; Chinese has no Bible in the library since the withdrawal of 2026-11-01 (`docs/translations-status.md`), and its interface stays, over the bundled English Bible:
 
 | Tag | Picker label | Register | Quotes | Copy |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@ The reader's interface speaks the seven languages of the Bibles it offers:
 
 Each tag is built from subtags in the [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry), written in canonical case. The page's `lang` is always one of them, so a screen reader picks the right voice.
 
-**Chinese takes a script, not a region**, because that is what distinguishes the two: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau, and the Bible behind both is one translation in two character sets. The two catalogs are separate texts rather than a conversion — Taiwan writes 搜尋, 設定, 儲存, 匯出 and 說明 where the mainland writes 搜索, 设置, 保存, 导出 and 帮助, and quotes with 「」 rather than “ ”. `tests/unit/i18n.test.ts` fails if a mainland word reaches the traditional catalog in traditional characters.
+**Chinese takes a script, not a region**, because that is what distinguishes the two: Simplified is written in the mainland and Singapore, Traditional in Taiwan, Hong Kong and Macau. The two catalogs are separate texts rather than a conversion — Taiwan writes 搜尋, 設定, 儲存, 匯出 and 說明 where the mainland writes 搜索, 设置, 保存, 导出 and 帮助, and quotes with 「」 rather than “ ”. `tests/unit/i18n.test.ts` fails if a mainland word reaches the traditional catalog in traditional characters.
 
 **Release waits on the six reviews** in [Review](#review).
 
@@ -109,6 +109,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] Bible terms are the ones readers in that language expect (see the glossary).
 - [ ] The register is consistent: *tú* in Spanish, *vous* in French, です・ます in Japanese, *você* in Portuguese.
 - [ ] For Chinese: the characters and the words are the ones that script's readers use, and the punctuation is full-width.
+- [ ] `library.noLongerOffered` says plainly that a copy already downloaded stays until it is removed, and cannot be downloaded again. It is seen on the row of a translation the library has stopped offering, and in the question before removing it.
 - [ ] Sentences are short and plain (3.1.5 for interface text).
 - [ ] Nothing is cut off, overlaps or wraps badly in the screenshots.
 - [ ] Punctuation, numbers and plurals follow the language.
@@ -123,6 +124,7 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] The fourth column width in Settings (`settings.measures.full`), added 2026-10-01: the chapter fills its pane instead of keeping to a column. It sits after Narrow, Normal and Wide and should read as the last step of that series.
 - [ ] The style names and the "Light or dark" choice in Settings (`settings.style`, `settings.styles`, `settings.appearance`, `settings.appearances`, added 2026-09-24). Style names are evocative rather than literal (Vellum, Emerald, Slate, Nocturne, Ember); each should sound like a name in the language, not a translated description.
 - [ ] Three names a screen reader says, changed 2026-10-28 so each holds the words its control shows (WCAG 2.5.3): the H1–H3 buttons (`tools.heading`, "H1, heading 1"), the numbered-list button (`tools.numbers`, "1. Numbered list") and the Marks chip (`reader.marksChip`, "Marks 3 — …", the count no longer in brackets). Each must start with, or contain in order, the letters and number on the button.
+- [ ] The licence link in the attribution line (`common.licence`, "King James Version licence"; it names the Bible, then says what it is), and the words a screen reader adds to it and to the source link (`common.opensInNewTab`), added 2026-11-01. A new row in Help's abbreviations (`help.terms`, "CC BY 3.0 Brasil"), and the same name in the library (`library.licences`), which stays as the licence calls itself.
 - [ ] With a screen reader: the interface is spoken in the language, and a Bible in another language switches voice (brief 92).
 
 Corrections come back as notes, a marked-up copy or edits to the catalog file. Apply them, rerun the tests, regenerate the screenshots, and mark the row above.
@@ -196,6 +198,6 @@ is not the other's characters, a converter would have got it wrong.
 
 - **Typing a reference in the interface language** works only when the open Bible uses those book names. "Jean 3:16" resolves in LSG 1910, not in BSB. The search placeholder and the help examples therefore use the open Bible's own name for John. Resolving names across installed Bibles is a follow-up.
 - **A live language switch and screen readers.** Some readers may keep the previous voice until the page reloads. The change is announced after `lang` updates, and brief 92 checks it.
-- **Metadata stays as published.** Translation names and attributions come from `data/*/metadata.json`: "文語訳聖書 (Classical)" carries English, and the VBL attribution mixes Spanish and English.
+- **Metadata stays as published.** Translation names and attributions come from `data/*/metadata.json`: "文語訳聖書 (Classical)" carries English, and the VBL attribution mixes Spanish and English. The Bíblia Livre attribution is in Portuguese. The King James's UK notice (`rights_notice`) is in English, whichever the language, and is marked so. These are not reviewers' texts.
 - **OT and NT** are English abbreviations; the help table explains them in each language.
 - **The web app manifest** names the app "Scriptura Reader" in every language.

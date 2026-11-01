@@ -32,4 +32,4 @@ npm run review:guide    # take the pictures again, then write the guides
 - **What a reviewer wrote is kept**: everything under `YOURS`, and every box they ticked whose words have not changed.
 - **When corrections come back**, apply them to the catalog file, run both commands, and mark the row in the plan.
 
-The pictures are cropped to the part of the page a section is about, so the words are their real size where GitHub shows the guide. They are taken with a Bible in the reviewer's language open, the one the app offers a new reader first.
+The pictures are cropped to the part of the page a section is about, so the words are their real size where GitHub shows the guide. They are taken with a Bible in the reviewer's language open, the one the app offers a new reader first. Where the library has none, as for Chinese at present, they are taken with the English Bible the app arrives with.

@@ -33,6 +33,32 @@ test('GET /translations is a bare array of metadata', async ({ request }) => {
   ]);
 });
 
+test('the licence address and the rights notice pass through with the metadata', async ({ request }) => {
+  const list = (await (await request.get('/translations')).json()) as Array<Record<string, unknown>>;
+  const of = (id: string) => list.find((t) => t.id === id);
+  expect(of('vbl')?.license_url).toBe('https://creativecommons.org/licenses/by-sa/4.0/');
+  expect(of('blivre')?.license).toBe('cc-by-3.0-br');
+  expect(of('blivre')?.license_url).toBe('https://creativecommons.org/licenses/by/3.0/br/');
+  expect(of('kjv')?.license).toBe('public-domain');
+  expect(of('kjv')?.rights_notice).toMatch(/^Public domain outside the UK;/);
+
+  for (const path of ['/translations/kjv', '/translations/kjv/full.json']) {
+    expect((await (await request.get(path)).json()).rights_notice).toBe(of('kjv')?.rights_notice);
+  }
+  for (const path of ['/translations/vbl', '/translations/vbl/full.json']) {
+    expect((await (await request.get(path)).json()).license_url).toBe(of('vbl')?.license_url);
+  }
+
+  // Optional, and absent rather than empty where there is none.
+  expect(of('asv')).not.toHaveProperty('license_url');
+  expect(of('asv')).not.toHaveProperty('rights_notice');
+  // The chapter and verse shapes do not grow: the attribution they carry already
+  // holds the licence's address in words.
+  const chapter = await (await request.get('/translations/vbl/john/3')).json();
+  expect(chapter).not.toHaveProperty('license_url');
+  expect(chapter.attribution).toContain('https://creativecommons.org/licenses/by-sa/4.0/');
+});
+
 test('GET /translations/:id carries a book index a picker can render', async ({ request }) => {
   const body = await (await request.get('/translations/kjv')).json();
   expect(body.books).toHaveLength(66);
@@ -68,7 +94,7 @@ test('GET chapter and verse have the documented shapes', async ({ request }) => 
 
 test('the same slug addresses every translation, in every language', async ({ request }) => {
   const texts = await Promise.all(
-    ['kjv', 'rv1909', 'lsg1910', 'bungo', 'ostervald'].map(async (id) =>
+    ['kjv', 'rv1909', 'lsg1910', 'bungo', 'blivre'].map(async (id) =>
       (await (await request.get(`/translations/${id}/john/3/16`)).json()).text
     )
   );

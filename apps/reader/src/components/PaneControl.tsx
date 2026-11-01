@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 export type Pane = 'bible' | 'notes';
 export type Maximized = 'none' | Pane;
@@ -43,7 +44,7 @@ export function MaximizeButton({ pane, className, name: named }: { pane: Pane; c
       title={label}
       onClick={() => controls.toggle(pane)}
     >
-      <span aria-hidden="true">{active ? '⤡' : '⤢'}</span>
+      <Icon name={active ? 'minimize-2' : 'maximize-2'} />
       <span className="visually-hidden">{label}</span>
     </button>
   );

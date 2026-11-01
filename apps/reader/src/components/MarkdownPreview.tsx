@@ -6,6 +6,7 @@ import type { Note } from '../lib/notes';
 import { BoardThumbnail } from './BoardThumbnail';
 import { useI18n } from '../i18n';
 import type { Messages } from '../i18n/messages/en-US';
+import { Icon } from './Icon';
 
 interface MarkdownPreviewProps {
   source: string;
@@ -83,7 +84,7 @@ export function MarkdownPreview({
               onEditAt(block.offset);
             }}
           >
-            ✎
+            <Icon name="pencil" />
           </button>
           {renderBlock(block, { t, bible, notes, boards, onFollowLink, onOpenBoard, describeLink })}
         </div>

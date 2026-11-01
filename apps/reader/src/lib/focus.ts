@@ -71,10 +71,16 @@ export function useReturnFocus(open: boolean, fallback?: string): void {
  * `item` names the kind of thing removed (`.marks__item`, `.card`): focus moves
  * to the next one, or to the one before when it was the last. `to` is tried
  * after that, in order. With neither, focus stays on the control that asked.
+ *
+ * `gone` is for a removal that may leave nothing in the control's place, as a
+ * translation no longer offered leaves no Download button: it is taken once the
+ * control has left the page and nothing above matched. In `to` it would match at
+ * once, moving focus and saying "removed" before storage had finished.
  */
 export interface FocusAfter {
   item?: string;
   to?: string[];
+  gone?: string;
 }
 
 function sibling(el: Element, selector: string, step: 'nextElementSibling' | 'previousElementSibling'): Element | null {
@@ -121,9 +127,10 @@ export function settleFocus(trigger: HTMLElement, after: FocusAfter = {}, landed
   };
   // True once there is nothing left to wait for.
   const land = (): boolean => {
-    const target = pick();
+    const target =
+      pick() ?? (after.gone && !trigger.isConnected ? document.querySelector<HTMLElement>(after.gone) : null);
     if (target) target.focus();
-    else if (trigger.isConnected && (after.item || after.to?.length)) return false;
+    else if (trigger.isConnected && (after.item || after.to?.length || after.gone)) return false;
     landed?.();
     return true;
   };

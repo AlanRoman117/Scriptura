@@ -52,7 +52,7 @@ import sys
 from pathlib import Path
 
 # Allowed license identifiers (must match the ingestion registry / schema enum).
-LICENSE_ENUM = {"public-domain", "cc-by-4.0", "cc-by-sa-4.0", "cc0", "custom-free"}
+LICENSE_ENUM = {"public-domain", "cc-by-3.0-br", "cc-by-4.0", "cc-by-sa-4.0", "cc0", "custom-free"}
 
 REQUIRED_META = ["id", "name", "language", "license", "attribution",
                  "source_url", "year", "testament", "book_count"]
@@ -119,16 +119,35 @@ VERSE_BANDS = {"both": (30000, 32000), "OT": (22000, 24000), "NT": (7000, 8500)}
 #                restored in the US until 2056, for the same URAA reason as
 #                kougo; eBible's "Korean Bible 1910" and CrossWire's korrv both
 #                carry it under another name.
-#   rcuv       — 和合本修訂版 (2010) and 新譯本, revisions still in copyright;
-#                the 1919 和合本 itself is fine and is in the library.
+#   rcuv       — 和合本修訂版 (2010) and 新譯本, revisions still in copyright.
 #   Brazilian  — ARA, ARC 1995/2009, ACF, NVI and NTLH, all in copyright; the
 #                library carries Bíblia Livre instead.
+#   cu89       — 新标点和合本/新標點和合本, the 1988/89 United Bible Societies New
+#                Punctuation revision of the Union Version; the Hong Kong Bible
+#                Society acts as copyright agent. eBible's cmn-cu89s and cmn-cu89t
+#                were in this library until 2026-11-01 as `cuvs` and `cuvt`,
+#                recorded as the 1919 text, public domain. They are not: the names
+#                are the revision's (吕便, not 流便), and eBible's own file calls
+#                it "Chinese Union New Punctuation 1989".
+#   fra_fob    — the 1996 revision of the Bible Ostervald, listed elsewhere as
+#                "Copyright © 1996 Mission Baptiste Maranatha". eBible's fra_fob
+#                was in this library until 2026-11-01 as `ostervald`, recorded
+#                as the 1867 text, public domain.
 DENY_ID_SUBSTRINGS = {
     "rv1960", "rvr1960", "rvr60", "reinavalera1960",
     "kougo",
     "gaeyeok", "gaeyeokhangeul", "gaeyeokgaejeong", "korrv",
     "rcuv", "hehebenxiudingban",
     "almeidaara", "arc1995", "arc2009", "acf1994", "ntlh",
+    "cu89", "frafob",
+}
+# The ids those texts were withdrawn from, matched whole. ⚠️ Never as substrings:
+# the texts they claimed to be are free, so `ostervald1867` from the real 1867
+# text, or a genuine 1919 Union Version under its own id, must be able to pass.
+DENY_EXACT_IDS = {
+    "cuvs": "the 1988/89 New Punctuation revision (cmn-cu89s), not the 1919 Union Version",
+    "cuvt": "the 1988/89 New Punctuation revision (cmn-cu89t), not the 1919 Union Version",
+    "ostervald": "the 1996 revision (fra_fob, © Mission Baptiste Maranatha), not the 1867 text",
 }
 DENY_TEXT_MARKERS = [
     "reina valera 1960", "reina-valera 1960", "口語訳",
@@ -136,6 +155,9 @@ DENY_TEXT_MARKERS = [
     "和合本修訂版", "和合本修订版", "新譯本", "新译本",
     "almeida revista e atualizada", "nova tradução na linguagem de hoje",
     "almeida corrigida fiel", "nova versão internacional",
+    "新标点和合本", "新標點和合本", "chinese union new punctuation",
+    "cmn-cu89s", "cmn-cu89t",
+    "fra_fob", "mission baptiste maranatha",
 ]
 
 _NUM_PREFIX = re.compile(r"^(\d+)-")
@@ -159,6 +181,10 @@ def validate_translation(tdir: Path, strict: bool):
 
     # --- Forbidden-translation guard (by directory id) ---
     norm_id = tid.replace("-", "").replace("_", "").lower()
+    if norm_id in DENY_EXACT_IDS:
+        errors.append(f"FORBIDDEN translation directory '{tid}' — withdrawn: "
+                      f"{DENY_EXACT_IDS[norm_id]}.")
+        return errors, warnings
     if any(bad in norm_id for bad in DENY_ID_SUBSTRINGS):
         errors.append(f"FORBIDDEN translation directory '{tid}' — this text is not "
                       f"public domain and must not be in this repo.")
@@ -182,12 +208,29 @@ def validate_translation(tdir: Path, strict: bool):
     if lic not in LICENSE_ENUM:
         errors.append(f"license '{lic}' is not one of {sorted(LICENSE_ENUM)}")
 
+    # A Creative Commons licence asks for its address to travel with the work,
+    # and the reader builds a link from this, so it has to be a web address.
+    license_url = meta.get("license_url")
+    if license_url is not None and not (isinstance(license_url, str)
+                                        and license_url.startswith("https://")):
+        errors.append(f"license_url '{license_url}' is not an https:// address")
+    if isinstance(lic, str) and lic.startswith("cc-by") and not license_url:
+        errors.append(f"license '{lic}' requires a license_url")
+
+    for field in ("attribution_lang", "rights_notice"):
+        if field in meta and not (isinstance(meta[field], str) and meta[field].strip()):
+            errors.append(f"{field} must be non-empty text when present")
+
     # id must match directory name.
     if meta.get("id") != tid:
         errors.append(f"metadata id '{meta.get('id')}' != directory name '{tid}'")
 
-    # Forbidden-translation guard (by attribution/name text).
-    haystack = f"{meta.get('name','')} {meta.get('attribution','')}".lower()
+    # Forbidden-translation guard (by name, attribution and source). The source
+    # counts because a mislabelled text is exactly what this guards against: the
+    # name and attribution can be wrong, as `cuvs` and `ostervald`'s were, while
+    # the URL still says where the text came from.
+    haystack = (f"{meta.get('name','')} {meta.get('attribution','')} "
+                f"{meta.get('source_url','')}").lower()
     for marker in DENY_TEXT_MARKERS:
         if marker in haystack:
             errors.append(f"FORBIDDEN marker '{marker}' found in metadata — "

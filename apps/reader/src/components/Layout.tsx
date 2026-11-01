@@ -4,6 +4,7 @@ import { useIsNarrow, usePointerDrag } from '../lib/viewport';
 import { TAP_SLOP, snapSheet, stepSheet, type SheetPosition } from '../lib/geometry';
 import { MaximizeButton, PaneControlsContext, type Maximized, type Pane } from './PaneControl';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 /**
  * Neither pane may be squeezed below this, in pixels.
@@ -416,7 +417,7 @@ export function Layout({
               {onGrip && (
                 <span className="done sheet__done" data-testid="sheet-done">
                   <span className="done__check" aria-hidden="true">
-                    ✓
+                    <Icon name="check" />
                   </span>{' '}
                   {onGrip}
                 </span>
@@ -480,7 +481,7 @@ export function Layout({
           <div className="done layout__done" data-testid="layout-done">
             <span>
               <span className="done__check" aria-hidden="true">
-                ✓
+                <Icon name="check" />
               </span>{' '}
               {inserted}
             </span>
@@ -509,7 +510,7 @@ export function Layout({
             aria-label={t.layout.notesMoreRoom}
             onClick={() => nudge(-0.1)}
           >
-            ◂
+            <Icon name="chevron-left" />
           </button>
           <div
             className="divider"
@@ -543,7 +544,7 @@ export function Layout({
             aria-label={t.layout.bibleMoreRoom}
             onClick={() => nudge(0.1)}
           >
-            ▸
+            <Icon name="chevron-right" />
           </button>
         </div>
       )}

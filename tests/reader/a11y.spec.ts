@@ -69,8 +69,8 @@ test.describe('status messages are announced (4.1.3)', () => {
     await open(page);
     await context.setOffline(true);
     await page.getByTestId('library-open').click();
-    await page.getByTestId('library-get-kjv').click();
-    await expect(page.getByTestId('library-error-kjv')).toHaveAttribute('role', 'alert');
+    await page.getByTestId('library-get-bsb').click();
+    await expect(page.getByTestId('library-error-bsb')).toHaveAttribute('role', 'alert');
     await expect(page.getByTestId('announcer-alert')).toContainText(/connection/i);
   });
 

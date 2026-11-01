@@ -157,6 +157,10 @@ CODE_TO_BOOK = {row[1]: row for row in CANONICAL_BOOKS}
 #   "sword"    -> needs `sword_url` + `sword_module`; a CrossWire zText module.
 #   "manual"   -> no automated parser yet; the script will skip it and explain.
 #
+# `keep_books` lists USFM codes the source must not supply, because its text of
+# them is wrong. Those books stay as committed in the output directory, and the
+# ingest stops if one is missing rather than falling back on the source.
+#
 # `verify: True` just means the eBible id is a best guess — if the download
 # fails, the script tells you exactly what to fix.
 # -----------------------------------------------------------------------------
@@ -176,6 +180,7 @@ TRANSLATIONS = {
         "language": "en",
         "license": "public-domain",
         "attribution": "King James Version — Public Domain",
+        "rights_notice": "Public domain outside the UK; in the UK, rights are vested in the Crown and administered by Cambridge University Press.",
         "source_url": "https://github.com/aruljohn/Bible-kjv",
         "year": 1769,
         "source": "aruljohn",
@@ -204,7 +209,9 @@ TRANSLATIONS = {
         "name": "Versión Biblia Libre",
         "language": "es",
         "license": "cc-by-sa-4.0",
-        "attribution": "Versión Biblia Libre (Free Bible Version) — CC BY-SA 4.0",
+        "attribution": "Versión Biblia Libre (Free Bible Version) v5.2 (Oct 2025) © Jonathan Gallagher, Shelly Barrios de Avila. CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/ . Scriptura omits footnotes, Psalm superscriptions and front matter; not endorsed by the licensor.",
+        "attribution_lang": "en",
+        "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
         "source_url": "https://ebible.org/find/details.php?id=spavbl",
         "year": 2025,
         "source": "usfx",
@@ -240,40 +247,27 @@ TRANSLATIONS = {
         "source": "usfx",
         "ebible_id": "engbsb",
     },
-    # --- Chinese: the Union Version of 1919, in both scripts ---
+    # --- Chinese: none for now ---
     #
-    # One translation, two character sets: the text Chinese Protestantism has
-    # read for a century. eBible publishes each as public domain, and the 1919
-    # publication puts it there in the United States, on the mainland (50 years
-    # for a corporate work), in Hong Kong and in Taiwan alike.
-    #
-    # ⚠️ The revision — 和合本修訂版 (RCUV, 2010) — is a different, copyrighted
-    # work, as are 新譯本 (CNV) and 現代中文譯本. scripts/validate.py refuses them.
-    "cuvs": {
-        "name": "新标点和合本",
-        "language": "zh-Hans",
-        "license": "public-domain",
-        "attribution": "Chinese Union Version (1919), simplified script — Public Domain",
-        "source_url": "https://ebible.org/cmn-cu89s/",
-        "year": 1919,
-        "source": "usfx",
-        "ebible_id": "cmn-cu89s",
-    },
-    "cuvt": {
-        "name": "新標點和合本",
-        "language": "zh-Hant",
-        "license": "public-domain",
-        "attribution": "Chinese Union Version (1919), traditional script — Public Domain",
-        "source_url": "https://ebible.org/cmn-cu89t/",
-        "year": 1919,
-        "source": "usfx",
-        "ebible_id": "cmn-cu89t",
-    },
+    # `cuvs` and `cuvt` were withdrawn on 2026-11-01. eBible's cmn-cu89s and
+    # cmn-cu89t were filed here as the Union Version of 1919, public domain, but
+    # they carry the 1988/89 New Punctuation revision (新标点和合本), for which the
+    # Hong Kong Bible Society acts as copyright agent: its names are the
+    # revision's (吕便, not 流便) and eBible's own file calls it "Chinese Union New
+    # Punctuation 1989". The real 1919 text would need another source and another
+    # id. 和合本修訂版 (RCUV, 2010), 新譯本 (CNV) and 現代中文譯本 are copyrighted too.
+    # scripts/validate.py refuses the ids and the markers; docs/translations-status.md
+    # has the reasons.
     # --- Brazilian Portuguese ---
     #
-    # A modern Brazilian text, updated from Almeida's 1819 translation. CC BY
-    # 4.0, so the attribution travels with every quotation — the same duty the
-    # Spanish VBL carries.
+    # A modern Brazilian text, updated from Almeida's 1819 translation, so the
+    # attribution travels with every quotation — the same duty the Spanish VBL
+    # carries.
+    #
+    # ⚠️ eBible says CC BY 4.0; the authors' licence file, README and site say
+    # CC BY 3.0 Brasil. Theirs binds until they say otherwise (see
+    # docs/translations-status.md). The text still comes from eBible, by
+    # `ebible_id`; `source_url` is the address the authors ask to be credited.
     #
     # ⚠️ The Bibles Brazilian churches read today — ARA, ARC 1995/2009, ACF,
     # NVI, NTLH — are all under copyright and are refused by validate.py. The
@@ -283,9 +277,10 @@ TRANSLATIONS = {
     "blivre": {
         "name": "Bíblia Livre",
         "language": "pt-BR",
-        "license": "cc-by-4.0",
-        "attribution": "Bíblia Livre © 2018 Diego Santos, Mario Sérgio, Marco Teles — CC BY 4.0",
-        "source_url": "https://ebible.org/porbr2018/",
+        "license": "cc-by-3.0-br",
+        "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio, e Marco Teles, https://sites.google.com/site/biblialivre/, fevereiro de 2018. Licença CC BY 3.0 Brasil: https://creativecommons.org/licenses/by/3.0/br/. Modificado pela Scriptura: removidas as notas, os títulos dos Salmos e a marcação das palavras acrescentadas; 166 citações incorporadas aos versículos.",
+        "license_url": "https://creativecommons.org/licenses/by/3.0/br/",
+        "source_url": "https://sites.google.com/site/biblialivre/",
         "year": 2018,
         "source": "usfx",
         "ebible_id": "porbr2018",
@@ -308,28 +303,32 @@ TRANSLATIONS = {
     # in archaic Hangul, which no parser here reads yet. Until that is built,
     # Korean is not in the library.
     # --- Configured but not yet automated (needs a dedicated parser/source) ---
+    # David Martin's Bible as revised by Pierre Roques (Basel, 1744), in
+    # modernised spelling.
+    #
+    # ⚠️ FreBDM1744 is not Martin in two books. Its 2 Chronicles and Job are the
+    # 1996 Ostervald revision, word for word: all 822 verses of the one and all
+    # 1,070 of the other, 91 of them only renumbered to fit Job 38-41. So those
+    # two books never come from the module. They are committed in data/ and
+    # re-ingesting keeps them (`keep_books`); docs/translations-status.md says
+    # where they came from and how they were checked against a 1744 scan.
     "martin1744": {
         "name": "Bible Martin",
         "language": "fr",
         "license": "public-domain",
-        "attribution": "Bible Martin 1744 — Domaine public",
+        "attribution": "Bible David Martin, révisée par Pierre Roques (Bâle, 1744) — Domaine public",
         "source_url": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744",
         "year": 1744,
         "source": "sword",
         "sword_url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/FreBDM1744.zip",
         "sword_module": "frebdm1744",
         "book_names": "FR_BOOK_NAMES",
+        "keep_books": ["2CH", "JOB"],
     },
-    "ostervald": {
-        "name": "Bible Ostervald",
-        "language": "fr",
-        "license": "public-domain",
-        "attribution": "Bible Ostervald 1867 — Domaine public",
-        "source_url": "https://ebible.org/fra_fob/",
-        "year": 1867,
-        "source": "usfx",
-        "ebible_id": "fra_fob",
-    },
+    # `ostervald` was withdrawn on 2026-11-01: eBible's fra_fob, filed here as
+    # the public-domain text of 1867, is the 1996 revision, listed elsewhere as
+    # "Copyright © 1996 Mission Baptiste Maranatha". scripts/validate.py refuses
+    # that source, not the name: the 1867 text itself is free.
     "bungo": {
         "name": "文語訳聖書 (Classical)",
         "language": "ja",
@@ -646,13 +645,15 @@ JA_BOOK_NAMES = {
 # FreBDM1744 embeds only x-usfm-toc1, the long form — "Le Saint Evangile de
 # Notre Seigneur Jésus-Christ selon Saint Matthieu" — and leaves the short
 # toc2/toc3 empty. Those titles are authentic but unusable as picker labels, and
-# they would read oddly beside the other two French translations in a
+# they would read oddly beside the other French translations in a
 # side-by-side view. (The source also carries a typo, "Le Livre deJosué".)
 #
-# These are the standard short French names, taken from the committed
-# `data/ostervald/` corpus (eBible `fra_fob`), so all three French translations
-# agree. Same role as JA_BOOK_NAMES: display metadata keyed off CANONICAL_BOOKS'
-# USFM codes, defining no numbering — not a canon definition.
+# These are the standard short French names of the books, a list of titles that
+# carries none of any translation's text, so that the French translations agree.
+# (They were copied from `ostervald` before its withdrawal, and martin1744's
+# committed books still carry them.) Same role as JA_BOOK_NAMES: display metadata
+# keyed off CANONICAL_BOOKS' USFM codes, defining no numbering — not a canon
+# definition.
 FR_BOOK_NAMES = {
     "GEN": "Genèse", "EXO": "Exode", "LEV": "Lévitique", "NUM": "Nombres",
     "DEU": "Deutéronome", "JOS": "Josué", "JDG": "Juges", "RUT": "Ruth",
@@ -818,6 +819,24 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
     return books
 
 
+def load_kept_book(tid: str, code: str, out_dir: Path) -> dict:
+    """
+    Read a committed book back into the shape the parsers return.
+
+    Raises FileNotFoundError when it is not there: a fresh output directory has
+    to fail, because carrying on would either write 65 books or tempt someone
+    into taking the book from the source that got it wrong.
+    """
+    number, _, _, slug, _, _ = CODE_TO_BOOK[code]
+    book = json.loads((out_dir / tid / "books" / f"{number:02d}-{slug}.json")
+                      .read_text(encoding="utf-8"))
+    return {
+        "name": book["name"],
+        "chapters": {ch["number"]: {v["number"]: v["text"] for v in ch["verses"]}
+                     for ch in book["chapters"]},
+    }
+
+
 def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict:
     """Write metadata.json + books/NN-slug.json. Returns a small stats dict."""
     base = out_dir / tid
@@ -863,6 +882,8 @@ def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict
         "language": entry["language"],
         "license": entry["license"],
         "attribution": entry["attribution"],
+        # Optional, and absent rather than empty: most translations have none.
+        **{key: entry[key] for key in ("attribution_lang", "license_url", "rights_notice") if key in entry},
         "source_url": entry["source_url"],
         "year": entry["year"],
         "testament": coverage,
@@ -914,6 +935,16 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
             zip_bytes = fetch_bytes(url, cache_path, use_cache)
             names = globals().get(entry.get("book_names", ""), None)
             books = parse_sword_ztext(zip_bytes, entry["sword_module"], names)
+
+            for code in entry.get("keep_books", ()):
+                try:
+                    books[code] = load_kept_book(tid, code, out_dir)
+                except FileNotFoundError as e:
+                    print(f"    ! {code} must not come from this source, and the committed "
+                          f"copy is missing: {e.filename}")
+                    print(f"      Restore it from git, then re-run. Nothing was written.")
+                    return False
+                print(f"    · kept {code} as committed; the module's text of it is wrong")
 
         elif source == "aruljohn":
             print(f"    · downloading 66 book files from aruljohn/Bible-kjv")

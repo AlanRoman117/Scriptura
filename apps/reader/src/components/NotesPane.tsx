@@ -15,6 +15,7 @@ import { ConfirmButton } from './ConfirmButton';
 import { settleFocus } from '../lib/focus';
 import { padFor, useRecedingMenus } from '../lib/recede';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 interface NotesPaneProps {
   notes: Note[];
@@ -381,7 +382,7 @@ export function NotesPane({
                 aria-label={menusShown ? t.notes.hideMenus : t.notes.showMenus}
                 onClick={() => (menusShown ? receding.hide() : receding.show())}
               >
-                <span className="menus__glyph" aria-hidden="true">{menusShown ? '▴' : '▾'}</span>
+                <Icon name={menusShown ? 'chevron-up' : 'chevron-down'} className="menus__glyph" />
               </button>
             )}
           </div>
@@ -501,7 +502,7 @@ export function NotesPane({
         {inserted && (
           <span className="done notes__done" data-testid="note-done">
             <span className="done__check" aria-hidden="true">
-              ✓
+              <Icon name="check" />
             </span>{' '}
             {inserted}
           </span>

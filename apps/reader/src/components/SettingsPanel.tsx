@@ -25,6 +25,7 @@ import {
   type Style,
   type TextSize,
 } from '../lib/prefs';
+import { Icon } from './Icon';
 
 interface SettingsPanelProps {
   persistence: Persistence;
@@ -82,7 +83,7 @@ export function SettingsPanel({
           onClick={onClose}
           aria-label={words.close}
         >
-          ✕
+          <Icon name="x" />
         </button>
       </header>
 
@@ -149,7 +150,7 @@ export function SettingsPanel({
                   <span className="style-tile__line style-tile__line--short" />
                 </span>
                 <span className="style-tile__check" aria-hidden="true">
-                  ✓
+                  <Icon name="check" />
                 </span>
               </label>
             ))}

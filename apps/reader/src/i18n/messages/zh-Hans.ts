@@ -166,6 +166,8 @@ export const zhHans = {
     untitledNote: '无标题',
     untitledBoard: '无标题看板',
     source: (name: string) => `${name}的来源`,
+    licence: (name: string) => `${name}的许可协议`,
+    opensInNewTab: '（会在新标签页中打开）',
     undoRemove: '撤销',
     remove: '移除',
     done: '完成',
@@ -349,6 +351,7 @@ export const zhHans = {
     about: (size: string) => `约${size}`,
     licences: {
       'public-domain': '公有领域',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -363,6 +366,7 @@ export const zhHans = {
     download: '下载',
     removeActive: (name: string) => `移除${name} — 请先切换到其他译本`,
     removeFromDevice: (name: string) => `从本设备上移除${name}`,
+    noLongerOffered: '此译本已不再提供。这份副本会保留在本设备上，直到你将它移除；移除后无法再次下载。',
     note: '下载后的译本保存在本设备上，可以离线阅读。移除译本不会影响你的笔记和标记：两者都属于经文本身，而不属于某个译本。',
     progress: (name: string, percent: string) => `${name}：已下载${percent}`,
     downloaded: (name: string) => `${name}已下载`,
@@ -575,6 +579,7 @@ export const zhHans = {
     meaning: '含义',
     terms: [
       ['CC BY-SA 4.0', '知识共享 署名-相同方式共享 4.0：一种自由许可协议，要求注明来源，并以相同方式共享修改。'],
+      ['CC BY 3.0 Brasil', '知识共享 署名 3.0 巴西：一种自由许可协议，要求注明作者和来源。'],
       ['CC0', '知识共享 零：作者放弃了全部权利，文本可以自由使用。'],
       ['OT', '旧约（英文 Old Testament）。'],
       ['NT', '新约（英文 New Testament）。'],

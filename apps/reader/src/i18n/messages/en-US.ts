@@ -160,6 +160,8 @@ export const enUS = {
     untitledNote: 'Untitled',
     untitledBoard: 'Untitled board',
     source: (name: string) => `${name} source`,
+    licence: (name: string) => `${name} licence`,
+    opensInNewTab: '(opens in a new tab)',
     undoRemove: 'Undo remove',
     remove: 'Remove',
     done: 'Done',
@@ -375,6 +377,7 @@ export const enUS = {
     about: (size: string) => `about ${size}`,
     licences: {
       'public-domain': 'Public domain',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -389,6 +392,8 @@ export const enUS = {
     download: 'Download',
     removeActive: (name: string) => `Remove ${name} — switch to another translation first`,
     removeFromDevice: (name: string) => `Remove ${name} from this device`,
+    /** Shown on the row of a translation that is on this device but no longer in the library, and in the question that asks before removing it. */
+    noLongerOffered: 'No longer offered. This copy stays on this device until you remove it, and cannot be downloaded again.',
     note: 'A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation.',
     progress: (name: string, percent: string) => `${name}: ${percent} downloaded`,
     downloaded: (name: string) => `${name} downloaded`,
@@ -610,6 +615,7 @@ export const enUS = {
     meaning: 'Meaning',
     terms: [
       ['CC BY-SA 4.0', 'Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms.'],
+      ['CC BY 3.0 Brasil', 'Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source.'],
       ['CC0', 'Creative Commons Zero: the author has waived all rights; the text is free to use.'],
       ['OT', 'Old Testament.'],
       ['NT', 'New Testament.'],

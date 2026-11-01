@@ -26,8 +26,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const APP = join(HERE, "..");
 const REPO = join(APP, "..", "..");
 
-/** The default translation. Modern English, public domain, no attribution owed. */
-const DEFAULT_TRANSLATION = "bsb";
+/** The default translation (src/lib/opening.ts says why): no attribution owed. */
+const DEFAULT_TRANSLATION = "kjv";
 
 const staged = mkdtempSync(join(tmpdir(), "scriptura-bundle-"));
 try {

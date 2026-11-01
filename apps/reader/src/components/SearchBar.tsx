@@ -4,6 +4,7 @@ import type { SearchResult } from '@scriptura/core/types';
 import { startsWeakMatches, type MatchOptions, type ResolvedReference } from '../lib/search';
 import { useDismissable, useReturnFocus } from '../lib/focus';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 interface SearchBarProps {
   query: string;
@@ -150,7 +151,7 @@ export function SearchBar({
                 input.current?.focus();
               }}
             >
-              ✕
+              <Icon name="x" />
             </button>
           </div>
 

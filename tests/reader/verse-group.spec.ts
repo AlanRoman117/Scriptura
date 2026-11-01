@@ -417,17 +417,17 @@ test.describe('quoting and linking a group', () => {
     await page.getByTestId('quote-3').click();
 
     const body = page.getByTestId('notes-surface');
-    await expect.poll(() => noteValue(body)).toContain('> — John 1:3-5 (BSB)\n\n[[john 1:3-5@bsb]]\n');
+    await expect.poll(() => noteValue(body)).toContain('> — John 1:3-5 (KJV)\n\n[[john 1:3-5@kjv]]\n');
     const note = await noteValue(body);
-    expect(note).toMatch(/^> \*\*3\*\* Through Him all things were made/);
-    expect(note).toContain('\n>\n> **4** In Him was life');
-    expect(note).toContain('\n>\n> **5** The Light shines in the darkness');
+    expect(note).toMatch(/^> \*\*3\*\* All things were made by him/);
+    expect(note).toContain('\n>\n> **4** In him was life');
+    expect(note).toContain('\n>\n> **5** And the light shineth in darkness');
     // One citation, one link: not one of each per verse.
     expect(note.match(/— John/g)).toHaveLength(1);
     expect(note.match(/\[\[/g)).toHaveLength(1);
 
     // Said as one, where it went; and the selection is done with.
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:3-5');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted John 1:3-5');
     await expect(announcer(page)).toHaveText('Quoted John 1:3-5 in an untitled note');
     expect(await selected(page)).toEqual([]);
   });
@@ -441,11 +441,11 @@ test.describe('quoting and linking a group', () => {
     const body = page.getByTestId('notes-surface');
     await expect
       .poll(() => noteValue(body))
-      .toContain('> — John 1:1, 14-15 (BSB)\n\n[[john 1:1@bsb]] [[john 1:14-15@bsb]]\n');
+      .toContain('> — John 1:1, 14-15 (KJV)\n\n[[john 1:1@kjv]] [[john 1:14-15@kjv]]\n');
     const note = await noteValue(body);
     expect(note).toMatch(/^> \*\*1\*\* In the beginning was the Word/);
-    expect(note).toContain('> **14** The Word became flesh');
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted John 1:1, 14-15');
+    expect(note).toContain('> **14** And the Word was made flesh');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted John 1:1, 14-15');
   });
 
   test('one verse is quoted exactly as it always was', async ({ page }) => {
@@ -454,8 +454,8 @@ test.describe('quoting and linking a group', () => {
     await text(page, 1).click();
     await page.getByTestId('quote-1').click();
     const body = page.getByTestId('notes-surface');
-    await expect.poll(() => noteValue(body)).toContain('[[john 1:1@bsb]]');
-    expect(await noteValue(body)).toMatch(/^> In the beginning was the Word[^\n]*\n> — John 1:1 \(BSB\)\n\n\[\[john 1:1@bsb\]\]\n/);
+    await expect.poll(() => noteValue(body)).toContain('[[john 1:1@kjv]]');
+    expect(await noteValue(body)).toMatch(/^> In the beginning was the Word[^\n]*\n> — John 1:1 \(KJV\)\n\n\[\[john 1:1@kjv\]\]\n/);
   });
 
   test('Link writes one link for a range, and one for each run of separate verses', async ({ page }) => {
@@ -464,12 +464,12 @@ test.describe('quoting and linking a group', () => {
     for (const n of [3, 4, 5]) await text(page, n).click();
     await page.getByTestId('link-3').click();
     const body = page.getByTestId('notes-surface');
-    await expect(body).toHaveJSProperty('value', '[[john 1:3-5@bsb]]\n\n');
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Linked John 1:3-5');
+    await expect(body).toHaveJSProperty('value', '[[john 1:3-5@kjv]]\n\n');
+    await expect(page.getByTestId('note-done')).toHaveText('Linked John 1:3-5');
 
     for (const n of [1, 14]) await text(page, n).click();
     await page.getByTestId('link-1').click();
-    await expect(body).toHaveJSProperty('value', '[[john 1:3-5@bsb]]\n\n[[john 1:1@bsb]] [[john 1:14@bsb]]\n\n');
+    await expect(body).toHaveJSProperty('value', '[[john 1:3-5@kjv]]\n\n[[john 1:1@kjv]] [[john 1:14@kjv]]\n\n');
   });
 
   // A link to a range used to scroll to its first verse and point out only it.
@@ -478,7 +478,7 @@ test.describe('quoting and linking a group', () => {
     await page.getByTestId('note-new').click();
     // Typed, so the caret is left inside the link, which is how one is picked.
     await page.getByTestId('notes-surface').click();
-    await page.keyboard.type('[[john 1:3-5@bsb]]');
+    await page.keyboard.type('[[john 1:3-5@kjv]]');
     await page.getByTestId('chapter-select').selectOption('2');
     await expect(page.getByTestId('chapter-title')).toContainText('2');
 
@@ -659,8 +659,8 @@ test.describe('a group on the board', () => {
     await expect(page.locator('.card')).toHaveCount(3);
     const first = page.locator('.card').first();
     await expect(first).toContainText('John 1:3-5');
-    await expect(first.locator('.card__body')).toContainText('3 Through Him all things were made');
-    await expect(first.locator('.card__body')).toContainText('5 The Light shines in the darkness');
+    await expect(first.locator('.card__body')).toContainText('3 All things were made by him');
+    await expect(first.locator('.card__body')).toContainText('5 And the light shineth in darkness');
     // The same range again is not a second card.
     for (const n of [3, 4, 5]) await text(page, n).click();
     await page.getByTestId('canvas-3').click();

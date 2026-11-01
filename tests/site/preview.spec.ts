@@ -92,7 +92,7 @@ for (const [locale, words] of Object.entries(WORDS)) {
       // It shows short words and an arrow; its name starts with those words
       // and says where it goes and that a new tab opens (2.5.3, 2.4.9, 3.2.5).
       await expect(link).toContainText(words.short);
-      await expect(link).toContainText('↗');
+      await expect(link.locator('svg[data-icon="arrow-up-right"]')).toBeVisible();
       await expect(link).toHaveAccessibleName(words.name);
       await expect(link).toHaveAttribute('target', '_blank');
       await expect(link).toHaveAttribute('rel', /\bnoopener\b/);

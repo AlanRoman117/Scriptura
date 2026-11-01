@@ -48,7 +48,7 @@ test('a quote with the notes folded away is confirmed on the grip, until they ar
   await expect(page.getByTestId('verse-actions')).toHaveCount(0);
 
   // So the grip — the way to the note — says what went into it…
-  await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:2');
+  await expect(page.getByTestId('sheet-done')).toHaveText('Quoted John 1:2');
   // …in its name as well as on screen, since the words are visible on the button (2.5.3)…
   const grip = page.getByRole('button', { name: /expand notes/i });
   await expect(grip).toHaveAccessibleName('Expand notes, Quoted John 1:2');
@@ -58,7 +58,7 @@ test('a quote with the notes folded away is confirmed on the grip, until they ar
   // Opening the notes shows the quote itself; the stand-in goes.
   await grip.tap();
   await expect(sheet).toHaveAttribute('data-sheet', 'half');
-  await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('He was with God in the beginning.');
+  await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('The same was in the beginning with God.');
   await expect(page.getByTestId('sheet-done')).toHaveCount(0);
   await expect(grip).toHaveAccessibleName('Expand notes');
 });
@@ -134,12 +134,12 @@ test('a group quoted with the notes folded away is confirmed as one on the grip'
 
   await expect(page.getByTestId('pane-notes')).toHaveAttribute('data-sheet', 'peek');
   await expect(page.getByTestId('verse-actions')).toHaveCount(0);
-  await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:2-4');
+  await expect(page.getByTestId('sheet-done')).toHaveText('Quoted John 1:2-4');
   await expect(page.getByTestId('announcer')).toHaveText('Quoted John 1:2-4 in a new note');
 
   await page.getByTestId('sheet-grip').tap();
   const note = await noteValue(page.getByTestId('notes-surface'));
-  expect(note).toContain('> — John 1:2-4 (BSB)\n\n[[john 1:2-4@bsb]]');
+  expect(note).toContain('> — John 1:2-4 (KJV)\n\n[[john 1:2-4@kjv]]');
   expect(note.match(/— John/g)).toHaveLength(1);
 });
 

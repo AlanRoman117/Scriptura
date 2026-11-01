@@ -71,10 +71,15 @@ export function toBible(full: FullTranslation): Bible {
 /**
  * Whether the licence obliges us to show attribution beside the text.
  *
- * `vbl` is CC BY-SA 4.0 — the one non-public-domain translation — and the
- * licence requires the notice where the material appears, not in an About page.
- * Derived from the licence rather than hardcoded to `vbl` so a future
- * translation inherits the behaviour automatically.
+ * `vbl` (CC BY-SA 4.0) and `blivre` (CC BY 3.0 Brasil) are the two
+ * non-public-domain translations, and their licences require the notice where
+ * the material appears, not in an About page. Derived from the licence rather
+ * than hardcoded to an id so a future translation inherits the behaviour
+ * automatically.
+ *
+ * ⚠️ A `rights_notice` does not make this true. It is why the King James shows a
+ * footer, but it obliges nothing: a quotation from a public-domain text carries
+ * no attribution line, and the callers of this answer about the licence alone.
  */
 export function requiresAttribution(meta: TranslationMeta): boolean {
   return meta.license !== 'public-domain' && meta.license !== 'cc0';

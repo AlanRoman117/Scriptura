@@ -13,8 +13,7 @@ export interface FullTranslation extends TranslationMeta {
   books: LoadedBook[];
 }
 
-/** The translation bundled with the app for immediate offline use. */
-export const DEFAULT_TRANSLATION = 'bsb';
+export { DEFAULT_TRANSLATION } from './opening';
 
 /**
  * Where the JSON API lives.

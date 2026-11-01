@@ -11,6 +11,7 @@ import {
   type Highlight,
   type HighlightColor,
 } from '../lib/notes';
+import { Icon } from './Icon';
 
 interface MarksPanelProps {
   bible: Bible;
@@ -104,7 +105,7 @@ export function MarksPanel({
           onClick={onClose}
           aria-label={t.marks.close}
         >
-          ✕
+          <Icon name="x" />
         </button>
       </header>
 
@@ -121,7 +122,7 @@ export function MarksPanel({
             <h2 className="visually-hidden">{colorLabel(color, labels, t.colours)}</h2>
             <header className="marks__group-bar">
               <span className="swatch__disc swatch__disc--static" data-color={color} aria-hidden="true">
-                <span className="swatch__glyph">{HIGHLIGHT_GLYPHS[color]}</span>
+                <span className="swatch__glyph"><Icon name={HIGHLIGHT_GLYPHS[color]} /></span>
               </span>
               <input
                 className="marks__label"
@@ -162,7 +163,7 @@ export function MarksPanel({
                       {/* Asks first; Undo stands until the next change (3.3.6).
                           Focus moves on to the next mark in the list. */}
                       <ConfirmButton
-                        label="✕"
+                        label={<Icon name="x" />}
                         className="marks__remove"
                         data-testid={`marks-remove-${m.book_slug}-${m.chapter}-${m.verse}`}
                         aria-label={t.marks.remove(ref)}

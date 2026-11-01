@@ -3,14 +3,14 @@
 > **Open Bible data ecosystem — multi-translation, multi-language, developer-first.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Translations](https://img.shields.io/badge/translations-14-green.svg)](#verified-translations)
-[![Languages](https://img.shields.io/badge/languages-6-orange.svg)](#verified-translations)
+[![Translations](https://img.shields.io/badge/translations-11-green.svg)](#verified-translations)
+[![Languages](https://img.shields.io/badge/languages-5-orange.svg)](#verified-translations)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/contributing.md)
 [![Data: Open License Only](https://img.shields.io/badge/data-open--license--only-important.svg)](#verified-translations)
 
 Scriptura is a free, open-source monorepo for working with Bible data programmatically. It provides structured, machine-readable scripture across multiple translations and languages — all under verified public-domain or open-source licenses — alongside TypeScript tooling for search, comparison, validation, and API generation.
 
-**The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.**
+**The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.** One exception to know about: in the United Kingdom, rights in the King James Version are held by the Crown ([what that means](docs/translations-status.md#the-king-james-version-in-the-united-kingdom)).
 
 **Try the reader:** <https://alanroman117.github.io/Scriptura/>. It is a preview, published for the people reviewing its interface in Spanish, French, Japanese, Brazilian Portuguese and Chinese (both scripts); each reviewer has a guide in [`docs/human-language-review/`](docs/human-language-review/README.md). What changed is in [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -18,8 +18,8 @@ Scriptura is a free, open-source monorepo for working with Bible data programmat
 
 ## ✨ Features
 
-- 📚 **Multi-translation** — 14 verified translations, all ingested
-- 🌍 **Multi-language** — Bibles in English, Spanish, French, Japanese, Chinese (both scripts) and Brazilian Portuguese, and the reader's interface speaks every one of them
+- 📚 **Multi-translation** — 11 verified translations, all ingested
+- 🌍 **Multi-language** — Bibles in English, Spanish, French, Japanese and Brazilian Portuguese, and the reader's interface speaks all of those and Chinese in both scripts
 - 🔍 **Search** — ranked full-text and reference-based lookup via `@scriptura/search`, with optional whole-word and case matching
 - ⚖️ **Compare** — side-by-side multi-translation diff via `@scriptura/compare`
 - 🛡️ **Validated** — every translation carries verified license metadata, checked by `scripts/validate.py`
@@ -319,7 +319,7 @@ scriptura/
 │   ├── asv/                     # American Standard Version (English, public domain)
 │   ├── ylt/                     # Young's Literal Translation (English, public domain)
 │   ├── lsg1910/                 # Louis Segond 1910 (French, public domain)
-│   ├── ostervald/               # Bible Ostervald (French, public domain)
+│   ├── blivre/                  # Bíblia Livre (Brazilian Portuguese, CC BY 4.0)
 │   ├── vbl/                     # Versión Biblia Libre (Spanish, CC BY-SA 4.0)
 │   ├── martin1744/              # Bible Martin 1744 (French, public domain)
 │   └── bungo/                   # 文語訳聖書 Classical Japanese (public domain)
@@ -367,7 +367,7 @@ All translations in this repository are independently verified to be public doma
 
 | ID | Name | Language | License | Primary source | Ingested |
 |---|---|---|---|---|---|
-| `kjv` | King James Version | English 🇬🇧 | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | ✅ |
+| `kjv` | King James Version | English 🇬🇧 | Public domain, [except in the UK](docs/translations-status.md#the-king-james-version-in-the-united-kingdom) | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | ✅ |
 | `web` | World English Bible | English 🇺🇸 | Public domain | [eBible.org `engwebp`](https://ebible.org/find/details.php?id=engwebp) | ✅ |
 | `asv` | American Standard Version (1901) | English 🇺🇸 | Public domain | [eBible.org `eng-asv`](https://ebible.org/eng-asv/) | ✅ |
 | `ylt` | Young's Literal Translation | English 🇬🇧 | Public domain | [eBible.org `engylt`](https://ebible.org/engylt/) | ✅ |
@@ -375,19 +375,18 @@ All translations in this repository are independently verified to be public doma
 | `rv1909` | Reina Valera 1909 | Spanish 🇪🇸 | Public domain | [eBible.org `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | ✅ |
 | `vbl` | Versión Biblia Libre | Spanish 🇪🇸 | CC BY-SA 4.0 | [eBible.org `spavbl`](https://ebible.org/find/details.php?id=spavbl) | ✅ |
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
-| `ostervald` | Bible Ostervald (1867) | French 🇫🇷 | Public domain | [eBible.org `fra_fob`](https://ebible.org/fra_fob/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
-| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
-| `cuvs` | 新标点和合本 (Union Version, 1919) | Chinese, simplified 🇨🇳 | Public domain | [eBible.org `cmn-cu89s`](https://ebible.org/cmn-cu89s/) | ✅ |
-| `cuvt` | 新標點和合本 (Union Version, 1919) | Chinese, traditional 🇹🇼 | Public domain | [eBible.org `cmn-cu89t`](https://ebible.org/cmn-cu89t/) | ✅ |
-| `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 4.0 | [eBible.org `porbr2018`](https://ebible.org/porbr2018/) | ✅ |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744), except [2 Chronicles and Job](docs/translations-status.md#martin1744--bible-david-martin-1744) | ✅ |
+| `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 3.0 Brasil | [The authors' licence file](https://github.com/blivre/BibliaLivre/blob/master/LICENCA.md) | ✅ |
 
 > **⚠️ Hard rules on what will never be added:**
 > - **Reina Valera 1960 (RV1960)** — copyrighted © Sociedades Bíblicas Unidas, renewed 1988. "Reina-Valera 1960®" is a registered trademark. Not public domain despite the common misconception.
 > - **口語訳聖書 / Kougo (1954/55)** — the one people get wrong. Japan Bible Society now states its copyright has expired, and that is true **in Japan** (50-year term, lapsed ~2004/2005). But because it was still protected there on 1996-01-01, the URAA **restored its US copyright until 2049–2050**. Japan-PD does not imply US-PD. Off-limits for any US-hosted project, and `validate.py` blocks it by id and by metadata marker.
 >   - By contrast, the 文語訳 (Bungo) text we *do* ship is 明治元訳 OT (1887) and 大正改訳 NT (1917) — public domain in the US, since even a URAA-restored term caps at 95 years from publication (1982 and 2012).
 > - **개역한글판 / Korean Revised Version (1952/1961)** — the same trap in another language, and the reason there is no Korean Bible here yet. It is public domain **in Korea** (the 50-year term ran out at the end of 2011), so the URAA restored its **US** copyright until **2056**. eBible's `kor`, titled "Korean Bible 1910", and CrossWire's `korrv` both carry this text marked "Public Domain"; [the log](docs/translations-status.md) shows the verse-by-verse check. The genuinely free 1911 구역 exists in archaic Hangul and needs a parser that does not exist yet.
-> - **和合本修訂版 (RCUV, 2010), 新譯本 (CNV)** — revisions still in copyright. The 1919 和合本 shipped here is not.
+> - **和合本修訂版 (RCUV, 2010), 新譯本 (CNV)** — revisions still in copyright.
+> - **新标点和合本 / 新標點和合本 (the Union Version's New Punctuation revision, 1988/89)** — offered by eBible as `cmn-cu89s` and `cmn-cu89t`, and in this repository as `cuvs` and `cuvt` until it was [withdrawn on 2026-11-01](docs/translations-status.md#withdrawn-translations). It was recorded here as the public-domain Union Version of 1919, and is not: the Hong Kong Bible Society acts as its copyright agent. So there is no Chinese Bible here for now, though the reader's interface stays in Chinese.
+> - **The 1996 revision of the Bible Ostervald** — offered by eBible as `fra_fob`, and in this repository as `ostervald` until it was withdrawn the same day, recorded as the text of 1867. It is listed elsewhere as "Copyright © 1996 Mission Baptiste Maranatha". The 1867 text is free; this one is not.
 > - **ARA, ARC 1995/2009, ACF, NVI, NTLH** — the Brazilian Bibles most churches read, all under copyright. Bíblia Livre is here instead.
 > - Any translation without a `license` field in its `metadata.json` will be rejected by CI.
 
@@ -445,15 +444,15 @@ data/{translation-id}/
 
 | Area | State |
 |---|---|
-| Translation data | **All 14 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
+| Translation data | **All 11 ingested**, 66 books each — `validate.py --strict` reports zero errors and zero warnings |
 | REST API | Runs locally; every route works in every language |
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
-| Static API build | Working — `npm run build:api -- --skip-verses` emits ~17.6k JSON files (chapters, without a file per verse) |
+| Static API build | Working — `npm run build:api -- --skip-verses` emits ~13.8k JSON files (chapters, without a file per verse) |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 1,743 jest, and 1,182 Playwright: 48 HTTP contract, 650 reader in Desktop Chrome, 454 reader on an emulated phone, 2 dev server, 28 on the published site |
+| Tests | 1,827 jest, and 1,220 Playwright: 49 HTTP contract, 681 reader in Desktop Chrome, 458 reader on an emulated phone, 2 dev server, 30 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes whose Markdown takes shape as it is written, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French, Japanese, Brazilian Portuguese and Chinese in both scripts, chosen from the browser or Settings — Chinese by script, so a Taiwanese browser gets Traditional — and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
-| Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |
+| Security | `npm audit` shows only a low advisory in `deepmerge`, which has no fix yet; CodeQL on push/PR + weekly; Dependabot version updates |
 | GraphQL | Not built (planned v1.1) |
 | Preview site | The reader and its translation files on GitHub Pages, published from `main` by `.github/workflows/pages.yml` once CI has passed — a preview for the translation reviewers, who each have a [guide](docs/human-language-review/README.md) |
 | Deployment | **AWS not built** — no infrastructure, no `deploy.yml` |
@@ -509,7 +508,7 @@ This repository is licensed under the **Apache License 2.0** — see [`LICENSE`]
 
 Apache 2.0 was chosen over MIT for one specific reason: it includes an explicit **patent grant**. Any contributor who holds a patent covering code they contribute cannot later sue users of this project for infringement. For an open project intended to serve developers everywhere with no strings attached, that protection matters.
 
-Individual Bible translations in `data/` carry their own licenses as documented in each `metadata.json`. All are either public domain or an explicitly open license (CC BY-SA 4.0 or CC0). No translation under a restrictive or proprietary license is included.
+Individual Bible translations in `data/` carry their own licenses as documented in each `metadata.json`. All are public domain or under an explicitly open license: `vbl` is CC BY-SA 4.0 and `blivre` is CC BY 3.0 Brasil, and both require attribution. The King James Version is public domain outside the UK; in the UK, rights are vested in the Crown, as [the log](docs/translations-status.md#the-king-james-version-in-the-united-kingdom) explains. No translation under a restrictive or proprietary license is included.
 
 ---
 
