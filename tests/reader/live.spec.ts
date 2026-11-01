@@ -353,6 +353,42 @@ test.describe('the live editor', () => {
   });
 
   /*
+   * The caret's offset was found by cloning everything before it and reading
+   * the clone back, twice per key: 4,100 dead nodes per key on a 50,000
+   * character note. A count, not a clock, so no runner's speed can excuse it.
+   * That the walk gives the clone's answer is `live-offset.spec.ts`.
+   */
+  test('finding the caret copies nothing of the note', async ({ page }) => {
+    const surface = await open(page);
+    await surface.click();
+    await page.keyboard.type('In the beginning');
+    await page.keyboard.press('Enter');
+    await page.evaluate(() => {
+      const w = window as unknown as { __clones: number };
+      w.__clones = 0;
+      const original = Range.prototype.cloneContents;
+      Range.prototype.cloneContents = function () {
+        w.__clones += 1;
+        return original.call(this);
+      };
+    });
+
+    await page.keyboard.type('was the **Word**');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('and the Word');
+    // A selection with two ends, each its own question.
+    await page.keyboard.press('Shift+ArrowLeft');
+    await page.keyboard.press('Shift+ArrowLeft');
+
+    const expected = 'In the beginning\nwas the **Word**\nand the Word';
+    await expect.poll(() => noteText(page)).toBe(expected);
+    await expect
+      .poll(() => surface.evaluate((el) => [(el as HTMLTextAreaElement).selectionStart, (el as HTMLTextAreaElement).selectionEnd]))
+      .toEqual([expected.length - 2, expected.length]);
+    expect(await page.evaluate(() => (window as unknown as { __clones: number }).__clones)).toBe(0);
+  });
+
+  /*
    * The browser's own multi-line insertion (dictation, a keyboard's text
    * replacement) fires an input event per line and per break. Read back and
    * redrawn on every one, 400 lines took four seconds; once per burst, a

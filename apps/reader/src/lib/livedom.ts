@@ -134,6 +134,10 @@ export const widgetHost = (line: Element): HTMLElement | null =>
  * character. Blocks are lines, a `<br>` is a line break unless it only holds
  * an empty block open, and text is text. The next redraw puts it all back into
  * the canonical form.
+ *
+ * ⚠️ `lengthBefore` below keeps these same rules without building the string.
+ * A rule changed here must change there; `tests/reader/live-offset.spec.ts`
+ * compares the two at every point of many shapes and fails if they part.
  */
 export function readText(root: Node): string {
   const lines: string[] = [];
@@ -177,9 +181,82 @@ export function readText(root: Node): string {
 }
 
 /**
+ * How long `readText` would read everything before a point, which must be in
+ * `root` and not `root` itself.
+ *
+ * ⚠️ Not `readText(range.cloneContents())`, which is what it used to be and is
+ * still what it must equal: that copied everything before the caret, twice per
+ * key, in the path dictation types through at a key a millisecond. At 4x CPU
+ * throttle on a 50,000 character note it took 39ms of script per key and left
+ * 4,100 dead nodes per key for the collector; this takes 29ms and leaves none.
+ *
+ * So this is `readText`'s walk over the live page, counting instead of
+ * building, and three things that were true of the copy are spelt out:
+ *  - Its children hung from a fragment, not a block, so a `<br>` directly in
+ *    the root always counts as a line break, even the last one.
+ *  - It ended at the point, so a `<br>` just before the point, or holding it,
+ *    was the last in its block whatever follows it in the page.
+ *  - Anything holding the point was copied as far as the point, so a point in
+ *    a widget or a comment still ends the count there, with nothing read.
+ */
+function lengthBefore(root: HTMLElement, node: Node, offset: number): number {
+  let chars = 0;
+  let lines = 0;
+  // `readText`'s `current !== null`: a line is open, and will count when ended.
+  let open = false;
+
+  const endLine = () => {
+    if (open) lines += 1;
+    open = false;
+  };
+
+  /** Whether the point was reached in `parent`. */
+  const walk = (parent: Node): boolean => {
+    const inBlock = parent !== root && BLOCK.has(parent.nodeName);
+    let index = 0;
+    for (let child = parent.firstChild; child; child = child.nextSibling, index += 1) {
+      if (parent === node && index === offset) return true;
+      if (child.nodeType === Node.TEXT_NODE) {
+        chars += child === node ? offset : (child as Text).data.length;
+        open = true;
+        if (child === node) return true;
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as Element;
+        if (el.hasAttribute('data-widget')) {
+          if (el.contains(node)) return true;
+        } else if (el.tagName === 'BR') {
+          const holdsPoint = el.contains(node);
+          const isLast = holdsPoint || (parent === node ? index + 1 === offset : !el.nextSibling);
+          if (!isLast || !inBlock) chars += 1;
+          open = true;
+          if (holdsPoint) return true;
+        } else if (BLOCK.has(el.tagName)) {
+          endLine();
+          // A point at the very start of a line still opens that line: it is
+          // the "\n" before the point.
+          open = true;
+          const reached = walk(el);
+          endLine();
+          if (reached) return true;
+        } else if (walk(el)) {
+          return true;
+        }
+      } else if (child === node) {
+        return true;
+      }
+    }
+    return parent === node;
+  };
+
+  walk(root);
+  endLine();
+  return chars + Math.max(0, lines - 1);
+}
+
+/**
  * The offset in the note of a point in the page.
  *
- * Measured by reading back everything before the point, with the same rules as
+ * Measured by reading everything before the point, with the same rules as
  * `readText` — so it is right even while the page is out of step with the
  * note, between an edit and its redraw.
  */
@@ -192,13 +269,10 @@ export function offsetOf(root: HTMLElement, node: Node, offset: number): number 
     const last = lines[lines.length - 1];
     return offsetOf(root, last, last.childNodes.length);
   }
-  const range = document.createRange();
-  range.setStart(root, 0);
-  range.setEnd(node, offset);
-  const fragment = range.cloneContents();
-  // A point at the very start of a line clones that line empty; readText
-  // then counts it as a line, which is the "\n" before the point.
-  return readText(fragment).length;
+  // A link a redraw has just removed, tapped a moment before: nothing of the
+  // note is before it. The walk would otherwise never stop and count it all.
+  if (!root.contains(node)) return 0;
+  return lengthBefore(root, node, offset);
 }
 
 /** The current selection as offsets in the note, or null when it is not in `root`. */
