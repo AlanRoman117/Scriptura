@@ -933,6 +933,8 @@ summary:focus-visible,
   margin-top: auto; padding: .75rem 1.25rem;
   border-top: 1px solid var(--rule);
   font-size: var(--fs-xs); color: var(--ink-soft);
+  /* An attribution carries bare addresses, which would widen a phone's page. */
+  overflow-wrap: anywhere;
 }
 .attribution a { color: inherit; }
 

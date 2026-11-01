@@ -218,7 +218,7 @@ test.describe('reading two translations at once', () => {
     await page.getByTestId('library-read-blivre').click();
 
     await expect(page.getByTestId('chapter-title')).toContainText('João 1');
-    await expect(page.getByTestId('attribution')).toContainText(/CC BY 4\.0/i);
+    await expect(page.getByTestId('attribution')).toContainText('CC BY 3.0 Brasil');
     await expect(page.getByTestId('attribution')).toContainText('Bíblia Livre');
   });
 

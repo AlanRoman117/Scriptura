@@ -16,8 +16,10 @@ import {
   loadPrefs,
   removeTranslation,
   savePrefs,
+  storeCurrentRights,
   type CatalogEntry,
 } from './lib/library';
+import { withCurrentRights } from './lib/rights';
 import { LibraryPanel, type DownloadState } from './components/LibraryPanel';
 import { ComparePane } from './components/ComparePane';
 import { SearchResults } from './components/SearchResults';
@@ -492,6 +494,28 @@ export function App() {
       cancelled = true;
     };
   }, [compareWith, compareBibles]);
+
+  // A stored Bible keeps the licence words of the day it was downloaded, so
+  // whatever is open is checked against the catalogue as each of them arrives
+  // (lib/rights.ts). Unchanged, nothing here sets a state.
+  useEffect(() => {
+    if (catalog.length === 0) return;
+    const current = (b: Bible): Bible => {
+      const meta = withCurrentRights(b.meta, catalog.find((t) => t.id === b.meta.id));
+      if (meta === b.meta) return b;
+      void storeCurrentRights(b.meta.id, meta);
+      return { ...b, meta };
+    };
+    if (bible) {
+      const next = current(bible);
+      if (next !== bible) setBible(next);
+    }
+    const open = Object.values(compareBibles);
+    const updated = open.map(current);
+    if (updated.some((b, i) => b !== open[i])) {
+      setCompareBibles(Object.fromEntries(updated.map((b) => [b.meta.id, b])));
+    }
+  }, [catalog, bible, compareBibles]);
 
   const goTo = useCallback((bookSlug: string, chapter: number, verse?: number, endVerse?: number) => {
     setPosition({ bookSlug, chapter });

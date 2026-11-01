@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { alignChapters, compareChapterOf } from '@scriptura/compare/chapters';
 import type { Bible } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
+import { AttributionLine, RightsNotice } from './Attribution';
 import { useI18n } from '../i18n';
 import { Icon } from './Icon';
 
@@ -43,6 +44,7 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
   }, [bibles, bookSlug, chapter]);
 
   const owed = bibles.filter((b) => requiresAttribution(b.meta));
+  const noticed = bibles.filter((b) => b.meta.rights_notice);
   /** Each column is read in its own language (3.1.2). */
   const languageOf = (translation: string) =>
     bibles.find((b) => b.meta.id === translation)?.meta.language;
@@ -201,14 +203,18 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
 
       {/* CC BY-SA wants the notice where the material appears — and in a
           comparison the material can be in any column. */}
-      {owed.length > 0 && (
+      {owed.length + noticed.length > 0 && (
         <footer className="attribution" data-testid="compare-attribution">
           {owed.map((b) => (
             <span key={b.meta.id} className="attribution__line">
-              {b.meta.attribution} ·{' '}
-              <a href={b.meta.source_url} target="_blank" rel="noreferrer noopener">
-                {t.common.source(b.meta.name)}
-              </a>
+              <AttributionLine meta={b.meta} />
+            </span>
+          ))}
+          {/* Named here, as an attribution names itself: with several columns,
+              the words alone do not say which Bible they are about. */}
+          {noticed.map((b) => (
+            <span key={b.meta.id} className="attribution__line" data-testid={`compare-rights-${b.meta.id}`}>
+              <span lang={b.meta.language}>{b.meta.name}</span> · <RightsNotice text={b.meta.rights_notice ?? ''} />
             </span>
           ))}
         </footer>

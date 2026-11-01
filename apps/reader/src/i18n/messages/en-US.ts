@@ -160,6 +160,8 @@ export const enUS = {
     untitledNote: 'Untitled',
     untitledBoard: 'Untitled board',
     source: (name: string) => `${name} source`,
+    licence: (name: string) => `${name} licence`,
+    opensInNewTab: '(opens in a new tab)',
     undoRemove: 'Undo remove',
     remove: 'Remove',
     done: 'Done',
@@ -375,6 +377,7 @@ export const enUS = {
     about: (size: string) => `about ${size}`,
     licences: {
       'public-domain': 'Public domain',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -610,6 +613,7 @@ export const enUS = {
     meaning: 'Meaning',
     terms: [
       ['CC BY-SA 4.0', 'Creative Commons Attribution–ShareAlike 4.0: a free licence that asks you to credit the source and share changes under the same terms.'],
+      ['CC BY 3.0 Brasil', 'Creative Commons Attribution 3.0 Brazil: a free licence that asks you to credit the authors and the source.'],
       ['CC0', 'Creative Commons Zero: the author has waived all rights; the text is free to use.'],
       ['OT', 'Old Testament.'],
       ['NT', 'New Testament.'],

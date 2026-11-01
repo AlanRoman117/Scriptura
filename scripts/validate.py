@@ -52,7 +52,7 @@ import sys
 from pathlib import Path
 
 # Allowed license identifiers (must match the ingestion registry / schema enum).
-LICENSE_ENUM = {"public-domain", "cc-by-4.0", "cc-by-sa-4.0", "cc0", "custom-free"}
+LICENSE_ENUM = {"public-domain", "cc-by-3.0-br", "cc-by-4.0", "cc-by-sa-4.0", "cc0", "custom-free"}
 
 REQUIRED_META = ["id", "name", "language", "license", "attribution",
                  "source_url", "year", "testament", "book_count"]
@@ -181,6 +181,19 @@ def validate_translation(tdir: Path, strict: bool):
     lic = meta.get("license")
     if lic not in LICENSE_ENUM:
         errors.append(f"license '{lic}' is not one of {sorted(LICENSE_ENUM)}")
+
+    # A Creative Commons licence asks for its address to travel with the work,
+    # and the reader builds a link from this, so it has to be a web address.
+    license_url = meta.get("license_url")
+    if license_url is not None and not (isinstance(license_url, str)
+                                        and license_url.startswith("https://")):
+        errors.append(f"license_url '{license_url}' is not an https:// address")
+    if isinstance(lic, str) and lic.startswith("cc-by") and not license_url:
+        errors.append(f"license '{lic}' requires a license_url")
+
+    for field in ("attribution_lang", "rights_notice"):
+        if field in meta and not (isinstance(meta[field], str) and meta[field].strip()):
+            errors.append(f"{field} must be non-empty text when present")
 
     # id must match directory name.
     if meta.get("id") != tid:

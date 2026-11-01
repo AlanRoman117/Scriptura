@@ -9,6 +9,7 @@
 import type { TranslationMeta } from '@scriptura/core/types';
 import { SETTINGS, TRANSLATIONS, del, get, keys, put } from './db';
 import { API_BASE, DEFAULT_TRANSLATION, type FullTranslation } from './api';
+import { withCurrentRights } from './rights';
 
 export { downloadPercent, formatBytes } from './units';
 
@@ -139,6 +140,20 @@ export async function removeTranslation(id: string): Promise<boolean> {
   if (id === DEFAULT_TRANSLATION) return false;
   await del(TRANSLATIONS, id).catch(() => undefined);
   return true;
+}
+
+/**
+ * Write corrected licence words onto the stored copy, so they hold offline too.
+ *
+ * The bundled catalogue is not precached, so with no network the app has only
+ * what it stored. This rewrites a whole translation, which is fine because it
+ * happens once per correction: the caller asks only when something differs. A
+ * failed write costs nothing today and the next start tries again.
+ */
+export async function storeCurrentRights(id: string, meta: TranslationMeta): Promise<void> {
+  const stored = await get<FullTranslation>(TRANSLATIONS, id).catch(() => undefined);
+  if (!stored) return;
+  await put(TRANSLATIONS, id, withCurrentRights(stored, meta)).catch(() => undefined);
 }
 
 /** Whether a translation's text is already local. */

@@ -164,6 +164,8 @@ export const zhHant = {
     untitledNote: '無標題',
     untitledBoard: '無標題看板',
     source: (name: string) => `${name}的來源`,
+    licence: (name: string) => `${name}的授權條款`,
+    opensInNewTab: '（會在新分頁中開啟）',
     undoRemove: '復原',
     remove: '移除',
     done: '完成',
@@ -347,6 +349,7 @@ export const zhHant = {
     about: (size: string) => `約${size}`,
     licences: {
       'public-domain': '公共領域',
+      'cc-by-3.0-br': 'CC BY 3.0 Brasil',
       'cc-by-4.0': 'CC BY 4.0',
       'cc-by-sa-4.0': 'CC BY-SA 4.0',
       cc0: 'CC0',
@@ -573,6 +576,7 @@ export const zhHant = {
     meaning: '意思',
     terms: [
       ['CC BY-SA 4.0', '創用 CC 姓名標示-相同方式分享 4.0：一種自由授權條款，要求標示來源，並以相同方式分享修改。'],
+      ['CC BY 3.0 Brasil', '創用 CC 姓名標示 3.0 巴西：一種自由授權條款，要求標示作者和來源。'],
       ['CC0', '創用 CC 零：作者放棄了全部權利，文字可以自由使用。'],
       ['OT', '舊約（英文 Old Testament）。'],
       ['NT', '新約（英文 New Testament）。'],
