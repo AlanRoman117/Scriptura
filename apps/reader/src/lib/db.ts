@@ -55,6 +55,11 @@ function run<T>(store: string, mode: IDBTransactionMode, fn: (s: IDBObjectStore)
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
         tx.onabort = () => reject(tx.error);
+        // One request, so nothing more is coming. Left to commit by itself a
+        // transaction waits for the page to hear this request succeed, and a
+        // page being reloaded never does: a board flushed from `pagehide` came
+        // back in its old place (tests/reader/board-save.spec.ts).
+        if (mode === 'readwrite') tx.commit?.();
       })
   );
 }

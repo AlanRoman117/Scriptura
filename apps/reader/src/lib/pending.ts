@@ -2,7 +2,8 @@
  * Work the app is holding that has not reached IndexedDB yet.
  *
  * Note edits are debounced — writing on every keystroke would be wasteful — so
- * for up to 600ms the newest words exist only in memory. Anything about to end
+ * for up to 600ms the newest words exist only in memory; a board being dragged
+ * is held back the same way, for up to 150ms. Anything about to end
  * the page (a reload onto a new version, the tab going to the background on a
  * phone, where the system may discard it) must flush them first. App registers
  * how; whoever is about to end the page asks. One function, module-level, for
