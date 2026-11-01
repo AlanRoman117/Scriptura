@@ -157,6 +157,10 @@ CODE_TO_BOOK = {row[1]: row for row in CANONICAL_BOOKS}
 #   "sword"    -> needs `sword_url` + `sword_module`; a CrossWire zText module.
 #   "manual"   -> no automated parser yet; the script will skip it and explain.
 #
+# `keep_books` lists USFM codes the source must not supply, because its text of
+# them is wrong. Those books stay as committed in the output directory, and the
+# ingest stops if one is missing rather than falling back on the source.
+#
 # `verify: True` just means the eBible id is a best guess — if the download
 # fails, the script tells you exactly what to fix.
 # -----------------------------------------------------------------------------
@@ -299,17 +303,27 @@ TRANSLATIONS = {
     # in archaic Hangul, which no parser here reads yet. Until that is built,
     # Korean is not in the library.
     # --- Configured but not yet automated (needs a dedicated parser/source) ---
+    # David Martin's Bible as revised by Pierre Roques (Basel, 1744), in
+    # modernised spelling.
+    #
+    # ⚠️ FreBDM1744 is not Martin in two books. Its 2 Chronicles and Job are the
+    # 1996 Ostervald revision, word for word: all 822 verses of the one and all
+    # 1,070 of the other, 91 of them only renumbered to fit Job 38-41. So those
+    # two books never come from the module. They are committed in data/ and
+    # re-ingesting keeps them (`keep_books`); docs/translations-status.md says
+    # where they came from and how they were checked against a 1744 scan.
     "martin1744": {
         "name": "Bible Martin",
         "language": "fr",
         "license": "public-domain",
-        "attribution": "Bible Martin 1744 — Domaine public",
+        "attribution": "Bible David Martin, révisée par Pierre Roques (Bâle, 1744) — Domaine public",
         "source_url": "https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744",
         "year": 1744,
         "source": "sword",
         "sword_url": "https://www.crosswire.org/ftpmirror/pub/sword/packages/rawzip/FreBDM1744.zip",
         "sword_module": "frebdm1744",
         "book_names": "FR_BOOK_NAMES",
+        "keep_books": ["2CH", "JOB"],
     },
     # `ostervald` was withdrawn on 2026-11-01: eBible's fra_fob, filed here as
     # the public-domain text of 1867, is the 1996 revision, listed elsewhere as
@@ -805,6 +819,24 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
     return books
 
 
+def load_kept_book(tid: str, code: str, out_dir: Path) -> dict:
+    """
+    Read a committed book back into the shape the parsers return.
+
+    Raises FileNotFoundError when it is not there: a fresh output directory has
+    to fail, because carrying on would either write 65 books or tempt someone
+    into taking the book from the source that got it wrong.
+    """
+    number, _, _, slug, _, _ = CODE_TO_BOOK[code]
+    book = json.loads((out_dir / tid / "books" / f"{number:02d}-{slug}.json")
+                      .read_text(encoding="utf-8"))
+    return {
+        "name": book["name"],
+        "chapters": {ch["number"]: {v["number"]: v["text"] for v in ch["verses"]}
+                     for ch in book["chapters"]},
+    }
+
+
 def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict:
     """Write metadata.json + books/NN-slug.json. Returns a small stats dict."""
     base = out_dir / tid
@@ -903,6 +935,16 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
             zip_bytes = fetch_bytes(url, cache_path, use_cache)
             names = globals().get(entry.get("book_names", ""), None)
             books = parse_sword_ztext(zip_bytes, entry["sword_module"], names)
+
+            for code in entry.get("keep_books", ()):
+                try:
+                    books[code] = load_kept_book(tid, code, out_dir)
+                except FileNotFoundError as e:
+                    print(f"    ! {code} must not come from this source, and the committed "
+                          f"copy is missing: {e.filename}")
+                    print(f"      Restore it from git, then re-run. Nothing was written.")
+                    return False
+                print(f"    · kept {code} as committed; the module's text of it is wrong")
 
         elif source == "aruljohn":
             print(f"    · downloading 66 book files from aruljohn/Bible-kjv")

@@ -376,7 +376,7 @@ All translations in this repository are independently verified to be public doma
 | `vbl` | Versión Biblia Libre | Spanish 🇪🇸 | CC BY-SA 4.0 | [eBible.org `spavbl`](https://ebible.org/find/details.php?id=spavbl) | ✅ |
 | `lsg1910` | Louis Segond 1910 | French 🇫🇷 | Public domain | [eBible.org `fraLSG`](https://ebible.org/fraLSG/) | ✅ |
 | `bungo` | 文語訳聖書 (Classical) | Japanese 🇯🇵 | Public domain | [CrossWire `JapBungo`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=JapBungo) | ✅ |
-| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744) | ✅ |
+| `martin1744` | Bible Martin 1744 | French 🇫🇷 | Public domain | [CrossWire `FreBDM1744`](https://www.crosswire.org/sword/modules/ModInfo.jsp?modName=FreBDM1744), except [2 Chronicles and Job](docs/translations-status.md#martin1744--bible-david-martin-1744) | ✅ |
 | `blivre` | Bíblia Livre | Brazilian Portuguese 🇧🇷 | CC BY 3.0 Brasil | [The authors' licence file](https://github.com/blivre/BibliaLivre/blob/master/LICENCA.md) | ✅ |
 
 > **⚠️ Hard rules on what will never be added:**
