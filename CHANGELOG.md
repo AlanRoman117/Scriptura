@@ -7,6 +7,24 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+### Changed
+
+- The chapter now says which Bible you are reading, in full, under its title:
+  "Berean Standard Bible", where the button alone said "BSB". The name is the
+  Bible's own, in its language, so there are no new texts for reviewers.
+- The Bible the app opens on is now the King James Version, the one most
+  readers of the Bible in English know by name, in place of the Berean Standard
+  Bible, which stays one download away. A device already reading the Berean
+  Standard Bible stays on it. The King James Version is public domain outside
+  the United Kingdom; `docs/translations-status.md` says what applies there.
+- The button that shows the translation has an arrow, like the book and
+  chapter menus beside it, so it is clear that it opens a list.
+- Every picture in the interface is now drawn by the app instead of by the
+  system's fonts: the settings gear, the arrows, the close and check marks, and
+  the shapes on marked verses. They look the same on every system and follow
+  each style's colours. They are copied from Lucide, with no new dependency;
+  the licence is in `LICENSE-lucide.txt` beside the app.
+
 ## [0.1.0-preview.13] - 2026-10-28
 
 The thirteenth preview brings the tools up to date, clears four security

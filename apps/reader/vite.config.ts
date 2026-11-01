@@ -65,7 +65,7 @@ export default defineConfig({
       // `autoUpdate` skipped waiting and took the open page the moment a build
       // was fetched — mid-edit, with up to 600ms of typing not yet saved.
       registerType: 'prompt',
-      // The bundled translation is deliberately NOT precached. It is ~4.4MB, so
+      // The bundled translation is deliberately NOT precached. It is ~4.7MB, so
       // putting it in the precache manifest would block service-worker install
       // on a large download and re-download the whole thing whenever its hash
       // changed. The app fetches it once into IndexedDB instead, with progress.

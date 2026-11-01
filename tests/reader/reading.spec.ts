@@ -63,16 +63,16 @@ test('navigating book and chapter changes the text', async ({ page }) => {
 });
 
 test('a public-domain translation shows no attribution notice', async ({ page }) => {
-  // bsb is public domain. The notice is a CC BY-SA obligation, not decoration,
+  // kjv is public domain. The notice is a CC BY-SA obligation, not decoration,
   // so it must not appear where it is not owed.
   await expect(page.getByTestId('attribution')).toHaveCount(0);
 });
 
 test('the page title says where you are (2.4.2, 2.4.8)', async ({ page }) => {
-  await expect(page).toHaveTitle('John 1 · BSB · Scriptura');
+  await expect(page).toHaveTitle('John 1 · KJV · Scriptura');
   await page.getByTestId('book-select').selectOption('genesis');
   await page.getByTestId('chapter-select').selectOption('3');
-  await expect(page).toHaveTitle('Genesis 3 · BSB · Scriptura');
+  await expect(page).toHaveTitle('Genesis 3 · KJV · Scriptura');
   await page.getByTestId('marks-open').click();
   await expect(page).toHaveTitle('Marks · Scriptura');
 });

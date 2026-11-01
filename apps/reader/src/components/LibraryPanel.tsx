@@ -5,6 +5,7 @@ import type { CatalogEntry } from '../lib/library';
 import { downloadPercent } from '../lib/library';
 import { DEFAULT_TRANSLATION } from '../lib/api';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 /** A download in flight, as a fraction plus the bytes behind it. */
 export interface DownloadState {
@@ -86,7 +87,7 @@ export function LibraryPanel({
           onClick={onClose}
           aria-label={words.library.close}
         >
-          ✕
+          <Icon name="x" />
         </button>
       </header>
 

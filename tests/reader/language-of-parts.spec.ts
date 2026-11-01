@@ -17,7 +17,7 @@ import type { Page } from '@playwright/test';
  */
 
 /** Which translation each scripture element belongs to, and what language that is. */
-const TRANSLATION_LANGUAGE: Record<string, string> = { bsb: 'en', rv1909: 'es' };
+const TRANSLATION_LANGUAGE: Record<string, string> = { kjv: 'en', rv1909: 'es' };
 
 async function boundaryProblems(page: Page, reading: string): Promise<string[]> {
   return page.evaluate(
@@ -77,17 +77,17 @@ test.describe('an English Bible under a Japanese interface', () => {
     await open(page);
     await page.getByTestId('verse-2').click();
     await expect(page.getByTestId('verse-actions')).toBeVisible();
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
   });
 
   test('search suggestions and every result', async ({ page }) => {
     await open(page);
     await page.getByTestId('search-input').fill('light');
     await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', 'light');
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
     await page.getByTestId('search-input').press('Enter');
     await expect(page.getByTestId('search-results')).toBeVisible();
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
   });
 
   test('marks and the board', async ({ page }) => {
@@ -95,30 +95,30 @@ test.describe('an English Bible under a Japanese interface', () => {
     await page.getByTestId('verse-1').click();
     await page.getByTestId('swatch-amber').click();
     await page.getByTestId('marks-open').click();
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
     await page.getByTestId('marks-close').click();
 
     await page.getByTestId('verse-3').click();
     await page.getByTestId('canvas-3').click();
     await page.getByTestId('side-board').click();
     await expect(page.locator('.card')).toHaveCount(1);
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
   });
 
   test('the gate catches lang on a container that holds controls', async ({ page }) => {
     await open(page);
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
     // The bug this replaced: the chapter carried the Bible's lang, and so did
     // every verse number inside it.
     await page.locator('.chapter__text').evaluate((el) => el.setAttribute('lang', 'en'));
-    const problems = await boundaryProblems(page, 'bsb');
+    const problems = await boundaryProblems(page, 'kjv');
     expect(problems.some((p) => p.includes('verse-1') && p.includes('is in en'))).toBe(true);
   });
 
   test('and catches scripture that lost its lang', async ({ page }) => {
     await open(page);
     await page.locator('.verse__text').first().evaluate((el) => el.removeAttribute('lang'));
-    const problems = await boundaryProblems(page, 'bsb');
+    const problems = await boundaryProblems(page, 'kjv');
     expect(problems.some((p) => p.startsWith('scripture'))).toBe(true);
   });
 });
@@ -129,11 +129,11 @@ test.describe('a Spanish Bible beside an English one, under an English interface
     await installSpanish(page);
     await page.getByTestId('library-compare-rv1909').click();
     await expect(page.getByTestId('compare')).toHaveAttribute('data-layout', 'table');
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
 
     await page.setViewportSize({ width: 500, height: 800 });
     await expect(page.getByTestId('compare')).toHaveAttribute('data-layout', 'stack');
-    expect(await boundaryProblems(page, 'bsb')).toEqual([]);
+    expect(await boundaryProblems(page, 'kjv')).toEqual([]);
   });
 
   test('reading the Spanish Bible itself', async ({ page }) => {

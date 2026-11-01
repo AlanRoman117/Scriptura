@@ -137,8 +137,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | 跳到经文 |
 | `app.skipToNotes` | Skip to notes | 跳到笔记 |
 | `app.skipToBoard` | Skip to the canvas | 跳到看板 |
-| `app.title` | John 1 · BSB · Scriptura | 约翰福音1 · CUVS · Scriptura |
-| `app.passageTitle` | John 1 · BSB | 约翰福音1 · CUVS |
+| `app.title` | John 1 · KJV · Scriptura | 约翰福音1 · CUVS · Scriptura |
+| `app.passageTitle` | John 1 · KJV | 约翰福音1 · CUVS |
 | `app.boardTitle` | John 1 · Boards | 约翰福音 1 · 看板 |
 | `app.opened` | Settings opened | 已打开设置面板 |
 | `app.closed` | Settings closed | 已关闭设置面板 |
@@ -147,7 +147,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | 经文 |
 | `reader.book` | Book | 书卷 |
 | `reader.chapter` | Chapter | 章 |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | CUVS — 新标点和合本。选择或添加译本 |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | CUVS — 新标点和合本。选择或添加译本 |
 | `reader.marks` | Marks | 标记 |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | 标记 7 — 你标记过的经文，按颜色分组 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 设置 — 显示、存储、导出与助手权限 |
@@ -156,8 +156,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | 选择约翰福音 1:2 — 在琥珀中 |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 已选1节：约翰福音 1:3<br>已选3节：约翰福音 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | 已取消选择 |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | 新标点和合本中没有这一章。 |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | 正在阅读新标点和合本 |
+| `reader.chapterMissing` | This chapter is not in King James Version. | 新标点和合本中没有这一章。 |
+| `reader.readingAnnounce` | Reading King James Version | 正在阅读新标点和合本 |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | 显示阅读菜单 |
 | `reader.hideMenus` | Hide the reading menus | 隐藏阅读菜单 |
 | `panels.marks` | Marks | 标记 |
@@ -168,14 +168,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | 取消 |
 | `common.untitledNote` | Untitled | 无标题 |
 | `common.untitledBoard` | Untitled board | 无标题看板 |
-| `common.source` | Berean Standard Bible source | 新标点和合本的来源 |
+| `common.source` | King James Version source | 新标点和合本的来源 |
 | `common.undoRemove` | Undo remove | 撤销 |
 | `common.remove` | Remove | 移除 |
 | `common.done` | Done | 完成 |
 | `offer.title` | Bibles in English | 中文圣经 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | 这些译本是你所用语言的译本。下载一个就可以阅读，联网或离线都可以。 |
 | `offer.downloadAndRead` | Download and read | 下载并阅读 |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | 下载并阅读新标点和合本 |
+| `offer.downloadAndReadName` | Download and read King James Version | 下载并阅读新标点和合本 |
 | `offer.allTranslations` | All translations | 全部译本 |
 | `offer.notNow` | Not now | 暂时不用 |
 
@@ -274,8 +274,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | 无法保存 — 请导出你的笔记 |
 | `notes.saving` | Saving… | 正在保存… |
 | `notes.saved` | Saved | 已保存 |
-| `notes.linkIn` | John 1:3-5 (KJV) | 约翰福音 1:3-5（BSB） |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | 约翰福音 1:3-5（BSB — 尚未下载） |
+| `notes.linkIn` | John 1:3-5 (BSB) | 约翰福音 1:3-5（KJV） |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | 约翰福音 1:3-5（KJV — 尚未下载） |
 | `tools.label` | Formatting | 格式 |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2，2级标题 |
 | `tools.headingGlyph` | H2 | H2 |
@@ -289,7 +289,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 经文链接 |
 | `insert.quoted` | Quoted John 1:3-5 | 已引用约翰福音 1:3-5 |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | 已引用约翰福音 1:3-5（CUVS） |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | 已引用约翰福音 1:3-5（CUVS） |
 | `insert.linked` | Linked John 1:3-5 | 已链接约翰福音 1:3-5 |
 | `insert.addedBoard` | Added the board “John 1” | 已添加看板“约翰福音 1” |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | 已把约翰福音 1:3-5加入看板“约翰福音 1” |
@@ -421,23 +421,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | 阅读 |
 | `library.compare` | Compare | 对照 |
 | `library.compareTitle` | Show beside the translation you are reading | 与你正在读的译本并排显示 |
-| `library.downloading` | Downloading Berean Standard Bible | 正在下载新标点和合本 |
+| `library.downloading` | Downloading King James Version | 正在下载新标点和合本 |
 | `library.download` | Download | 下载 |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | 移除新标点和合本 — 请先切换到其他译本 |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | 从本设备上移除新标点和合本 |
+| `library.removeActive` | Remove King James Version — switch to another translation first | 移除新标点和合本 — 请先切换到其他译本 |
+| `library.removeFromDevice` | Remove King James Version from this device | 从本设备上移除新标点和合本 |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | 下载后的译本保存在本设备上，可以离线阅读。移除译本不会影响你的笔记和标记：两者都属于经文本身，而不属于某个译本。 |
-| `library.progress` | Berean Standard Bible: 50% downloaded | 新标点和合本：已下载50% |
-| `library.downloaded` | Berean Standard Bible downloaded | 新标点和合本已下载 |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | 新标点和合本：没有网络连接 — 联网后再试。 |
+| `library.progress` | King James Version: 50% downloaded | 新标点和合本：已下载50% |
+| `library.downloaded` | King James Version downloaded | 新标点和合本已下载 |
+| `library.failed` | King James Version: No connection — try again when you are online. | 新标点和合本：没有网络连接 — 联网后再试。 |
 | `library.failedOnline` | The download did not finish. Try again later. | 下载没有完成。请稍后再试。 |
 | `library.offline` | No connection — try again when you are online. | 没有网络连接 — 联网后再试。 |
 | `compare.label` | Translations side by side | 译本并排对照 |
 | `compare.compared` | Translations compared | 对照中的译本 |
-| `compare.stop` | Stop comparing KJV | 停止对照BSB |
+| `compare.stop` | Stop comparing BSB | 停止对照KJV |
 | `compare.verse` | Verse | 节 |
 | `compare.verseBefore` | Verse␣ | 节␣ |
-| `compare.missing` | Not in KJV | BSB中没有 |
-| `compare.quote` | Quote KJV verse 16 | 引用BSB第16节 |
+| `compare.missing` | Not in BSB | KJV中没有 |
+| `compare.quote` | Quote BSB verse 16 | 引用KJV第16节 |
 
 #### 2.7 Settings
 
@@ -778,12 +778,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | 移除约翰福音 1:2上的标记吗？ |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | 这节经文将离开合集“琥珀”。 |
 | `confirm.mark.action` | Remove mark | 移除标记 |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | 从本设备上移除新标点和合本吗？ |
+| `confirm.translation.title` | Remove King James Version from this device? | 从本设备上移除新标点和合本吗？ |
 | `confirm.translation.frees` | This frees about 5.4 MB. | 这会释放约5.4 MB的空间。 |
 | `confirm.translation.kept` | Your notes and marks are not changed. | 你的笔记和标记不会改变。 |
 | `confirm.translation.again` | You can download it again when you are online. | 联网时可以再次下载。 |
 | `confirm.translation.action` | Remove translation | 移除译本 |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | 已从本设备上移除新标点和合本 |
+| `confirm.translation.done` | Removed King James Version from this device | 已从本设备上移除新标点和合本 |
 
 #### 2.11 Notices
 

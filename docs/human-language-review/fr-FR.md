@@ -134,8 +134,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | Aller au texte biblique |
 | `app.skipToNotes` | Skip to notes | Aller aux notes |
 | `app.skipToBoard` | Skip to the canvas | Aller aux tableaux |
-| `app.title` | John 1 · BSB · Scriptura | JEAN 1 · LSG1910 · Scriptura |
-| `app.passageTitle` | John 1 · BSB | JEAN 1 · LSG1910 |
+| `app.title` | John 1 · KJV · Scriptura | JEAN 1 · LSG1910 · Scriptura |
+| `app.passageTitle` | John 1 · KJV | JEAN 1 · LSG1910 |
 | `app.boardTitle` | John 1 · Boards | JEAN 1 · Tableaux |
 | `app.opened` | Settings opened | Panneau Paramètres ouvert |
 | `app.closed` | Settings closed | Panneau Paramètres fermé |
@@ -144,7 +144,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | Passage |
 | `reader.book` | Book | Livre |
 | `reader.chapter` | Chapter | Chapitre |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | LSG1910 : Louis Segond 1910. Choisir ou ajouter une traduction |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | LSG1910 : Louis Segond 1910. Choisir ou ajouter une traduction |
 | `reader.marks` | Marks | Marques |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | Marques 7 : les versets que vous avez marqués, par couleur |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | Paramètres : affichage, stockage, exportation et accès des assistants |
@@ -153,8 +153,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | Sélectionner JEAN 1:2 : dans Ambre (ambre) |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 1 verset sélectionné : JEAN 1:3<br>3 versets sélectionnés : JEAN 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | Sélection annulée |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | Ce chapitre ne figure pas dans Louis Segond 1910. |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | Lecture de Louis Segond 1910 |
+| `reader.chapterMissing` | This chapter is not in King James Version. | Ce chapitre ne figure pas dans Louis Segond 1910. |
+| `reader.readingAnnounce` | Reading King James Version | Lecture de Louis Segond 1910 |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | Afficher les menus de lecture |
 | `reader.hideMenus` | Hide the reading menus | Masquer les menus de lecture |
 | `panels.marks` | Marks | Marques |
@@ -165,14 +165,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | Annuler |
 | `common.untitledNote` | Untitled | Sans titre |
 | `common.untitledBoard` | Untitled board | Tableau sans titre |
-| `common.source` | Berean Standard Bible source | Source de Louis Segond 1910 |
+| `common.source` | King James Version source | Source de Louis Segond 1910 |
 | `common.undoRemove` | Undo remove | Annuler le retrait |
 | `common.remove` | Remove | Retirer |
 | `common.done` | Done | Terminé |
 | `offer.title` | Bibles in English | Bibles en français |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Ces traductions sont dans votre langue. Téléchargez-en une pour la lire, en ligne ou hors ligne. |
 | `offer.downloadAndRead` | Download and read | Télécharger et lire |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | Télécharger et lire Louis Segond 1910 |
+| `offer.downloadAndReadName` | Download and read King James Version | Télécharger et lire Louis Segond 1910 |
 | `offer.allTranslations` | All translations | Toutes les traductions |
 | `offer.notNow` | Not now | Pas maintenant |
 
@@ -271,8 +271,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | Impossible d’enregistrer : exportez vos notes |
 | `notes.saving` | Saving… | Enregistrement… |
 | `notes.saved` | Saved | Enregistré |
-| `notes.linkIn` | John 1:3-5 (KJV) | JEAN 1:3-5 (BSB) |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | JEAN 1:3-5 (BSB, non téléchargée) |
+| `notes.linkIn` | John 1:3-5 (BSB) | JEAN 1:3-5 (KJV) |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | JEAN 1:3-5 (KJV, non téléchargée) |
 | `tools.label` | Formatting | Mise en forme |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | T2, titre 2 |
 | `tools.headingGlyph` | H2 | T2 |
@@ -286,7 +286,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | Citation |
 | `tools.link` | Link to a passage | Lien vers un passage |
 | `insert.quoted` | Quoted John 1:3-5 | Citation de JEAN 1:3-5 ajoutée |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | Citation de JEAN 1:3-5 (LSG1910) ajoutée |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | Citation de JEAN 1:3-5 (LSG1910) ajoutée |
 | `insert.linked` | Linked John 1:3-5 | Lien vers JEAN 1:3-5 ajouté |
 | `insert.addedBoard` | Added the board “John 1” | Tableau « JEAN 1 » ajouté |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | JEAN 1:3-5 ajouté au tableau « JEAN 1 » |
@@ -418,23 +418,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | Lire |
 | `library.compare` | Compare | Comparer |
 | `library.compareTitle` | Show beside the translation you are reading | Afficher à côté de la traduction que vous lisez |
-| `library.downloading` | Downloading Berean Standard Bible | Téléchargement de Louis Segond 1910 |
+| `library.downloading` | Downloading King James Version | Téléchargement de Louis Segond 1910 |
 | `library.download` | Download | Télécharger |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | Retirer Louis Segond 1910 : passez d’abord à une autre traduction |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | Retirer Louis Segond 1910 de cet appareil |
+| `library.removeActive` | Remove King James Version — switch to another translation first | Retirer Louis Segond 1910 : passez d’abord à une autre traduction |
+| `library.removeFromDevice` | Remove King James Version from this device | Retirer Louis Segond 1910 de cet appareil |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | Une traduction téléchargée reste sur cet appareil et peut être lue hors ligne. En retirer une ne touche jamais à vos notes ni à vos marques : elles appartiennent au passage, pas à une traduction. |
-| `library.progress` | Berean Standard Bible: 50% downloaded | Louis Segond 1910 : 50 % téléchargés |
-| `library.downloaded` | Berean Standard Bible downloaded | Louis Segond 1910 téléchargée |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | Louis Segond 1910 : Pas de connexion. Réessayez quand vous serez en ligne. |
+| `library.progress` | King James Version: 50% downloaded | Louis Segond 1910 : 50 % téléchargés |
+| `library.downloaded` | King James Version downloaded | Louis Segond 1910 téléchargée |
+| `library.failed` | King James Version: No connection — try again when you are online. | Louis Segond 1910 : Pas de connexion. Réessayez quand vous serez en ligne. |
 | `library.failedOnline` | The download did not finish. Try again later. | Le téléchargement n’a pas abouti. Réessayez plus tard. |
 | `library.offline` | No connection — try again when you are online. | Pas de connexion. Réessayez quand vous serez en ligne. |
 | `compare.label` | Translations side by side | Traductions côte à côte |
 | `compare.compared` | Translations compared | Traductions comparées |
-| `compare.stop` | Stop comparing KJV | Arrêter de comparer BSB |
+| `compare.stop` | Stop comparing BSB | Arrêter de comparer KJV |
 | `compare.verse` | Verse | Verset |
 | `compare.verseBefore` | Verse␣ | Verset␣ |
-| `compare.missing` | Not in KJV | Absent de BSB |
-| `compare.quote` | Quote KJV verse 16 | Citer le verset 16 de BSB |
+| `compare.missing` | Not in BSB | Absent de KJV |
+| `compare.quote` | Quote BSB verse 16 | Citer le verset 16 de KJV |
 
 #### 2.7 Settings
 
@@ -775,12 +775,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | Retirer la marque de JEAN 1:2 ? |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | Le verset quittera la collection « Ambre ». |
 | `confirm.mark.action` | Remove mark | Retirer la marque |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | Retirer Louis Segond 1910 de cet appareil ? |
+| `confirm.translation.title` | Remove King James Version from this device? | Retirer Louis Segond 1910 de cet appareil ? |
 | `confirm.translation.frees` | This frees about 5.4 MB. | Environ 5,4 Mo seront libérés. |
 | `confirm.translation.kept` | Your notes and marks are not changed. | Vos notes et vos marques ne sont pas modifiées. |
 | `confirm.translation.again` | You can download it again when you are online. | Vous pourrez la télécharger de nouveau une fois en ligne. |
 | `confirm.translation.action` | Remove translation | Retirer la traduction |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | Traduction Louis Segond 1910 retirée de cet appareil |
+| `confirm.translation.done` | Removed King James Version from this device | Traduction Louis Segond 1910 retirée de cet appareil |
 
 #### 2.11 Notices
 

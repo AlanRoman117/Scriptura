@@ -863,7 +863,7 @@ for (const screen of SCREENS) {
       await open(page);
       for (const n of [1, 2, 3]) await page.locator(`.verse[data-verse="${n}"] .verse__text`).tap();
       await press(page, 'quote-1');
-      await expect(page.getByTestId('sheet-done')).toHaveText('✓ Quoted John 1:1-3');
+      await expect(page.getByTestId('sheet-done')).toHaveText('Quoted John 1:1-3');
       await expect(page.locator('.verse[data-open]')).toHaveCount(0);
     });
   });

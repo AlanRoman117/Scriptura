@@ -52,8 +52,8 @@ interface Language {
 const LANGUAGES: Record<Locale, Language> = {
   'en-US': {
     english: 'English (United States)',
-    bible: 'bsb',
-    other: 'kjv',
+    bible: 'kjv',
+    other: 'bsb',
     word: 'light',
     form: 'translation-en.yml',
     voice: [
@@ -66,7 +66,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'es-MX': {
     english: 'Spanish (Mexico)',
     bible: 'rv1909',
-    other: 'bsb',
+    other: 'kjv',
     word: 'luz',
     form: 'translation-es.yml',
     voice: [
@@ -79,7 +79,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'fr-FR': {
     english: 'French (France)',
     bible: 'lsg1910',
-    other: 'bsb',
+    other: 'kjv',
     word: 'lumière',
     form: 'translation-fr.yml',
     voice: [
@@ -92,7 +92,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'ja-JP': {
     english: 'Japanese (Japan)',
     bible: 'bungo',
-    other: 'bsb',
+    other: 'kjv',
     word: '光',
     form: 'translation-ja.yml',
     voice: [
@@ -105,7 +105,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'pt-BR': {
     english: 'Portuguese (Brazil)',
     bible: 'blivre',
-    other: 'bsb',
+    other: 'kjv',
     word: 'luz',
     form: 'translation-pt.yml',
     voice: [
@@ -118,7 +118,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'zh-Hans': {
     english: 'Chinese (Simplified)',
     bible: 'cuvs',
-    other: 'bsb',
+    other: 'kjv',
     word: '光',
     form: 'translation-zh-hans.yml',
     voice: [
@@ -131,7 +131,7 @@ const LANGUAGES: Record<Locale, Language> = {
   'zh-Hant': {
     english: 'Chinese (Traditional)',
     bible: 'cuvt',
-    other: 'bsb',
+    other: 'kjv',
     word: '光',
     form: 'translation-zh-hant.yml',
     voice: [

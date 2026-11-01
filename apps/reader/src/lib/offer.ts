@@ -2,7 +2,7 @@
  * Which Bibles to offer a reader whose interface is not in English.
  *
  * A reader whose browser is in Spanish gets a Spanish interface, but the
- * bundled Bible is English (BSB). So when the interface language has Bibles
+ * bundled Bible is English (KJV). So when the interface language has Bibles
  * in the library and none of them is on this device yet, the reader is
  * offered every one of them. Nothing downloads without a press, and "Not now"
  * is remembered for that language on this device.

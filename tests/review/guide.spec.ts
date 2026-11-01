@@ -16,13 +16,13 @@ import { join } from 'node:path';
 
 /** Each interface language, the Bible a reader of it is offered first, and a word to search for in it. */
 const LOCALES = {
-  'en-US': { bible: null, other: 'kjv', word: 'light' },
-  'es-MX': { bible: 'rv1909', other: 'bsb', word: 'luz' },
-  'fr-FR': { bible: 'lsg1910', other: 'bsb', word: 'lumière' },
-  'ja-JP': { bible: 'bungo', other: 'bsb', word: '光' },
-  'pt-BR': { bible: 'blivre', other: 'bsb', word: 'luz' },
-  'zh-Hans': { bible: 'cuvs', other: 'bsb', word: '光' },
-  'zh-Hant': { bible: 'cuvt', other: 'bsb', word: '光' },
+  'en-US': { bible: null, other: 'bsb', word: 'light' },
+  'es-MX': { bible: 'rv1909', other: 'kjv', word: 'luz' },
+  'fr-FR': { bible: 'lsg1910', other: 'kjv', word: 'lumière' },
+  'ja-JP': { bible: 'bungo', other: 'kjv', word: '光' },
+  'pt-BR': { bible: 'blivre', other: 'kjv', word: 'luz' },
+  'zh-Hans': { bible: 'cuvs', other: 'kjv', word: '光' },
+  'zh-Hant': { bible: 'cuvt', other: 'kjv', word: '光' },
 } as const;
 type Locale = keyof typeof LOCALES;
 

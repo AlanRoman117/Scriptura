@@ -137,8 +137,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | 跳到經文 |
 | `app.skipToNotes` | Skip to notes | 跳到筆記 |
 | `app.skipToBoard` | Skip to the canvas | 跳到看板 |
-| `app.title` | John 1 · BSB · Scriptura | 約翰福音1 · CUVT · Scriptura |
-| `app.passageTitle` | John 1 · BSB | 約翰福音1 · CUVT |
+| `app.title` | John 1 · KJV · Scriptura | 約翰福音1 · CUVT · Scriptura |
+| `app.passageTitle` | John 1 · KJV | 約翰福音1 · CUVT |
 | `app.boardTitle` | John 1 · Boards | 約翰福音 1 · 看板 |
 | `app.opened` | Settings opened | 已開啟設定面板 |
 | `app.closed` | Settings closed | 已關閉設定面板 |
@@ -147,7 +147,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | 經文 |
 | `reader.book` | Book | 書卷 |
 | `reader.chapter` | Chapter | 章 |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | CUVT — 新標點和合本。選擇或加入譯本 |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | CUVT — 新標點和合本。選擇或加入譯本 |
 | `reader.marks` | Marks | 標記 |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | 標記 7 — 你標記過的經文，按顏色分組 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 設定 — 顯示、儲存空間、匯出與助理權限 |
@@ -156,8 +156,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | 選取約翰福音 1:2 — 在琥珀中 |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 已選取1節：約翰福音 1:3<br>已選取3節：約翰福音 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | 已取消選取 |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | 新標點和合本中沒有這一章。 |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | 正在閱讀新標點和合本 |
+| `reader.chapterMissing` | This chapter is not in King James Version. | 新標點和合本中沒有這一章。 |
+| `reader.readingAnnounce` | Reading King James Version | 正在閱讀新標點和合本 |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | 顯示閱讀選單 |
 | `reader.hideMenus` | Hide the reading menus | 隱藏閱讀選單 |
 | `panels.marks` | Marks | 標記 |
@@ -168,14 +168,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | 取消 |
 | `common.untitledNote` | Untitled | 無標題 |
 | `common.untitledBoard` | Untitled board | 無標題看板 |
-| `common.source` | Berean Standard Bible source | 新標點和合本的來源 |
+| `common.source` | King James Version source | 新標點和合本的來源 |
 | `common.undoRemove` | Undo remove | 復原 |
 | `common.remove` | Remove | 移除 |
 | `common.done` | Done | 完成 |
 | `offer.title` | Bibles in English | 中文聖經 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | 這些譯本是你所用語言的譯本。下載一個就可以閱讀，連上網路或離線都可以。 |
 | `offer.downloadAndRead` | Download and read | 下載並閱讀 |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | 下載並閱讀新標點和合本 |
+| `offer.downloadAndReadName` | Download and read King James Version | 下載並閱讀新標點和合本 |
 | `offer.allTranslations` | All translations | 全部譯本 |
 | `offer.notNow` | Not now | 暫時不用 |
 
@@ -274,8 +274,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | 無法儲存 — 請匯出你的筆記 |
 | `notes.saving` | Saving… | 正在儲存… |
 | `notes.saved` | Saved | 已儲存 |
-| `notes.linkIn` | John 1:3-5 (KJV) | 約翰福音 1:3-5（BSB） |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | 約翰福音 1:3-5（BSB — 尚未下載） |
+| `notes.linkIn` | John 1:3-5 (BSB) | 約翰福音 1:3-5（KJV） |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | 約翰福音 1:3-5（KJV — 尚未下載） |
 | `tools.label` | Formatting | 格式 |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2，2級標題 |
 | `tools.headingGlyph` | H2 | H2 |
@@ -289,7 +289,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 經文連結 |
 | `insert.quoted` | Quoted John 1:3-5 | 已引用約翰福音 1:3-5 |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | 已引用約翰福音 1:3-5（CUVT） |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | 已引用約翰福音 1:3-5（CUVT） |
 | `insert.linked` | Linked John 1:3-5 | 已連結約翰福音 1:3-5 |
 | `insert.addedBoard` | Added the board “John 1” | 已加入看板「約翰福音 1」 |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | 已把約翰福音 1:3-5加入看板「約翰福音 1」 |
@@ -421,23 +421,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | 閱讀 |
 | `library.compare` | Compare | 對照 |
 | `library.compareTitle` | Show beside the translation you are reading | 與你正在讀的譯本並排顯示 |
-| `library.downloading` | Downloading Berean Standard Bible | 正在下載新標點和合本 |
+| `library.downloading` | Downloading King James Version | 正在下載新標點和合本 |
 | `library.download` | Download | 下載 |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | 移除新標點和合本 — 請先切換到其他譯本 |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | 從本裝置上移除新標點和合本 |
+| `library.removeActive` | Remove King James Version — switch to another translation first | 移除新標點和合本 — 請先切換到其他譯本 |
+| `library.removeFromDevice` | Remove King James Version from this device | 從本裝置上移除新標點和合本 |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | 下載後的譯本會存在本裝置上，可以離線閱讀。移除譯本不會影響你的筆記和標記：兩者都屬於經文本身，而不屬於某個譯本。 |
-| `library.progress` | Berean Standard Bible: 50% downloaded | 新標點和合本：已下載50% |
-| `library.downloaded` | Berean Standard Bible downloaded | 新標點和合本已下載 |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | 新標點和合本：沒有網路連線 — 連上網路後再試。 |
+| `library.progress` | King James Version: 50% downloaded | 新標點和合本：已下載50% |
+| `library.downloaded` | King James Version downloaded | 新標點和合本已下載 |
+| `library.failed` | King James Version: No connection — try again when you are online. | 新標點和合本：沒有網路連線 — 連上網路後再試。 |
 | `library.failedOnline` | The download did not finish. Try again later. | 下載沒有完成。請稍後再試。 |
 | `library.offline` | No connection — try again when you are online. | 沒有網路連線 — 連上網路後再試。 |
 | `compare.label` | Translations side by side | 譯本並排對照 |
 | `compare.compared` | Translations compared | 對照中的譯本 |
-| `compare.stop` | Stop comparing KJV | 停止對照BSB |
+| `compare.stop` | Stop comparing BSB | 停止對照KJV |
 | `compare.verse` | Verse | 節 |
 | `compare.verseBefore` | Verse␣ | 節␣ |
-| `compare.missing` | Not in KJV | BSB中沒有 |
-| `compare.quote` | Quote KJV verse 16 | 引用BSB第16節 |
+| `compare.missing` | Not in BSB | KJV中沒有 |
+| `compare.quote` | Quote BSB verse 16 | 引用KJV第16節 |
 
 #### 2.7 Settings
 
@@ -778,12 +778,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | 要移除約翰福音 1:2上的標記嗎？ |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | 這節經文將離開合集「琥珀」。 |
 | `confirm.mark.action` | Remove mark | 移除標記 |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | 要從本裝置上移除新標點和合本嗎？ |
+| `confirm.translation.title` | Remove King James Version from this device? | 要從本裝置上移除新標點和合本嗎？ |
 | `confirm.translation.frees` | This frees about 5.4 MB. | 這會釋出大約5.4 MB的空間。 |
 | `confirm.translation.kept` | Your notes and marks are not changed. | 你的筆記和標記不會改變。 |
 | `confirm.translation.again` | You can download it again when you are online. | 連上網路時可以再次下載。 |
 | `confirm.translation.action` | Remove translation | 移除譯本 |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | 已從本裝置上移除新標點和合本 |
+| `confirm.translation.done` | Removed King James Version from this device | 已從本裝置上移除新標點和合本 |
 
 #### 2.11 Notices
 

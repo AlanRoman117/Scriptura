@@ -137,8 +137,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | Pular para o texto bíblico |
 | `app.skipToNotes` | Skip to notes | Pular para as notas |
 | `app.skipToBoard` | Skip to the canvas | Pular para os quadros |
-| `app.title` | John 1 · BSB · Scriptura | João 1 · BLIVRE · Scriptura |
-| `app.passageTitle` | John 1 · BSB | João 1 · BLIVRE |
+| `app.title` | John 1 · KJV · Scriptura | João 1 · BLIVRE · Scriptura |
+| `app.passageTitle` | John 1 · KJV | João 1 · BLIVRE |
 | `app.boardTitle` | John 1 · Boards | João 1 · Quadros |
 | `app.opened` | Settings opened | Painel Configurações aberto |
 | `app.closed` | Settings closed | Painel Configurações fechado |
@@ -147,7 +147,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | Passagem |
 | `reader.book` | Book | Livro |
 | `reader.chapter` | Chapter | Capítulo |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | BLIVRE — Bíblia Livre. Escolher ou adicionar uma tradução |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | BLIVRE — Bíblia Livre. Escolher ou adicionar uma tradução |
 | `reader.marks` | Marks | Marcas |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | Marcas 7 — versículos que você marcou, por cor |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | Configurações — exibição, armazenamento, exportação e acesso do assistente |
@@ -156,8 +156,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | Selecionar João 1:2 — em Âmbar (âmbar) |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 1 versículo selecionado: João 1:3<br>3 versículos selecionados: João 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | Seleção removida |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | Este capítulo não está em Bíblia Livre. |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | Lendo Bíblia Livre |
+| `reader.chapterMissing` | This chapter is not in King James Version. | Este capítulo não está em Bíblia Livre. |
+| `reader.readingAnnounce` | Reading King James Version | Lendo Bíblia Livre |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | Mostrar os menus de leitura |
 | `reader.hideMenus` | Hide the reading menus | Ocultar os menus de leitura |
 | `panels.marks` | Marks | Marcas |
@@ -168,14 +168,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | Cancelar |
 | `common.untitledNote` | Untitled | Sem título |
 | `common.untitledBoard` | Untitled board | Quadro sem título |
-| `common.source` | Berean Standard Bible source | Fonte de Bíblia Livre |
+| `common.source` | King James Version source | Fonte de Bíblia Livre |
 | `common.undoRemove` | Undo remove | Desfazer |
 | `common.remove` | Remove | Remover |
 | `common.done` | Done | Pronto |
 | `offer.title` | Bibles in English | Bíblias em português |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Estas traduções estão no seu idioma. Baixe uma para lê-la, com ou sem conexão. |
 | `offer.downloadAndRead` | Download and read | Baixar e ler |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | Baixar e ler Bíblia Livre |
+| `offer.downloadAndReadName` | Download and read King James Version | Baixar e ler Bíblia Livre |
 | `offer.allTranslations` | All translations | Todas as traduções |
 | `offer.notNow` | Not now | Agora não |
 
@@ -274,8 +274,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | Não foi possível salvar — exporte suas notas |
 | `notes.saving` | Saving… | Salvando… |
 | `notes.saved` | Saved | Salvo |
-| `notes.linkIn` | John 1:3-5 (KJV) | João 1:3-5 (BSB) |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | João 1:3-5 (BSB — não baixada) |
+| `notes.linkIn` | John 1:3-5 (BSB) | João 1:3-5 (KJV) |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | João 1:3-5 (KJV — não baixada) |
 | `tools.label` | Formatting | Formatação |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | T2, título 2 |
 | `tools.headingGlyph` | H2 | T2 |
@@ -289,7 +289,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | Citação |
 | `tools.link` | Link to a passage | Link para uma passagem |
 | `insert.quoted` | Quoted John 1:3-5 | João 1:3-5 foi citado |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | João 1:3-5 (BLIVRE) foi citado |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | João 1:3-5 (BLIVRE) foi citado |
 | `insert.linked` | Linked John 1:3-5 | João 1:3-5 foi vinculado |
 | `insert.addedBoard` | Added the board “John 1” | O quadro “João 1” foi adicionado |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | João 1:3-5 foi adicionado ao quadro “João 1” |
@@ -421,23 +421,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | Ler |
 | `library.compare` | Compare | Comparar |
 | `library.compareTitle` | Show beside the translation you are reading | Mostrar ao lado da tradução que você está lendo |
-| `library.downloading` | Downloading Berean Standard Bible | Baixando Bíblia Livre |
+| `library.downloading` | Downloading King James Version | Baixando Bíblia Livre |
 | `library.download` | Download | Baixar |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | Remover Bíblia Livre — mude para outra tradução antes |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | Remover Bíblia Livre deste dispositivo |
+| `library.removeActive` | Remove King James Version — switch to another translation first | Remover Bíblia Livre — mude para outra tradução antes |
+| `library.removeFromDevice` | Remove King James Version from this device | Remover Bíblia Livre deste dispositivo |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | Uma tradução baixada fica neste dispositivo e pode ser lida offline. Removê-la nunca mexe nas suas notas nem nas suas marcas: as duas pertencem à passagem, não a uma tradução. |
-| `library.progress` | Berean Standard Bible: 50% downloaded | Bíblia Livre: 50% baixado |
-| `library.downloaded` | Berean Standard Bible downloaded | Bíblia Livre foi baixada |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | Bíblia Livre: Sem conexão — tente de novo quando estiver online. |
+| `library.progress` | King James Version: 50% downloaded | Bíblia Livre: 50% baixado |
+| `library.downloaded` | King James Version downloaded | Bíblia Livre foi baixada |
+| `library.failed` | King James Version: No connection — try again when you are online. | Bíblia Livre: Sem conexão — tente de novo quando estiver online. |
 | `library.failedOnline` | The download did not finish. Try again later. | O download não terminou. Tente de novo mais tarde. |
 | `library.offline` | No connection — try again when you are online. | Sem conexão — tente de novo quando estiver online. |
 | `compare.label` | Translations side by side | Traduções lado a lado |
 | `compare.compared` | Translations compared | Traduções comparadas |
-| `compare.stop` | Stop comparing KJV | Parar de comparar BSB |
+| `compare.stop` | Stop comparing BSB | Parar de comparar KJV |
 | `compare.verse` | Verse | Versículo |
 | `compare.verseBefore` | Verse␣ | Versículo␣ |
-| `compare.missing` | Not in KJV | Não está em BSB |
-| `compare.quote` | Quote KJV verse 16 | Citar o versículo 16 de BSB |
+| `compare.missing` | Not in BSB | Não está em KJV |
+| `compare.quote` | Quote BSB verse 16 | Citar o versículo 16 de KJV |
 
 #### 2.7 Settings
 
@@ -778,12 +778,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | Remover a marca em João 1:2? |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | O versículo sai da coleção “Âmbar”. |
 | `confirm.mark.action` | Remove mark | Remover marca |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | Remover Bíblia Livre deste dispositivo? |
+| `confirm.translation.title` | Remove King James Version from this device? | Remover Bíblia Livre deste dispositivo? |
 | `confirm.translation.frees` | This frees about 5.4 MB. | Isso libera cerca de 5,4 MB. |
 | `confirm.translation.kept` | Your notes and marks are not changed. | Suas notas e marcas não mudam. |
 | `confirm.translation.again` | You can download it again when you are online. | Você pode baixá-la de novo quando estiver online. |
 | `confirm.translation.action` | Remove translation | Remover tradução |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | Bíblia Livre foi removida deste dispositivo |
+| `confirm.translation.done` | Removed King James Version from this device | Bíblia Livre foi removida deste dispositivo |
 
 #### 2.11 Notices
 

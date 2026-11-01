@@ -10,7 +10,7 @@
 
 Scriptura is a free, open-source monorepo for working with Bible data programmatically. It provides structured, machine-readable scripture across multiple translations and languages — all under verified public-domain or open-source licenses — alongside TypeScript tooling for search, comparison, validation, and API generation.
 
-**The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.**
+**The mission is simple: no developer should hit a paywall, a DMCA notice, or a legal grey area when building with the Bible.** One exception to know about: in the United Kingdom, rights in the King James Version are held by the Crown ([what that means](docs/translations-status.md#the-king-james-version-in-the-united-kingdom)).
 
 **Try the reader:** <https://alanroman117.github.io/Scriptura/>. It is a preview, published for the people reviewing its interface in Spanish, French, Japanese, Brazilian Portuguese and Chinese (both scripts); each reviewer has a guide in [`docs/human-language-review/`](docs/human-language-review/README.md). What changed is in [`CHANGELOG.md`](CHANGELOG.md).
 
@@ -450,7 +450,7 @@ data/{translation-id}/
 | TypeScript packages | Build, type-check, and pass tests on Node 24 (current Active LTS) |
 | Static API build | Working — `npm run build:api -- --skip-verses` emits ~17.6k JSON files (chapters, without a file per verse) |
 | Static/dynamic parity | Enforced by test — the two serving paths return identical JSON |
-| Tests | 1,743 jest, and 1,182 Playwright: 48 HTTP contract, 650 reader in Desktop Chrome, 454 reader on an emulated phone, 2 dev server, 28 on the published site |
+| Tests | 1,778 jest, and 1,189 Playwright: 48 HTTP contract, 657 reader in Desktop Chrome, 454 reader on an emulated phone, 2 dev server, 28 on the published site |
 | Reader PWA | `apps/reader` — offline reading, notes whose Markdown takes shape as it is written, colour collections, export, offline search and linking, a downloadable library with side-by-side comparison, canvas boards, and opt-in assistant tools (all 5 stages). Usable by touch and keyboard alone, and conformant with **WCAG 2.2 Level AAA** for its interface, checked in CI by axe, contrast, target-size, reflow and text-spacing gates — see the [conformance matrix](docs/plans/reader-touch-and-aaa/wcag-2.2-aaa-matrix.md). Its interface speaks English, Spanish (Mexico), French, Japanese, Brazilian Portuguese and Chinese in both scripts, chosen from the browser or Settings — Chinese by script, so a Taiwanese browser gets Traditional — and a reader in another language is offered a Bible in it; the non-English copy awaits native review. Real-device and screen-reader checks are still to do. |
 | CI | Running — data validation, canon sync, lint and tests on every push and PR |
 | Security | `npm audit` clean; CodeQL on push/PR + weekly; Dependabot version updates |

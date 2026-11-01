@@ -167,7 +167,7 @@ test.describe('a board inside a note', () => {
     await page.getByTestId('side-board').click();
     await (await boardAction(page, 'board-to-note')).click();
     // The board closed behind the button, so the note says what arrived.
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Added the board “Study board”');
+    await expect(page.getByTestId('note-done')).toHaveText('Added the board “Study board”');
     await expect(page.getByTestId('announcer')).toHaveText('Added the board “Study board” in “Prologue study”');
 
     // Back in the note, the fence is plain text…

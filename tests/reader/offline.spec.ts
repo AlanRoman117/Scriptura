@@ -27,7 +27,7 @@ test('reads scripture with the network cut', async ({ page, context }) => {
         open.onsuccess = () => {
           const db = open.result;
           const req = db.transaction('translations').objectStore('translations').getAllKeys();
-          req.onsuccess = () => resolve(req.result.includes('bsb'));
+          req.onsuccess = () => resolve(req.result.includes('kjv'));
           req.onerror = () => resolve(false);
         };
         open.onerror = () => resolve(false);

@@ -8,7 +8,7 @@ license before its data may be committed.**
 
 | ID | Name | Language | License | Verified source | Parser | Status |
 |---|---|---|---|---|---|---|
-| `kjv` | King James Version | en | Public domain | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | `aruljohn` | Complete |
+| `kjv` | King James Version | en | Public domain, [except in the UK](#the-king-james-version-in-the-united-kingdom) | [aruljohn/Bible-kjv](https://github.com/aruljohn/Bible-kjv) | `aruljohn` | Complete |
 | `web` | World English Bible | en | Public domain | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | Complete |
 | `asv` | American Standard Version (1901) | en | Public domain | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | Complete |
 | `ylt` | Young's Literal Translation | en | Public domain | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | Complete |
@@ -131,3 +131,21 @@ domain now" citation reopen this; the ban stands.
 Note also that scanned collections circulating online (for example on the
 Internet Archive) frequently bundle Kougo *together with* Bungo in a single
 item. The Bungo half being usable does not make such a bundle safe to ingest.
+
+## The King James Version in the United Kingdom
+
+The King James Version is public domain in the United States and most of the
+world, and Scriptura distributes it on that basis. In the United Kingdom, rights
+in the text are vested in the Crown and administered by Cambridge University
+Press (England, Wales and Northern Ireland) and the Scottish Bible Board
+(Scotland). Scriptura holds no permission from either. If you print, import or
+redistribute this text in the UK, check
+[Cambridge's terms](https://www.cambridge.org/bibles/about/rights-and-permissions)
+first: limited non-commercial quotation is allowed, and larger uses need written
+permission.
+
+Still open in this row: it cites `aruljohn/Bible-kjv`, whose README states no
+edition, source or rights, so it does not yet meet this log's rule of a primary
+source. That repository carries an MIT licence (2019, Arul John), and the edition
+behind `year: 1769` is undeclared. `license` stays `public-domain` in
+`metadata.json`, whose values have no qualified form.

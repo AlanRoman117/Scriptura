@@ -6,6 +6,7 @@ import { NotesPane } from './components/NotesPane';
 import { DurabilityBanner, type Persistence } from './components/DurabilityBanner';
 import { PreviewNotice } from './components/PreviewNotice';
 import { DEFAULT_TRANSLATION, loadTranslation, type LoadStage } from './lib/translation';
+import { openingOrder } from './lib/opening';
 import { requestPersistence, storageEstimate } from './lib/db';
 import {
   MAX_COMPARE,
@@ -255,15 +256,15 @@ export function App() {
     let cancelled = false;
 
     // The stored choice decides what to open, so it is read first. A stored
-    // translation that has since been removed falls back to the bundled one
-    // rather than showing an error screen — the app must always have something
-    // to read.
+    // translation that has since been removed falls back rather than showing
+    // an error screen — the app must always have something to read.
     void loadPrefs().then(async (prefs) => {
       if (cancelled) return;
-      const wanted = prefs.active ?? DEFAULT_TRANSLATION;
       setCompareWith((prefs.compareWith ?? []).slice(0, MAX_COMPARE));
 
-      for (const id of [wanted, DEFAULT_TRANSLATION]) {
+      const order = openingOrder(prefs.active, await installedIds());
+      if (cancelled) return;
+      for (const id of order) {
         try {
           const loaded = await loadTranslation(id, (st) => !cancelled && setStage(st));
           if (cancelled) return;
@@ -277,7 +278,7 @@ export function App() {
           void storageEstimate().then((e) => !cancelled && setStorage(e));
           return;
         } catch (e: unknown) {
-          if (id === DEFAULT_TRANSLATION && !cancelled) {
+          if (id === order[order.length - 1] && !cancelled) {
             setError(e instanceof Error ? e.message : String(e));
           }
         }

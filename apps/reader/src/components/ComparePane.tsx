@@ -3,6 +3,7 @@ import { alignChapters, compareChapterOf } from '@scriptura/compare/chapters';
 import type { Bible } from '@scriptura/core/types';
 import { requiresAttribution } from '../lib/translation';
 import { useI18n } from '../i18n';
+import { Icon } from './Icon';
 
 interface ComparePaneProps {
   /** The active translation first, then each comparison, in the order chosen. */
@@ -78,7 +79,7 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
                     aria-label={t.compare.stop(c.translation.toUpperCase())}
                     onClick={() => onDrop(c.translation)}
                   >
-                    ✕
+                    <Icon name="x" />
                   </button>
                 )}
               </span>
@@ -148,7 +149,7 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
                       aria-label={t.compare.stop(c.translation.toUpperCase())}
                       onClick={() => onDrop(c.translation)}
                     >
-                      ✕
+                      <Icon name="x" />
                     </button>
                   )}
                 </th>

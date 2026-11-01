@@ -134,8 +134,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | 聖書本文へ移動 |
 | `app.skipToNotes` | Skip to notes | ノートへ移動 |
 | `app.skipToBoard` | Skip to the canvas | ボードへ移動 |
-| `app.title` | John 1 · BSB · Scriptura | ヨハネによる福音書 1 · BUNGO · Scriptura |
-| `app.passageTitle` | John 1 · BSB | ヨハネによる福音書 1 · BUNGO |
+| `app.title` | John 1 · KJV · Scriptura | ヨハネによる福音書 1 · BUNGO · Scriptura |
+| `app.passageTitle` | John 1 · KJV | ヨハネによる福音書 1 · BUNGO |
 | `app.boardTitle` | John 1 · Boards | ヨハネによる福音書 1 · ボード |
 | `app.opened` | Settings opened | 設定を開きました |
 | `app.closed` | Settings closed | 設定を閉じました |
@@ -144,7 +144,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | 箇所 |
 | `reader.book` | Book | 書 |
 | `reader.chapter` | Chapter | 章 |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | BUNGO：文語訳聖書 (Classical)。訳を選ぶ、または追加する |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | BUNGO：文語訳聖書 (Classical)。訳を選ぶ、または追加する |
 | `reader.marks` | Marks | マーク |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | マーク 7件：マークした節を色ごとに表示 |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | 設定：表示、保存、エクスポート、アシスタントのアクセス |
@@ -153,8 +153,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | ヨハネによる福音書 1:2を選択（琥珀色にマーク済み） |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 1節を選択中：ヨハネによる福音書 1:3<br>3節を選択中：ヨハネによる福音書 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | 選択を解除しました |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | この章は文語訳聖書 (Classical)にありません。 |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | 文語訳聖書 (Classical)を表示しています |
+| `reader.chapterMissing` | This chapter is not in King James Version. | この章は文語訳聖書 (Classical)にありません。 |
+| `reader.readingAnnounce` | Reading King James Version | 文語訳聖書 (Classical)を表示しています |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | 聖書のメニューを表示する |
 | `reader.hideMenus` | Hide the reading menus | 聖書のメニューを隠す |
 | `panels.marks` | Marks | マーク |
@@ -165,14 +165,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | キャンセル |
 | `common.untitledNote` | Untitled | 無題 |
 | `common.untitledBoard` | Untitled board | 無題のボード |
-| `common.source` | Berean Standard Bible source | 文語訳聖書 (Classical)の出典 |
+| `common.source` | King James Version source | 文語訳聖書 (Classical)の出典 |
 | `common.undoRemove` | Undo remove | 元に戻す |
 | `common.remove` | Remove | 削除 |
 | `common.done` | Done | 完了 |
 | `offer.title` | Bibles in English | 日本語の聖書 |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | お使いの言語の訳があります。ダウンロードすると、オフラインでも読めます。 |
 | `offer.downloadAndRead` | Download and read | ダウンロードして読む |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | ダウンロードして読む：文語訳聖書 (Classical) |
+| `offer.downloadAndReadName` | Download and read King James Version | ダウンロードして読む：文語訳聖書 (Classical) |
 | `offer.allTranslations` | All translations | すべての訳 |
 | `offer.notNow` | Not now | 今はしない |
 
@@ -271,8 +271,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | 保存できませんでした。ノートをエクスポートしてください |
 | `notes.saving` | Saving… | 保存中… |
 | `notes.saved` | Saved | 保存しました |
-| `notes.linkIn` | John 1:3-5 (KJV) | ヨハネによる福音書 1:3-5（BSB） |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | ヨハネによる福音書 1:3-5（BSB、未ダウンロード） |
+| `notes.linkIn` | John 1:3-5 (BSB) | ヨハネによる福音書 1:3-5（KJV） |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | ヨハネによる福音書 1:3-5（KJV、未ダウンロード） |
 | `tools.label` | Formatting | 書式 |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | H2、見出し2 |
 | `tools.headingGlyph` | H2 | H2 |
@@ -286,7 +286,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | 引用 |
 | `tools.link` | Link to a passage | 箇所へのリンク |
 | `insert.quoted` | Quoted John 1:3-5 | ヨハネによる福音書 1:3-5を引用しました |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | ヨハネによる福音書 1:3-5（BUNGO）を引用しました |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | ヨハネによる福音書 1:3-5（BUNGO）を引用しました |
 | `insert.linked` | Linked John 1:3-5 | ヨハネによる福音書 1:3-5へのリンクを追加しました |
 | `insert.addedBoard` | Added the board “John 1” | ボード「ヨハネによる福音書 1」を追加しました |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | ヨハネによる福音書 1:3-5をボード「ヨハネによる福音書 1」に追加しました |
@@ -418,23 +418,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | 読む |
 | `library.compare` | Compare | 比較 |
 | `library.compareTitle` | Show beside the translation you are reading | 読んでいる訳の横に表示します |
-| `library.downloading` | Downloading Berean Standard Bible | 文語訳聖書 (Classical)をダウンロード中 |
+| `library.downloading` | Downloading King James Version | 文語訳聖書 (Classical)をダウンロード中 |
 | `library.download` | Download | ダウンロード |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | 文語訳聖書 (Classical)を削除（先にほかの訳に切り替えてください） |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | 文語訳聖書 (Classical)をこの端末から削除 |
+| `library.removeActive` | Remove King James Version — switch to another translation first | 文語訳聖書 (Classical)を削除（先にほかの訳に切り替えてください） |
+| `library.removeFromDevice` | Remove King James Version from this device | 文語訳聖書 (Classical)をこの端末から削除 |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | ダウンロードした訳はこの端末に残り、オフラインで読めます。訳を削除しても、ノートやマークは消えません。どちらも訳ではなく箇所に付いているからです。 |
-| `library.progress` | Berean Standard Bible: 50% downloaded | 文語訳聖書 (Classical)：50%をダウンロードしました |
-| `library.downloaded` | Berean Standard Bible downloaded | 文語訳聖書 (Classical)のダウンロードが完了しました |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | 文語訳聖書 (Classical)：接続がありません。オンラインになってからもう一度お試しください。 |
+| `library.progress` | King James Version: 50% downloaded | 文語訳聖書 (Classical)：50%をダウンロードしました |
+| `library.downloaded` | King James Version downloaded | 文語訳聖書 (Classical)のダウンロードが完了しました |
+| `library.failed` | King James Version: No connection — try again when you are online. | 文語訳聖書 (Classical)：接続がありません。オンラインになってからもう一度お試しください。 |
 | `library.failedOnline` | The download did not finish. Try again later. | ダウンロードを完了できませんでした。しばらくしてからもう一度お試しください。 |
 | `library.offline` | No connection — try again when you are online. | 接続がありません。オンラインになってからもう一度お試しください。 |
 | `compare.label` | Translations side by side | 訳の並列表示 |
 | `compare.compared` | Translations compared | 比較している訳 |
-| `compare.stop` | Stop comparing KJV | BSBの比較をやめる |
+| `compare.stop` | Stop comparing BSB | KJVの比較をやめる |
 | `compare.verse` | Verse | 節 |
 | `compare.verseBefore` | Verse␣ | 節␣ |
-| `compare.missing` | Not in KJV | BSBにはありません |
-| `compare.quote` | Quote KJV verse 16 | BSBの16節を引用 |
+| `compare.missing` | Not in BSB | KJVにはありません |
+| `compare.quote` | Quote BSB verse 16 | KJVの16節を引用 |
 
 #### 2.7 Settings
 
@@ -775,12 +775,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | ヨハネによる福音書 1:2のマークを削除しますか？ |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | この節はコレクション「琥珀色」から外れます。 |
 | `confirm.mark.action` | Remove mark | マークを削除 |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | 文語訳聖書 (Classical)をこの端末から削除しますか？ |
+| `confirm.translation.title` | Remove King James Version from this device? | 文語訳聖書 (Classical)をこの端末から削除しますか？ |
 | `confirm.translation.frees` | This frees about 5.4 MB. | 約5.4 MBの空き容量が増えます。 |
 | `confirm.translation.kept` | Your notes and marks are not changed. | ノートとマークは変更されません。 |
 | `confirm.translation.again` | You can download it again when you are online. | オンラインのときに、もう一度ダウンロードできます。 |
 | `confirm.translation.action` | Remove translation | 翻訳を削除 |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | 文語訳聖書 (Classical)をこの端末から削除しました |
+| `confirm.translation.done` | Removed King James Version from this device | 文語訳聖書 (Classical)をこの端末から削除しました |
 
 #### 2.11 Notices
 

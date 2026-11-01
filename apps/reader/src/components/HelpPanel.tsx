@@ -6,6 +6,7 @@ import { PREVIEW, VERSION } from '../lib/preview';
 import { useI18n } from '../i18n';
 import { rich } from '../i18n/rich';
 import type { BookExample } from '../i18n/types';
+import { Icon } from './Icon';
 
 interface HelpPanelProps {
   catalog: CatalogEntry[];
@@ -40,7 +41,7 @@ export function HelpPanel({ catalog, book, onClose }: HelpPanelProps) {
       <header className="help__bar">
         <h1 className="help__title">{words.title}</h1>
         <button type="button" className="help__close" data-testid="help-close" onClick={onClose} aria-label={words.close}>
-          ✕
+          <Icon name="x" />
         </button>
       </header>
 

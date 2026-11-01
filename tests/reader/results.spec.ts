@@ -89,7 +89,8 @@ test.describe('all the matches', () => {
 
     await page.getByTestId('results-insert-jeremiah-2-13').click();
     await expect.poll(() => noteValue(page.getByTestId('notes-surface'))).toContain('living water');
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Quoted Jeremiah 2:13');
+    await expect(page.getByTestId('note-done')).toHaveText('Quoted Jeremiah 2:13');
+    await expect(page.getByTestId('note-done').locator('svg[data-icon="check"]')).toBeVisible();
 
     await page.getByTestId('results-go-jeremiah-2-13').click();
     await expect(page.getByTestId('chapter-title')).toContainText('Jeremiah 2');
@@ -148,7 +149,7 @@ test.describe('precision', () => {
   });
 
   test('but a stem still finds its inflections by default', async ({ page }) => {
-    // Whole-word costs 49% of `love` in the KJV, so it must stay opt-in.
+    // Whole-word costs 49% of `love` in the BSB, so it must stay opt-in.
     await open(page);
     await searchFor(page, 'love');
     await page.getByTestId('search-see-all').click();

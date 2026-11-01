@@ -821,6 +821,9 @@ summary:focus-visible,
 
 /* Both chips are controls — the translation opens the library, Marks opens the
    collections — so neither is dropped when the bar runs short. */
+/* Sized from the text around it, so a picture grows with Settings' text size
+   and sits on the line like the symbol it replaced. */
+.icon { display: inline-block; flex: none; width: 1.2em; height: 1.2em; vertical-align: -.2em; }
 .reader__chip {
   /* Centred on both axes: the chip is at least 44px wide, and a flex box
      packs its content to the start, which drew the settings gear 5px and the
@@ -909,6 +912,11 @@ summary:focus-visible,
    the interface was Japanese or Chinese too. The face is declared where the
    `lang` is, since a family resolves where it is declared. */
 .chapter__book { font-family: var(--serif); }
+/* Drawn up into the room the strip leaves below itself: it belongs to the
+   title, and the pinned strip is opaque, so it slides under as the text does. */
+.chapter__translation {
+  margin: -1.25rem 0 1.5rem; font-family: var(--serif); font-size: var(--fs-sm); color: var(--ink-soft);
+}
 .chapter__book:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)) { letter-spacing: normal; font-variant-caps: normal; }
 .chapter__text { font-family: var(--serif); font-size: var(--reading-size); line-height: var(--reading-leading); }
 /* Scripture carries its translation's lang on the text itself, not on the

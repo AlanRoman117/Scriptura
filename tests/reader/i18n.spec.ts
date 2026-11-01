@@ -114,8 +114,8 @@ test.describe('in Spanish (Mexico)', () => {
   test('a Spanish browser opens in Spanish, and says so to a screen reader', async ({ page }) => {
     await open(page);
     expect(await lang(page)).toBe('es-MX');
-    // The passage keeps the open Bible's own book name: BSB is English.
-    await expect(page).toHaveTitle('John 1 · BSB · Scriptura');
+    // The passage keeps the open Bible's own book name: KJV is English.
+    await expect(page).toHaveTitle('John 1 · KJV · Scriptura');
     await expect(page.getByTestId('marks-open')).toContainText('Marcas');
     await expect(page.getByTestId('search-input')).toHaveAttribute('placeholder', 'Busca, o ve a “John 3:16”');
     await expect(page.getByRole('main', { name: 'Escrituras' })).toBeVisible();
@@ -150,7 +150,7 @@ test.describe('in Spanish (Mexico)', () => {
     await page.getByTestId('note-new').click();
     await page.getByTestId('verse-1').click();
     await page.getByTestId('quote-1').click();
-    await expect(page.getByTestId('note-done')).toHaveText('✓ Se citó John 1:1');
+    await expect(page.getByTestId('note-done')).toHaveText('Se citó John 1:1');
     await expect(page.getByTestId('announcer')).toHaveText('Se citó John 1:1 en una nota sin título');
     // Nothing English was stored: the untitled note reads as untitled in Spanish too.
     await expect(page.getByTestId('note-select').locator('option:checked')).toHaveText('Sin título');

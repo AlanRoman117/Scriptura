@@ -290,7 +290,7 @@ test.describe('help is where you left it (3.2.6, 3.3.5)', () => {
     await expect(help).toBeVisible();
     await expect(help.getByTestId('help-accessibility')).toContainText(/Level AAA/);
     // Every translation in the catalogue is in the abbreviations table.
-    await expect(help.locator('table abbr', { hasText: 'KJV' })).toHaveCount(1);
+    await expect(help.locator('table abbr', { hasText: 'BSB' })).toHaveCount(1);
     await expect(help.locator('table abbr', { hasText: 'BUNGO' })).toHaveCount(1);
     await page.getByTestId('help-close').click();
     await expect(help).toHaveCount(0);

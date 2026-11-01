@@ -134,8 +134,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture | Saltar a las Escrituras |
 | `app.skipToNotes` | Skip to notes | Saltar a las notas |
 | `app.skipToBoard` | Skip to the canvas | Saltar a los tableros |
-| `app.title` | John 1 · BSB · Scriptura | Juan 1 · RV1909 · Scriptura |
-| `app.passageTitle` | John 1 · BSB | Juan 1 · RV1909 |
+| `app.title` | John 1 · KJV · Scriptura | Juan 1 · RV1909 · Scriptura |
+| `app.passageTitle` | John 1 · KJV | Juan 1 · RV1909 |
 | `app.boardTitle` | John 1 · Boards | Juan 1 · Tableros |
 | `app.opened` | Settings opened | Se abrió Configuración |
 | `app.closed` | Settings closed | Se cerró Configuración |
@@ -144,7 +144,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage | Pasaje |
 | `reader.book` | Book | Libro |
 | `reader.chapter` | Chapter | Capítulo |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation | RV1909: Reina Valera 1909. Elige o agrega una traducción |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation | RV1909: Reina Valera 1909. Elige o agrega una traducción |
 | `reader.marks` | Marks | Marcas |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour | Marcas 7: los versículos que marcaste, por color |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access | Configuración: pantalla, almacenamiento, exportación y acceso de asistentes |
@@ -153,8 +153,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) | Seleccionar Juan 1:2: está en Ámbar (ámbar) |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 | 1 versículo seleccionado: Juan 1:3<br>3 versículos seleccionados: Juan 1:3-5 |
 | `reader.selectionCleared` | Selection cleared | Se quitó la selección |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. | Este capítulo no está en Reina Valera 1909. |
-| `reader.readingAnnounce` | Reading Berean Standard Bible | Leyendo Reina Valera 1909 |
+| `reader.chapterMissing` | This chapter is not in King James Version. | Este capítulo no está en Reina Valera 1909. |
+| `reader.readingAnnounce` | Reading King James Version | Leyendo Reina Valera 1909 |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus | Mostrar los menús de lectura |
 | `reader.hideMenus` | Hide the reading menus | Ocultar los menús de lectura |
 | `panels.marks` | Marks | Marcas |
@@ -165,14 +165,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel | Cancelar |
 | `common.untitledNote` | Untitled | Sin título |
 | `common.untitledBoard` | Untitled board | Tablero sin título |
-| `common.source` | Berean Standard Bible source | Fuente de Reina Valera 1909 |
+| `common.source` | King James Version source | Fuente de Reina Valera 1909 |
 | `common.undoRemove` | Undo remove | Deshacer |
 | `common.remove` | Remove | Quitar |
 | `common.done` | Done | Listo |
 | `offer.title` | Bibles in English | Biblias en español |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. | Estas traducciones están en tu idioma. Descarga una para leerla, con o sin conexión. |
 | `offer.downloadAndRead` | Download and read | Descargar y leer |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible | Descargar y leer Reina Valera 1909 |
+| `offer.downloadAndReadName` | Download and read King James Version | Descargar y leer Reina Valera 1909 |
 | `offer.allTranslations` | All translations | Todas las traducciones |
 | `offer.notNow` | Not now | Ahora no |
 
@@ -271,8 +271,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes | No se pudo guardar; exporta tus notas |
 | `notes.saving` | Saving… | Guardando… |
 | `notes.saved` | Saved | Guardado |
-| `notes.linkIn` | John 1:3-5 (KJV) | Juan 1:3-5 (BSB) |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) | Juan 1:3-5 (BSB, sin descargar) |
+| `notes.linkIn` | John 1:3-5 (BSB) | Juan 1:3-5 (KJV) |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | Juan 1:3-5 (KJV, sin descargar) |
 | `tools.label` | Formatting | Formato |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | T2, título 2 |
 | `tools.headingGlyph` | H2 | T2 |
@@ -286,7 +286,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote | Cita |
 | `tools.link` | Link to a passage | Enlazar a un pasaje |
 | `insert.quoted` | Quoted John 1:3-5 | Se citó Juan 1:3-5 |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) | Se citó Juan 1:3-5 (RV1909) |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) | Se citó Juan 1:3-5 (RV1909) |
 | `insert.linked` | Linked John 1:3-5 | Se enlazó Juan 1:3-5 |
 | `insert.addedBoard` | Added the board “John 1” | Se agregó el tablero “Juan 1” |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” | Se agregó Juan 1:3-5 al tablero “Juan 1” |
@@ -418,23 +418,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read | Leer |
 | `library.compare` | Compare | Comparar |
 | `library.compareTitle` | Show beside the translation you are reading | Mostrar junto a la traducción que estás leyendo |
-| `library.downloading` | Downloading Berean Standard Bible | Descargando Reina Valera 1909 |
+| `library.downloading` | Downloading King James Version | Descargando Reina Valera 1909 |
 | `library.download` | Download | Descargar |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first | Quitar Reina Valera 1909: primero cambia a otra traducción |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device | Quitar Reina Valera 1909 de este dispositivo |
+| `library.removeActive` | Remove King James Version — switch to another translation first | Quitar Reina Valera 1909: primero cambia a otra traducción |
+| `library.removeFromDevice` | Remove King James Version from this device | Quitar Reina Valera 1909 de este dispositivo |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. | Una traducción descargada se queda en este dispositivo y se puede leer sin conexión. Quitar una nunca toca tus notas ni tus marcas: ambas pertenecen al pasaje, no a una traducción. |
-| `library.progress` | Berean Standard Bible: 50% downloaded | Reina Valera 1909: 50% descargado |
-| `library.downloaded` | Berean Standard Bible downloaded | Se descargó Reina Valera 1909 |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. | Reina Valera 1909: Sin conexión. Inténtalo de nuevo cuando tengas internet. |
+| `library.progress` | King James Version: 50% downloaded | Reina Valera 1909: 50% descargado |
+| `library.downloaded` | King James Version downloaded | Se descargó Reina Valera 1909 |
+| `library.failed` | King James Version: No connection — try again when you are online. | Reina Valera 1909: Sin conexión. Inténtalo de nuevo cuando tengas internet. |
 | `library.failedOnline` | The download did not finish. Try again later. | La descarga no terminó. Inténtalo de nuevo más tarde. |
 | `library.offline` | No connection — try again when you are online. | Sin conexión. Inténtalo de nuevo cuando tengas internet. |
 | `compare.label` | Translations side by side | Traducciones lado a lado |
 | `compare.compared` | Translations compared | Traducciones comparadas |
-| `compare.stop` | Stop comparing KJV | Dejar de comparar BSB |
+| `compare.stop` | Stop comparing BSB | Dejar de comparar KJV |
 | `compare.verse` | Verse | Versículo |
 | `compare.verseBefore` | Verse␣ | Versículo␣ |
-| `compare.missing` | Not in KJV | No está en BSB |
-| `compare.quote` | Quote KJV verse 16 | Citar el versículo 16 de BSB |
+| `compare.missing` | Not in BSB | No está en KJV |
+| `compare.quote` | Quote BSB verse 16 | Citar el versículo 16 de KJV |
 
 #### 2.7 Settings
 
@@ -775,12 +775,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? | ¿Quitar la marca de Juan 1:2? |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. | El versículo sale de la colección “Ámbar”. |
 | `confirm.mark.action` | Remove mark | Quitar marca |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? | ¿Quitar Reina Valera 1909 de este dispositivo? |
+| `confirm.translation.title` | Remove King James Version from this device? | ¿Quitar Reina Valera 1909 de este dispositivo? |
 | `confirm.translation.frees` | This frees about 5.4 MB. | Se liberarán unos 5.4 MB. |
 | `confirm.translation.kept` | Your notes and marks are not changed. | Tus notas y marcas no cambian. |
 | `confirm.translation.again` | You can download it again when you are online. | Puedes volver a descargarla cuando tengas conexión. |
 | `confirm.translation.action` | Remove translation | Quitar traducción |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device | Se quitó Reina Valera 1909 de este dispositivo |
+| `confirm.translation.done` | Removed King James Version from this device | Se quitó Reina Valera 1909 de este dispositivo |
 
 #### 2.11 Notices
 

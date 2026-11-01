@@ -22,7 +22,7 @@ Part 1 alone already tells us a great deal. If you can give only a quarter of an
 
 - Each row is one text. **Key** is its name in the program; **Text** is what a reader sees or hears.
 - The small print under a key, where there is some, is the programmer's own note on that text. It often says whether the text is shown on the screen or only spoken by a screen reader, which a blind reader uses.
-- Names and numbers inside a text are examples: "John 1:3-5", "Berean Standard Bible", "1,382". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.
+- Names and numbers inside a text are examples: "John 1:3-5", "King James Version", "1,382". The app puts the real ones there. Where a text changes with a number, it is shown with one and with several.
 - A word in braces, such as `{count}`, is a place where the app puts a number or a name. Leave it as it is; it may move within the sentence.
 - `␣` marks a space at the start or end of a text that has to stay, and <kbd>Enter</kbd> is a key on the keyboard.
 - The pictures were taken with the Berean Standard Bible open, so the names of books are that Bible's own.
@@ -115,8 +115,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.skipToScripture` | Skip to scripture |
 | `app.skipToNotes` | Skip to notes |
 | `app.skipToBoard` | Skip to the canvas |
-| `app.title` | John 1 · BSB · Scriptura |
-| `app.passageTitle` | John 1 · BSB |
+| `app.title` | John 1 · KJV · Scriptura |
+| `app.passageTitle` | John 1 · KJV |
 | `app.boardTitle` | John 1 · Boards |
 | `app.opened` | Settings opened |
 | `app.closed` | Settings closed |
@@ -125,7 +125,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.passage` | Passage |
 | `reader.book` | Book |
 | `reader.chapter` | Chapter |
-| `reader.translationChip` | BSB — Berean Standard Bible. Choose or add a translation |
+| `reader.translationChip` | KJV — King James Version. Choose or add a translation |
 | `reader.marks` | Marks |
 | `reader.marksChip`<br><sub>The Marks button's name. It holds the word and the count the button shows, in that order and without brackets, so someone using voice control can say what they see (WCAG 2.5.3).</sub> | Marks 7 — verses you have marked, by colour |
 | `reader.settingsChip` | Settings — display, storage, export, and assistant access |
@@ -134,8 +134,8 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `reader.selectVerseIn` | Select John 1:2 — in Amber (amber) |
 | `reader.selection`<br><sub>Said when the selection changes and focus does not move to say it.</sub> | 1 verse selected: John 1:3<br>3 verses selected: John 1:3-5 |
 | `reader.selectionCleared` | Selection cleared |
-| `reader.chapterMissing` | This chapter is not in Berean Standard Bible. |
-| `reader.readingAnnounce` | Reading Berean Standard Bible |
+| `reader.chapterMissing` | This chapter is not in King James Version. |
+| `reader.readingAnnounce` | Reading King James Version |
 | `reader.showMenus`<br><sub>The button at the end of the chapter title, on a small screen: named for what a press will do.</sub> | Show the reading menus |
 | `reader.hideMenus` | Hide the reading menus |
 | `panels.marks` | Marks |
@@ -146,14 +146,14 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `common.cancel` | Cancel |
 | `common.untitledNote` | Untitled |
 | `common.untitledBoard` | Untitled board |
-| `common.source` | Berean Standard Bible source |
+| `common.source` | King James Version source |
 | `common.undoRemove` | Undo remove |
 | `common.remove` | Remove |
 | `common.done` | Done |
 | `offer.title` | Bibles in English |
 | `offer.intro` | These translations are in your language. Download one to read it, online or offline. |
 | `offer.downloadAndRead` | Download and read |
-| `offer.downloadAndReadName` | Download and read Berean Standard Bible |
+| `offer.downloadAndReadName` | Download and read King James Version |
 | `offer.allTranslations` | All translations |
 | `offer.notNow` | Not now |
 
@@ -252,8 +252,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.saveFailed` | Could not save — export your notes |
 | `notes.saving` | Saving… |
 | `notes.saved` | Saved |
-| `notes.linkIn` | John 1:3-5 (KJV) |
-| `notes.linkMissing` | John 1:3-5 (KJV — not downloaded) |
+| `notes.linkIn` | John 1:3-5 (BSB) |
+| `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) |
 | `tools.label` | Formatting |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 |
 | `tools.headingGlyph` | H2 |
@@ -267,7 +267,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `tools.quote` | Quote |
 | `tools.link` | Link to a passage |
 | `insert.quoted` | Quoted John 1:3-5 |
-| `insert.quotedFrom` | Quoted John 1:3-5 (BSB) |
+| `insert.quotedFrom` | Quoted John 1:3-5 (KJV) |
 | `insert.linked` | Linked John 1:3-5 |
 | `insert.addedBoard` | Added the board “John 1” |
 | `insert.addedToBoard` | Added John 1:3-5 to “John 1” |
@@ -399,23 +399,23 @@ Where a Bible is downloaded, read, compared with the one being read, or removed.
 | `library.read` | Read |
 | `library.compare` | Compare |
 | `library.compareTitle` | Show beside the translation you are reading |
-| `library.downloading` | Downloading Berean Standard Bible |
+| `library.downloading` | Downloading King James Version |
 | `library.download` | Download |
-| `library.removeActive` | Remove Berean Standard Bible — switch to another translation first |
-| `library.removeFromDevice` | Remove Berean Standard Bible from this device |
+| `library.removeActive` | Remove King James Version — switch to another translation first |
+| `library.removeFromDevice` | Remove King James Version from this device |
 | `library.note` | A downloaded translation stays on this device and can be read offline. Removing one never touches your notes or marks: both belong to the passage, not to a translation. |
-| `library.progress` | Berean Standard Bible: 50% downloaded |
-| `library.downloaded` | Berean Standard Bible downloaded |
-| `library.failed` | Berean Standard Bible: No connection — try again when you are online. |
+| `library.progress` | King James Version: 50% downloaded |
+| `library.downloaded` | King James Version downloaded |
+| `library.failed` | King James Version: No connection — try again when you are online. |
 | `library.failedOnline` | The download did not finish. Try again later. |
 | `library.offline` | No connection — try again when you are online. |
 | `compare.label` | Translations side by side |
 | `compare.compared` | Translations compared |
-| `compare.stop` | Stop comparing KJV |
+| `compare.stop` | Stop comparing BSB |
 | `compare.verse` | Verse |
 | `compare.verseBefore` | Verse␣ |
-| `compare.missing` | Not in KJV |
-| `compare.quote` | Quote KJV verse 16 |
+| `compare.missing` | Not in BSB |
+| `compare.quote` | Quote BSB verse 16 |
 
 #### 2.7 Settings
 
@@ -756,12 +756,12 @@ Deleting a note or a board, or removing a card, a mark or a translation, asks fi
 | `confirm.mark.title` | Remove the mark on John 1:2? |
 | `confirm.mark.leaves` | The verse leaves the collection “Amber”. |
 | `confirm.mark.action` | Remove mark |
-| `confirm.translation.title` | Remove Berean Standard Bible from this device? |
+| `confirm.translation.title` | Remove King James Version from this device? |
 | `confirm.translation.frees` | This frees about 5.4 MB. |
 | `confirm.translation.kept` | Your notes and marks are not changed. |
 | `confirm.translation.again` | You can download it again when you are online. |
 | `confirm.translation.action` | Remove translation |
-| `confirm.translation.done` | Removed Berean Standard Bible from this device |
+| `confirm.translation.done` | Removed King James Version from this device |
 
 #### 2.11 Notices
 
