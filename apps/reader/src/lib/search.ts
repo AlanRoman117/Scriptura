@@ -7,12 +7,10 @@
  * added here: quoted phrases and boolean terms, which the spec asks for and
  * plain substring matching cannot express.
  */
-import { foldDiacritics, foldText, parseReference } from '@scriptura/core/books';
+import { parseReference } from '@scriptura/core/books';
 import type { Bible, SearchResult } from '@scriptura/core/types';
 import {
-  matchScore,
-  searchBible,
-  SCORE_NONE,
+  searchBibleTerms,
   SCORE_WHOLE_WORD,
   type MatchOptions,
 } from '@scriptura/search/matcher';
@@ -55,9 +53,10 @@ export function parseQuery(input: string): Query {
 /**
  * Run a query against a loaded translation.
  *
- * The first required term goes through `searchBible` so the corpus scan and its
- * folding are the shared implementation; the rest narrow that candidate set.
- * Narrowing an already-small list beats scanning 31,000 verses once per term.
+ * Every term goes through `searchBibleTerms`, one pass over the folded index the
+ * single-word search already builds: this runs on every keystroke, and narrowing
+ * by re-folding the candidates' text cost `in the beginning` 127ms a key on a 4x
+ * CPU throttle, where this costs 36ms (see the function for what it keeps).
  *
  * Every term is scored through the same `matchScore` the engine uses — the
  * later terms used to re-fold the text and call `includes` directly, which
@@ -79,29 +78,7 @@ export function runQuery(
   const { required, excluded } = parseQuery(input);
   if (required.length === 0) return [];
 
-  const fold = options.caseSensitive ? foldDiacritics : foldText;
-  let results = searchBible(bible, required[0], options);
-
-  for (const term of required.slice(1)) {
-    const needle = fold(term);
-    results = results.flatMap((r) => {
-      const score = matchScore(fold(r.text), needle);
-      if (score === SCORE_NONE) return [];
-      if (options.mode === 'word' && score !== SCORE_WHOLE_WORD) return [];
-      return [{ ...r, score: Math.min(r.score, score) }];
-    });
-  }
-  for (const term of excluded) {
-    const needle = fold(term);
-    // Exclusion is deliberately substring even in word mode: asking to drop
-    // `love` should also drop `loveth`, or the term reads as a promise it
-    // does not keep.
-    results = results.filter((r) => !fold(r.text).includes(needle));
-  }
-
-  // Re-sorted because a later term can demote a result the first term ranked
-  // highly. Stable, so equal scores stay in canonical order.
-  return results.sort((a, b) => b.score - a.score);
+  return searchBibleTerms(bible, required, excluded, options);
 }
 
 /**
