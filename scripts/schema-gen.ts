@@ -58,6 +58,11 @@ const bookSchema = {
         required: ['number', 'verses'],
         properties: {
           number: { type: 'integer', minimum: 1 },
+          superscription: {
+            type: 'string',
+            minLength: 1,
+            description: "The chapter's title where the source has one (a Psalm's superscription); absent, never empty, otherwise",
+          },
           verses: {
             type: 'array',
             items: {

@@ -18,6 +18,7 @@ ERRORS (fail the build — these are unambiguous bugs):
   • an expected canonical book missing, or an unexpected book present
   • book_count in metadata not matching the number of book files
   • a verse with empty text, a duplicate verse number, or a non-positive number
+  • a chapter's superscription present but not a non-empty string
   • a book's testament tag disagreeing with the canon
 
 WARNINGS (reported, do NOT fail the build — may be legitimate):
@@ -315,6 +316,13 @@ def validate_translation(tdir: Path, strict: bool):
                 errors.append(f"{bf.name}: chapter 'number' must be a positive int "
                               f"(got {ch_num!r})")
                 continue
+            # A Psalm's title is optional and, where present, text: an empty one
+            # would draw an empty line before verse 1. Absent is the way to say
+            # "none", as with the optional metadata fields.
+            if "superscription" in ch and not (isinstance(ch["superscription"], str)
+                                               and ch["superscription"].strip()):
+                errors.append(f"{bf.name} ch {ch_num}: 'superscription' must be a "
+                              f"non-empty string when present")
             verses = ch.get("verses")
             if not isinstance(verses, list) or not verses:
                 errors.append(f"{bf.name} ch {ch_num}: 'verses' must be a non-empty list")

@@ -74,8 +74,18 @@ export async function validate(translationDir: string): Promise<ValidationError[
         }
       }
 
-      // Check for empty verse text
+      // Check for empty verse text, and an empty title where one is present
       for (const chapter of book.chapters) {
+        if (
+          chapter.superscription !== undefined &&
+          (typeof chapter.superscription !== 'string' || chapter.superscription.trim() === '')
+        ) {
+          errors.push({
+            translation: dirName,
+            file,
+            message: `${book.name} ${chapter.number} has an empty superscription`,
+          });
+        }
         for (const verse of chapter.verses) {
           if (!verse.text || verse.text.trim() === '') {
             errors.push({
