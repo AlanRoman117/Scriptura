@@ -475,7 +475,12 @@ export const ptBR = {
 
   embed: {
     scrolls: (board: string) => `Quadro: ${board}, rola para os lados`,
-    picture: (board: string, cards: number) => `Quadro: ${board}, ${num(cards)} cartões`,
+    picture: (board: string, cards: number) =>
+      plural(cards, {
+        one: `Quadro: ${board}, ${num(cards)} cartão`,
+        many: `Quadro: ${board}, ${num(cards)} de cartões`,
+        other: `Quadro: ${board}, ${num(cards)} cartões`,
+      }),
     empty: 'Este quadro está vazio.',
     missing: 'Um quadro foi inserido aqui, mas ele não existe mais.',
     open: 'Abrir o quadro',
