@@ -149,11 +149,25 @@ describe('parseReference', () => {
    * "a" and 50,000 spaces took 1.85s here, and `/compare?ref=` takes this
    * string straight from a query. It is now two steps, and the same input is
    * immediate.
+   *
+   * Timed, because there is nothing to count: the work is the regex engine's
+   * backtracking, which no spy from JavaScript can see, and the function makes
+   * the same calls on either grammar. So the clock is the process's CPU time,
+   * which a loaded machine cannot inflate the way it did wall-clock (another
+   * test failed at 2,158ms with the load at 56), and the input is twice the one
+   * measured above: 100,000 spaces took 7.7s of CPU on the old grammar and
+   * under 2ms on this one. A second between them is room for a slow runner, not
+   * for a quadratic grammar.
+   *
+   * ⚠️ The run of spaces ends in a letter. `parseReference` trims first, and
+   * trailing spaces alone never reached either grammar: the old grammar
+   * planted back passed this test while the input was "a" and spaces.
    */
   test('fails immediately on a long run of spaces (js/polynomial-redos)', () => {
-    const started = performance.now();
-    expect(parseReference(`a${' '.repeat(50_000)}`)).toBeNull();
+    const started = process.cpuUsage();
+    expect(parseReference(`a${' '.repeat(100_000)}b`)).toBeNull();
     expect(parseReference(`${'a '.repeat(20_000)}3:16`)).not.toBeNull();
-    expect(performance.now() - started).toBeLessThan(100);
+    const { user, system } = process.cpuUsage(started);
+    expect((user + system) / 1000).toBeLessThan(1000);
   });
 });

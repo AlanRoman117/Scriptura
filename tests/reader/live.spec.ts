@@ -320,6 +320,13 @@ test.describe('the live editor', () => {
     expect(await paragraphs.nth(1).evaluate((el) => getComputedStyle(el).direction)).toBe('rtl');
   });
 
+  /*
+   * Counted, not timed: this was a limit of 50ms a key, which a loaded or
+   * power-saving runner can miss with the editor doing nothing wrong. A redraw
+   * has to make elements for every line it draws and take out the ones it
+   * replaces, so the elements made and the lines removed during the burst are
+   * the redraw's size, on any machine.
+   */
   test('a long note redraws one line per keystroke', async ({ page }) => {
     const surface = await open(page);
     const note = Array.from({ length: 2000 }, (_, i) => (i % 10 === 0 ? `## Part ${i}` : `Line ${i} with **bold** and [[john 3:${i}]]`)).join('\n');
@@ -333,23 +340,46 @@ test.describe('the live editor', () => {
     }, note);
     await expect.poll(() => noteText(page)).toBe(note);
     await surface.evaluate((el) => (el as HTMLTextAreaElement).setSelectionRange(5, 5));
-    const timing = await page.evaluate(async () => {
+    const redraw = await page.evaluate(async () => {
       const el = document.getElementById('notes-surface')!;
       const first = el.children[1];
       const typed = el.children[0];
-      const started = performance.now();
+      let built = 0;
+      let removed = 0;
+      const createElement = Document.prototype.createElement;
+      const remove = Element.prototype.remove;
+      const replaceChildren = Element.prototype.replaceChildren;
+      Document.prototype.createElement = function (this: Document, ...args: [string, ElementCreationOptions?]) {
+        built += 1;
+        return createElement.apply(this, args);
+      } as typeof createElement;
+      Element.prototype.remove = function (this: Element) {
+        removed += 1;
+        return remove.call(this);
+      };
+      Element.prototype.replaceChildren = function (this: Element, ...nodes: (Node | string)[]) {
+        removed += this.childElementCount;
+        return replaceChildren.apply(this, nodes);
+      };
       for (let i = 0; i < 20; i++) document.execCommand('insertText', false, 'x');
-      const ms = (performance.now() - started) / 20;
       // The read-back runs in a microtask after the inserts: look after it.
       await new Promise((resolve) => setTimeout(resolve, 0));
-      return { ms, untouched: el.children[1] === first, kept: el.children[0] === typed };
+      Document.prototype.createElement = createElement;
+      Element.prototype.remove = remove;
+      Element.prototype.replaceChildren = replaceChildren;
+      return { built, removed, untouched: el.children[1] === first, kept: el.children[0] === typed };
     });
-    expect(timing.untouched).toBe(true);
+    // 0 and 0 here: the heading the x's land in is kept, as `kept` says below.
+    // 13,000 and 2,000 with a full redraw planted, 2 and 1 with the typed line
+    // rebuilt on every key as it once was. The room above 0 is for the editor
+    // redrawing the typed line for a good reason (a marker closed, a line
+    // becoming a heading); it is not room for anything that grows with the lines.
+    expect(redraw.built).toBeLessThanOrEqual(20);
+    expect(redraw.removed).toBeLessThanOrEqual(1);
+    expect(redraw.untouched).toBe(true);
     // The line typed into is kept as well: the x's land in the heading's own
     // text, and what the browser left is what would be drawn.
-    expect(timing.kept).toBe(true);
-    // Generous for a slow runner; a full redraw of 2,000 lines takes far longer.
-    expect(timing.ms).toBeLessThan(50);
+    expect(redraw.kept).toBe(true);
   });
 
   /*
