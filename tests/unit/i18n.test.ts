@@ -425,4 +425,11 @@ describe('the catalogs', () => {
       for (const phrase of phrases) expect(phrase).not.toMatch(/色の色|色色/);
     }
   });
+
+  test.each([...LOCALES])('%s names the Bible pane and the passage nav differently', (locale) => {
+    // Two landmarks, one inside the other: a screen reader lists both, and the
+    // same name on the text and on the controls that move through it misleads.
+    const { layout, reader } = CATALOGS[locale];
+    expect(reader.passage).not.toBe(layout.scripture);
+  });
 });
