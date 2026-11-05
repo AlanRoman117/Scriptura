@@ -48,7 +48,12 @@ export interface FullBookEntry {
   slug: string;
   abbreviation: string;
   testament: 'OT' | 'NT';
-  chapters: Array<{ number: number; verses: Array<{ number: number; text: string }> }>;
+  chapters: Array<{
+    number: number;
+    /** The chapter's title (a Psalm's superscription), only where the source has one. */
+    superscription?: string;
+    verses: Array<{ number: number; text: string }>;
+  }>;
 }
 
 export interface FullTranslationPayload extends TranslationMeta {
@@ -73,6 +78,12 @@ export interface ChapterPayload {
   book_slug: string;
   book_number: number;
   chapter: number;
+  /**
+   * The chapter's title, where the source has one: a Psalm's superscription,
+   * which stands before verse 1 and is not a verse. Absent otherwise, so a
+   * client that never heard of it sees the payload it always did.
+   */
+  superscription?: string;
   verses: Array<{ number: number; text: string }>;
 }
 
@@ -164,10 +175,22 @@ export function formatFullTranslation(
       testament: b.testament,
       chapters: b.chapters.map((c) => ({
         number: c.number,
+        ...superscriptionOf(c),
         verses: c.verses.map((v) => ({ number: v.number, text: v.text })),
       })),
     })),
   };
+}
+
+/**
+ * The chapter's title as a payload fragment: the key only where there is one.
+ *
+ * Spread into the chapter shapes rather than set to `undefined`, so the key set
+ * a client sees is exactly the static builder's, which cannot write `undefined`
+ * into JSON at all. `tests/contract/routes.spec.ts` asserts exact key sets.
+ */
+function superscriptionOf(chapter: Chapter): { superscription?: string } {
+  return chapter.superscription !== undefined ? { superscription: chapter.superscription } : {};
 }
 
 /**
@@ -229,6 +252,7 @@ export function formatChapter(
     book_slug: book.slug,
     book_number: book.number,
     chapter: chapter.number,
+    ...superscriptionOf(chapter),
     verses: chapter.verses.map((v) => ({ number: v.number, text: v.text })),
   };
 }

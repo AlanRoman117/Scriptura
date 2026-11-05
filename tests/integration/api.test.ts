@@ -201,6 +201,51 @@ describe('response shapes match the static build', () => {
   });
 });
 
+describe('a chapter’s title (superscription)', () => {
+  // A Psalm's title stands before verse 1 unnumbered. It is the chapter's,
+  // never verse 1's, and the key is present only where the source has one, so
+  // a client that never heard of it sees the payload it always did.
+  test('a Psalm with a title carries it beside its verses, and verse 1 is the verse alone', async () => {
+    const res = await get('/translations/web/psalms/3');
+    expect(res.status).toBe(200);
+    const body = res.body as { superscription?: string; verses: { number: number; text: string }[] };
+    expect(body.superscription).toBe('A Psalm by David, when he fled from Absalom his son.');
+    expect(body.verses[0]).toMatchObject({ number: 1 });
+    expect(body.verses[0].text).toMatch(/^LORD, how my adversaries/);
+    expect(body.verses).toHaveLength(8);
+  });
+
+  test.each([
+    ['a Psalm whose source has no title', '/translations/web/psalms/1'],
+    ['a translation whose source has no titles', '/translations/kjv/psalms/3'],
+    ['a chapter outside the Psalms', '/translations/web/john/3'],
+  ])('%s has no key at all', async (_label, path) => {
+    const res = await get(path);
+    expect(res.status).toBe(200);
+    expect(res.body).not.toHaveProperty('superscription');
+  });
+
+  test('the offline bundle carries it chapter by chapter', async () => {
+    const body = (await get('/translations/web/full')).body as {
+      books: { slug: string; chapters: { number: number; superscription?: string }[] }[];
+    };
+    const psalms = body.books.find((b) => b.slug === 'psalms')!;
+    expect(psalms.chapters.find((c) => c.number === 3)?.superscription).toMatch(/^A Psalm by David/);
+    expect(psalms.chapters.find((c) => c.number === 1)).not.toHaveProperty('superscription');
+    // Psalm 119's Hebrew letters are headings, not a title, and are left out.
+    expect(psalms.chapters.find((c) => c.number === 119)).not.toHaveProperty('superscription');
+  });
+
+  test('a chapter comparison carries each translation’s own, and its rows stay verses', async () => {
+    const res = await get('/compare/chapter', { book: 'psalms', chapter: '3', translations: 'web,kjv' });
+    expect(res.status).toBe(200);
+    const body = res.body as { results: { translation: string; superscription?: string; verses: unknown[] }[] };
+    expect(body.results[0]).toMatchObject({ translation: 'web', superscription: expect.stringMatching(/^A Psalm by David/) });
+    expect(body.results[1]).not.toHaveProperty('superscription');
+    expect(body.results.map((r) => r.verses.length)).toEqual([8, 8]);
+  });
+});
+
 describe('attribution travels with the text', () => {
   // CC BY-SA requires the notice wherever the text appears. An offline client
   // that caches only chapters previously had no copy of it at all.
