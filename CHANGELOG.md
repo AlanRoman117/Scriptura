@@ -41,8 +41,6 @@ chapter menu in both Chinese scripts. They are listed in
   letter case. A rename that only changes case no longer leaves the old spelling
   behind on a disk that keeps them apart.
 - A board picture's name counts its cards correctly in every language ("1 card").
-- At high zoom, the menus step aside as **Tab** moves down the chapter, so the
-  focused verse is never hidden behind them.
 
 ### Changed
 
