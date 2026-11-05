@@ -238,7 +238,9 @@ export const zhHant = {
   },
 
   reader: {
-    passage: '經文',
+    // The nav that picks a book and chapter, inside the pane named 經文
+    // (layout.scripture): a screen reader lists both, so they differ.
+    passage: '章節',
     book: '書卷',
     chapter: '章',
     translationChip: (id: string, name: string) => `${id} — ${name}。選擇或加入譯本`,

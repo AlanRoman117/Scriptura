@@ -52,6 +52,30 @@ describe('compareChapterOf', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].verses).toEqual([]);
   });
+
+  test('a chapter’s title travels with its column, and only where there is one', () => {
+    // A Psalm's title is not a verse, so it is not a row: it goes beside the
+    // verses, for the view to draw above them under that column.
+    const psalm = (superscription?: string): LoadedBook[] => [
+      {
+        number: 19,
+        name: 'Psalms',
+        slug: 'psalms',
+        abbreviation: 'Psa',
+        testament: 'OT',
+        chapters: [{ number: 3, ...(superscription && { superscription }), verses: [{ number: 1, text: 'LORD, how…' }] }],
+      },
+    ];
+    const rows = compareChapterOf(
+      [createBible(meta('web'), psalm('A Psalm by David.')), createBible(meta('kjv'), psalm())],
+      'psalms',
+      3
+    );
+    expect(rows[0].superscription).toBe('A Psalm by David.');
+    expect(rows[1]).not.toHaveProperty('superscription');
+    // The rows are the verses alone.
+    expect(alignChapters(rows).map((r) => r.number)).toEqual([1]);
+  });
 });
 
 describe('alignChapters', () => {

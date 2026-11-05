@@ -112,6 +112,13 @@ const NON_TRANSLATION_DIRS = new Set(["schemas"]);
 const slugFromFilename = (name) =>
   name.replace(/\.json$/i, "").replace(/^\d+-/, "");
 
+// A chapter's title (a Psalm's superscription), as a fragment to spread into
+// the chapter shapes: the key only where the book file has one, so the key set
+// matches formatChapter/formatFullTranslation in packages/api/src/format.ts
+// exactly. tests/integration/static-parity.test.ts diffs the two.
+const superscriptionOf = (chapter) =>
+  typeof chapter.superscription === "string" ? { superscription: chapter.superscription } : {};
+
 // -----------------------------------------------------------------------------
 function build() {
   if (!existsSync(DATA_DIR)) {
@@ -207,6 +214,7 @@ function build() {
           book_slug: slug,
           book_number: book.number,
           chapter: chapter.number,
+          ...superscriptionOf(chapter),
           verses: verses.map((v) => ({ number: v.number, text: v.text })),
         });
         totals.chapters++;
@@ -248,6 +256,7 @@ function build() {
         testament: book.testament,
         chapters: chapters.map((c) => ({
           number: c.number,
+          ...superscriptionOf(c),
           verses: (Array.isArray(c.verses) ? c.verses : []).map((v) => ({
             number: v.number,
             text: v.text,

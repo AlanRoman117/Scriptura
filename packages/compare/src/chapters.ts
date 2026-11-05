@@ -16,6 +16,12 @@ export interface ChapterComparison {
   translation: string;
   /** The book's name *in that translation* — "Juan", "ヨハネによる福音書". */
   book?: string;
+  /**
+   * The chapter's title in that translation, where it has one (a Psalm's
+   * superscription). Not a verse, so it is not a row: a side-by-side view
+   * shows it above the rows, under its column.
+   */
+  superscription?: string;
   verses: TranslationVerse[];
 }
 
@@ -39,6 +45,8 @@ export function compareChapterOf(
     return {
       translation: bible.meta.id,
       book: book?.name,
+      // Present only where the chapter has one, like the on-disk field.
+      ...(chapter?.superscription !== undefined && { superscription: chapter.superscription }),
       verses: (chapter?.verses ?? []).map((v) => ({
         translation: bible.meta.id,
         // Keep the verse number: without it callers can only align chapters by

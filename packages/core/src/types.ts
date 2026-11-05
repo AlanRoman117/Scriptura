@@ -41,6 +41,16 @@ export interface Verse {
 /** A chapter containing verses. */
 export interface Chapter {
   number: number;
+  /**
+   * The chapter's title, where the source has one: a Psalm's superscription
+   * ("A Psalm of David, when he fled from Absalom his son."). In English Bibles
+   * it stands before verse 1 unnumbered, so it is the chapter's and not verse
+   * 1's: putting it into the verse would change quoting, search and links.
+   * Absent, never empty, where the source has none (the KJV's source has no
+   * titles; Segond and Reina-Valera number the title as verse 1, so it is
+   * already verse text there).
+   */
+  superscription?: string;
   verses: Verse[];
 }
 

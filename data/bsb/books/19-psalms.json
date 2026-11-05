@@ -1,6 +1,6 @@
 {
   "number": 19,
-  "name": "Psalms",
+  "name": "Psalm",
   "abbreviation": "Psa",
   "testament": "OT",
   "chapters": [
@@ -70,7 +70,7 @@
         },
         {
           "number": 9,
-          "text": "You will break them with an iron scepter; You will shatter them like pottery.”"
+          "text": "You will break them with an iron scepter; You will shatter them like pottery. ”"
         },
         {
           "number": 10,
@@ -88,6 +88,7 @@
     },
     {
       "number": 3,
+      "superscription": "A Psalm of David, when he fled from his son Absalom.",
       "verses": [
         {
           "number": 1,
@@ -125,6 +126,7 @@
     },
     {
       "number": 4,
+      "superscription": "For the choirmaster. With stringed instruments. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -162,6 +164,7 @@
     },
     {
       "number": 5,
+      "superscription": "For the choirmaster, to be accompanied by flutes. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -215,6 +218,7 @@
     },
     {
       "number": 6,
+      "superscription": "For the choirmaster. With stringed instruments, according to Sheminith. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -260,6 +264,7 @@
     },
     {
       "number": 7,
+      "superscription": "A Shiggaion of David, which he sang to the LORD concerning the words of Cush, a Benjamite.",
       "verses": [
         {
           "number": 1,
@@ -333,6 +338,7 @@
     },
     {
       "number": 8,
+      "superscription": "For the choirmaster. According to Gittith. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -344,7 +350,7 @@
         },
         {
           "number": 3,
-          "text": "When I behold Your heavens, the work of Your fingers, the moon and the stars, which You have set in place—"
+          "text": "When I behold Your heavens, the work of Your fingers, the moon and the stars, which You have set in place —"
         },
         {
           "number": 4,
@@ -374,6 +380,7 @@
     },
     {
       "number": 9,
+      "superscription": "For the choirmaster. To the tune of “The Death of the Son.” A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -429,7 +436,7 @@
         },
         {
           "number": 14,
-          "text": "that I may declare all Your praises— that within the gates of Daughter Zion I may rejoice in Your salvation."
+          "text": "that I may declare all Your praises — that within the gates of Daughter Zion I may rejoice in Your salvation."
         },
         {
           "number": 15,
@@ -498,7 +505,7 @@
         },
         {
           "number": 10,
-          "text": "They are crushed and beaten down; the hapless fall prey to his strength."
+          "text": "They are crushed and beaten down; the helpless fall prey to his strength."
         },
         {
           "number": 11,
@@ -536,6 +543,7 @@
     },
     {
       "number": 11,
+      "superscription": "For the choirmaster. Of David.",
       "verses": [
         {
           "number": 1,
@@ -569,6 +577,7 @@
     },
     {
       "number": 12,
+      "superscription": "For the choirmaster. According to Sheminith. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -584,7 +593,7 @@
         },
         {
           "number": 4,
-          "text": "They say, “With our tongues we will prevail. We own our lips—who can be our master?”"
+          "text": "They say, “With our tongues we will prevail. We own our lips— who can be our master?”"
         },
         {
           "number": 5,
@@ -606,6 +615,7 @@
     },
     {
       "number": 13,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -635,6 +645,7 @@
     },
     {
       "number": 14,
+      "superscription": "For the choirmaster. Of David.",
       "verses": [
         {
           "number": 1,
@@ -668,6 +679,7 @@
     },
     {
       "number": 15,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -693,6 +705,7 @@
     },
     {
       "number": 16,
+      "superscription": "A Miktam of David.",
       "verses": [
         {
           "number": 1,
@@ -742,6 +755,7 @@
     },
     {
       "number": 17,
+      "superscription": "A prayer of David.",
       "verses": [
         {
           "number": 1,
@@ -757,7 +771,7 @@
         },
         {
           "number": 4,
-          "text": "As for the deeds of men— by the word of Your lips I have avoided the ways of the violent."
+          "text": "As for the deeds of men — by the word of Your lips I have avoided the ways of the violent."
         },
         {
           "number": 5,
@@ -807,6 +821,7 @@
     },
     {
       "number": 18,
+      "superscription": "For the choirmaster. Of David the servant of the LORD, who sang this song to the LORD on the day the LORD had delivered him from the hand of all his enemies and from the hand of Saul. He said:",
       "verses": [
         {
           "number": 1,
@@ -854,11 +869,11 @@
         },
         {
           "number": 12,
-          "text": "From the brightness of His presence His clouds advanced— hailstones and coals of fire."
+          "text": "From the brightness of His presence His clouds advanced — hailstones and coals of fire."
         },
         {
           "number": 13,
-          "text": "The LORD thundered from heaven; the voice of the Most High resounded— hailstones and coals of fire."
+          "text": "The LORD thundered from heaven; the voice of the Most High resounded — hailstones and coals of fire."
         },
         {
           "number": 14,
@@ -966,11 +981,11 @@
         },
         {
           "number": 40,
-          "text": "You have made my enemies retreat before me; I put an end to those who hated me."
+          "text": "You have made my enemies retreat before me; I destroyed those who hated me."
         },
         {
           "number": 41,
-          "text": "They cried for help, but there was no one to save them— to the LORD, but He did not answer."
+          "text": "They cried for help, but there was no one to save them — to the LORD, but He did not answer."
         },
         {
           "number": 42,
@@ -1012,6 +1027,7 @@
     },
     {
       "number": 19,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1073,6 +1089,7 @@
     },
     {
       "number": 20,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1114,6 +1131,7 @@
     },
     {
       "number": 21,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1171,6 +1189,7 @@
     },
     {
       "number": 22,
+      "superscription": "For the choirmaster. To the tune of “The Doe of the Dawn.” A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1294,12 +1313,13 @@
         },
         {
           "number": 31,
-          "text": "They will come and proclaim His righteousness to a people yet unborn— all that He has done."
+          "text": "They will come and proclaim His righteousness to a people yet unborn — all that He has done."
         }
       ]
     },
     {
       "number": 23,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1329,6 +1349,7 @@
     },
     {
       "number": 24,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1368,12 +1389,13 @@
         },
         {
           "number": 10,
-          "text": "Who is He, this King of Glory? The LORD of Hosts— He is the King of Glory. Selah"
+          "text": "Who is He, this King of Glory? The LORD of Hosts — He is the King of Glory. Selah"
         }
       ]
     },
     {
       "number": 25,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -1385,7 +1407,7 @@
         },
         {
           "number": 3,
-          "text": "Surely none who wait for You will be put to shame; but those who are faithless without cause will be disgraced."
+          "text": "Surely none who wait for You will be put to shame; but those who engage in treachery without cause will be disgraced."
         },
         {
           "number": 4,
@@ -1467,6 +1489,7 @@
     },
     {
       "number": 26,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -1520,6 +1543,7 @@
     },
     {
       "number": 27,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -1581,6 +1605,7 @@
     },
     {
       "number": 28,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -1622,6 +1647,7 @@
     },
     {
       "number": 29,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1671,6 +1697,7 @@
     },
     {
       "number": 30,
+      "superscription": "A Psalm. A song for the dedication of the temple. Of David.",
       "verses": [
         {
           "number": 1,
@@ -1724,6 +1751,7 @@
     },
     {
       "number": 31,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -1767,7 +1795,7 @@
         },
         {
           "number": 11,
-          "text": "Among all my enemies I am a disgrace, and among my neighbors even more. I am dreaded by my friends— they flee when they see me on the street."
+          "text": "Among all my enemies I am a disgrace, and among my neighbors even more. I am dreaded by my friends — they flee when they see me on the street."
         },
         {
           "number": 12,
@@ -1795,7 +1823,7 @@
         },
         {
           "number": 18,
-          "text": "May lying lips be silenced— lips that speak with arrogance against the righteous, full of pride and contempt."
+          "text": "May lying lips be silenced — lips that speak with arrogance against the righteous, full of pride and contempt."
         },
         {
           "number": 19,
@@ -1825,6 +1853,7 @@
     },
     {
       "number": 32,
+      "superscription": "Of David. A Maskil.",
       "verses": [
         {
           "number": 1,
@@ -1967,6 +1996,7 @@
     },
     {
       "number": 34,
+      "superscription": "Of David, when he pretended to be insane before Abimelech, so that the king drove him away.",
       "verses": [
         {
           "number": 1,
@@ -2060,6 +2090,7 @@
     },
     {
       "number": 35,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -2177,6 +2208,7 @@
     },
     {
       "number": 36,
+      "superscription": "For the choirmaster. A Psalm of David, the servant of the LORD.",
       "verses": [
         {
           "number": 1,
@@ -2230,6 +2262,7 @@
     },
     {
       "number": 37,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -2261,7 +2294,7 @@
         },
         {
           "number": 8,
-          "text": "Refrain from anger and abandon wrath; do not fret—it can only bring harm."
+          "text": "Refrain from anger and abandon wrath; do not fret— it can only bring harm."
         },
         {
           "number": 9,
@@ -2395,6 +2428,7 @@
     },
     {
       "number": 38,
+      "superscription": "A Psalm of David, for remembrance.",
       "verses": [
         {
           "number": 1,
@@ -2458,7 +2492,7 @@
         },
         {
           "number": 16,
-          "text": "For I said, “Let them not gloat over me— those who taunt me when my foot slips.”"
+          "text": "For I said, “Let them not gloat over me — those who taunt me when my foot slips.”"
         },
         {
           "number": 17,
@@ -2488,6 +2522,7 @@
     },
     {
       "number": 39,
+      "superscription": "For the choirmaster. For Jeduthun. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -2545,6 +2580,7 @@
     },
     {
       "number": 40,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -2564,7 +2600,7 @@
         },
         {
           "number": 5,
-          "text": "Many, O LORD my God, are the wonders You have done, and the plans You have for us— none can compare to You— if I proclaim and declare them, they are more than I can count."
+          "text": "Many, O LORD my God, are the wonders You have done, and the plans You have for us — none can compare to You — if I proclaim and declare them, they are more than I can count."
         },
         {
           "number": 6,
@@ -2572,7 +2608,7 @@
         },
         {
           "number": 7,
-          "text": "Then I said, “Here I am, I have come— it is written about me in the scroll:"
+          "text": "Then I said, “Here I am, I have come — it is written about me in the scroll:"
         },
         {
           "number": 8,
@@ -2618,6 +2654,7 @@
     },
     {
       "number": 41,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -2625,7 +2662,7 @@
         },
         {
           "number": 2,
-          "text": "The LORD will protect and preserve him; He will bless him in the land and refuse to surrender him to the will of his foes."
+          "text": "The LORD will protect and preserve him; He will bless him in the land and refuse to give him over to the will of his foes."
         },
         {
           "number": 3,
@@ -2675,6 +2712,7 @@
     },
     {
       "number": 42,
+      "superscription": "For the choirmaster. A Maskil of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -2690,7 +2728,7 @@
         },
         {
           "number": 4,
-          "text": "These things come to mind as I pour out my soul: how I walked with the multitude, leading the procession to the house of God with shouts of joy and praise."
+          "text": "These things come to mind as I pour out my soul: how I walked with the multitude, leading the festive procession to the house of God with shouts of joy and praise."
         },
         {
           "number": 5,
@@ -2698,7 +2736,7 @@
         },
         {
           "number": 6,
-          "text": "O my God, my soul despairs within me. Therefore I remember You from the land of Jordan and the peaks of Hermon— even from Mount Mizar."
+          "text": "O my God, my soul despairs within me. Therefore I remember You from the land of Jordan and the peaks of Hermon — even from Mount Mizar."
         },
         {
           "number": 7,
@@ -2735,7 +2773,7 @@
         },
         {
           "number": 3,
-          "text": "Send out Your light and Your truth; let them lead me. Let them bring me to Your holy mountain, and to the place where You dwell."
+          "text": "Send out Your light and Your truth; let them lead me. Let them bring me to Your holy mountain and to the place where You dwell."
         },
         {
           "number": 4,
@@ -2749,6 +2787,7 @@
     },
     {
       "number": 44,
+      "superscription": "For the choirmaster. A Maskil of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -2858,6 +2897,7 @@
     },
     {
       "number": 45,
+      "superscription": "For the choirmaster. To the tune of “The Lilies.” A Maskil of the sons of Korah. A love song.",
       "verses": [
         {
           "number": 1,
@@ -2865,7 +2905,7 @@
         },
         {
           "number": 2,
-          "text": "You are the most handsome of men; grace has anointed your lips, since God has blessed you forever."
+          "text": "You are the most handsome of men; grace has anointed your lips; therefore God has blessed you forever."
         },
         {
           "number": 3,
@@ -2931,6 +2971,7 @@
     },
     {
       "number": 46,
+      "superscription": "For the choirmaster. Of the sons of Korah. According to Alamoth. A song.",
       "verses": [
         {
           "number": 1,
@@ -2980,6 +3021,7 @@
     },
     {
       "number": 47,
+      "superscription": "For the choirmaster. A Psalm of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -3007,7 +3049,7 @@
         },
         {
           "number": 7,
-          "text": "For God is King of all the earth; sing profound praises to Him."
+          "text": "For God is King of all the earth; sing to Him a psalm of praise."
         },
         {
           "number": 8,
@@ -3021,6 +3063,7 @@
     },
     {
       "number": 48,
+      "superscription": "A song. A Psalm of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -3082,6 +3125,7 @@
     },
     {
       "number": 49,
+      "superscription": "For the choirmaster. A Psalm of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -3125,7 +3169,7 @@
         },
         {
           "number": 11,
-          "text": "Their graves are their eternal homes— their dwellings for endless generations— even though their lands were their namesakes."
+          "text": "Their graves are their eternal homes — their dwellings for endless generations — even though their lands were their namesakes."
         },
         {
           "number": 12,
@@ -3133,7 +3177,7 @@
         },
         {
           "number": 13,
-          "text": "This is the fate of the self-confident and their followers who endorse their sayings. Selah"
+          "text": "This is the fate of the foolish and their followers who endorse their sayings. Selah"
         },
         {
           "number": 14,
@@ -3145,7 +3189,7 @@
         },
         {
           "number": 16,
-          "text": "Do not be amazed when a man grows rich, when the splendor of his house increases."
+          "text": "Do not be afraid when a man grows rich, when the splendor of his house increases."
         },
         {
           "number": 17,
@@ -3153,7 +3197,7 @@
         },
         {
           "number": 18,
-          "text": "Though in his lifetime he blesses his soul— and men praise you when you prosper—"
+          "text": "Though in his lifetime he blesses his soul — and men praise you when you prosper —"
         },
         {
           "number": 19,
@@ -3167,6 +3211,7 @@
     },
     {
       "number": 50,
+      "superscription": "A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -3206,7 +3251,7 @@
         },
         {
           "number": 10,
-          "text": "for every beast of the forest is Mine— the cattle on a thousand hills."
+          "text": "for every beast of the forest is Mine — the cattle on a thousand hills."
         },
         {
           "number": 11,
@@ -3242,7 +3287,7 @@
         },
         {
           "number": 19,
-          "text": "You unleash your mouth for evil and unharness your tongue for deceit."
+          "text": "You unleash your mouth for evil and harness your tongue to deceit."
         },
         {
           "number": 20,
@@ -3258,12 +3303,13 @@
         },
         {
           "number": 23,
-          "text": "He who sacrifices a thank offering honors Me, and to him who rights his way, I will show the salvation of God.”"
+          "text": "He who sacrifices a thank offering honors Me, and to him who rightly orders his way, I will show the salvation of God.”"
         }
       ]
     },
     {
       "number": 51,
+      "superscription": "For the choirmaster. A Psalm of David. When Nathan the prophet came to him after his adultery with Bathsheba.",
       "verses": [
         {
           "number": 1,
@@ -3345,6 +3391,7 @@
     },
     {
       "number": 52,
+      "superscription": "For the choirmaster. A Maskil of David. After Doeg the Edomite went to Saul and told him, “David has gone to the house of Ahimelech.”",
       "verses": [
         {
           "number": 1,
@@ -3380,12 +3427,13 @@
         },
         {
           "number": 9,
-          "text": "I will praise You forever, because You have done it. I will wait on Your name— for it is good— in the presence of Your saints."
+          "text": "I will praise You forever, because You have done it. I will wait on Your name — for it is good — in the presence of Your saints."
         }
       ]
     },
     {
       "number": 53,
+      "superscription": "For the choirmaster. According to Mahalath. A Maskil of David.",
       "verses": [
         {
           "number": 1,
@@ -3415,6 +3463,7 @@
     },
     {
       "number": 54,
+      "superscription": "For the choirmaster. With stringed instruments. A Maskil of David. When the Ziphites went to Saul and said, “Is David not hiding among us?”",
       "verses": [
         {
           "number": 1,
@@ -3426,7 +3475,7 @@
         },
         {
           "number": 3,
-          "text": "For strangers rise up against me, and ruthless men seek my life— men with no regard for God. Selah"
+          "text": "For strangers rise up against me, and ruthless men seek my life — men with no regard for God. Selah"
         },
         {
           "number": 4,
@@ -3442,12 +3491,13 @@
         },
         {
           "number": 7,
-          "text": "For He has delivered me from every trouble, and my eyes have stared down my foes."
+          "text": "For He has delivered me from every trouble, and my eyes have looked in triumph on my foes."
         }
       ]
     },
     {
       "number": 55,
+      "superscription": "For the choirmaster. With stringed instruments. A Maskil of David.",
       "verses": [
         {
           "number": 1,
@@ -3459,11 +3509,11 @@
         },
         {
           "number": 3,
-          "text": "at the voice of the enemy, at the pressure of the wicked. For they release disaster upon me and revile me in their anger."
+          "text": "at the voice of the enemy, at the pressure of the wicked. For they bring down disaster upon me and resent me in their anger."
         },
         {
           "number": 4,
-          "text": "My heart murmurs within me, and the terrors of death assail me."
+          "text": "My heart pounds within me, and the terrors of death assail me."
         },
         {
           "number": 5,
@@ -3523,7 +3573,7 @@
         },
         {
           "number": 19,
-          "text": "God will hear and humiliate them— the One enthroned for the ages— Selah because they do not change and they have no fear of God."
+          "text": "God will hear and humiliate them — the One enthroned for the ages — Selah because they do not change and they have no fear of God."
         },
         {
           "number": 20,
@@ -3545,6 +3595,7 @@
     },
     {
       "number": 56,
+      "superscription": "For the choirmaster. To the tune of “A Dove on Distant Oaks.” A Miktam of David, when the Philistines seized him in Gath.",
       "verses": [
         {
           "number": 1,
@@ -3560,7 +3611,7 @@
         },
         {
           "number": 4,
-          "text": "In God, whose word I praise— in God I trust. I will not be afraid. What can man do to me?"
+          "text": "In God, whose word I praise — in God I trust. I will not be afraid. What can man do to me?"
         },
         {
           "number": 5,
@@ -3576,7 +3627,7 @@
         },
         {
           "number": 8,
-          "text": "You have taken account of my wanderings. Put my tears in Your bottle— are they not in Your book?"
+          "text": "You have taken account of my wanderings. Put my tears in Your bottle — are they not in Your book?"
         },
         {
           "number": 9,
@@ -3602,6 +3653,7 @@
     },
     {
       "number": 57,
+      "superscription": "For the choirmaster. To the tune of “Do Not Destroy.” A Miktam of David, when he fled from Saul into the cave.",
       "verses": [
         {
           "number": 1,
@@ -3651,6 +3703,7 @@
     },
     {
       "number": 58,
+      "superscription": "For the choirmaster. To the tune of “Do Not Destroy.” A Miktam of David.",
       "verses": [
         {
           "number": 1,
@@ -3700,6 +3753,7 @@
     },
     {
       "number": 59,
+      "superscription": "For the choirmaster. To the tune of “Do Not Destroy.” A Miktam of David, when Saul sent men to watch David’s house in order to kill him.",
       "verses": [
         {
           "number": 1,
@@ -3773,6 +3827,7 @@
     },
     {
       "number": 60,
+      "superscription": "For the choirmaster. To the tune of “The Lily of the Covenant.” A Miktam of David for instruction. When he fought Aram-naharaim and Aram-zobah, and Joab returned and struck down 12,000 Edomites in the Valley of Salt.",
       "verses": [
         {
           "number": 1,
@@ -3826,6 +3881,7 @@
     },
     {
       "number": 61,
+      "superscription": "For the choirmaster. With stringed instruments. Of David.",
       "verses": [
         {
           "number": 1,
@@ -3863,6 +3919,7 @@
     },
     {
       "number": 62,
+      "superscription": "For the choirmaster. According to Jeduthun. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -3898,11 +3955,11 @@
         },
         {
           "number": 9,
-          "text": "Lowborn men are but a vapor, the exalted but a lie. Weighed on the scale, they go up; together they are but a vapor."
+          "text": "Lowborn men are but a vapor; the exalted are but a lie. Weighed on the scale, they go up; together they are but a vapor."
         },
         {
           "number": 10,
-          "text": "Place no trust in extortion, or false hope in stolen goods. If your riches increase, do not set your heart upon them."
+          "text": "Place no trust in extortion or false hope in stolen goods. If your riches increase, do not set your heart upon them."
         },
         {
           "number": 11,
@@ -3916,6 +3973,7 @@
     },
     {
       "number": 63,
+      "superscription": "A Psalm of David, when he was in the Wilderness of Judah.",
       "verses": [
         {
           "number": 1,
@@ -3965,6 +4023,7 @@
     },
     {
       "number": 64,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -4010,6 +4069,7 @@
     },
     {
       "number": 65,
+      "superscription": "For the choirmaster. A Psalm of David. A song.",
       "verses": [
         {
           "number": 1,
@@ -4067,6 +4127,7 @@
     },
     {
       "number": 66,
+      "superscription": "For the choirmaster. A song. A Psalm.",
       "verses": [
         {
           "number": 1,
@@ -4106,7 +4167,7 @@
         },
         {
           "number": 10,
-          "text": "For You, O God, have tested us; You have refined us like silver."
+          "text": "For You , O God, have tested us; You have refined us like silver."
         },
         {
           "number": 11,
@@ -4118,7 +4179,7 @@
         },
         {
           "number": 13,
-          "text": "I will enter Your house with burnt offerings; I will fulfill my vows to You—"
+          "text": "I will enter Your house with burnt offerings; I will fulfill my vows to You —"
         },
         {
           "number": 14,
@@ -4152,6 +4213,7 @@
     },
     {
       "number": 67,
+      "superscription": "For the choirmaster. With stringed instruments. A Psalm. A song.",
       "verses": [
         {
           "number": 1,
@@ -4185,6 +4247,7 @@
     },
     {
       "number": 68,
+      "superscription": "For the choirmaster. A Psalm of David. A song.",
       "verses": [
         {
           "number": 1,
@@ -4204,7 +4267,7 @@
         },
         {
           "number": 5,
-          "text": "A father of the fatherless, and a defender of the widows, is God in His holy habitation."
+          "text": "A father of the fatherless and a defender of widows is God in His holy habitation."
         },
         {
           "number": 6,
@@ -4252,7 +4315,7 @@
         },
         {
           "number": 17,
-          "text": "The chariots of God are tens of thousands— thousands of thousands are they; the Lord is in His sanctuary as He was at Sinai."
+          "text": "The chariots of God are tens of thousands — thousands of thousands are they; the Lord is in His sanctuary as He was at Sinai."
         },
         {
           "number": 18,
@@ -4280,7 +4343,7 @@
         },
         {
           "number": 24,
-          "text": "They have seen Your procession, O God— the march of my God and King into the sanctuary."
+          "text": "They have seen Your procession, O God — the march of my God and King into the sanctuary."
         },
         {
           "number": 25,
@@ -4330,6 +4393,7 @@
     },
     {
       "number": 69,
+      "superscription": "For the choirmaster. To the tune of “Lilies.” Of David.",
       "verses": [
         {
           "number": 1,
@@ -4345,7 +4409,7 @@
         },
         {
           "number": 4,
-          "text": "Those who hate me without cause outnumber the hairs of my head; many are those who would destroy me— my enemies for no reason. Though I did not steal, I must repay."
+          "text": "Those who hate me without cause outnumber the hairs of my head; many are those who would destroy me — my enemies for no reason. Though I did not steal, I must repay."
         },
         {
           "number": 5,
@@ -4479,6 +4543,7 @@
     },
     {
       "number": 70,
+      "superscription": "For the choirmaster. Of David. To bring remembrance.",
       "verses": [
         {
           "number": 1,
@@ -4567,7 +4632,7 @@
         },
         {
           "number": 16,
-          "text": "I will enter in the strength of the Lord GOD; I will proclaim Your righteousness—Yours alone."
+          "text": "I will come in the strength of the Lord GOD; I will proclaim Your righteousness — Yours alone."
         },
         {
           "number": 17,
@@ -4605,6 +4670,7 @@
     },
     {
       "number": 72,
+      "superscription": "Of Solomon.",
       "verses": [
         {
           "number": 1,
@@ -4632,7 +4698,7 @@
         },
         {
           "number": 7,
-          "text": "May the righteous flourish in his days and prosperity abound, until the moon is no more."
+          "text": "May the righteous flourish in his days and prosperity abound until the moon is no more."
         },
         {
           "number": 8,
@@ -4668,7 +4734,7 @@
         },
         {
           "number": 16,
-          "text": "May there be an abundance of grain in the land; may it sway atop the hills. May its fruit trees flourish like the forests of Lebanon, and its people like the grass of the field."
+          "text": "May there be an abundance of grain in the land; may it sway atop the hills. May its fruit trees flourish like the forests of Lebanon, the people of its cities like the grass of the field."
         },
         {
           "number": 17,
@@ -4690,6 +4756,7 @@
     },
     {
       "number": 73,
+      "superscription": "A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -4737,7 +4804,7 @@
         },
         {
           "number": 12,
-          "text": "Behold, these are the wicked— always carefree as they increase their wealth."
+          "text": "Behold, these are the wicked — always carefree as they increase their wealth."
         },
         {
           "number": 13,
@@ -4807,6 +4874,7 @@
     },
     {
       "number": 74,
+      "superscription": "A Maskil of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -4814,7 +4882,7 @@
         },
         {
           "number": 2,
-          "text": "Remember Your congregation, which You purchased long ago and redeemed as the tribe of Your inheritance— Mount Zion where You dwell."
+          "text": "Remember Your congregation, which You purchased long ago and redeemed as the tribe of Your inheritance — Mount Zion, where You dwell."
         },
         {
           "number": 3,
@@ -4904,6 +4972,7 @@
     },
     {
       "number": 75,
+      "superscription": "For the choirmaster: To the tune of “Do Not Destroy.” A Psalm of Asaph. A song.",
       "verses": [
         {
           "number": 1,
@@ -4949,6 +5018,7 @@
     },
     {
       "number": 76,
+      "superscription": "For the choirmaster. With stringed instruments. A Psalm of Asaph. A song.",
       "verses": [
         {
           "number": 1,
@@ -5002,6 +5072,7 @@
     },
     {
       "number": 77,
+      "superscription": "For the choirmaster. According to Jeduthun. A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5087,6 +5158,7 @@
     },
     {
       "number": 78,
+      "superscription": "A Maskil of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5102,7 +5174,7 @@
         },
         {
           "number": 4,
-          "text": "We will not hide them from their children, but will declare to the next generation the praises of the LORD and His might, and the wonders He has performed."
+          "text": "We will not hide them from their children but will declare to the next generation the praises of the LORD and His might and the wonders He has performed."
         },
         {
           "number": 5,
@@ -5380,6 +5452,7 @@
     },
     {
       "number": 79,
+      "superscription": "A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5437,6 +5510,7 @@
     },
     {
       "number": 80,
+      "superscription": "For the choirmaster. To the tune of “The Lilies of the Covenant.” A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5518,6 +5592,7 @@
     },
     {
       "number": 81,
+      "superscription": "For the choirmaster. According to Gittith. Of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5587,6 +5662,7 @@
     },
     {
       "number": 82,
+      "superscription": "A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5624,6 +5700,7 @@
     },
     {
       "number": 83,
+      "superscription": "A song. A Psalm of Asaph.",
       "verses": [
         {
           "number": 1,
@@ -5643,7 +5720,7 @@
         },
         {
           "number": 5,
-          "text": "For with one mind they plot together, they form an alliance against You—"
+          "text": "For with one mind they plot together; they form an alliance against You—"
         },
         {
           "number": 6,
@@ -5701,6 +5778,7 @@
     },
     {
       "number": 84,
+      "superscription": "For the choirmaster. According to Gittith. A Psalm of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -5754,6 +5832,7 @@
     },
     {
       "number": 85,
+      "superscription": "For the choirmaster. A Psalm of the sons of Korah.",
       "verses": [
         {
           "number": 1,
@@ -5811,6 +5890,7 @@
     },
     {
       "number": 86,
+      "superscription": "A prayer of David.",
       "verses": [
         {
           "number": 1,
@@ -5866,7 +5946,7 @@
         },
         {
           "number": 14,
-          "text": "The arrogant rise against me, O God; a band of ruthless men seeks my life, with no regard for You."
+          "text": "The arrogant rise against me, O God; a band of ruthless men seeks my life; they have no regard for You."
         },
         {
           "number": 15,
@@ -5884,6 +5964,7 @@
     },
     {
       "number": 87,
+      "superscription": "A Psalm of the sons of Korah. A song.",
       "verses": [
         {
           "number": 1,
@@ -5899,7 +5980,7 @@
         },
         {
           "number": 4,
-          "text": "“I will mention Rahab and Babylon among those who know Me— along with Philistia, Tyre, and Cush — when I say, ‘This one was born in Zion.’”"
+          "text": "“I will mention Rahab and Babylon among those who know Me — along with Philistia, Tyre, and Cush — when I say, ‘This one was born in Zion.’”"
         },
         {
           "number": 5,
@@ -5917,6 +5998,7 @@
     },
     {
       "number": 88,
+      "superscription": "A song. A Psalm of the sons of Korah. For the choirmaster. According to Mahalath Leannoth. A Maskil of Heman the Ezrahite.",
       "verses": [
         {
           "number": 1,
@@ -5994,6 +6076,7 @@
     },
     {
       "number": 89,
+      "superscription": "A Maskil of Ethan the Ezrahite.",
       "verses": [
         {
           "number": 1,
@@ -6013,7 +6096,7 @@
         },
         {
           "number": 5,
-          "text": "The heavens praise Your wonders, O LORD— Your faithfulness as well— in the assembly of the holy ones."
+          "text": "The heavens praise Your wonders, O LORD — Your faithfulness as well — in the assembly of the holy ones."
         },
         {
           "number": 6,
@@ -6133,7 +6216,7 @@
         },
         {
           "number": 35,
-          "text": "Once and for all I have sworn by My holiness— I will not lie to David—"
+          "text": "Once and for all I have sworn by My holiness — I will not lie to David —"
         },
         {
           "number": 36,
@@ -6193,7 +6276,7 @@
         },
         {
           "number": 50,
-          "text": "Remember, O Lord, the reproach of Your servants, which I bear in my heart from so many people—"
+          "text": "Remember, O Lord, the reproach of Your servants, which I bear in my heart from so many people —"
         },
         {
           "number": 51,
@@ -6207,6 +6290,7 @@
     },
     {
       "number": 90,
+      "superscription": "A prayer of Moses the man of God.",
       "verses": [
         {
           "number": 1,
@@ -6226,7 +6310,7 @@
         },
         {
           "number": 5,
-          "text": "You whisk them away in their sleep; they are like the new grass of the morning—"
+          "text": "You sweep them away in their sleep; they are like the new grass of the morning—"
         },
         {
           "number": 6,
@@ -6246,7 +6330,7 @@
         },
         {
           "number": 10,
-          "text": "The length of our days is seventy years— or eighty if we are strong— yet their pride is but labor and sorrow, for they quickly pass, and we fly away."
+          "text": "The length of our days is seventy years — or eighty if we are strong — yet their pride is but labor and sorrow, for they quickly pass, and we fly away."
         },
         {
           "number": 11,
@@ -6349,6 +6433,7 @@
     },
     {
       "number": 92,
+      "superscription": "A Psalm. A song for the Sabbath day.",
       "verses": [
         {
           "number": 1,
@@ -6518,7 +6603,7 @@
         },
         {
           "number": 20,
-          "text": "Can a corrupt throne be Your ally— one devising mischief by decree?"
+          "text": "Can a corrupt throne be Your ally — one devising mischief by decree?"
         },
         {
           "number": 21,
@@ -6596,7 +6681,7 @@
         },
         {
           "number": 3,
-          "text": "Declare His glory among the nations, His wonderful deeds among all peoples."
+          "text": "Declare His glory among the nations, His wonders among all peoples."
         },
         {
           "number": 4,
@@ -6669,7 +6754,7 @@
         },
         {
           "number": 7,
-          "text": "All worshipers of images are put to shame— those who boast in idols. Worship Him, all you gods!"
+          "text": "All worshipers of images are put to shame — those who boast in idols. Worship Him, all you gods!"
         },
         {
           "number": 8,
@@ -6695,6 +6780,7 @@
     },
     {
       "number": 98,
+      "superscription": "A Psalm.",
       "verses": [
         {
           "number": 1,
@@ -6710,7 +6796,7 @@
         },
         {
           "number": 4,
-          "text": "Make a joyful noise to the LORD, all the earth; break forth—let your cry ring out, and sing praises!"
+          "text": "Make a joyful noise to the LORD, all the earth; break forth — let your cry ring out, and sing praises!"
         },
         {
           "number": 5,
@@ -6747,7 +6833,7 @@
         },
         {
           "number": 3,
-          "text": "Let them praise Your great and awesome name— He is holy!"
+          "text": "Let them praise Your great and awesome name — He is holy!"
         },
         {
           "number": 4,
@@ -6777,6 +6863,7 @@
     },
     {
       "number": 100,
+      "superscription": "A Psalm of thanksgiving.",
       "verses": [
         {
           "number": 1,
@@ -6802,6 +6889,7 @@
     },
     {
       "number": 101,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -6809,7 +6897,7 @@
         },
         {
           "number": 2,
-          "text": "I will ponder the way that is blameless— when will You come to me? I will walk in my house with integrity of heart."
+          "text": "I will ponder the way that is blameless — when will You come to me? I will walk in my house with integrity of heart."
         },
         {
           "number": 3,
@@ -6839,6 +6927,7 @@
     },
     {
       "number": 102,
+      "superscription": "A prayer of one who is afflicted, when he grows faint and pours out his lament before the LORD.",
       "verses": [
         {
           "number": 1,
@@ -6858,7 +6947,7 @@
         },
         {
           "number": 5,
-          "text": "Through my loud groaning my flesh clings to my bones."
+          "text": "Through my loud groaning my skin hangs on my bones."
         },
         {
           "number": 6,
@@ -6890,7 +6979,7 @@
         },
         {
           "number": 13,
-          "text": "You will rise up and have compassion on Zion, for it is time to show her favor— the appointed time has come."
+          "text": "You will rise up and have compassion on Zion, for it is time to show her favor — the appointed time has come."
         },
         {
           "number": 14,
@@ -6956,6 +7045,7 @@
     },
     {
       "number": 103,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -6963,7 +7053,7 @@
         },
         {
           "number": 2,
-          "text": "Bless the LORD, O my soul, and do not forget all His kind deeds—"
+          "text": "Bless the LORD, O my soul, and do not forget all His kind deeds —"
         },
         {
           "number": 3,
@@ -7023,7 +7113,7 @@
         },
         {
           "number": 17,
-          "text": "But from everlasting to everlasting the loving devotion of the LORD extends to those who fear Him, and His righteousness to their children’s children—"
+          "text": "But from everlasting to everlasting the loving devotion of the LORD extends to those who fear Him, and His righteousness to their children’s children —"
         },
         {
           "number": 18,
@@ -7076,11 +7166,11 @@
         },
         {
           "number": 7,
-          "text": "At Your rebuke the waters fled; at the sound of Your thunder they hurried away—"
+          "text": "At Your rebuke the waters fled; at the sound of Your thunder they hurried away —"
         },
         {
           "number": 8,
-          "text": "the mountains rose and the valleys sank to the place You assigned for them—"
+          "text": "the mountains rose and the valleys sank to the place You assigned for them —"
         },
         {
           "number": 9,
@@ -7546,7 +7636,7 @@
         },
         {
           "number": 42,
-          "text": "Their enemies oppressed them, and subdued them under their hand."
+          "text": "Their enemies oppressed them and subdued them under their hand."
         },
         {
           "number": 43,
@@ -7753,6 +7843,7 @@
     },
     {
       "number": 108,
+      "superscription": "A song. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -7810,6 +7901,7 @@
     },
     {
       "number": 109,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -7939,6 +8031,7 @@
     },
     {
       "number": 110,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -8032,7 +8125,7 @@
         },
         {
           "number": 4,
-          "text": "Light dawns in the darkness for the upright— for the gracious, compassionate, and righteous."
+          "text": "Light dawns in the darkness for the upright — for the gracious, compassionate, and righteous."
         },
         {
           "number": 5,
@@ -8110,7 +8203,7 @@
         },
         {
           "number": 2,
-          "text": "Judah became God’s sanctuary, and Israel His dominion."
+          "text": "Judah became God’s sanctuary, Israel His dominion."
         },
         {
           "number": 3,
@@ -8220,7 +8313,7 @@
       "verses": [
         {
           "number": 1,
-          "text": "I love the LORD, for He has heard my voice— my appeal for mercy."
+          "text": "I love the LORD, for He has heard my voice — my appeal for mercy."
         },
         {
           "number": 2,
@@ -8515,7 +8608,7 @@
         },
         {
           "number": 21,
-          "text": "You rebuke the arrogant— the cursed who stray from Your commandments."
+          "text": "You rebuke the arrogant — the cursed who stray from Your commandments."
         },
         {
           "number": 22,
@@ -8711,7 +8804,7 @@
         },
         {
           "number": 70,
-          "text": "Their hearts are hard and callous, but I delight in Your law."
+          "text": "Their hearts are callous and insensitive, but I delight in Your law."
         },
         {
           "number": 71,
@@ -8775,7 +8868,7 @@
         },
         {
           "number": 86,
-          "text": "All Your commandments are faithful; I am persecuted without cause—help me!"
+          "text": "All Your commandments are faithful; I am persecuted without cause— help me!"
         },
         {
           "number": 87,
@@ -9091,7 +9184,7 @@
         },
         {
           "number": 165,
-          "text": "Abundant peace belongs to those who love Your instruction; nothing can make them stumble."
+          "text": "Abundant peace belongs to those who love Your law; nothing can make them stumble."
         },
         {
           "number": 166,
@@ -9141,6 +9234,7 @@
     },
     {
       "number": 120,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9174,6 +9268,7 @@
     },
     {
       "number": 121,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9211,6 +9306,7 @@
     },
     {
       "number": 122,
+      "superscription": "A song of ascents. Of David.",
       "verses": [
         {
           "number": 1,
@@ -9252,6 +9348,7 @@
     },
     {
       "number": 123,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9273,6 +9370,7 @@
     },
     {
       "number": 124,
+      "superscription": "A song of ascents. Of David.",
       "verses": [
         {
           "number": 1,
@@ -9310,6 +9408,7 @@
     },
     {
       "number": 125,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9335,6 +9434,7 @@
     },
     {
       "number": 126,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9364,6 +9464,7 @@
     },
     {
       "number": 127,
+      "superscription": "A song of ascents. Of Solomon.",
       "verses": [
         {
           "number": 1,
@@ -9371,7 +9472,7 @@
         },
         {
           "number": 2,
-          "text": "In vain you rise early and stay up late, toiling for bread to eat— for He gives sleep to His beloved."
+          "text": "In vain you rise early and stay up late, toiling for bread to eat — for He gives sleep to His beloved."
         },
         {
           "number": 3,
@@ -9389,6 +9490,7 @@
     },
     {
       "number": 128,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9418,6 +9520,7 @@
     },
     {
       "number": 129,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9455,6 +9558,7 @@
     },
     {
       "number": 130,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9492,6 +9596,7 @@
     },
     {
       "number": 131,
+      "superscription": "A song of ascents. Of David.",
       "verses": [
         {
           "number": 1,
@@ -9509,6 +9614,7 @@
     },
     {
       "number": 132,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9528,7 +9634,7 @@
         },
         {
           "number": 5,
-          "text": "until I find a place for the LORD, a dwelling for the Mighty One of Jacob.”"
+          "text": "until I find a place for the LORD, a dwelling for the Mighty One of Jacob. ”"
         },
         {
           "number": 6,
@@ -9586,6 +9692,7 @@
     },
     {
       "number": 133,
+      "superscription": "A song of ascents. Of David.",
       "verses": [
         {
           "number": 1,
@@ -9603,6 +9710,7 @@
     },
     {
       "number": 134,
+      "superscription": "A song of ascents.",
       "verses": [
         {
           "number": 1,
@@ -9703,7 +9811,7 @@
         },
         {
           "number": 21,
-          "text": "Blessed be the LORD from Zion— He who dwells in Jerusalem. Hallelujah!"
+          "text": "Blessed be the LORD from Zion — He who dwells in Jerusalem. Hallelujah!"
         }
       ]
     },
@@ -9736,7 +9844,7 @@
         },
         {
           "number": 7,
-          "text": "He made the great lights— His loving devotion endures forever."
+          "text": "He made the great lights — His loving devotion endures forever."
         },
         {
           "number": 8,
@@ -9859,6 +9967,7 @@
     },
     {
       "number": 138,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -9890,12 +9999,13 @@
         },
         {
           "number": 8,
-          "text": "The LORD will fulfill His purpose for me. O LORD, Your loving devotion endures forever— do not abandon the works of Your hands."
+          "text": "The LORD will fulfill His purpose for me. O LORD, Your loving devotion endures forever — do not abandon the works of Your hands."
         }
       ]
     },
     {
       "number": 139,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -9997,6 +10107,7 @@
     },
     {
       "number": 140,
+      "superscription": "For the choirmaster. A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -10054,6 +10165,7 @@
     },
     {
       "number": 141,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -10061,7 +10173,7 @@
         },
         {
           "number": 2,
-          "text": "May my prayer be set before You like incense, my uplifted hands like the evening offering."
+          "text": "May my prayer be set before You like incense; my uplifted hands, like the evening offering."
         },
         {
           "number": 3,
@@ -10099,6 +10211,7 @@
     },
     {
       "number": 142,
+      "superscription": "A Maskil of David, when he was in the cave. A prayer.",
       "verses": [
         {
           "number": 1,
@@ -10132,6 +10245,7 @@
     },
     {
       "number": 143,
+      "superscription": "A Psalm of David.",
       "verses": [
         {
           "number": 1,
@@ -10185,6 +10299,7 @@
     },
     {
       "number": 144,
+      "superscription": "Of David.",
       "verses": [
         {
           "number": 1,
@@ -10220,7 +10335,7 @@
         },
         {
           "number": 9,
-          "text": "I will sing to You a new song, O God; on a harp of ten strings I will make music to You—"
+          "text": "I will sing to You a new song, O God; on a harp of ten strings I will make music to You —"
         },
         {
           "number": 10,
@@ -10250,6 +10365,7 @@
     },
     {
       "number": 145,
+      "superscription": "A Psalm of praise. Of David.",
       "verses": [
         {
           "number": 1,
@@ -10423,7 +10539,7 @@
         },
         {
           "number": 10,
-          "text": "He does not delight in the strength of the horse; He takes no pleasure in the legpower of the man."
+          "text": "He does not delight in the strength of the horse; He takes no pleasure in the legs of a man."
         },
         {
           "number": 11,
@@ -10533,7 +10649,7 @@
       "verses": [
         {
           "number": 1,
-          "text": "Hallelujah! Sing to the LORD a new song— His praise in the assembly of the godly."
+          "text": "Hallelujah! Sing to the LORD a new song — His praise in the assembly of the godly."
         },
         {
           "number": 2,

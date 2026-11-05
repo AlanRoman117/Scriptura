@@ -148,6 +148,27 @@ Every translation stored in `data/` must conform to this structure.
 
 The filename prefix (`43-john.json`) encodes the canonical book number and an English slug (`john`). The slug is language-independent and becomes the `:book` URL segment even for non-English translations; `name` inside the file is localized.
 
+**A chapter may carry `superscription`**, between `number` and `verses`: its
+title where the source has one — a Psalm's heading, "A Psalm of David, when he
+fled from Absalom his son." In English Bibles that line stands before verse 1
+unnumbered, so it is the chapter's and not verse 1's: folded into the verse it
+would change quoting, search and links; dropped, it would make the text differ
+from its source, which for the World English Bible's trademark and the Berean's
+request matters. It is a non-empty string, and absent (never empty) where there
+is no title: the KJV's source has none, and Segond, Reina-Valera, Young and
+Martin number the title as verse 1, where it stays. Section headings, parallel
+references, speaker labels and acrostic letters are headings, not titles, and
+are left out of the text. Titles are not searched: search is over verses, and a
+title is not one. The reader shows it before verse 1 in the reading face,
+quieter than the verses, in the Bible's `lang`, and in a comparison above the
+rows under its column.
+
+```json
+{ "number": 3,
+  "superscription": "A Psalm of David, when he fled from Absalom his son.",
+  "verses": [{ "number": 1, "text": "O LORD, how my foes have increased!…" }] }
+```
+
 ### License values (enum)
 | Value | Meaning |
 |---|---|
@@ -493,7 +514,7 @@ type Verse {
 | `web` | World English Bible | English | Public domain | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | ✅ |
 | `asv` | American Standard Version (1901) | English | Public domain | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | ✅ |
 | `ylt` | Young's Literal Translation | English | Public domain | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | ✅ |
-| `bsb` | Berean Standard Bible | English | Public domain (2023) | [eBible `engbsb`](https://ebible.org/engbsb/) | `usfx` | ✅ |
+| `bsb` | Berean Standard Bible | English | Public domain (2023) | [The publisher's USFM](https://bereanbible.com/bsb_usfm.zip) | `usfm` | ✅ |
 | `rv1909` | Reina Valera 1909 | Spanish | Public domain | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | ✅ |
 | `vbl` | Versión Biblia Libre | Spanish | CC BY-SA 4.0 | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | ✅ |
 | `lsg1910` | Louis Segond 1910 | French | Public domain | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | ✅ |
@@ -530,17 +551,32 @@ before adding a registry entry.
 ### Ingestion pipeline (`scripts/ingest.py`)
 
 Dependency-free Python (standard library only). A `TRANSLATIONS` registry maps
-each id to its licence metadata plus how to fetch it, and three parsers
+each id to its licence metadata plus how to fetch it, and four parsers
 normalize wildly different upstream formats into the one schema in §3:
 
 | Parser | Source shape | Notes |
 |---|---|---|
-| `usfx` | USFX XML inside an eBible.org `_usfx.zip` | Milestone verse/chapter model; strips footnotes and cross-references, keeps translator additions. Covers eight translations from one consistent source. |
+| `usfx` | USFX XML inside an eBible.org `_usfx.zip` | Milestone verse/chapter model; strips footnotes and cross-references, keeps translator additions. Covers seven translations from one consistent source. |
+| `usfm` | A zip of USFM files, one per book | A publisher's own release. Used by `bsb`, whose publisher asks that text varying from the official one not carry its name; eBible's conversion lagged it by about 1,100 verses. |
 | `aruljohn` | Per-book JSON from aruljohn/Bible-kjv | Used only by `kjv`. |
 | `sword` | A CrossWire SWORD **zText** module | Compiled OSIS in a binary format. Used by `bungo` and `martin1744`. |
 
 Downloads cache under `.cache/` (gitignored); normalized output in `data/` is
 committed, because that structured data *is* the product.
+
+**Headings are not verse text.** Every parser leaves section headings, parallel
+references (`r`), speaker labels (`sp`), acrostic letters (`qa`) and chapter
+labels out of the verses, wherever the source placed them — sources put them
+*inside* a verse's span more often than one would hope (Segond's eBible file ran
+"Léa et Rachel V. 15-30: cf. Os 12:13" into Genesis 29:14). A Psalm's title (USFM
+`\d`, OSIS `<title type="psalm">`) becomes the chapter's `superscription` when it
+is the last heading before the chapter's first verse. Two rules from real files:
+a `\d` after a verse has begun, with more verses to follow, is a section heading
+in a title's clothing (the World English Bible marks Psalm 119's Hebrew letters
+that way), and such a chapter gets no title at all; and a `\d` with other
+headings between it and verse 1 labels something larger than the chapter (the
+Berean's "Psalms 42–72" after "BOOK II"). The script prints what it kept and
+what it left out, for `docs/translations-status.md`.
 
 **On the `sword` parser.** zText is not plain XML. Each testament is three
 files: `.bzs` (block index — offset, compressed size, uncompressed size per
@@ -550,7 +586,11 @@ so verse boundaries survive only in `.bzv`. Book and chapter structure is
 recovered from the `<div type="book">` and `<chapter osisID>` markers, which get
 their own index entries — that is what lets the parser work without carrying a
 versification table. Zero-size entries are verses the translation omits; they
-still advance the verse counter so neighbours keep canonical numbers.
+still advance the verse counter so neighbours keep canonical numbers. Two
+consecutive entries addressing one slice are a verse the translation runs
+together with the one before it (`osis2mod` links them; `JapBungo` has 24, Psalm
+49:1-2 among them): the text stands under the first number and the second is
+omitted, where it used to be repeated.
 
 > ⚠️ `.bzv` offsets are **byte** offsets into the decompressed block. Slice the
 > bytes and decode afterwards. Slicing decoded text works fine on ASCII and

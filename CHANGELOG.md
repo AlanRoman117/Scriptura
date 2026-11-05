@@ -7,6 +7,49 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.16] - 2026-11-05
+
+The sixteenth preview brings the Psalm titles back, takes headings and references
+out of verses, and follows each Bible's current source more closely. It also makes
+exporting and saving notes safer, and the reader easier to use from the keyboard
+at high zoom.
+
+For reviewers, changed texts: a board picture's card count in English and
+Portuguese, the Japanese words for marking into a collection, and the name of the
+chapter menu in both Chinese scripts. They are listed in
+`docs/plans/reader-i18n/README.md`.
+
+### Added
+
+- **Psalm titles** are shown before verse 1, in the World English Bible, the Berean
+  Standard Bible, the American Standard Version, the Versión Biblia Libre, the
+  Bíblia Livre and the 文語訳聖書. They were dropped before. A title is not part of
+  verse 1, so quoting, linking and search are unchanged. In the data and the API,
+  a chapter can carry an optional `superscription`.
+
+### Fixed
+
+- **Headings and cross-references no longer appear inside verses:** 15 in the
+  Louis Segond, the Hebrew letters in Psalm 119 in the World English Bible, and six
+  headings in the Song of Songs in the Berean Standard Bible.
+- The **文語訳聖書** no longer repeats a verse where its source joins two verse
+  numbers into one, in 24 places.
+- An **exported zip** names every note as the folder does, so no two notes share a
+  file. Untitled notes are now named by their id there too.
+- **Saving to a folder** never removes a file the app did not create, a file
+  another tab has just written, or the note's own file on a disk that ignores
+  letter case. A rename that only changes case no longer leaves the old spelling
+  behind on a disk that keeps them apart.
+- A board picture's name counts its cards correctly in every language ("1 card").
+
+### Changed
+
+- The **Berean Standard Bible** now follows the publisher's official text, in
+  place of an older copy. The World English Bible and the Louis Segond follow
+  eBible's current files.
+- Typing in the search box no longer leaves a redraw queued after each key.
+- Two tests that measured time now count work, so a busy computer cannot fail them.
+
 ## [0.1.0-preview.15] - 2026-11-01
 
 The fifteenth preview makes the reader lighter on your device, from a measured
@@ -485,6 +528,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.16]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.16
 [0.1.0-preview.15]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.15
 [0.1.0-preview.14]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.14
 [0.1.0-preview.13]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.13

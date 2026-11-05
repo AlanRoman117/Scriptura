@@ -444,7 +444,8 @@ export const jaJP = {
     lede: 'アシスタントからの提案です。まだ何も保存されていません。内容を確認し、自由に変更してください。承認したときにだけ反映されます。',
     titleInput: '提案されたノートのタイトル',
     bodyInput: '提案されたノートの本文',
-    into: (colour: string) => `{collection}（${colour}の色）にマーク`,
+    // The colour names already end in 色 (琥珀色, 空色); の色 after one read 琥珀色の色.
+    into: (colour: string) => `{collection}（${colour}）にマーク`,
     missing: 'この訳にはありません。',
     discard: '破棄',
     save: 'このノートを保存',

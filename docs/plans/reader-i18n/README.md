@@ -125,6 +125,9 @@ npm run review:screens     # writes review-screenshots/<language>/<device>-<scre
 - [ ] The style names and the "Light or dark" choice in Settings (`settings.style`, `settings.styles`, `settings.appearance`, `settings.appearances`, added 2026-09-24). Style names are evocative rather than literal (Vellum, Emerald, Slate, Nocturne, Ember); each should sound like a name in the language, not a translated description.
 - [ ] Three names a screen reader says, changed 2026-10-28 so each holds the words its control shows (WCAG 2.5.3): the H1–H3 buttons (`tools.heading`, "H1, heading 1"), the numbered-list button (`tools.numbers`, "1. Numbered list") and the Marks chip (`reader.marksChip`, "Marks 3 — …", the count no longer in brackets). Each must start with, or contain in order, the letters and number on the button.
 - [ ] The licence link in the attribution line (`common.licence`, "King James Version licence"; it names the Bible, then says what it is), and the words a screen reader adds to it and to the source link (`common.opensInNewTab`), added 2026-11-01. A new row in Help's abbreviations (`help.terms`, "CC BY 3.0 Brasil"), and the same name in the library (`library.licences`), which stays as the licence calls itself.
+- [ ] The name a screen reader gives a board's picture in a note (`embed.picture`, "Board: Plan, 1 card"), changed 2026-11-05: the count now takes the language's plural forms (English "1 card" / "2 cards", Portuguese "1 cartão" / "0 cartão" / "2 cartões"), where it said "1 cards" and "1 cartões". Spanish, French, Japanese and Chinese are unchanged and listed for the check: "1 tarjeta" / "2 tarjetas", "0 fiche" / "1 fiche" / "2 fiches" (French counts 0 as singular), 「カード1枚」, "1张卡片" / "1張卡片".
+- [ ] Japanese only: the line under a proposed set of marks (`proposal.into`, 「{collection}（琥珀色）にマーク」), changed 2026-11-05. It read 琥珀色の色 because の色 was added after colour names that already end in 色 (琥珀色, ばら色, 空色, すみれ色); the name now stands alone in the brackets, as it does in 「{collection}（琥珀色）でマーク」 elsewhere. The other six languages write the colour the same way they did.
+- [ ] Chinese only: the name of the book-and-chapter nav (`reader.passage`, 章节 / 章節), changed 2026-11-05 from 经文 / 經文. Heard, not seen: the nav sits inside the Bible pane, which keeps the name 经文 / 經文 (`layout.scripture`), and a screen reader lists both landmarks, so the same word on the text and on the menus that move through it told a listener nothing. 章节 is what Chinese Bible apps call the chapter chooser; say if 经文位置 or another word would be more natural. Every other 经文 / 經文 in the catalog stays: a verse (一节经文), a reference (经文出处), a scripture link (经文链接) and a verse card (经文卡片) are the usual compounds, not a second meaning.
 - [ ] With a screen reader: the interface is spoken in the language, and a Bible in another language switches voice (brief 92).
 
 Corrections come back as notes, a marked-up copy or edits to the catalog file. Apply them, rerun the tests, regenerate the screenshots, and mark the row above.
@@ -176,7 +179,7 @@ is not the other's characters, a converter would have got it wrong.
 | Canvas (put on a board) | Ao quadro | 加入看板 | 加入看板 |
 | Translation | Tradução | 译本 | 譯本 |
 | Scripture | Texto bíblico | 经文 | 經文 |
-| Passage | Passagem | 经文 | 經文 |
+| Passage (the book and chapter nav) | Passagem | 章节 | 章節 |
 | Book / chapter / verse | Livro / capítulo / versículo | 书卷 / 章 / 节 | 書卷 / 章 / 節 |
 | Search | Pesquisar | 搜索 | 搜尋 |
 | Whole words only | Apenas palavras inteiras | 仅整词 | 僅完整字詞 |

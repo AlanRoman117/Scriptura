@@ -739,7 +739,7 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.connections` | Connections | Connexions |
 | `cards.missingCard` | (missing card) | (fiche disparue) |
 | `embed.scrolls` | Board: John 1, scrolls sideways | Tableau : JEAN 1, défile horizontalement |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | Tableau : JEAN 1, 1 fiche<br>Tableau : JEAN 1, 4 fiches |
+| `embed.picture` | Board: John 1, 1 card<br>Board: John 1, 4 cards | Tableau : JEAN 1, 1 fiche<br>Tableau : JEAN 1, 4 fiches |
 | `embed.empty` | This board is empty. | Ce tableau est vide. |
 | `embed.missing` | A board was embedded here, but it no longer exists. | Un tableau était intégré ici, mais il n’existe plus. |
 | `embed.open` | Open board | Ouvrir le tableau |
