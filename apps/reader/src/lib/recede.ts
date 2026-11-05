@@ -7,9 +7,6 @@
  * same narrow layout — the pinned bars are taller than the window. So the
  * menus recede when the reader scrolls on, and come back when they scroll
  * back, reach the top, move focus into them, or press the pane's menu button.
- * Keyboard focus moving on down the text scrolls it on too, and counts as
- * such; and focus the browser could not place clear of the menus — a
- * window shorter than they are — sends them away at once (2.4.11).
  *
  * ⚠️ Receded is out of sight, never out of reach. The menus stay in the
  * accessibility tree and the Tab order — never `display: none`, never
@@ -129,41 +126,6 @@ export function scrollsByKey(key: string, typing: boolean): boolean {
   return !typing && SCROLL_KEYS.has(key);
 }
 
-/** The key that moves focus: the scroll that follows is the browser showing where it went. */
-export function movesFocus(key: string): boolean {
-  return key === 'Tab';
-}
-
-/** An element's edges in the viewport, as `getBoundingClientRect` gives them. */
-export interface Edges {
-  top: number;
-  bottom: number;
-}
-
-/**
- * Whether a focused box is kept from the room the pinned menus leave: not
- * wholly below the lowest menu lying over the scroller and above the
- * scroller's bottom edge, though it would fit there. A menu parked above the
- * scroller (receded) or beside it covers nothing in it and does not count.
- *
- * The pane's scroll padding is what normally puts a focused verse there; this
- * is for when the browser could not — the pinned menus taller than the
- * window, as a desktop at 400% zoom in a short window is — and left focus
- * under them or off the bottom of the screen, where no one can see it
- * (2.4.11). A box taller than the scroller itself — the chapter landmark,
- * which a skip link or a tap on the text focuses — can never be shown whole,
- * and is not obscured by the menus so much as by its own size: nothing is to
- * be done for it. Half a pixel of tolerance: edges come back fractional.
- */
-export function obscured(box: Edges, menus: Edges[], scroller: Edges): boolean {
-  if (box.bottom - box.top > scroller.bottom - scroller.top) return false;
-  let limit = scroller.top;
-  for (const menu of menus) {
-    if (menu.bottom > scroller.top && menu.top < scroller.bottom) limit = Math.max(limit, menu.bottom);
-  }
-  return box.top < limit - 0.5 || box.bottom > scroller.bottom + 0.5;
-}
-
 interface RecedingOptions {
   /** Whether anything recedes at all: the phone layout, with something to read. */
   enabled: boolean;
@@ -255,14 +217,6 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
   const state = useRef<RecedeState>(INITIAL);
   const latest = useRef(options);
   latest.current = options;
-  /**
-   * Whether the scrolls arriving now are the browser showing where keyboard
-   * focus went (a Tab). A ref, not a closure: the effect that scrolls for the
-   * same control (`reveal`) clears it so that scroll is measured afresh.
-   */
-  const forFocus = useRef(false);
-  /** A control focus landed on under the menus, to bring clear once they have gone. */
-  const reveal = useRef<HTMLElement | null>(null);
 
   const set = useCallback(
     (next: Menus) => {
@@ -295,60 +249,23 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
     let theirs = false;
     const trust = () => {
       theirs = true;
-      forFocus.current = false;
     };
     const withdraw = () => {
       theirs = false;
-      forFocus.current = false;
     };
     const onKey = (e: KeyboardEvent) => {
       theirs = scrollsByKey(e.key, isTyping(e.target));
-      forFocus.current = movesFocus(e.key);
     };
     // A press on the scroller itself, not on anything in it, is its scrollbar.
     const onPointerDown = (e: PointerEvent) => {
-      forFocus.current = false;
       if (e.pointerType === 'mouse' && counts(e.target)) theirs = true;
-    };
-    const edges = (el: Element): Edges => {
-      const { top, bottom } = el.getBoundingClientRect();
-      return { top, bottom };
-    };
-    const sampleOf = (el: HTMLElement) => ({ top: el.scrollTop, height: el.clientHeight, scrollHeight: el.scrollHeight });
-
-    // Focus arriving. The browser has scrolled for it by now, where it could;
-    // that scroll is not the reader's (the scroll event has yet to arrive).
-    // Where it could not — the pinned menus taller than the window, as at
-    // 400% zoom in a short one — keyboard focus is left under them or off the
-    // bottom of the screen, which nothing may do (2.4.11): the menus go, and
-    // `reveal` brings the control clear of what stays pinned once they have.
-    // Keyboard focus only: a finger's is under the finger, on screen by
-    // definition, and the browser scrolls nothing for it — and a tap on a
-    // verse's text focuses the chapter landmark, taller than the pane, whose
-    // "revealing" moved the text under the finger before its click landed.
-    // That is the geometry of a scroller with menus pinned over its text, so
-    // only where the watched element is the scroller; a note's menus are laid
-    // out above its scroller and cover nothing in it. The reader's preference
-    // for keeping the menus makes no difference here: it is about reading on,
-    // and a focus no one can see is not a preference.
-    const onFocusIn = (e: FocusEvent) => {
-      theirs = false;
-      const target = e.target;
-      const { match, menus: within } = latest.current;
-      if (match || !keyboard || !(target instanceof HTMLElement) || state.current.menus !== 'shown' || target.closest(within)) return;
-      if (!obscured(edges(target), Array.from(node.querySelectorAll(within), edges), edges(node))) return;
-      reveal.current = target;
-      forFocus.current = false;
-      const sample = sampleOf(node);
-      state.current = { ...rebase(state.current, sample), menus: 'hidden' };
-      setView({ menus: 'hidden', at: Math.max(0, sample.top) });
     };
 
     const onScroll = (e: Event) => {
       const el = e.target;
       if (!counts(el)) return;
       const { auto, menus: within, gain } = latest.current;
-      const sample = sampleOf(el);
+      const sample = { top: el.scrollTop, height: el.clientHeight, scrollHeight: el.scrollHeight };
       const before = state.current;
       // At the top of a text its menus are there, however the reader got
       // there and whatever they have switched off. Nothing is covered by it:
@@ -358,7 +275,7 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
         setView({ menus: 'shown', at: 0 });
         return;
       }
-      if (!theirs && !forFocus.current) {
+      if (!theirs) {
         state.current = rebase(before, sample);
         return;
       }
@@ -367,28 +284,12 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
         state.current = after;
         return;
       }
-      // Keyboard focus moving on down the text is the reader reading on, and
-      // the scroll the browser makes to show it may send the menus away as a
-      // finger's would. It never brings them back: that put them over the
-      // very thing the browser had just placed for their being away (2.4.11).
-      // A focus-driven scroll back is measured from afresh.
-      if (forFocus.current && after.menus === 'shown') {
-        state.current = rebase(before, sample);
-        return;
-      }
       // The position is still tracked while the reader has the automatic part
       // switched off, or focus holds the menus, so that turning either back
       // measures from where they are and not from where they were.
       if (!auto || (after.menus === 'hidden' && workingIn(within))) {
         state.current = { ...after, menus: before.menus };
         return;
-      }
-      // Sent away by focus, the menus leave the control where the browser put
-      // it for their padding, in whatever was left below them: bring it up.
-      const active = document.activeElement;
-      if (forFocus.current && active instanceof HTMLElement && !active.closest(within)) {
-        reveal.current = active;
-        forFocus.current = false;
       }
       state.current = after;
       setView({ menus: after.menus, at: Math.max(0, sample.top) });
@@ -401,7 +302,7 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
     node.addEventListener('keydown', onKey, true);
     node.addEventListener('pointerdown', onPointerDown, true);
     node.addEventListener('click', withdraw, true);
-    node.addEventListener('focusin', onFocusIn, true);
+    node.addEventListener('focusin', withdraw, true);
     return () => {
       node.removeEventListener('scroll', onScroll, { capture: true });
       node.removeEventListener('touchmove', trust, { capture: true });
@@ -409,25 +310,9 @@ export function useRecedingMenus(options: RecedingOptions): Receding {
       node.removeEventListener('keydown', onKey, true);
       node.removeEventListener('pointerdown', onPointerDown, true);
       node.removeEventListener('click', withdraw, true);
-      node.removeEventListener('focusin', onFocusIn, true);
+      node.removeEventListener('focusin', withdraw, true);
     };
   }, [node, enabled]);
-
-  // Once the menus have gone for a focused control's sake (above), bring it
-  // clear of what stays pinned. The browser placed it for the padding of the
-  // menus that were there; after this commit the scroller's padding is for
-  // the title strip alone, and `scrollIntoView` reads it. A control that says
-  // it is already in view — the strip's own button, with its negative scroll
-  // margin — is left where it is: the strip pins at the top now, and bringing
-  // that margin "into view" would send the chapter back to its start.
-  useEffect(() => {
-    const el = reveal.current;
-    if (!el) return;
-    reveal.current = null;
-    if (view.menus !== 'hidden' || document.activeElement !== el) return;
-    if (parseFloat(getComputedStyle(el).scrollMarginTop) < 0) return;
-    el.scrollIntoView({ block: 'start' });
-  }, [view]);
 
   // Focus arriving in the receded menus brings them back: nothing that has
   // focus is off the screen (2.4.11). On the document, because a pane's menus
