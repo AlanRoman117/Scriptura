@@ -7,6 +7,16 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.17] - 2026-11-05
+
+The seventeenth preview clears a code-scanning alert. Nothing you can see changes.
+
+### Security
+
+- A regular expression that turns a book name into a key is written so that
+  CodeQL no longer rates it as slow on long input (js/polynomial-redos). It could
+  not be slow in practice, and every book name gives the same key as before.
+
 ## [0.1.0-preview.16] - 2026-11-05
 
 The sixteenth preview brings the Psalm titles back, takes headings and references
@@ -528,6 +538,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.17]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.17
 [0.1.0-preview.16]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.16
 [0.1.0-preview.15]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.15
 [0.1.0-preview.14]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.14
