@@ -57,7 +57,7 @@ These are the names of the app's own things. Each is used the same way on every 
 | Canvas (put on a board) | Ao quadro | |
 | Translation | Tradução | |
 | Scripture | Texto bíblico | |
-| Passage | Passagem | |
+| Passage (the book and chapter nav) | Passagem | |
 | Book / chapter / verse | Livro / capítulo / versículo | |
 | Search | Pesquisar | |
 | Whole words only | Apenas palavras inteiras | |
@@ -742,7 +742,7 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.connections` | Connections | Conexões |
 | `cards.missingCard` | (missing card) | (cartão que não existe) |
 | `embed.scrolls` | Board: John 1, scrolls sideways | Quadro: João 1, rola para os lados |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | Quadro: João 1, 1 cartões<br>Quadro: João 1, 4 cartões |
+| `embed.picture` | Board: John 1, 1 card<br>Board: John 1, 4 cards | Quadro: João 1, 1 cartão<br>Quadro: João 1, 4 cartões |
 | `embed.empty` | This board is empty. | Este quadro está vazio. |
 | `embed.missing` | A board was embedded here, but it no longer exists. | Um quadro foi inserido aqui, mas ele não existe mais. |
 | `embed.open` | Open board | Abrir o quadro |

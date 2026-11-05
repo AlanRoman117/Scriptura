@@ -720,7 +720,7 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.connections` | Connections |
 | `cards.missingCard` | (missing card) |
 | `embed.scrolls` | Board: John 1, scrolls sideways |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards |
+| `embed.picture` | Board: John 1, 1 card<br>Board: John 1, 4 cards |
 | `embed.empty` | This board is empty. |
 | `embed.missing` | A board was embedded here, but it no longer exists. |
 | `embed.open` | Open board |
