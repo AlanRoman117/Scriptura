@@ -44,22 +44,21 @@ export function exportNotes(
   words: CardWords = enUS.cards
 ): Blob {
   const name = describe ?? ((node: BoardNode) => defaultDescribe(node, words));
-  const seen = new Map<string, number>();
-  const unique = (folder: string, title: string, id: string) => {
-    const base = safeFilename(title, id);
-    const n = (seen.get(`${folder}/${base}`) ?? 0) + 1;
-    seen.set(`${folder}/${base}`, n);
-    return `${folder}/${base}${n > 1 ? ` (${n})` : ''}.md`;
-  };
+  // The very names the folder mirror gives, from the one function, so a note is
+  // the same file in both and the two cannot drift apart again. The zip had a
+  // dedupe of its own that appended " (2)" without looking and compared names
+  // as strings: "T", "T" and "T (2)" went in as two entries with one path, and
+  // "Psalm" beside "psalm" unzipped to one file on Windows and macOS. Boards
+  // have no folder, so an untitled one keeps the word for it.
+  const boardNames = uniqueNames(boards, (board) => safeFilename(board.name || words.untitledBoard, board.id));
 
   return createZip([
-    ...notes.map((note) => ({
-      // Two notes may share a title; a zip with duplicate paths is ambiguous.
-      name: unique('notes', note.title || words.untitledNote, note.id),
-      content: toMarkdown(note, words, renderBoard),
+    ...[...mirrorFiles(notes, words).values()].map((file) => ({
+      name: `notes/${file.name}`,
+      content: toMarkdown(file.note, words, renderBoard),
     })),
     ...boards.map((board) => ({
-      name: unique('boards', board.name || words.untitledBoard, board.id),
+      name: `boards/${boardNames.get(board)!}`,
       content: boardToMarkdown(board, name, words),
     })),
   ]);
@@ -165,8 +164,14 @@ export interface MirrorFile {
 export const fileKey = (name: string): string =>
   name.normalize('NFD').toUpperCase().toLowerCase().normalize('NFC');
 
+/** What a file is named after: a note or a board, by what never changes about it. */
+interface Named {
+  id: string;
+  created: number;
+}
+
 /** Oldest first, by what never changes: not the list's order, and not `updated`. */
-function byAge(a: Note, b: Note): number {
+function byAge(a: Named, b: Named): number {
   // A note from before `created` was stored still needs a place, and NaN would
   // make the sort's order depend on the order it was handed.
   const age = (Number(a.created) || 0) - (Number(b.created) || 0);
@@ -175,19 +180,51 @@ function byAge(a: Note, b: Note): number {
 }
 
 /**
- * Which note belongs in which file, as of this list.
+ * A `.md` file name of its own for each of `items`, from the base name `baseOf`
+ * gives it. The one naming for the folder and the zip, so a note is the same
+ * file in both.
  *
- * Always over the whole list, however few notes are about to be written: a
- * note's number depends on who else wants its name. In list order if it could
- * be, but the list is sorted by `updated` when it loads and a new note goes on
- * top, so counting down it moved " (2)" from one note to the other whenever
- * either was edited and the page reloaded. The oldest note of a name keeps it,
- * and no edit can change who that is.
+ * Always over the whole list, however few are about to be written: an item's
+ * number depends on who else wants its name. In list order if it could be, but
+ * the list is sorted by `updated` when it loads and a new note goes on top, so
+ * counting down it moved " (2)" from one note to the other whenever either was
+ * edited and the page reloaded. The oldest of a name keeps it, and no edit can
+ * change who that is.
  *
  * Two passes, so that a note titled "T (2)" holds that name against the second
  * of two notes titled "T". The dedupe once appended " (2)" without looking, and
  * those two shared a file: whichever was written last silently replaced the
- * other. A note nobody collides with has exactly the name it has always had.
+ * other. An item nobody collides with has exactly the name it has always had.
+ */
+export function uniqueNames<T extends Named>(items: T[], baseOf: (item: T) => string): Map<T, string> {
+  const taken = new Set<string>();
+  const names = new Map<T, string>();
+  const unnamed: T[] = [];
+  for (const item of [...items].sort(byAge)) {
+    const name = `${baseOf(item)}.md`;
+    if (taken.has(fileKey(name))) {
+      unnamed.push(item);
+    } else {
+      taken.add(fileKey(name));
+      names.set(item, name);
+    }
+  }
+  // Where each name's count got to, because this runs on every autosave and
+  // starting again from 2 is quadratic in notes sharing a title.
+  const counts = new Map<string, number>();
+  for (const item of unnamed) {
+    const base = baseOf(item);
+    let n = counts.get(fileKey(base)) ?? 2;
+    while (taken.has(fileKey(`${base} (${n}).md`))) n++;
+    counts.set(fileKey(base), n + 1);
+    taken.add(fileKey(`${base} (${n}).md`));
+    names.set(item, `${base} (${n}).md`);
+  }
+  return names;
+}
+
+/**
+ * Which note belongs in which file, as of this list (`uniqueNames`).
  *
  * Returned in list order, the order the files are then written in.
  */
@@ -195,30 +232,7 @@ export function mirrorFiles(notes: Note[], words: CardWords = enUS.cards): Map<s
   // An untitled note is named by its id here, not by the word "Untitled": the
   // folder outlives a change of language, and a new name would leave a second
   // copy of the same note behind.
-  const baseOf = (note: Note) => safeFilename(note.title, note.id);
-  const taken = new Set<string>();
-  const names = new Map<Note, string>();
-  const unnamed: Note[] = [];
-  for (const note of [...notes].sort(byAge)) {
-    const name = `${baseOf(note)}.md`;
-    if (taken.has(fileKey(name))) {
-      unnamed.push(note);
-    } else {
-      taken.add(fileKey(name));
-      names.set(note, name);
-    }
-  }
-  // Where each name's count got to, because this runs on every autosave and
-  // starting again from 2 is quadratic in notes sharing a title.
-  const counts = new Map<string, number>();
-  for (const note of unnamed) {
-    const base = baseOf(note);
-    let n = counts.get(fileKey(base)) ?? 2;
-    while (taken.has(fileKey(`${base} (${n}).md`))) n++;
-    counts.set(fileKey(base), n + 1);
-    taken.add(fileKey(`${base} (${n}).md`));
-    names.set(note, `${base} (${n}).md`);
-  }
+  const names = uniqueNames(notes, (note) => safeFilename(note.title, note.id));
   const files = new Map<string, MirrorFile>();
   for (const note of notes) {
     const name = names.get(note)!;
