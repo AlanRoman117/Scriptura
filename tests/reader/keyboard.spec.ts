@@ -367,3 +367,105 @@ test.describe('tabbing along the pinned bar leaves the text where it is', () => 
     expect(await panel.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
   });
 });
+
+/*
+ * A desktop at 400% zoom: a 1280 × 1024 window is 320 × 256 CSS px, the
+ * one-pane layout whose menus recede (lib/recede.ts), and the pinned bar,
+ * search box and title strip take 220 of the 256. A finger or a wheel
+ * scrolling on sent the menus away; keyboard focus moving on down the text
+ * did not, because the scroll the browser makes to show a focused verse was
+ * never counted as the reader's, so Tab left each verse number in the 36px
+ * under the strip with its text below the fold. In a window shorter than the
+ * pinned stack the browser cannot scroll for the padding at all, and left
+ * focus off the bottom of the screen (2.4.11, 2.4.12).
+ */
+test.describe('a desktop zoomed to 400%', () => {
+  type Page = import('@playwright/test').Page;
+  const menus = (page: Page) => page.locator('.reader');
+
+  /**
+   * Where focus came to rest: how far under anything pinned that does not hold
+   * it (positive is under), how far off the bottom of the screen (positive is
+   * off), and where its verse begins. Polled, since the menus go in one commit
+   * and the verse is brought under the title in the next.
+   */
+  const placed = (page: Page) =>
+    page.evaluate(() => {
+      const el = document.activeElement!;
+      const box = el.getBoundingClientRect();
+      const pinned = ['.reader__bar', '.search', '.chapter__head']
+        .filter((s) => !el.closest(s))
+        .map((s) => document.querySelector(s)!.getBoundingClientRect())
+        .filter((r) => r.bottom > 0 && r.top < window.innerHeight && r.top <= box.top);
+      const verse = el.closest('.verse')?.getBoundingClientRect();
+      return {
+        under: Math.max(0, ...pinned.map((r) => r.bottom)) - box.top,
+        off: box.bottom - window.innerHeight,
+        verseTop: verse ? verse.top : 0,
+      };
+    });
+  const onScreen = async (page: Page, label: string) => {
+    await expect.poll(async () => (await placed(page)).under, { message: `${label}: under what is pinned` }).toBeLessThanOrEqual(0);
+    await expect.poll(async () => (await placed(page)).off, { message: `${label}: off the screen` }).toBeLessThanOrEqual(0);
+  };
+
+  test.describe('320 × 256', () => {
+    test.use({ viewport: { width: 320, height: 256 } });
+
+    test('Tab on into the chapter sends the menus away, and each verse comes under the title', async ({ page }) => {
+      await open(page);
+      await page.locator('.durability__dismiss').click();
+      await page.getByTestId('search-input').click();
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('chapter-menus-toggle')).toBeFocused();
+      // Into the chapter. Showing the first verse scrolls the pane 40px, which
+      // is short of reading on (HIDE_AFTER, as for a finger); the second is
+      // not, and the menus go.
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('verse-1')).toBeFocused();
+      await onScreen(page, 'verse 1');
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('verse-2')).toBeFocused();
+      await expect(menus(page)).toHaveAttribute('data-menus', 'hidden');
+      for (let verse = 2; verse <= 6; verse++) {
+        if (verse > 2) await page.keyboard.press('Tab');
+        await expect(page.getByTestId(`verse-${verse}`)).toBeFocused();
+        await onScreen(page, `verse ${verse}`);
+        // The verse, not only its number: its text has the screen to show in.
+        await expect
+          .poll(async () => (await placed(page)).verseTop, { message: `verse ${verse}: where its text begins` })
+          .toBeLessThan(128);
+      }
+      // Back up the chapter, focus never brings the menus over a verse.
+      for (let verse = 5; verse >= 3; verse--) {
+        await page.keyboard.press('Shift+Tab');
+        await expect(page.getByTestId(`verse-${verse}`)).toBeFocused();
+        await onScreen(page, `verse ${verse}, back up`);
+        await expect(menus(page)).toHaveAttribute('data-menus', 'hidden');
+      }
+    });
+  });
+
+  test.describe('320 × 200, shorter than the pinned menus', () => {
+    test.use({ viewport: { width: 320, height: 200 } });
+
+    test('focus the browser could not bring on screen sends the menus away', async ({ page }) => {
+      await open(page);
+      await page.getByTestId('search-input').click();
+      // The storage notice's first button is the next stop: in flow after the
+      // search box, which is to say below the screen, and the browser cannot
+      // scroll for a padding taller than the pane.
+      await page.keyboard.press('Tab');
+      await expect(page.getByTestId('choose-folder')).toBeFocused();
+      await expect(menus(page)).toHaveAttribute('data-menus', 'hidden');
+      await onScreen(page, 'the notice');
+      // On through the notice, the title strip's button and into the chapter.
+      for (let i = 0; i < 5; i++) {
+        await page.keyboard.press('Tab');
+        const id = await page.locator(':focus').getAttribute('data-testid');
+        await onScreen(page, id ?? 'the notice');
+      }
+      await expect(page.getByTestId('verse-2')).toBeFocused();
+    });
+  });
+});
