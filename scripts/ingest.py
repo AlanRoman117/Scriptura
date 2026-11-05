@@ -13,13 +13,22 @@ into Scriptura's canonical JSON schema:
         ├── 02-exodus.json
         └── ...  (66 Protestant-canon books, zero-padded for sort order)
 
-It supports two source formats:
+It supports four source formats:
   • "sword"    — a CrossWire SWORD zText module (compiled OSIS in a binary
                  block/index format). Used for translations no plain-text
                  source still carries.
   • "usfx"     — a single USFX XML file inside a .zip (eBible.org). One parser
                  handles many translations across many languages.
+  • "usfm"     — a .zip of USFM files, one per book, as a publisher releases
+                 them (the Berean Standard Bible).
   • "aruljohn" — clean per-book JSON from github.com/aruljohn/Bible-kjv.
+
+Headings are not verse text. Section headings, parallel references, speaker
+labels, acrostic letters and chapter labels are left out of every verse, and
+a Psalm's title (USFM `\\d`, OSIS `<title type="psalm">`), which stands before
+verse 1 unnumbered in English Bibles, is kept as the chapter's
+`superscription` rather than folded into verse 1 or dropped. Footnotes and
+cross-references are still left out.
 
 ------------------------------------------------------------------------------
 LICENSE / ETHICS — READ THIS
@@ -61,6 +70,7 @@ import sys
 import time
 import zipfile
 import zlib
+from collections import Counter
 from pathlib import Path
 from http.client import IncompleteRead
 from urllib.error import HTTPError, URLError
@@ -153,6 +163,7 @@ CODE_TO_BOOK = {row[1]: row for row in CANONICAL_BOOKS}
 # Each entry carries the curated metadata (from license research) plus how to
 # fetch it. `source` is one of:
 #   "usfx"     -> needs `ebible_id`; downloaded from eBible.org as a USFX zip.
+#   "usfm"     -> needs `usfm_url`; a zip of one USFM file per book.
 #   "aruljohn" -> per-book JSON from the aruljohn/Bible-kjv repo.
 #   "sword"    -> needs `sword_url` + `sword_module`; a CrossWire zText module.
 #   "manual"   -> no automated parser yet; the script will skip it and explain.
@@ -209,7 +220,7 @@ TRANSLATIONS = {
         "name": "Versión Biblia Libre",
         "language": "es",
         "license": "cc-by-sa-4.0",
-        "attribution": "Versión Biblia Libre (Free Bible Version) v5.2 (Oct 2025) © Jonathan Gallagher, Shelly Barrios de Avila. CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/ . Scriptura omits footnotes, Psalm superscriptions and front matter; not endorsed by the licensor.",
+        "attribution": "Versión Biblia Libre (Free Bible Version) v5.2 (Oct 2025) © Jonathan Gallagher, Shelly Barrios de Avila. CC BY-SA 4.0 https://creativecommons.org/licenses/by-sa/4.0/ . Scriptura omits footnotes, section headings (the speaker labels in Song of Songs, Psalm 119's letter headings) and front matter; not endorsed by the licensor.",
         "attribution_lang": "en",
         "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
         "source_url": "https://ebible.org/find/details.php?id=spavbl",
@@ -237,15 +248,20 @@ TRANSLATIONS = {
         "source": "usfx",
         "ebible_id": "engylt",
     },
+    # The publisher's own USFM, not eBible's copy. The publisher asks that text
+    # varying from the official one not carry the Berean name, and eBible's
+    # engbsb lagged it by hundreds of verses (Genesis 2:14 still read Hiddekel
+    # where the official text has Tigris). docs/translations-status.md has the
+    # comparison.
     "bsb": {
         "name": "Berean Standard Bible",
         "language": "en",
         "license": "public-domain",
         "attribution": "Berean Standard Bible — Public Domain (2023)",
-        "source_url": "https://ebible.org/engbsb/",
+        "source_url": "https://bereanbible.com/",
         "year": 2023,
-        "source": "usfx",
-        "ebible_id": "engbsb",
+        "source": "usfm",
+        "usfm_url": "https://bereanbible.com/bsb_usfm.zip",
     },
     # --- Chinese: none for now ---
     #
@@ -278,7 +294,7 @@ TRANSLATIONS = {
         "name": "Bíblia Livre",
         "language": "pt-BR",
         "license": "cc-by-3.0-br",
-        "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio, e Marco Teles, https://sites.google.com/site/biblialivre/, fevereiro de 2018. Licença CC BY 3.0 Brasil: https://creativecommons.org/licenses/by/3.0/br/. Modificado pela Scriptura: removidas as notas, os títulos dos Salmos e a marcação das palavras acrescentadas; 166 citações incorporadas aos versículos.",
+        "attribution": "Bíblia Livre (BLIVRE), Copyright © Diego Santos, Mario Sérgio, e Marco Teles, https://sites.google.com/site/biblialivre/, fevereiro de 2018. Licença CC BY 3.0 Brasil: https://creativecommons.org/licenses/by/3.0/br/. Modificado pela Scriptura: removidas as notas e a marcação das palavras acrescentadas; 166 citações incorporadas aos versículos.",
         "license_url": "https://creativecommons.org/licenses/by/3.0/br/",
         "source_url": "https://sites.google.com/site/biblialivre/",
         "year": 2018,
@@ -349,6 +365,101 @@ TRANSLATIONS = {
 NOTE_TAGS = {"f", "fe", "x", "xe", "ef", "ex", "note", "fig", "rem", "periph",
              "fr", "ft", "fk", "fq", "fl", "fv", "xo", "xt", "xk"}
 
+# Paragraph-level markers whose content is a heading, never verse text: section
+# headings (s, s1…), parallel-passage references (r, sr, mr), major sections and
+# book titles (ms, mt, mte), speaker labels (sp: "Friends", "Mujer:"), acrostic
+# letters (qa), chapter labels (cl, cd), semantic divisions (sd) and the
+# descriptive title (d), which is a Psalm's superscription. A trailing digit is a
+# level (s1, mt2) and is ignored when matching.
+#
+# Sources put headings *inside* a verse's span more often than one would hope:
+# Segond's eBible file runs "Léa et Rachel V. 15-30: cf. Os 12:13" into Genesis
+# 29:14, the World English Bible's Psalm 119 puts BETH..TAV inside the verse
+# before each stanza, the Berean's Song of Songs has "The Friends" inside
+# verses. Each used to be captured as verse text. USFX writes some headings as
+# their own element (<s>, <d>) and others as <p sfm="r">; both forms count.
+HEADING_SFMS = {"s", "r", "sr", "mr", "ms", "mt", "mte", "d", "sp", "qa", "cl", "cd", "sd"}
+
+_LEVEL_SUFFIX = re.compile(r"\d+$")
+
+
+def _heading_base(marker: str) -> str | None:
+    """'s1' -> 's', 'mt2' -> 'mt'; None when the marker is not a heading."""
+    base = _LEVEL_SUFFIX.sub("", marker)
+    return base if base in HEADING_SFMS else None
+
+
+class _Headings:
+    """
+    What a book's headings become: a Psalm title kept per chapter, and a count
+    of everything else left out, so a re-import can say what it dropped.
+
+    A `d` (descriptive title) is the chapter's superscription when it is the
+    last heading before the chapter's first verse: the run of `d` nearest verse
+    1, with nothing but verse text after it. Two cases from real files decide
+    the rest:
+
+    - A `d` after a verse has begun, with more verses to follow, is a section
+      heading in a title's clothing: the World English Bible marks the Hebrew
+      letters of Psalm 119 that way, ALEPH before verse 1 included. A chapter
+      with one of those gets no superscription at all, or Psalm 119 would carry
+      "ALEPH" alone while BETH to TAV are left out. A `d` after the *last* verse
+      (the colophon at the end of Habakkuk 3 in the ASV) is simply left out.
+    - A `d` with other headings between it and verse 1 labels something larger
+      than the chapter: the Berean's "\\ms BOOK II" / "\\d Psalms 42–72" /
+      "\\s1 …" before Psalm 42's own "\\d \\v 1 For the choirmaster…". Taken as a
+      title, it would have made Psalm 1's superscription "Psalms 1–41".
+    """
+
+    def __init__(self):
+        self.before: dict = {}          # chapter -> [(base, text)] before its first verse
+        self.acrostic: set = set()      # chapters whose `d` are section headings
+        self.dropped = Counter()        # heading marker base -> count left out
+        self._late_d: int | None = None  # chapter with a `d` after verses began
+
+    def heading(self, base: str, text: str, chapter, verse_begun: bool):
+        """
+        A heading has ended. `verse_begun` is whether a verse of `chapter` had
+        begun when the heading *started*: the Berean writes `\\d \\v 1 A Psalm of
+        David…`, so by the end of the title verse 1 is open.
+        """
+        if not text:
+            return
+        if chapter is not None and not verse_begun:
+            self.before.setdefault(chapter, []).append((base, text))
+            return
+        if base == "d" and chapter is not None:
+            self._late_d = chapter
+        self.dropped[base] += 1
+
+    def verse_begins(self, chapter):
+        """Called at each verse start: a `d` before it, after verses began, was a section heading."""
+        if self._late_d == chapter:
+            self.acrostic.add(chapter)
+        self._late_d = None
+
+    def chapter_begins(self):
+        self._late_d = None
+
+    def superscriptions(self, chapters: dict) -> dict:
+        """Chapter -> title, for chapters that have verses and are not acrostic."""
+        out = {}
+        for ch, sequence in self.before.items():
+            run = []
+            while sequence and sequence[-1][0] == "d":
+                run.insert(0, sequence.pop()[1])
+            for base, _ in sequence:
+                self.dropped[base] += 1
+            if not run:
+                continue
+            if ch in self.acrostic or not chapters.get(ch):
+                self.dropped["d"] += len(run)
+                continue
+            text = _clean(" ".join(run))
+            if text:
+                out[ch] = text
+        return out
+
 
 # =============================================================================
 # Download helpers (stdlib only, with a simple on-disk cache)
@@ -399,20 +510,38 @@ def _localname(tag: str) -> str:
     return tag.rsplit("}", 1)[-1] if "}" in tag else tag
 
 
-def _walk(elem):
+def _usfx_heading(elem) -> str | None:
+    """The heading marker an element stands for ('s', 'r', 'd'…), or None."""
+    tag = _localname(elem.tag)
+    marker = elem.get("sfm") if tag in ("p", "q") else tag
+    return _heading_base(marker) if marker else None
+
+
+def _walk(elem, in_heading: bool = False):
     """
     Yield tokens in document order so we can reconstruct verses from USFX's
     "milestone" markers. USFX marks verse/chapter *boundaries* with empty
     elements; the actual text lives in the surrounding `.text`/`.tail`.
 
-    Token types: ('chapter', n), ('verse', n), ('verse_end', None), ('text', s)
+    Token types: ('chapter', n), ('verse', n), ('verse_end', None), ('text', s),
+    and for headings ('heading', base) … ('htext', s) … ('heading_end', base).
+    A heading is walked, not skipped, because a verse milestone can sit inside
+    one (the Berean's Zechariah 12 opens `<d><v id="1"/>This is the burden…`);
+    only its text is kept apart, as 'htext'.
     """
     tag = _localname(elem.tag)
+    outer = "htext" if in_heading else "text"
 
     if tag in NOTE_TAGS:                      # skip note bodies, keep trailing text
         if elem.tail:
-            yield ("text", elem.tail)
+            yield (outer, elem.tail)
         return
+
+    heading = _usfx_heading(elem)
+    if heading:
+        yield ("heading", heading)
+    inside = in_heading or heading is not None
+    inner = "htext" if inside else "text"
 
     if tag == "c":                            # chapter milestone
         yield ("chapter", elem.get("id"))
@@ -422,11 +551,13 @@ def _walk(elem):
         yield ("verse_end", None)
 
     if elem.text:                             # text held by this element
-        yield ("text", elem.text)
+        yield (inner, elem.text)
     for child in elem:                        # then descend into children
-        yield from _walk(child)
+        yield from _walk(child, inside)
+    if heading:
+        yield ("heading_end", heading)
     if elem.tail:                             # then text that follows this element
-        yield ("text", elem.tail)
+        yield (outer, elem.tail)
 
 
 _WS = re.compile(r"\s+")
@@ -448,7 +579,10 @@ def _verse_number(raw: str) -> int | None:
 def parse_usfx(xml_bytes: bytes) -> dict:
     """
     Parse a USFX document into:
-        { usfm_code: {"name": <localized header>, "chapters": {chap: {verse: text}}} }
+        { usfm_code: {"name": <localized header>,
+                      "chapters": {chap: {verse: text}},
+                      "superscriptions": {chap: title},
+                      "dropped": Counter of heading markers left out} }
     """
     import xml.etree.ElementTree as ET
 
@@ -468,8 +602,14 @@ def parse_usfx(xml_bytes: bytes) -> dict:
                 break
 
         chapters: dict = {}
+        headings = _Headings()
         cur_ch = cur_v = None
+        verse_begun = False
         buf: list = []
+        hbuf: list = []
+        # The heading being walked, and whether a verse had begun when it started.
+        heading: str | None = None
+        heading_verse_begun = False
 
         def flush():
             nonlocal buf
@@ -486,24 +626,175 @@ def parse_usfx(xml_bytes: bytes) -> dict:
                 n = _verse_number(value)
                 if n is not None:
                     cur_ch, cur_v = n, None
+                    verse_begun = False
                     chapters.setdefault(cur_ch, {})
+                    headings.chapter_begins()
             elif kind == "verse":
                 flush()
                 cur_v = _verse_number(value)
                 if cur_ch is not None:
                     chapters.setdefault(cur_ch, {})
+                    headings.verse_begins(cur_ch)
+                    verse_begun = True
             elif kind == "verse_end":
                 flush()
                 cur_v = None
             elif kind == "text" and cur_v is not None:
                 buf.append(value)
+            elif kind == "heading":
+                heading, heading_verse_begun = value, verse_begun
+                hbuf = []
+            elif kind == "htext":
+                hbuf.append(value)
+            elif kind == "heading_end":
+                headings.heading(value, _clean("".join(hbuf)), cur_ch, heading_verse_begun)
+                heading, hbuf = None, []
         flush()
 
         books[code] = {
             "name": localized or CODE_TO_BOOK[code][2],
             "chapters": chapters,
+            "superscriptions": headings.superscriptions(chapters),
+            "dropped": headings.dropped,
         }
 
+    return books
+
+
+# =============================================================================
+# USFM parsing (a publisher's own files)
+# =============================================================================
+# USFM is the format USFX is made from: one file per book, one marker per
+# paragraph, with verse markers and character styles inline. The Berean
+# Standard Bible is published this way; its verse text differs from eBible's
+# conversion by hundreds of verses, so it is read at the source.
+#
+# Notes are removed whole first, then the character styles are unwrapped, and
+# what is left is a stream of paragraph markers and the text under each. A
+# heading marker's text is a heading (see HEADING_SFMS); any other marker's
+# text belongs to the open verse. A heading does not end the verse: the
+# Berean's Song of Songs puts "The Friends" between two lines of one verse.
+_USFM_NOTE = re.compile(r"\\(f|fe|x|ef|ex|fig)\b.*?\\\1\*", re.S)
+# Attribute-bearing styles keep the text before the bar: \w word|strong\w*,
+# \ref Matthew 5:3|MAT 5:3\ref*.
+_USFM_BARRED = re.compile(r"\\(\+?(?:w|ref|rb|xt|jmp))\s+([^\\|]*)\|[^\\]*\\\1\*")
+# Styles whose content is not readable text: alternate verse and chapter numbers.
+_USFM_SILENT = re.compile(r"\\(va|vp|ca|cp)\s[^\\]*\\\1\*")
+_USFM_CLOSE = re.compile(r"\\\+?[a-z]+\d*\*")
+_USFM_MARKER = re.compile(r"\\(\+?[a-z]+\d*)\s*")
+# Character styles: the marker is dropped and the words stay. Everything else
+# that is not a heading or a structural marker is a paragraph.
+_USFM_CHAR = {"w", "wj", "nd", "add", "qs", "qac", "sc", "it", "bd", "bdit", "em", "no",
+              "tl", "pn", "png", "k", "qt", "sls", "bk", "dc", "ord", "wh", "wg", "wa",
+              "ndx", "rb", "pro", "ref", "jmp", "sup", "rq", "ior", "iqt", "xt"}
+
+
+def parse_usfm(text: str) -> tuple:
+    """
+    Parse one USFM book into (code, book), `book` shaped as parse_usfx's.
+    Returns (None, None) for a file without a canonical `\\id`.
+    """
+    text = _USFM_NOTE.sub(" ", text)
+    text = _USFM_BARRED.sub(r"\2", text)
+    text = _USFM_SILENT.sub("", text)
+    text = _USFM_CLOSE.sub("", text)
+    text = text.replace("~", " ").replace("//", " ")
+
+    code = None
+    header = toc2 = None
+    chapters: dict = {}
+    headings = _Headings()
+    cur_ch = cur_v = None
+    verse_begun = False
+    buf: list = []
+    hbuf: list = []
+    heading: str | None = None
+    heading_verse_begun = False
+
+    def flush():
+        nonlocal buf
+        if cur_ch is not None and cur_v is not None and buf:
+            t = _clean("".join(buf))
+            if t:
+                existing = chapters[cur_ch].get(cur_v, "")
+                chapters[cur_ch][cur_v] = (existing + " " + t).strip() if existing else t
+        buf = []
+
+    def end_heading():
+        nonlocal heading, hbuf
+        if heading is not None:
+            headings.heading(heading, _clean("".join(hbuf)), cur_ch, heading_verse_begun)
+        heading, hbuf = None, []
+
+    markers = list(_USFM_MARKER.finditer(text))
+    for i, m in enumerate(markers):
+        marker = m.group(1).lstrip("+")
+        content = text[m.end():markers[i + 1].start() if i + 1 < len(markers) else len(text)]
+        base = _heading_base(marker)
+
+        if marker == "id":
+            code = content.split()[0].upper() if content.split() else None
+            continue
+        if marker == "h":
+            header = _clean(content)
+            continue
+        if marker == "toc2":
+            toc2 = _clean(content)
+            continue
+        if marker == "c":
+            flush()
+            end_heading()
+            n = _verse_number(content)
+            if n is not None:
+                cur_ch, cur_v = n, None
+                verse_begun = False
+                chapters.setdefault(cur_ch, {})
+                headings.chapter_begins()
+            continue
+        if marker == "v":
+            flush()
+            number, _, rest = content.lstrip().partition(" ")
+            cur_v = _verse_number(number)
+            if cur_ch is not None:
+                chapters.setdefault(cur_ch, {})
+                headings.verse_begins(cur_ch)
+                verse_begun = True
+            (hbuf if heading is not None else buf).append(rest)
+            continue
+        if marker in _USFM_CHAR:
+            (hbuf if heading is not None else buf).append(content)
+            continue
+
+        # A paragraph or heading marker ends any heading in progress.
+        end_heading()
+        if base:
+            heading, heading_verse_begun = base, verse_begun
+            hbuf.append(content)
+        elif cur_v is not None:
+            buf.append(content)
+    flush()
+    end_heading()
+
+    if code not in CODE_TO_BOOK:
+        return None, None
+    return code, {
+        "name": toc2 or header or CODE_TO_BOOK[code][2],
+        "chapters": chapters,
+        "superscriptions": headings.superscriptions(chapters),
+        "dropped": headings.dropped,
+    }
+
+
+def parse_usfm_zip(zip_bytes: bytes) -> dict:
+    """Parse every USFM file in a zip into the shape parse_usfx returns."""
+    books: dict = {}
+    with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+        for name in sorted(zf.namelist()):
+            if not name.lower().endswith((".usfm", ".sfm")):
+                continue
+            code, book = parse_usfm(zf.read(name).decode("utf-8-sig"))
+            if code:
+                books[code] = book
     return books
 
 
@@ -731,6 +1022,9 @@ def _osis_marker(fragment: str):
     return found
 _OSIS_NOTE_RE = re.compile(r"<note\b.*?</note>", re.S)
 _OSIS_TITLE_RE = re.compile(r"<title\b.*?</title>", re.S)
+# A Psalm's superscription, as OSIS marks it. Attribute order is not fixed, so
+# the type is looked for anywhere in the tag.
+_OSIS_PSALM_TITLE_RE = re.compile(r"<title\b[^>]*\btype=\"psalm\"[^>]*>(.*?)</title>", re.S)
 _OSIS_TAG_RE = re.compile(r"<[^>]*>")
 
 
@@ -738,11 +1032,13 @@ def _clean_osis(fragment: str) -> str:
     """
     Strip OSIS markup down to running text.
 
-    Drops footnotes and section headings outright. Everything else is
-    unwrapped rather than removed, which matters for <w gloss="…">漢字</w>:
-    that is furigana (a reading gloss on the kanji), so we keep the kanji and
-    discard the gloss. Translator additions (<transChange>) are kept, matching
-    what the USFX parser does.
+    Drops footnotes and headings outright — section headings, FreBDM1744's
+    chapter summaries (`type="x-s"`) and acrostic letters, and Psalm titles,
+    which parse_sword_ztext has already taken for the chapter's superscription.
+    Everything else is unwrapped rather than removed, which matters for
+    <w gloss="…">漢字</w>: that is furigana (a reading gloss on the kanji), so we
+    keep the kanji and discard the gloss. Translator additions (<transChange>)
+    are kept, matching what the USFX parser does.
     """
     fragment = _OSIS_NOTE_RE.sub("", fragment)
     fragment = _OSIS_TITLE_RE.sub("", fragment)
@@ -759,8 +1055,18 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
     The module carries no per-book localized headers (only a testament-level
     title), so book names come from `book_names` (USFM code -> localized name)
     when given, and fall back to the canonical English ones otherwise.
+
+    A `<title type="psalm">` in the first verse's entry is the chapter's
+    superscription. In one after it (JapBungo's Psalm 119 marks the Hebrew
+    letters that way) they are section headings, and the chapter gets none.
     """
     books: dict = {}
+    titles: dict = {}        # (code, chapter) -> [title, ...]
+    acrostic: set = set()    # (code, chapter) with a psalm title after verse 1
+
+    def book_entry(code):
+        return books.setdefault(code, {"name": None, "chapters": {}, "superscriptions": {},
+                                       "dropped": Counter()})
 
     with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
         names = {n.rsplit("/", 1)[-1]: n for n in zf.namelist()
@@ -782,6 +1088,7 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
             code = None
             chapter = None
             verse_no = 0
+            previous = None
 
             for i in range(len(bzv) // 10):
                 block, start, size = struct.unpack("<IIH", bzv[i * 10:(i + 1) * 10])
@@ -801,17 +1108,50 @@ def parse_sword_ztext(zip_bytes: bytes, module: str,
                         book_id, chapter_no = value
                         code = OSIS_TO_USFM.get(book_id)
                         chapter, verse_no = chapter_no, 0
+                    previous = None
                     continue
 
                 if code is None or chapter is None:
                     continue
 
                 verse_no += 1                      # empty slices still count
+
+                # Two consecutive entries addressing one slice are a verse the
+                # translation runs together with the one before it (osis2mod
+                # "links" them; JapBungo's Psalm 49 has 1-2 as one verse). The
+                # text stands under the first number; repeating it under the
+                # second would show one verse twice.
+                entry = book_entry(code)
+                if size and (block, start, size) == previous:
+                    entry["dropped"]["verse linked to the one before"] += 1
+                    continue
+                previous = (block, start, size)
+
+                psalm_titles = _OSIS_PSALM_TITLE_RE.findall(raw)
+                for found in psalm_titles:
+                    title = _clean_osis(found)
+                    if not title:
+                        continue
+                    if verse_no == 1:
+                        titles.setdefault((code, chapter), []).append(title)
+                    else:
+                        acrostic.add((code, chapter))
+                        entry["dropped"]["d"] += 1
+                entry["dropped"]["s"] += len(_OSIS_TITLE_RE.findall(raw)) - len(psalm_titles)
+
                 text = _clean_osis(raw)
                 if not text:
                     continue
-                entry = books.setdefault(code, {"name": None, "chapters": {}})
                 entry["chapters"].setdefault(chapter, {})[verse_no] = text
+
+    for (code, chapter), parts in titles.items():
+        entry = books.get(code)
+        if entry is None or not entry["chapters"].get(chapter):
+            continue
+        if (code, chapter) in acrostic:
+            entry["dropped"]["d"] += len(parts)
+            continue
+        entry["superscriptions"][chapter] = " ".join(parts)
 
     for code, entry in books.items():
         if not entry["name"]:
@@ -834,6 +1174,8 @@ def load_kept_book(tid: str, code: str, out_dir: Path) -> dict:
         "name": book["name"],
         "chapters": {ch["number"]: {v["number"]: v["text"] for v in ch["verses"]}
                      for ch in book["chapters"]},
+        "superscriptions": {ch["number"]: ch["superscription"]
+                            for ch in book["chapters"] if ch.get("superscription")},
     }
 
 
@@ -851,6 +1193,7 @@ def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict
             continue
 
         src = books[code]
+        superscriptions = src.get("superscriptions", {})
         chapter_list = []
         for ch_num in sorted(src["chapters"]):
             verse_list = []
@@ -859,7 +1202,13 @@ def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict
                 if not text:
                     empty_verses += 1
                 verse_list.append({"number": v_num, "text": text})
-            chapter_list.append({"number": ch_num, "verses": verse_list})
+            chapter = {"number": ch_num}
+            # Optional, and absent rather than empty: a Psalm's title stands
+            # before verse 1 unnumbered, so it is the chapter's, not verse 1's.
+            if superscriptions.get(ch_num):
+                chapter["superscription"] = superscriptions[ch_num]
+            chapter["verses"] = verse_list
+            chapter_list.append(chapter)
 
         book_json = {
             "number": number,
@@ -893,7 +1242,13 @@ def write_translation(tid: str, entry: dict, books: dict, out_dir: Path) -> dict
         json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8"
     )
 
-    return {"written": len(written), "missing": missing, "empty_verses": empty_verses}
+    # What the headings became, for the status log: titles kept, the rest left out.
+    kept = sum(len(books[c].get("superscriptions", {})) for _, c in written)
+    dropped = Counter()
+    for _, c in written:
+        dropped.update(books[c].get("dropped", {}))
+    return {"written": len(written), "missing": missing, "empty_verses": empty_verses,
+            "superscriptions": kept, "dropped": dropped}
 
 
 # =============================================================================
@@ -927,6 +1282,12 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
                     return False
                 xml_bytes = zf.read(xml_name)
             books = parse_usfx(xml_bytes)
+
+        elif source == "usfm":
+            url = entry["usfm_url"]
+            cache_path = cache_dir / url.rsplit("/", 1)[-1]
+            print(f"    · downloading {url}")
+            books = parse_usfm_zip(fetch_bytes(url, cache_path, use_cache))
 
         elif source == "sword":
             url = entry["sword_url"]
@@ -971,6 +1332,11 @@ def ingest_one(tid: str, entry: dict, out_dir: Path, cache_dir: Path, use_cache:
 
     stats = write_translation(tid, entry, books, out_dir)
     print(f"    ✓ wrote {stats['written']}/66 books → {out_dir / tid}")
+    if stats["superscriptions"]:
+        print(f"    · {stats['superscriptions']} chapter titles kept as superscriptions")
+    if stats["dropped"]:
+        left = ", ".join(f"{k} {n}" for k, n in sorted(stats["dropped"].items()))
+        print(f"    · headings left out of verses: {left}")
     if stats["missing"]:
         preview = ", ".join(stats["missing"][:5]) + ("…" if len(stats["missing"]) > 5 else "")
         print(f"    ⚠ {len(stats['missing'])} book(s) missing: {preview}")
