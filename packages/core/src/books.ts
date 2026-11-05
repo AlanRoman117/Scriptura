@@ -62,9 +62,12 @@ export function foldText(value: string): string {
  * all meet at `genesis`, and `1 Samuel` meets the `1-samuel` slug.
  */
 export function normalizeBookKey(value: string): string {
+  // The first replace leaves at most one '-' in a row, so trimming one from each
+  // end is enough. `^-+|-+$` did the same, but CodeQL rates `-+$` polynomial
+  // (js/polynomial-redos, 2026-11-05) on a run of dashes that cannot reach it.
   return foldText(value)
     .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/^-|-$/g, '');
 }
 
 /**
