@@ -111,9 +111,12 @@ test('as running text without numbers, it stays a block above verse 1', async ({
   expect(await title.evaluate((el) => getComputedStyle(el).display)).toBe('block');
   const [t, v1] = [await box(page, '[data-testid="chapter-superscription"]'), await box(page, '.verse[data-verse="1"]')];
   expect(t.y + t.height).toBeLessThanOrEqual(v1.y + 1);
-  // Verses 1 and 2 still run on together after it.
-  const [a, b] = [await box(page, '.verse[data-verse="1"]'), await box(page, '.verse[data-verse="2"]')];
-  expect(b.y).toBeLessThan(a.y + a.height);
+  // Verses 1 and 2 still run on together after it: inline, as running text lays
+  // them out. Not by where they land: whether verse 1 happens to end at a line's
+  // edge depends on the fonts, and CI's ended it there (2026-11-05).
+  for (const n of [1, 2]) {
+    expect(await page.locator(`.verse[data-verse="${n}"]`).evaluate((el) => getComputedStyle(el).display)).toBe('inline');
+  }
   // Copied with verse 1, the title is its own line, not run into the verse.
   const copied = await page.evaluate(() => {
     const range = document.createRange();
