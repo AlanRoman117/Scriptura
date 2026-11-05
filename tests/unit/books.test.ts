@@ -163,6 +163,17 @@ describe('parseReference', () => {
    * trailing spaces alone never reached either grammar: the old grammar
    * planted back passed this test while the input was "a" and spaces.
    */
+  test('a book key trims the same with one dash as it did with a run of them', () => {
+    // Separators collapse to one dash before the trim, so trimming one is enough.
+    for (const [input, key] of [
+      ['1 Samuel', '1-samuel'], ['  Génesis  ', 'genesis'], ['--John--', 'john'],
+      ['- - Song of Songs - -', 'song-of-songs'], ['---', ''], ['', ''], ['1-2', '1-2'],
+    ] as const) {
+      expect(normalizeBookKey(input)).toBe(key);
+    }
+    expect(normalizeBookKey(`${'-'.repeat(100_000)}a${'-'.repeat(100_000)}`)).toBe('a');
+  });
+
   test('fails immediately on a long run of spaces (js/polynomial-redos)', () => {
     const started = process.cpuUsage();
     expect(parseReference(`a${' '.repeat(100_000)}b`)).toBeNull();
