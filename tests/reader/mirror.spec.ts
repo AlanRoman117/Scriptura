@@ -21,8 +21,10 @@ import { storedBodies } from '../helpers/note';
  * one changes, and the writes counted then are the whole story.
  *
  * What a rename removes is here as well as in tests/unit/mirror.test.ts, because
- * two of its guards are only real against real things: the record has to survive
- * IndexedDB and a reload, and a stored handle has to be told from another folder's.
+ * some of its guards are only real against real things: the record has to survive
+ * IndexedDB and a reload, a stored handle has to be told from another folder's,
+ * asking whether a file is there rests on the real API's NotFoundError, and a
+ * second tab has to be a second tab.
  */
 
 interface Harness {
@@ -158,7 +160,7 @@ const recordedName = (page: Page, id: string): Promise<string | null> =>
           get.onerror = () => reject(get.error);
           get.onsuccess = () => {
             open.result.close();
-            resolve(get.result?.files?.[note] ?? null);
+            resolve(get.result?.files?.[note]?.name ?? null);
           };
         };
       }),
@@ -471,6 +473,64 @@ test.describe('a rename', () => {
     expect(await fileText(page, 'Old.md', 'mirror-b')).toBe('the reader’s, in the other folder');
     expect(await removals(page)).toEqual([]);
     expect(await fileNames(page)).toEqual(['Old.md']);
+  });
+
+  test('by case alone leaves the note in one file, however the disk spells it', async ({ page }) => {
+    await openWith(page, [titled(0, 'psalm')]);
+    await chooseFolder(page, 1);
+
+    await retitle(page, 'note-0', 'Psalm');
+
+    // The private file system keeps "psalm.md" and "Psalm.md" apart here and
+    // may fold them elsewhere. Either way the note ends in one file: the old
+    // spelling goes only where the new one was not already there.
+    await fileHas(page, 'Psalm.md', '# Psalm');
+    await expect.poll(() => fileNames(page).then((names) => names.length), { timeout: 15_000 }).toBe(1);
+    expect(await fileText(page, 'Psalm.md')).toContain('Body 0');
+  });
+
+  test('never removes a file that was in the folder before the app wrote to it', async ({ page }) => {
+    await openWith(page, [titled(0, 'Old')]);
+    await putFile(page, 'Old.md', 'the reader’s');
+    await chooseFolder(page, 1);
+    // Overwritten, as it always was. Removing it is what is new, and not done.
+    await fileHas(page, 'Old.md', 'Body 0');
+
+    await retitle(page, 'note-0', 'New');
+
+    // The record is written after the removals, so once it says New.md the
+    // removals are all in.
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('New.md');
+    expect(await fileNames(page)).toEqual(['New.md', 'Old.md']);
+    expect(await removals(page)).toEqual([]);
+    expect(await fileText(page, 'Old.md')).toContain('Body 0');
+  });
+
+  test('seen from a second tab holding an older copy of the note removes nothing', async ({ page, context }) => {
+    await openWith(page, [titled(0, 'Old'), titled(1, 'Other')]);
+    await chooseFolder(page, 2);
+
+    // A second tab, loaded while the note is still "Old", and left there.
+    const other = await context.newPage();
+    await harness(other);
+    await other.goto('/');
+    await expect(other.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await expect(other.getByTestId('note-select').locator('option')).toHaveCount(2);
+
+    await retitle(page, 'note-0', 'New');
+    await expect.poll(() => recordedName(page, 'note-0'), { timeout: 15_000 }).toBe('New.md');
+    expect(await fileNames(page)).toEqual(['New.md', 'Other.md']);
+
+    // The second tab's first autosave writes every note it has, "Old" included,
+    // and the record tells it that note's file is New.md, which it does not own.
+    // It used to remove it. The store says the note moved on after this tab
+    // loaded it, which is reason enough to leave the file alone.
+    await typeIn(other, 'note-1', 'abc');
+    await fileHas(other, 'Other.md', 'abc');
+    await expect.poll(() => recordedName(other, 'note-0'), { timeout: 15_000 }).toBe('Old.md');
+
+    expect(await fileText(page, 'New.md')).toContain('Body 0');
+    expect(await removals(other)).toEqual([]);
   });
 
   test('with a damaged record removes nothing, and the record is whole again after', async ({ page }) => {
