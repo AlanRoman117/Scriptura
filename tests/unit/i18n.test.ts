@@ -409,4 +409,20 @@ describe('the catalogs', () => {
     expect(picture('zh-Hant', 2)).toBe('看板：Plan，2張卡片');
   });
 
+  test('a Japanese colour name is never followed by a second 色', () => {
+    // Four of the five names end in 色 (琥珀色, ばら色, 空色, すみれ色), so a
+    // message that adds の色 after the name read 琥珀色の色.
+    const ja = CATALOGS['ja-JP'];
+    for (const colour of Object.values(ja.colourWords)) {
+      const phrases = [
+        ja.proposal.into(colour),
+        ja.marks.nameFor(colour),
+        ja.verseActions.mark('Plan', colour),
+        ja.canvas.colourName('Plan', colour),
+        ja.canvas.coloured('Card', colour),
+        ja.canvas.colour(colour, 'Card'),
+      ];
+      for (const phrase of phrases) expect(phrase).not.toMatch(/色の色|色色/);
+    }
+  });
 });
