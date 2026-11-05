@@ -467,7 +467,8 @@ export const enUS = {
 
   embed: {
     scrolls: (board: string) => `Board: ${board}, scrolls sideways`,
-    picture: (board: string, cards: number) => `Board: ${board}, ${num(cards)} cards`,
+    picture: (board: string, cards: number) =>
+      plural(cards, { one: `Board: ${board}, ${num(cards)} card`, other: `Board: ${board}, ${num(cards)} cards` }),
     empty: 'This board is empty.',
     missing: 'A board was embedded here, but it no longer exists.',
     open: 'Open board',

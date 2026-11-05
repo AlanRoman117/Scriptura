@@ -182,8 +182,31 @@ for (const locale of Object.keys(LOCALES) as Locale[]) {
         await page.getByTestId(`canvas-${n}`).click();
       }
       await page.getByTestId('side-board').click();
-      await expect(page.locator('.card')).toHaveCount(2);
+      const cards = page.locator('.card');
+      await expect(cards).toHaveCount(2);
+      // New cards land in a row, and at this width the second lies across
+      // the pane's edge. It is dragged under the first, by the part of its
+      // grip the pane still shows, so the picture holds both cards whole at
+      // their real size.
+      const first = (await cards.nth(0).boundingBox())!;
+      const second = (await cards.nth(1).boundingBox())!;
+      await page.mouse.move(second.x + 24, second.y + 22);
+      await page.mouse.down();
+      await page.mouse.move(first.x + 24, first.y + first.height + 24 + 22, { steps: 10 });
+      await page.mouse.up();
+      await expect.poll(async () => (await cards.nth(1).boundingBox())!.x).toBeLessThan(first.x + 2);
       await page.getByTestId('board-connections').click();
+      // The bar is taller in a language whose "no connections yet" line
+      // wraps, and the lower card would then lose its foot below the pane.
+      // A wheel over the plane pans it by exactly that much, and no more.
+      const pane = (await page.locator(SIDE).boundingBox())!;
+      const lower = (await cards.nth(1).boundingBox())!;
+      const over = lower.y + lower.height + 8 - (pane.y + pane.height);
+      if (over > 0) {
+        await page.mouse.move(pane.x + pane.width - 40, lower.y - 12);
+        await page.mouse.wheel(0, over);
+        await expect.poll(async () => (await cards.nth(1).boundingBox())!.y).toBeLessThan(lower.y - over + 2);
+      }
       await shoot(page, dir, '12-board', [SIDE], 0);
     });
   });
