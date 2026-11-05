@@ -12,7 +12,7 @@ license before its data may be committed.**
 | `web` | World English Bible | en | [Public domain by dedication](#web--world-english-bible) | [eBible `engwebp`](https://ebible.org/find/details.php?id=engwebp) | `usfx` | Complete |
 | `asv` | American Standard Version (1901) | en | [Public domain](#asv--american-standard-version) | [eBible `eng-asv`](https://ebible.org/eng-asv/) | `usfx` | Complete |
 | `ylt` | Young's Literal Translation | en | [Public domain](#ylt--youngs-literal-translation) | [eBible `engylt`](https://ebible.org/engylt/) | `usfx` | Complete |
-| `bsb` | Berean Standard Bible | en | [Public domain (2023)](#bsb--berean-standard-bible) | [Berean terms](https://berean.bible/terms.htm); text from [eBible `engbsb`](https://ebible.org/engbsb/) | `usfx` | Complete |
+| `bsb` | Berean Standard Bible | en | [Public domain (2023)](#bsb--berean-standard-bible) | [Berean terms](https://berean.bible/terms.htm); text from [the publisher's USFM](https://bereanbible.com/bsb_usfm.zip) | `usfm` | Complete |
 | `rv1909` | Reina Valera 1909 | es | [Public domain](#rv1909--reina-valera-1909) | [eBible `spaRV1909`](https://ebible.org/find/details.php?id=spaRV1909) | `usfx` | Complete |
 | `vbl` | Versión Biblia Libre | es | [CC BY-SA 4.0](#vbl--versión-biblia-libre) | [eBible `spavbl`](https://ebible.org/find/details.php?id=spavbl) | `usfx` | Complete |
 | `lsg1910` | Louis Segond 1910 | fr | [Public domain](#lsg1910--louis-segond-1910) | [eBible `fraLSG`](https://ebible.org/fraLSG/) | `usfx` | Complete |
@@ -46,16 +46,48 @@ on eBible already: `bsb` (`engbsb`, the post-2023 public-domain release) and `as
 that text: see [Withdrawn translations](#withdrawn-translations). An id on eBible
 says where a text can be had, not which edition it is.
 
+### Chapter titles and headings — the re-import of 2026-11-05
+
+A rights review found that our ingestion changed texts in ways that matter: the
+Psalm titles (superscriptions) were dropped, and headings and cross-references
+were run into verses where a source placed them inside a verse's span. Both are
+fixed in `scripts/ingest.py`, and `web`, `bsb`, `lsg1910`, `vbl`, `blivre`,
+`bungo` and `asv` were re-imported from fresh downloads of 2026-11-05. A Psalm's
+title now stands on the chapter as `superscription` (see `docs/API.md`), and
+headings of every kind are left out of verses. Each re-import was compared verse
+by verse with the old data, every kind of change explained below, and with its
+source by a second, parser-independent extraction: identical, apart from the
+checker's own space where a footnote marker sat between a word and its
+punctuation. Verse numbering and chapter counts are unchanged everywhere except
+`bungo`'s 24 linked verses (below).
+
+What each source has, title-wise:
+
+| ID | Titles in the source | Now |
+|---|---|---|
+| `web` | 117 Psalms with `<d>`, Psalm 119's ALEPH among them; BETH..TAV are `<d>` inside verses 8, 16, … | 116 superscriptions; Psalm 119's 22 letters left out (they are section headings, and "ALEPH" alone would misdescribe the Psalm) |
+| `bsb` | 116 Psalms with `\d \v 1 …`, and Zechariah 12:1's opening line marked `\d`; five `\d Psalms N–M` labels after `\ms BOOK I–V` | 117 superscriptions (Zechariah 12 included, as the publisher marks it); the five book labels left out |
+| `vbl` | 118 `<d>` over 117 Psalms (Psalm 43 has one; Psalm 76's runs over two lines) | 117 |
+| `blivre` | 115 Psalms (none for Psalm 125) | 115 |
+| `asv` | 116 Psalms, and a `<d>` colophon inside Habakkuk 3:19 | 116; the colophon left out |
+| `bungo` | `<title type="psalm">` in 117 Psalms' first verse, and in Psalm 119's letter stanzas | 116; Psalm 119's letters left out |
+| `kjv` | None: aruljohn's JSON carries no titles | none, and none invented |
+| `lsg1910`, `rv1909`, `ylt`, `martin1744` | None marked: each numbers the title as verse 1 ("Psaume de David…", "Salmo de David…", "A Psalm of David, in his fleeing…"; Martin's Psalm 3 has 9 verses) | none; the title stays verse 1 as in the source |
+
 ### `vbl` — Versión Biblia Libre
 CC BY-SA 4.0, version 5.2 of October 2025. Checked 2026-11-01 against
 [Free Bible Version](https://www.freebibleversion.org/), eBible's
 [copyright page](https://ebible.org/spavbl/copyright.htm) and the front matter in
 `spavbl_usfx.zip`; our verses match that file exactly under `parse_usfx`.
 
-Our import drops the 4,499 footnotes, the 118 Psalm superscriptions, the front
-matter and the Strong's tags, and the attribution discloses the first three
-(§3 asks that changes be indicated, not itemised). ShareAlike applies to any
-adaptation: see `docs/API.md`.
+Our import keeps the 118 Psalm superscriptions (117 chapters; re-imported
+2026-11-05 from eBible's current file, whose verses are unchanged since our
+previous copy) and drops the 4,499 footnotes, the headings (Psalm 119's 21
+letter headings, `qa`, and 33 speaker labels in Song of Songs, `sp`, two of
+which — "Mujer:" at 6:13 and 8:5 — had been run into verses), the front matter
+and the Strong's tags. The attribution discloses the footnotes, headings and
+front matter (§3 asks that changes be indicated, not itemised). ShareAlike
+applies to any adaptation: see `docs/API.md`.
 
 Open questions, being put to Free Bible Ministry (info@freebibleministry.org):
 
@@ -67,8 +99,8 @@ Open questions, being put to Free Bible Ministry (info@freebibleministry.org):
 - **"El texto no debe ser cambiado".** The front matter's foreword sets that
   condition, while its copyright line grants CC BY-SA ("4:0 Unported") and
   speaks of derivatives and "los cambios realizados". The licence is what we
-  rely on, but dropping notes and superscriptions may not be what the foreword
-  had in mind.
+  rely on, but dropping notes and headings may not be what the foreword had in
+  mind.
 - **The editors.** The front matter also names Gustavo Sanabria and Rebeca
   Põldaas (eBible: "Rebekah"). CC BY-SA credits anyone designated to receive
   attribution; whether they are is part of the question.
@@ -91,19 +123,28 @@ the proposed wording left the address out and the text comes from eBible. The
 site also asks to be told of any reproduction, "não para pedir autorização": a
 request, not a condition, and answered by the same letter.
 
-Our verses match eBible's file exactly under `parse_usfx`, which changes the text
-in these ways, all disclosed in the attribution: 1,290 notes and 115 Psalm titles
-dropped; the marking of 6,030 supplied words (`<add>`) dropped, keeping the words;
-and **166 citations (`<rq>`) merged into verses**, so Matthew 1:23 ends "Isaías
-7:14". That last is a data fault to fix in a later re-import. No brackets were
-removed: the file's verse text has none. eBible's copy is dated February 2018 and
-the authors have since released 2025.1.0, which we do not carry.
+Our verses match eBible's file exactly under `parse_usfx` (re-imported
+2026-11-05; eBible's file is unchanged since our previous copy, so no verse
+changed), which changes the text in these ways, all disclosed in the
+attribution: 1,290 notes dropped; the marking of 6,030 supplied words (`<add>`)
+dropped, keeping the words; and **166 citations (`<rq>`) merged into verses**,
+so Matthew 1:23 ends "Isaías 7:14". That last is a data fault to fix in a later
+re-import. The 115 Psalm titles are kept now, as each chapter's
+`superscription`, and the attribution no longer says they are removed. No
+brackets were removed: the file's verse text has none. eBible's copy is dated
+February 2018 and the authors have since released 2025.1.0, which we do not
+carry.
 
 ### `asv` — American Standard Version
 © 1901 Thomas Nelson & Sons, renewed 1929 by the International Council of
 Religious Education. Under the 1909 Act's two 28-year terms the US copyright ended
 in 1957. That is the basis, not eBible's label. We use eBible's e-text, without
-its 16 footnotes, its Strong's tags or its 116 Psalm titles.
+its 16 footnotes or its Strong's tags; its 116 Psalm titles are kept as
+superscriptions since the re-import of 2026-11-05. One verse changed in that
+re-import: the file marks "For the Chief Musician, on my stringed instruments."
+at the end of Habakkuk 3:19 as a title (`<d>`), the way the ASV sets it apart in
+print, so it is left out of the verse as the other headings are; the WEB has the
+same words as plain verse text and keeps them.
 
 ### `ylt` — Young's Literal Translation
 The third edition (G. A. Young & Co., Edinburgh, 1898), revised by the publishers
@@ -112,6 +153,11 @@ Young alone and labels it public domain. The term has expired on any known basis
 even a reviser living to the 1950s would be out of term by now. The reviser's
 identity remains unverified.
 
+Checked 2026-11-05 for titles and headings: eBible's file marks no Psalm titles
+(Young numbers the title as verse 1, "A Psalm of David, in his fleeing from the
+face of Absalom his son. Jehovah, how…") and places no heading inside a verse. A
+re-import produced our data again, byte for byte, so nothing changed.
+
 ### `rv1909` — Reina Valera 1909
 First published Madrid, British and Foreign Bible Society, 1909; the revisers are
 undocumented. The text is public domain by age. A "REINA-VALERA 1909" design mark
@@ -119,15 +165,25 @@ is reported registered in the US (Reg. 3390776, United Bible Societies
 Association; not checked at the USPTO). We use the name descriptively, with no
 logo and no claim of endorsement.
 
+Checked 2026-11-05 for titles and headings: eBible's file marks no Psalm titles
+(the title is verse 1, "Salmo de David, cuando huía…") and places no heading
+inside a verse. A re-import produced our data again, byte for byte.
+
 ### `lsg1910` — Louis Segond 1910
 The British and Foreign Bible Society's 1910 revision of Segond (d. 1885); the
 preface does not name the revisers. The basis is age, not eBible's "not
 copyrighted" label.
 
-Known data faults, for a later re-import: 15 verses contain section headings or
-cross-references (Genesis 29:14 runs on "Léa et Rachel V. 15-30: cf. Os 12:13").
-Separately, 465 verses differ from eBible's file of 30 October 2026, all in spacing
-alone: it has since separated words run together in our copy ("Maisaprès", Ezra 5:12).
+Re-imported 2026-11-05 from eBible's current file. 480 verses changed, of two
+kinds and no other: 15 verses lose the section heading and parallel-passage
+reference the file places inside the verse's span (Genesis 29:14 now ends "Jacob
+demeura un mois chez Laban.", with "Léa et Rachel V. 15-30: cf. Os 12:13. Jg
+14:10-13." gone — `s` and `p sfm="r"` elements, which the parser now leaves out
+everywhere), and 465 verses differ in spacing alone, where eBible has since
+separated words run together in our copy ("Maisaprès", Ezra 5:12). The file marks
+no Psalm titles: Segond numbers the title as verse 1, where it stays. Still left
+out: the footnotes, the 1,476 section headings and 2,786 parallel references,
+which were never verse text.
 
 ### `web` — World English Bible
 Edition `engwebp`. Public domain [by dedication](https://ebible.org/eng-web/webfaq.htm),
@@ -135,19 +191,81 @@ which is stronger than a label: the editors dedicate it, CC0 included. The name 
 a trademark, limited to faithful copies: anyone who changes the text or
 punctuation must stop calling it the World English Bible.
 
-That condition is why this needs fixing: our import drops the Psalm titles and
-runs Psalm 119's 21 Hebrew-letter headings into the verses before them (119:8 ends
-"BETH"), and 11 verses lag eBible's file of 29 October 2026. All for a later
-re-import.
+What the FAQ says, in its own words: "All we ask is that if you change the
+actual text or punctuation of the World English Bible that you not call it the
+World English Bible any more. (This is a condition of our trademark use, not to
+restrict your freedom, but to avoid confusion.)" And: "the name “World English
+Bible” is a trademark that may only be used to identify the World English Bible
+as published from eBible.org, and faithful copies of that work."
+
+Re-imported 2026-11-05 from eBible's current `engwebp` file. Against our previous
+data, 36 verses changed: 21 lose the Hebrew letter that ended them in Psalm 119
+(the file marks BETH..TAV with the title marker `<d>` inside the verse before
+each stanza; 119:8 ends "Don’t utterly forsake me." now), 3 in Song of Songs lose
+a speaker label ("Friends", "Beloved", "Lover", `<p sfm="sp">`, at 5:1, 6:13 and
+8:5), and 12 are eBible's own revisions since our copy (Deuteronomy 28:29 "as a
+blind person gropes", Daniel 4:26 "will be restored to you"). The 116 Psalm
+titles are kept as superscriptions.
+
+**Where our text now stands against the file.** Every verse is the file's verse,
+word for word and mark for mark, with whitespace collapsed, and every Psalm title
+is the file's title. What we do not carry: the footnotes and cross-references;
+the headings — Psalm 119's 22 Hebrew letters, 33 speaker labels in Song of Songs,
+the five "BOOK I–V" divisions and the book titles — which are not verse text in
+the file either; and the Strong's tags, which are markup. The colophon at the end
+of Habakkuk 3:19 is plain verse text in this file and is kept.
+
+**Open question, not decided here:** whether leaving out the footnotes and
+cross-references is a change to "the actual text or punctuation". The FAQ speaks
+of text and punctuation and of "faithful copies", and separately describes the
+footnotes as what "clarify the translation, note textual variants, give
+reasonable alternate translations, or clarify some essential context"; it does
+not say whether a copy without them is faithful. Until that is asked and
+answered, the name is used as the file's own metadata gives it, and this log
+says what is left out.
 
 ### `bsb` — Berean Standard Bible
 [Dedicated to the public domain](https://berean.bible/terms.htm) on 30 April 2023.
-The publisher asks that text varying from the official one not use the Berean
-name, a request rather than a licence term; US Reg. 7773706 is reported for the
-name (not checked at the USPTO). Our import drops the Psalm titles and footnotes
-and runs 6 headings into the Song of Songs, to be re-imported later. Our verses
-match eBible's file of 29 October 2026 exactly under `parse_usfx`, so any lag would
-be eBible's behind the publisher; that is unchecked.
+The publisher's words: "All applications that maintain the verbatim text from
+the above Berean sites are invited to bear the Berean name. … For derivative
+works that vary from the official text, we respectfully request that the Berean
+name is not used." A request rather than a licence term; US Reg. 7773706 is
+reported for the name (not checked at the USPTO).
+
+**Re-imported 2026-11-05 from the publisher's own USFM**,
+<https://bereanbible.com/bsb_usfm.zip> (served with `Last-Modified: Fri, 02 Oct
+2026`; its files are dated 2026-03-08, with Luke and Acts 2026-10-02 and 2
+Timothy 2026-07-31), through the new `usfm` parser. The zip holds all 66 books
+and 31,086 verses, the same numbering as before. The downloads page it is linked
+from, berean.bible/downloads.htm, refused a non-browser fetch, so that link was
+not confirmed here; the file's address is the one the review reported.
+
+Against our previous data (eBible's `engbsb`), 2,387 verses changed: 1,252 in
+spacing alone, where the publisher writes a spaced em dash ("and there was
+morning — the first day") and eBible closes it up; 1,129 in wording or
+punctuation, eBible's conversion being behind the publisher (Genesis 2:14 "the
+Tigris" for "Hiddekel", 2:11 "the Pishon", 3:4 "told the woman", commas); and 6
+that lose a heading or a title the source places inside the verse — the colophon
+"For the choirmaster. With stringed instruments." at the end of Habakkuk 3:19
+(`\mr`), Zechariah 12:1's opening line "This is the burden of the word of the
+LORD concerning Israel." (`\d`, now that chapter's superscription), 2 Kings
+19:34's leading quotation mark and three one-word revisions. The Song of Songs'
+6 speaker headings ("The Friends", "The Bride", `\s2`) were already outside its
+verses in this file. eBible's current file, read with the same heading rules,
+still differs from the publisher's in 2,382 verses, so the lag is eBible's; its
+Psalm 3 title reads "A Psalms of David", the publisher's "A Psalm of David".
+
+Two book names follow the publisher's `\toc2`: "Psalm" (eBible's header said
+"Psalms") and "Song of Solomon" (eBible's said "Song"). Slugs and URLs are
+unchanged.
+
+**Where our text now stands against the official file.** Every verse is the
+file's verse, word for word and mark for mark, with whitespace collapsed, and
+every title (116 Psalms and Zechariah 12) is the file's. Left out, none of it
+verse text in the file: the 4,854 footnotes, the 3,096 section headings and 1,325
+parallel references, Psalm 119's 44 acrostic lines (Hebrew letter and name), the
+five "BOOK I–V" divisions and their "Psalms N–M" labels, and the Habakkuk 3
+colophon. The publisher's request is about text that varies; this is its text.
 
 ### `bungo` — 文語訳聖書
 The originally planned source, `bible.salterrae.net`, **no longer resolves in
@@ -174,8 +292,19 @@ outside the EEA by a non-EEA author lasts no longer than in its country of origi
 (CDPA 1988 s.12(6)), so the Japanese answer carries over. This is reasoning, not a
 ruling. It would need revisiting if a named reviser's own term turned out to count.
 
-Our import omits the Psalm superscriptions (`<title type="psalm">`) and the
-furigana (`gloss`, about 248,000 in the Old Testament alone).
+Re-imported 2026-11-05 from the same module. The 116 Psalm superscriptions
+(`<title type="psalm">` in the first verse's entry) are kept now; Psalm 119's 22
+letter headings, marked the same way inside the stanzas, are left out as in the
+WEB. Still omitted: the furigana (`gloss`, about 248,000 in the Old Testament
+alone), and one `<title>` with no type, "新約聖書", which the module places in
+Malachi 4:6's entry.
+
+The re-import also removed 24 duplicated verses. The module links a verse to the
+one before it where the translation runs two together (osis2mod gives both index
+entries one text slice): Psalm 49:1-2, Numbers 15:4-5, Luke 2:4-5, Ephesians
+2:14-15 and 3:14-15 among them. Our copy repeated the text under both numbers;
+it now stands under the first, and the second is omitted, as a verse a
+translation does not have. No other verse changed.
 
 ### `martin1744` — Bible David Martin 1744
 What this is: David Martin's Bible as revised by Pierre Roques (Basel, Im-Hoff,
@@ -249,6 +378,15 @@ that module is **not usable here**. Always read the `.conf`.
 Note the module carries a malformed chapter sequence in Haggai (an empty `Hag.2`
 opens and closes before `Hag.1`). `scripts/ingest.py` handles it; see the
 `_osis_marker` notes in CLAUDE.md.
+
+Checked 2026-11-05 for titles and headings: the module marks no Psalm titles.
+Martin numbers the title as verse 1, as the Hebrew does (Psalm 3 has 9 verses,
+3:1 "Psaume de David au sujet de sa fuite de devant Absalom son fils."), so it
+is verse text and stays. Its 1,040 chapter summaries (`<title type="x-s">`,
+"Création du monde.") and 188 acrostic letters ("Aleph.") are headings and were
+already left out; it has no linked verses. A re-import with `keep_books` in
+force produced our 66 books again, byte for byte; 2 Chronicles and Job stay as
+committed.
 
 
 ## Withdrawn translations
