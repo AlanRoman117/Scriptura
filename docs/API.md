@@ -120,7 +120,8 @@ it to display.
 }
 ```
 
-Served by the live API **and** emitted by `npm run build:api`. Like the list
+Each chapter here has the chapter endpoint's `superscription` where the source
+has a title (see below). Served by the live API **and** emitted by `npm run build:api`. Like the list
 above, and unlike the other endpoints, the router also accepts the `.json`
 suffix (`/translations/bsb/full.json`), because the static tree appends `.json`
 to every path and these are the URLs a browser client fetches directly — the
@@ -136,6 +137,24 @@ reader PWA uses exactly those URLs.
   "book": "John", "book_slug": "john", "book_number": 43,
   "chapter": 3,
   "verses": [{ "number": 1, "text": "There was a man of the Pharisees…" }]
+}
+```
+
+**A chapter may carry `superscription`**, its title where the source has one: a
+Psalm's heading, which English Bibles set before verse 1 unnumbered. It is the
+chapter's, not verse 1's — putting it into the verse would change quoting,
+search and links — so it is a sibling of `verses`, never a verse. The key is
+present only where there is a title (116 Psalms in `web`, none in `kjv`, whose
+source has no titles), so a client that ignores it sees the payload it always
+did. Titles are not searched. The same key appears on each chapter of
+`full.json`, and on a result of `/compare/chapter` whose chapter has one.
+
+```json
+{
+  "translation": "web", "book": "Psalms", "book_slug": "psalms", "book_number": 19,
+  "chapter": 3,
+  "superscription": "A Psalm by David, when he fled from Absalom his son.",
+  "verses": [{ "number": 1, "text": "LORD, how my adversaries have increased!…" }], "…": "…"
 }
 ```
 
@@ -256,7 +275,9 @@ whole request.
 ### `GET /compare/chapter?book=john&chapter=3&translations=kjv,rv1909`
 
 Side-by-side chapter reading. Verse `number` is preserved on every row so columns
-stay aligned even where a translation omits a verse.
+stay aligned even where a translation omits a verse. A result carries
+`superscription` beside `verses` where that translation's chapter has a title;
+it is not a row, since it is not a verse.
 
 ```json
 {

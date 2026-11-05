@@ -2,6 +2,8 @@ import {
   HIDE_AFTER,
   INITIAL,
   SHOW_AFTER,
+  movesFocus,
+  obscured,
   nextMenus,
   padFor,
   rebase,
@@ -155,6 +157,65 @@ describe('which keys are the reader scrolling', () => {
   test('in a field the same keys move the caret', () => {
     expect(scrollsByKey('ArrowDown', true)).toBe(false);
     expect(scrollsByKey(' ', true)).toBe(false);
+  });
+
+  test('Tab is the key that moves focus', () => {
+    expect(movesFocus('Tab')).toBe(true);
+    expect(movesFocus('ArrowDown')).toBe(false);
+    expect(movesFocus('Enter')).toBe(false);
+  });
+});
+
+/*
+ * A desktop at 400% zoom, 320 × 256: the bar (114px) and the search box (61px)
+ * pinned over the pane, the title strip under them. The browser places a
+ * focused verse by the pane's scroll padding where it can; where it cannot,
+ * focus is left under the menus or off the bottom of the screen (2.4.11).
+ */
+describe('whether the pinned menus keep focus from the room they leave', () => {
+  const pane = { top: 0, bottom: 256 };
+  const pinned = [
+    { top: 0, bottom: 114 },
+    { top: 114, bottom: 175 },
+  ];
+
+  test('not when wholly below the lowest menu and above the bottom', () => {
+    expect(obscured({ top: 221, bottom: 235 }, pinned, pane)).toBe(false);
+    expect(obscured({ top: 175, bottom: 256 }, pinned, pane)).toBe(false);
+  });
+
+  test('when under a menu, by however little', () => {
+    expect(obscured({ top: 170, bottom: 190 }, pinned, pane)).toBe(true);
+    expect(obscured({ top: 174, bottom: 200 }, pinned, pane)).toBe(true);
+  });
+
+  test('when off the bottom of the screen, where the browser could not scroll for it', () => {
+    // A window shorter than the pinned menus: Chromium does not scroll at all.
+    expect(obscured({ top: 225, bottom: 269 }, pinned, { top: 0, bottom: 200 })).toBe(true);
+    expect(obscured({ top: 240, bottom: 260 }, pinned, pane)).toBe(true);
+  });
+
+  test('menus parked above the scroller, or beside it, cover nothing in it', () => {
+    const receded = [
+      { top: -114, bottom: 0 },
+      { top: -61, bottom: -0.2 },
+    ];
+    expect(obscured({ top: 10, bottom: 30 }, receded, pane)).toBe(false);
+    expect(obscured({ top: 10, bottom: 30 }, [{ top: 300, bottom: 350 }], pane)).toBe(false);
+    expect(obscured({ top: 10, bottom: 30 }, [], pane)).toBe(false);
+  });
+
+  // The chapter landmark, focused by the skip link or by a tap on the text:
+  // nothing could show it whole, and "revealing" it moved the text under the
+  // finger before the tap's click landed.
+  test('a box taller than the scroller is its own size\'s doing, and left alone', () => {
+    expect(obscured({ top: 100, bottom: 6500 }, pinned, pane)).toBe(false);
+    expect(obscured({ top: -300, bottom: 300 }, pinned, pane)).toBe(false);
+  });
+
+  test('half a pixel is a fractional edge, not a covering', () => {
+    expect(obscured({ top: 174.6, bottom: 200 }, pinned, pane)).toBe(false);
+    expect(obscured({ top: 200, bottom: 256.4 }, pinned, pane)).toBe(false);
   });
 });
 

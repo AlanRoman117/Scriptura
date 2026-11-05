@@ -57,7 +57,7 @@ These are the names of the app's own things. Each is used the same way on every 
 | Canvas (put on a board) | 加入看板 | |
 | Translation | 譯本 | |
 | Scripture | 經文 | |
-| Passage | 經文 | |
+| Passage (the book and chapter nav) | 章節 | |
 | Book / chapter / verse | 書卷 / 章 / 節 | |
 | Search | 搜尋 | |
 | Whole words only | 僅完整字詞 | |
@@ -143,7 +143,7 @@ The bar across the top chooses the book, the chapter and the translation, and op
 | `app.closed` | Settings closed | 已關閉設定面板 |
 | `app.boardSaveFailed` | Could not save the board — export your notes | 無法儲存看板 — 請匯出你的筆記 |
 | `app.languageChanged` | The interface is now in English. | 介面現在是繁體中文。 |
-| `reader.passage` | Passage | 經文 |
+| `reader.passage` | Passage | 章節 |
 | `reader.book` | Book | 書卷 |
 | `reader.chapter` | Chapter | 章 |
 | `reader.translationChip` | KJV — King James Version. Choose or add a translation | KJV — King James Version。選擇或加入譯本 |
@@ -741,7 +741,7 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.connections` | Connections | 連接 |
 | `cards.missingCard` | (missing card) | （已不存在的卡片） |
 | `embed.scrolls` | Board: John 1, scrolls sideways | 看板：John 1，可左右捲動 |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | 看板：John 1，1張卡片<br>看板：John 1，4張卡片 |
+| `embed.picture` | Board: John 1, 1 card<br>Board: John 1, 4 cards | 看板：John 1，1張卡片<br>看板：John 1，4張卡片 |
 | `embed.empty` | This board is empty. | 這個看板是空的。 |
 | `embed.missing` | A board was embedded here, but it no longer exists. | 這裡曾嵌入一個看板，但它已經不存在了。 |
 | `embed.open` | Open board | 開啟看板 |

@@ -92,6 +92,25 @@ test('GET chapter and verse have the documented shapes', async ({ request }) => 
   expect(verse.reference).toBe('John 3:16');
 });
 
+test('a chapter with a title carries `superscription`; one without does not grow', async ({ request }) => {
+  // A Psalm's title stands before verse 1 and is not a verse. The key is
+  // present only where the source has one: the KJV chapter above has none.
+  const titled = await (await request.get('/translations/web/psalms/3')).json();
+  expect(keys(titled)).toEqual([
+    'attribution', 'book', 'book_number', 'book_slug', 'chapter', 'license',
+    'superscription', 'translation', 'verses',
+  ].sort());
+  expect(titled.superscription).toBe('A Psalm by David, when he fled from Absalom his son.');
+  expect(titled.verses[0].text).not.toContain('Absalom');
+
+  const plain = await (await request.get('/translations/web/psalms/1')).json();
+  expect(keys(plain)).not.toContain('superscription');
+
+  // The verse payload never carries it: a title belongs to the chapter.
+  const verse = await (await request.get('/translations/web/psalms/3/1')).json();
+  expect(keys(verse)).not.toContain('superscription');
+});
+
 test('the same slug addresses every translation, in every language', async ({ request }) => {
   const texts = await Promise.all(
     ['kjv', 'rv1909', 'lsg1910', 'bungo', 'blivre'].map(async (id) =>

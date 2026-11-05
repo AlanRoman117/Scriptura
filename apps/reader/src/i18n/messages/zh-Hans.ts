@@ -240,7 +240,9 @@ export const zhHans = {
   },
 
   reader: {
-    passage: '经文',
+    // The nav that picks a book and chapter, inside the pane named 经文
+    // (layout.scripture): a screen reader lists both, so they differ.
+    passage: '章节',
     book: '书卷',
     chapter: '章',
     translationChip: (id: string, name: string) => `${id} — ${name}。选择或添加译本`,

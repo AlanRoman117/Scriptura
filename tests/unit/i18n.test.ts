@@ -383,4 +383,53 @@ describe('the catalogs', () => {
     expect(text).toContain('ZZJOHN 3:16');
     expect(text).toContain('ZZABBR 3:16');
   });
+
+  test('a board picture counts its cards in the language’s plural forms', () => {
+    // The name BoardThumbnail gives a board's picture. It said "1 cards" in
+    // English and "1 cartões" in Portuguese, because the count was written
+    // with the plural in the text instead of through plural().
+    const picture = (locale: (typeof LOCALES)[number], cards: number) =>
+      CATALOGS[locale].embed.picture('Plan', cards);
+    expect(picture('en-US', 1)).toBe('Board: Plan, 1 card');
+    expect(picture('en-US', 2)).toBe('Board: Plan, 2 cards');
+    expect(picture('en-US', 0)).toBe('Board: Plan, 0 cards');
+    expect(picture('es-MX', 1)).toBe('Tablero: Plan, 1 tarjeta');
+    expect(picture('es-MX', 2)).toBe('Tablero: Plan, 2 tarjetas');
+    // French and Brazilian Portuguese treat 0 as singular.
+    expect(picture('fr-FR', 0)).toBe('Tableau : Plan, 0 fiche');
+    expect(picture('fr-FR', 1)).toBe('Tableau : Plan, 1 fiche');
+    expect(picture('fr-FR', 2)).toBe('Tableau : Plan, 2 fiches');
+    expect(picture('pt-BR', 0)).toBe('Quadro: Plan, 0 cartão');
+    expect(picture('pt-BR', 1)).toBe('Quadro: Plan, 1 cartão');
+    expect(picture('pt-BR', 2)).toBe('Quadro: Plan, 2 cartões');
+    // Japanese and Chinese have no plural: the count takes its counter.
+    expect(picture('ja-JP', 1)).toBe('ボード：Plan、カード1枚');
+    expect(picture('ja-JP', 2)).toBe('ボード：Plan、カード2枚');
+    expect(picture('zh-Hans', 1)).toBe('看板：Plan，1张卡片');
+    expect(picture('zh-Hant', 2)).toBe('看板：Plan，2張卡片');
+  });
+
+  test('a Japanese colour name is never followed by a second 色', () => {
+    // Four of the five names end in 色 (琥珀色, ばら色, 空色, すみれ色), so a
+    // message that adds の色 after the name read 琥珀色の色.
+    const ja = CATALOGS['ja-JP'];
+    for (const colour of Object.values(ja.colourWords)) {
+      const phrases = [
+        ja.proposal.into(colour),
+        ja.marks.nameFor(colour),
+        ja.verseActions.mark('Plan', colour),
+        ja.canvas.colourName('Plan', colour),
+        ja.canvas.coloured('Card', colour),
+        ja.canvas.colour(colour, 'Card'),
+      ];
+      for (const phrase of phrases) expect(phrase).not.toMatch(/色の色|色色/);
+    }
+  });
+
+  test.each([...LOCALES])('%s names the Bible pane and the passage nav differently', (locale) => {
+    // Two landmarks, one inside the other: a screen reader lists both, and the
+    // same name on the text and on the controls that move through it misleads.
+    const { layout, reader } = CATALOGS[locale];
+    expect(reader.passage).not.toBe(layout.scripture);
+  });
 });

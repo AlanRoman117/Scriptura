@@ -50,6 +50,10 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
     bibles.find((b) => b.meta.id === translation)?.meta.language;
   const nameOf = (translation: string) =>
     bibles.find((b) => b.meta.id === translation)?.meta.name ?? translation.toUpperCase();
+  // A Psalm's title is not a verse, so it is not a row aligned by number: it
+  // sits above the rows, under its own column, and a column whose Bible has
+  // none stays empty there. Nothing is drawn when no column has one.
+  const titled = columns.some((c) => c.superscription);
 
   const root = useRef<HTMLElement>(null);
   const [stacked, setStacked] = useState(false);
@@ -88,6 +92,29 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
             ))}
           </div>
           <ol className="compare__stack" data-testid="compare-stack" role="list">
+            {titled && (
+              <li className="compare__verse compare__verse--superscription" data-testid="compare-superscriptions">
+                {/* No number: the title is before verse 1. The cell keeps the grid's column. */}
+                <span className="compare__num" />
+                <dl className="compare__readings">
+                  {columns
+                    .filter((c) => c.superscription)
+                    .map((c) => (
+                      <div key={c.translation} className="compare__reading">
+                        <dt className="compare__reading-id">
+                          <span aria-hidden="true">{c.translation.toUpperCase()}</span>
+                          <span className="visually-hidden">{nameOf(c.translation)}</span>
+                        </dt>
+                        <dd className="compare__reading-text">
+                          <span className="compare__text compare__superscription" lang={languageOf(c.translation)}>
+                            {c.superscription}
+                          </span>
+                        </dd>
+                      </div>
+                    ))}
+                </dl>
+              </li>
+            )}
             {rows.map((row) => (
               <li key={row.number} className="compare__verse" data-verse={row.number}>
                 <span className="compare__num">
@@ -159,6 +186,21 @@ export function ComparePane({ bibles, bookSlug, chapter, onDrop, onQuote }: Comp
             </tr>
           </thead>
           <tbody>
+            {titled && (
+              <tr className="compare__superscriptions" data-testid="compare-superscriptions">
+                {/* A plain cell, not a row header: there is no number to head the row with. */}
+                <td className="compare__num" />
+                {columns.map((c) => (
+                  <td key={c.translation} className="compare__cell compare__cell--superscription">
+                    {c.superscription && (
+                      <span className="compare__text compare__superscription" lang={languageOf(c.translation)}>
+                        {c.superscription}
+                      </span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            )}
             {rows.map((row) => (
               <tr key={row.number} data-verse={row.number}>
                 <th scope="row" className="compare__num">

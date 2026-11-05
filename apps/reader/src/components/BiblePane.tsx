@@ -587,6 +587,16 @@ export function BiblePane({
           // a Spanish Bible read with an English interface had every "Mark
           // John 1:2" and "Quote" spoken with Spanish phonemes (3.1.2).
           <div className="chapter__text">
+            {/* A Psalm's title stands before verse 1, unnumbered: it is the
+                chapter's, not verse 1's, so it is no `.verse` — no number, no
+                press, no place in the selection — and it is scripture, so it
+                carries the Bible's `lang` (3.1.2). The reader has no words of
+                its own here: the text is the Bible's. */}
+            {current.superscription && (
+              <p className="chapter__superscription" data-testid="chapter-superscription" lang={meta.language}>
+                {current.superscription}
+              </p>
+            )}
             {current.verses.map((v) => {
               const id = highlightId({ book_slug: book.slug, chapter, verse: v.number });
               const mark = highlights.find((h) => h.id === id);

@@ -1,4 +1,12 @@
-import { fileKey, filesToWrite, mirrorFiles, recordedNames, writeMirror, type MirrorFile } from '../../apps/reader/src/lib/export';
+import {
+  fileKey,
+  filesToWrite,
+  mirrorFiles,
+  recordedNames,
+  writeMirror,
+  type FileRecord,
+  type MirrorFile,
+} from '../../apps/reader/src/lib/export';
 import { enUS } from '../../apps/reader/src/i18n/messages/en-US';
 import type { Note } from '../../apps/reader/src/lib/notes';
 
@@ -46,30 +54,39 @@ function fakeFolder({ foldNames = false } = {}) {
   };
   const writes: string[] = [];
   const removed: string[] = [];
+  /** Names looked up without `create`: the app asking whether a file is there. */
+  const probes: string[] = [];
   /** Writes and removals together, in the order they reached the folder. */
   const log: string[] = [];
   const failOpen = new Set<string>();
   const failClose = new Set<string>();
   const failRemove = new Set<string>();
   const handle: unknown = {
-    getFileHandle: async (name: string) => ({
-      createWritable: async () => {
-        if (failOpen.has(name)) throw new Error('unwritable');
-        let text = '';
-        return {
-          write: async (chunk: string) => {
-            text = chunk;
-          },
-          close: async () => {
-            // A real stream reaches the file only when it closes.
-            if (failClose.has(name)) throw new Error('disk full');
-            files.set(name, text);
-            writes.push(name);
-            log.push(`write ${name}`);
-          },
-        };
-      },
-    }),
+    getFileHandle: async (name: string, options?: { create?: boolean }) => {
+      if (!options?.create) {
+        probes.push(name);
+        // As the real thing does for a file that is not there.
+        if (files.get(name) === undefined) throw new DOMException('missing', 'NotFoundError');
+      }
+      return {
+        createWritable: async () => {
+          if (failOpen.has(name)) throw new Error('unwritable');
+          let text = '';
+          return {
+            write: async (chunk: string) => {
+              text = chunk;
+            },
+            close: async () => {
+              // A real stream reaches the file only when it closes.
+              if (failClose.has(name)) throw new Error('disk full');
+              files.set(name, text);
+              writes.push(name);
+              log.push(`write ${name}`);
+            },
+          };
+        },
+      };
+    },
     removeEntry: async (name: string) => {
       if (failRemove.has(name)) throw new Error('in use');
       // As the real thing does for a file that is not there.
@@ -80,18 +97,20 @@ function fakeFolder({ foldNames = false } = {}) {
     },
     isSameEntry: async (other: unknown) => other === handle,
   } as unknown as FileSystemDirectoryHandle;
-  return { handle, files, writes, removed, log, failOpen, failClose, failRemove };
+  /** What a page knows it wrote, and the record of names, for this folder. */
+  const known = new Map<string, MirrorFile>();
+  const names = new Map<string, FileRecord>();
+  return { handle, files, writes, removed, probes, log, failOpen, failClose, failRemove, known, names };
 }
 
 /** A folder that has already had `notes` written into it. */
 async function mirrored(notes: Note[], options: { foldNames?: boolean } = {}) {
   const folder = fakeFolder(options);
-  const known = new Map<string, MirrorFile>();
-  const names = new Map<string, string>();
-  await writeMirror(folder.handle, notes, known, names);
+  await writeMirror(folder.handle, notes, folder.known, folder.names);
   folder.writes.length = 0;
+  folder.probes.length = 0;
   folder.log.length = 0;
-  return { ...folder, known, names };
+  return folder;
 }
 
 describe('naming', () => {
@@ -418,7 +437,7 @@ describe('a rename removes the file it replaced', () => {
     expect(folder.files.get('Old.md')).toBeUndefined();
     expect(folder.files.get('New.md')).toContain('body of a');
     expect(folder.files.get('Other.md')).toContain('body of b');
-    expect(folder.names.get('a')).toBe('New.md');
+    expect(folder.names.get('a')?.name).toBe('New.md');
   });
 
   test('two renames in a row leave one file', async () => {
@@ -528,7 +547,7 @@ describe('what a rename must leave alone', () => {
     expect(await writeMirror(folder.handle, next, folder.known, folder.names)).toBe(0);
     expect(folder.removed).toEqual([]);
     expect(folder.files.get('Old.md')).toContain('body of a');
-    expect(folder.names.get('a')).toBe('Old.md');
+    expect(folder.names.get('a')?.name).toBe('Old.md');
 
     // And it goes once the write works, however much later.
     folder.failOpen.clear();
@@ -607,6 +626,191 @@ describe('what a rename must leave alone', () => {
   });
 });
 
+/**
+ * "t.md" and "T.md" are one file on Windows and macOS and two on Linux, and the
+ * app cannot ask which. What it can ask, before writing the new spelling, is
+ * whether anything already answers to it: on a disk that folds the two, the old
+ * file does. So the old spelling goes only when the new one was not there.
+ */
+describe('a rename by case alone', () => {
+  test('removes the old spelling on a disk that keeps the two apart', async () => {
+    const a = note('a', 'psalm');
+    const folder = await mirrored([a]);
+
+    await writeMirror(folder.handle, [{ ...renamed(a, 'Psalm'), body: 'recased' }], folder.known, folder.names);
+
+    expect(folder.log).toEqual(['write Psalm.md', 'remove psalm.md']);
+    expect([...folder.files.store.keys()]).toEqual(['Psalm.md']);
+    expect(folder.files.get('Psalm.md')).toContain('recased');
+  });
+
+  test('removes nothing on a disk where the two are one file, and the note is whole', async () => {
+    const a = note('a', 'psalm');
+    const folder = await mirrored([a], { foldNames: true });
+
+    await writeMirror(folder.handle, [{ ...renamed(a, 'Psalm'), body: 'recased' }], folder.known, folder.names);
+
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.size).toBe(1);
+    expect(folder.files.get('Psalm.md')).toContain('recased');
+  });
+
+  test('leaves the old spelling when the new one was already there, since it cannot tell whose it was', async () => {
+    const a = note('a', 'psalm');
+    const folder = await mirrored([a]);
+    folder.files.set('Psalm.md', 'the reader’s');
+
+    await writeMirror(folder.handle, [renamed(a, 'Psalm')], folder.known, folder.names);
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('psalm.md')).toContain('body of a');
+    expect(folder.files.get('Psalm.md')).toContain('body of a');
+
+    // And the file it overwrote was there before the app: a later rename leaves it too.
+    await writeMirror(folder.handle, [renamed(a, 'Other')], folder.known, folder.names);
+    expect(folder.removed).toEqual([]);
+  });
+
+  test('is written again at the next autosave, as insurance against a disk that lied', async () => {
+    const a = note('a', 'psalm');
+    const folder = await mirrored([a]);
+    const recased = renamed(a, 'Psalm');
+    await writeMirror(folder.handle, [recased], folder.known, folder.names);
+    folder.writes.length = 0;
+
+    expect(await writeMirror(folder.handle, [recased], folder.known, folder.names)).toBe(1);
+    expect(folder.writes).toEqual(['Psalm.md']);
+  });
+});
+
+/**
+ * A file that was in the folder before the app first wrote to it was never the
+ * app's, whatever the record says it wrote there since. Overwriting one is as it
+ * always was; removing one is not, so the record says which files the app made.
+ */
+describe('a file that was there before the app wrote it', () => {
+  test('is overwritten as it always was, and never removed by a rename', async () => {
+    const folder = fakeFolder();
+    folder.files.set('Psalm.md', 'the reader’s');
+    const a = note('a', 'Psalm');
+    await writeMirror(folder.handle, [a], new Map(), folder.names);
+    expect(folder.files.get('Psalm.md')).toContain('body of a');
+
+    await writeMirror(folder.handle, [renamed(a, 'New')], folder.known, folder.names);
+
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('Psalm.md')).toContain('body of a');
+    expect(folder.files.get('New.md')).toContain('body of a');
+  });
+
+  test('the leftover of a deleted note, taken by a new note of the same title', async () => {
+    const [a, b] = [note('a', 'Keep me'), note('b', 'Other')];
+    const folder = await mirrored([a, b]);
+    await writeMirror(folder.handle, [b], folder.known, folder.names);
+
+    const fresh = note('z', 'Keep me', 'new');
+    await writeMirror(folder.handle, [fresh, b], folder.known, folder.names);
+    expect(folder.files.get('Keep me.md')).toContain('new');
+    await writeMirror(folder.handle, [renamed(fresh, 'Later'), b], folder.known, folder.names);
+
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('Keep me.md')).toContain('new');
+  });
+
+  test('a file the app made for one note, taken over by another, is still the app’s to remove', async () => {
+    const [a, b] = [note('a', 'T', 'body of a', 1), note('b', 'X', 'body of b', 2)];
+    const folder = await mirrored([a, b]);
+
+    // b joins a's name and takes "T (2)"; then a leaves and b takes "T.md" over from it.
+    const joined = renamed(b, 'T');
+    await writeMirror(folder.handle, [a, joined], folder.known, folder.names);
+    await writeMirror(folder.handle, [renamed(a, 'New'), joined], folder.known, folder.names);
+    expect(folder.files.get('T.md')).toContain('body of b');
+    folder.removed.length = 0;
+
+    await writeMirror(folder.handle, [renamed(a, 'New'), renamed(joined, 'Z')], folder.known, folder.names);
+    expect(folder.removed).toEqual(['T.md']);
+  });
+
+  test('the folder is asked once, at the first write of a name, and not on an autosave', async () => {
+    const [a, b] = [note('a', 'A'), note('b', 'B')];
+    const folder = fakeFolder();
+    await writeMirror(folder.handle, [a, b], new Map(), folder.names);
+    expect(folder.probes.sort()).toEqual(['A.md', 'B.md']);
+    folder.probes.length = 0;
+
+    await writeMirror(folder.handle, [edited(a, 'more'), b], folder.known, folder.names);
+    expect(folder.probes).toEqual([]);
+
+    // A page load knows nothing of the folder, but the record still does.
+    await writeMirror(folder.handle, [a, b], new Map(), folder.names);
+    expect(folder.probes).toEqual([]);
+  });
+});
+
+/**
+ * Two tabs share the folder and the record, not their lists. A tab whose copy
+ * of a note is older than the store's can think a name is no longer owned, when
+ * the other tab has just written it. Before removing, each old file's note is
+ * read from the store: a newer copy there means this tab is behind, and in doubt.
+ */
+describe('a tab holding an older copy of a note', () => {
+  const a = note('a', 'Old');
+  const other = note('b', 'Other');
+  const renamedElsewhere = renamed(a, 'New');
+
+  /** The record and the folder as the other tab left them: a renamed to New. */
+  async function afterTheOtherTab() {
+    const folder = await mirrored([a, other]);
+    await writeMirror(folder.handle, [renamedElsewhere, other], folder.known, folder.names);
+    expect(folder.files.get('Old.md')).toBeUndefined();
+    folder.removed.length = 0;
+    return folder;
+  }
+
+  const store = (notes: Note[]) => async (id: string) => notes.find((n) => n.id === id);
+
+  test('does not remove the file the newer copy was written to', async () => {
+    const folder = await afterTheOtherTab();
+
+    // This tab's first autosave: a full write, from a list that still says Old.
+    const written = await writeMirror(
+      folder.handle,
+      [a, other],
+      new Map(),
+      folder.names,
+      enUS.cards,
+      store([renamedElsewhere, other])
+    );
+
+    expect(written).toBe(2);
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('New.md')).toContain('body of a');
+  });
+
+  test('a tab whose copy is the newest removes as before', async () => {
+    const folder = await mirrored([a, other]);
+    await writeMirror(folder.handle, [renamedElsewhere, other], folder.known, folder.names, enUS.cards, store([renamedElsewhere, other]));
+    expect(folder.removed).toEqual(['Old.md']);
+  });
+
+  test('removes nothing for a note the store no longer has', async () => {
+    const folder = await mirrored([a, other]);
+    await writeMirror(folder.handle, [renamedElsewhere, other], folder.known, folder.names, enUS.cards, store([other]));
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('New.md')).toContain('body of a');
+  });
+
+  test('removes nothing when the store cannot be read, and the writes are not held up', async () => {
+    const folder = await mirrored([a, other]);
+    const refusing = () => Promise.reject(new Error('closed'));
+    await expect(
+      writeMirror(folder.handle, [renamedElsewhere, edited(other, 'more')], folder.known, folder.names, enUS.cards, refusing)
+    ).resolves.toBe(2);
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('Other.md')).toContain('more');
+  });
+});
+
 describe('a removal that fails', () => {
   test('stops nothing: every note is written and recorded', async () => {
     const [a, b, c] = [note('a', 'A'), note('b', 'B'), note('c', 'C')];
@@ -619,7 +823,7 @@ describe('a removal that fails', () => {
     expect(folder.files.get('A2.md')).toContain('body of a');
     expect(folder.files.get('C.md')).toContain('c two');
     expect(folder.removed).toEqual(['B.md']);
-    expect(folder.names.get('a')).toBe('A2.md');
+    expect(folder.names.get('a')?.name).toBe('A2.md');
   });
 
   test('a file already gone from the folder is no failure', async () => {
@@ -648,11 +852,13 @@ describe('a removal that fails', () => {
 /** The record survives a reload, so what is stored decides what can ever be removed. */
 describe('the stored record', () => {
   const stored = (folder: unknown, files: unknown) => ({ folder, files });
+  /** A file the app made, as the record puts it. */
+  const made = (name: string): FileRecord => ({ name, made: true });
 
   test('is read back for the folder it was written for', async () => {
     const folder = fakeFolder();
-    const names = await recordedNames(stored(folder.handle, { a: 'Old.md' }), folder.handle);
-    expect(names).toEqual(new Map([['a', 'Old.md']]));
+    const names = await recordedNames(stored(folder.handle, { a: made('Old.md') }), folder.handle);
+    expect(names).toEqual(new Map([['a', made('Old.md')]]));
   });
 
   test('read back, it removes the old file as if the page had never reloaded', async () => {
@@ -665,12 +871,26 @@ describe('the stored record', () => {
     expect(folder.removed).toEqual(['Old.md']);
   });
 
+  test('carries whether the app made the file, so a reload cannot forget that it did not', async () => {
+    const folder = fakeFolder();
+    folder.files.set('Old.md', 'the reader’s');
+    const a = note('a', 'Old');
+    await writeMirror(folder.handle, [a], new Map(), folder.names);
+    const stored = JSON.parse(JSON.stringify(Object.fromEntries(folder.names)));
+    expect(stored).toEqual({ a: { name: 'Old.md', made: false } });
+
+    const names = await recordedNames({ folder: folder.handle, files: stored }, folder.handle);
+    await writeMirror(folder.handle, [renamed(a, 'New')], new Map(), names);
+    expect(folder.removed).toEqual([]);
+    expect(folder.files.get('Old.md')).toContain('body of a');
+  });
+
   test('is empty for any other folder, so a rename there removes nothing', async () => {
     const [one, other] = [fakeFolder(), fakeFolder()];
     const a = note('a', 'Old');
     other.files.set('Old.md', 'the reader’s, in another folder');
 
-    const names = await recordedNames(stored(one.handle, { a: 'Old.md' }), other.handle);
+    const names = await recordedNames(stored(one.handle, { a: made('Old.md') }), other.handle);
     expect(names.size).toBe(0);
 
     await writeMirror(other.handle, [renamed(a, 'New')], new Map(), names);
@@ -681,7 +901,7 @@ describe('the stored record', () => {
   test('is empty when the folder cannot be compared', async () => {
     const folder = fakeFolder();
     const refusing = { isSameEntry: () => Promise.reject(new Error('gone')) };
-    expect((await recordedNames(stored(folder.handle, { a: 'Old.md' }), refusing)).size).toBe(0);
+    expect((await recordedNames(stored(folder.handle, { a: made('Old.md') }), refusing)).size).toBe(0);
   });
 
   test.each<[string, (handle: unknown) => unknown]>([
@@ -691,11 +911,14 @@ describe('the stored record', () => {
     ['an old shape with no folder', () => ({ a: 'Old.md' })],
     ['no files', (handle) => ({ folder: handle })],
     ['files that are null', (handle) => stored(handle, null)],
-    ['a name that is not text', (handle) => stored(handle, { a: 7 })],
-    ['a name with no extension', (handle) => stored(handle, { a: 'Old' })],
-    ['a name that climbs out of the folder', (handle) => stored(handle, { a: '../Old.md' })],
-    ['a name in a subfolder', (handle) => stored(handle, { a: 'sub\\Old.md' })],
-    ['two notes claiming one file', (handle) => stored(handle, { a: 'Old.md', b: 'old.MD' })],
+    ['the shape from before it said what the app made', (handle) => stored(handle, { a: 'Old.md' })],
+    ['a name that is not text', (handle) => stored(handle, { a: made(7 as unknown as string) })],
+    ['a name with no extension', (handle) => stored(handle, { a: made('Old') })],
+    ['a name that climbs out of the folder', (handle) => stored(handle, { a: made('../Old.md') })],
+    ['a name in a subfolder', (handle) => stored(handle, { a: made('sub\\Old.md') })],
+    ['no word on whether the app made it', (handle) => stored(handle, { a: { name: 'Old.md' } })],
+    ['a word on it that is not yes or no', (handle) => stored(handle, { a: { name: 'Old.md', made: 'yes' } })],
+    ['two notes claiming one file', (handle) => stored(handle, { a: made('Old.md'), b: made('old.MD') })],
   ])('malformed as %s removes nothing', async (_what, make) => {
     const a = note('a', 'Old');
     const folder = await mirrored([a]);

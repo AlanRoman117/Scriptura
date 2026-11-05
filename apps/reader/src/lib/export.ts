@@ -9,7 +9,7 @@
  *    which `navigator.storage.persist()` only *requests*, never guarantees.
  *    Chromium-only, so it is offered where it exists and never assumed.
  */
-import { get, put, SETTINGS } from './db';
+import { get, NOTES, put, SETTINGS } from './db';
 import { markExported, type Note } from './notes';
 import { boardToMarkdown, type Board, type BoardNode, type CardWords } from './canvas';
 import { enUS } from '../i18n/messages/en-US';
@@ -44,22 +44,21 @@ export function exportNotes(
   words: CardWords = enUS.cards
 ): Blob {
   const name = describe ?? ((node: BoardNode) => defaultDescribe(node, words));
-  const seen = new Map<string, number>();
-  const unique = (folder: string, title: string, id: string) => {
-    const base = safeFilename(title, id);
-    const n = (seen.get(`${folder}/${base}`) ?? 0) + 1;
-    seen.set(`${folder}/${base}`, n);
-    return `${folder}/${base}${n > 1 ? ` (${n})` : ''}.md`;
-  };
+  // The very names the folder mirror gives, from the one function, so a note is
+  // the same file in both and the two cannot drift apart again. The zip had a
+  // dedupe of its own that appended " (2)" without looking and compared names
+  // as strings: "T", "T" and "T (2)" went in as two entries with one path, and
+  // "Psalm" beside "psalm" unzipped to one file on Windows and macOS. Boards
+  // have no folder, so an untitled one keeps the word for it.
+  const boardNames = uniqueNames(boards, (board) => safeFilename(board.name || words.untitledBoard, board.id));
 
   return createZip([
-    ...notes.map((note) => ({
-      // Two notes may share a title; a zip with duplicate paths is ambiguous.
-      name: unique('notes', note.title || words.untitledNote, note.id),
-      content: toMarkdown(note, words, renderBoard),
+    ...[...mirrorFiles(notes, words).values()].map((file) => ({
+      name: `notes/${file.name}`,
+      content: toMarkdown(file.note, words, renderBoard),
     })),
     ...boards.map((board) => ({
-      name: unique('boards', board.name || words.untitledBoard, board.id),
+      name: `boards/${boardNames.get(board)!}`,
       content: boardToMarkdown(board, name, words),
     })),
   ]);
@@ -165,8 +164,14 @@ export interface MirrorFile {
 export const fileKey = (name: string): string =>
   name.normalize('NFD').toUpperCase().toLowerCase().normalize('NFC');
 
+/** What a file is named after: a note or a board, by what never changes about it. */
+interface Named {
+  id: string;
+  created: number;
+}
+
 /** Oldest first, by what never changes: not the list's order, and not `updated`. */
-function byAge(a: Note, b: Note): number {
+function byAge(a: Named, b: Named): number {
   // A note from before `created` was stored still needs a place, and NaN would
   // make the sort's order depend on the order it was handed.
   const age = (Number(a.created) || 0) - (Number(b.created) || 0);
@@ -175,19 +180,51 @@ function byAge(a: Note, b: Note): number {
 }
 
 /**
- * Which note belongs in which file, as of this list.
+ * A `.md` file name of its own for each of `items`, from the base name `baseOf`
+ * gives it. The one naming for the folder and the zip, so a note is the same
+ * file in both.
  *
- * Always over the whole list, however few notes are about to be written: a
- * note's number depends on who else wants its name. In list order if it could
- * be, but the list is sorted by `updated` when it loads and a new note goes on
- * top, so counting down it moved " (2)" from one note to the other whenever
- * either was edited and the page reloaded. The oldest note of a name keeps it,
- * and no edit can change who that is.
+ * Always over the whole list, however few are about to be written: an item's
+ * number depends on who else wants its name. In list order if it could be, but
+ * the list is sorted by `updated` when it loads and a new note goes on top, so
+ * counting down it moved " (2)" from one note to the other whenever either was
+ * edited and the page reloaded. The oldest of a name keeps it, and no edit can
+ * change who that is.
  *
  * Two passes, so that a note titled "T (2)" holds that name against the second
  * of two notes titled "T". The dedupe once appended " (2)" without looking, and
  * those two shared a file: whichever was written last silently replaced the
- * other. A note nobody collides with has exactly the name it has always had.
+ * other. An item nobody collides with has exactly the name it has always had.
+ */
+export function uniqueNames<T extends Named>(items: T[], baseOf: (item: T) => string): Map<T, string> {
+  const taken = new Set<string>();
+  const names = new Map<T, string>();
+  const unnamed: T[] = [];
+  for (const item of [...items].sort(byAge)) {
+    const name = `${baseOf(item)}.md`;
+    if (taken.has(fileKey(name))) {
+      unnamed.push(item);
+    } else {
+      taken.add(fileKey(name));
+      names.set(item, name);
+    }
+  }
+  // Where each name's count got to, because this runs on every autosave and
+  // starting again from 2 is quadratic in notes sharing a title.
+  const counts = new Map<string, number>();
+  for (const item of unnamed) {
+    const base = baseOf(item);
+    let n = counts.get(fileKey(base)) ?? 2;
+    while (taken.has(fileKey(`${base} (${n}).md`))) n++;
+    counts.set(fileKey(base), n + 1);
+    taken.add(fileKey(`${base} (${n}).md`));
+    names.set(item, `${base} (${n}).md`);
+  }
+  return names;
+}
+
+/**
+ * Which note belongs in which file, as of this list (`uniqueNames`).
  *
  * Returned in list order, the order the files are then written in.
  */
@@ -195,30 +232,7 @@ export function mirrorFiles(notes: Note[], words: CardWords = enUS.cards): Map<s
   // An untitled note is named by its id here, not by the word "Untitled": the
   // folder outlives a change of language, and a new name would leave a second
   // copy of the same note behind.
-  const baseOf = (note: Note) => safeFilename(note.title, note.id);
-  const taken = new Set<string>();
-  const names = new Map<Note, string>();
-  const unnamed: Note[] = [];
-  for (const note of [...notes].sort(byAge)) {
-    const name = `${baseOf(note)}.md`;
-    if (taken.has(fileKey(name))) {
-      unnamed.push(note);
-    } else {
-      taken.add(fileKey(name));
-      names.set(note, name);
-    }
-  }
-  // Where each name's count got to, because this runs on every autosave and
-  // starting again from 2 is quadratic in notes sharing a title.
-  const counts = new Map<string, number>();
-  for (const note of unnamed) {
-    const base = baseOf(note);
-    let n = counts.get(fileKey(base)) ?? 2;
-    while (taken.has(fileKey(`${base} (${n}).md`))) n++;
-    counts.set(fileKey(base), n + 1);
-    taken.add(fileKey(`${base} (${n}).md`));
-    names.set(note, `${base} (${n}).md`);
-  }
+  const names = uniqueNames(notes, (note) => safeFilename(note.title, note.id));
   const files = new Map<string, MirrorFile>();
   for (const note of notes) {
     const name = names.get(note)!;
@@ -254,6 +268,21 @@ export function filesToWrite(files: Map<string, MirrorFile>, inFolder: Map<strin
 }
 
 /**
+ * The file last written for a note, and whether the app made it.
+ *
+ * `made` is false for a file that was already in the folder when the app first
+ * wrote to it under this name: the reader's own, a deleted note's leftover, or
+ * a file from before the record kept this. Overwriting such a file is as it
+ * always was; removing it is new, and never done. The flag is asked of the
+ * folder once, at the first write of a name (`writeMirror`), and carried along
+ * when another note takes the file over.
+ */
+export interface FileRecord {
+  name: string;
+  made: boolean;
+}
+
+/**
  * The record of file names, as stored: note id to the file last written for it,
  * beside the folder that was written to. A map of what the app itself wrote,
  * and the only thing that may ever name a file to remove.
@@ -264,30 +293,55 @@ export function filesToWrite(files: Map<string, MirrorFile>, inFolder: Map<strin
  */
 interface NameRecord {
   folder: FileSystemDirectoryHandle;
-  files: Record<string, string>;
+  files: Record<string, FileRecord>;
 }
 
 /**
  * What was recorded for this folder. Anything else is an empty record: one that
  * is missing, malformed or another folder's, and an empty record removes nothing.
  * The price of being wrong that way is a stray file, and of the reverse a lost one.
+ *
+ * The shape before `made` (a bare name per note) is malformed here on purpose:
+ * it cannot say whether those files were there before the app, so the first
+ * full write records them afresh, as found, and the first rename of each leaves
+ * its old file behind, once.
  */
 export async function recordedNames(
   stored: unknown,
   folder: Pick<FileSystemDirectoryHandle, 'isSameEntry'>
-): Promise<Map<string, string>> {
+): Promise<Map<string, FileRecord>> {
   try {
     const record = stored as NameRecord;
     if (!(await folder.isSameEntry(record.folder))) return new Map();
     const entries = Object.entries(record.files);
-    const names = entries.map(([, name]) => name);
-    const sound = names.every((name) => typeof name === 'string' && /^[^/\\]+\.md$/.test(name));
+    const sound = entries.every(
+      ([, file]) => typeof file.name === 'string' && /^[^/\\]+\.md$/.test(file.name) && typeof file.made === 'boolean'
+    );
     // Written by this file, one note to a file. Two notes claiming one is not.
-    return sound && new Set(names.map(fileKey)).size === names.length ? new Map(entries) : new Map();
+    if (!sound || new Set(entries.map(([, file]) => fileKey(file.name))).size !== entries.length) return new Map();
+    return new Map(entries.map(([id, file]) => [id, { name: file.name, made: file.made }]));
   } catch {
     return new Map();
   }
 }
+
+/**
+ * Whether nothing in the folder answers to `name` yet. Asked before the first
+ * write of a name, and only then, because a lookup per file per autosave is what
+ * the mirror was just relieved of. Anything but a plain "not found" is taken as
+ * "something is there": a folder that cannot be asked is a folder in doubt.
+ */
+async function absent(folder: Pick<FileSystemDirectoryHandle, 'getFileHandle'>, name: string): Promise<boolean> {
+  try {
+    await folder.getFileHandle(name);
+    return false;
+  } catch (error) {
+    return (error as { name?: unknown } | null)?.name === 'NotFoundError';
+  }
+}
+
+/** The note as the store has it now, or nothing when the store no longer has it. */
+export type StoredNote = (id: string) => Promise<Pick<Note, 'updated'> | undefined>;
 
 /**
  * Write what changed, record each file once its write has really finished, then
@@ -301,23 +355,37 @@ export async function recordedNames(
  *   the only copy, and the next autosave tries again.
  * - The name came from `names`, so the app wrote it for this very note. Nothing
  *   here guesses a name or lists the folder, and the reader's own files are safe.
- * - No note now owns that name, compared as a disk would. After two notes swap
- *   titles each one's old file is the other's new one. And "t.md" replacing
- *   "T.md" is one file on Windows and macOS, so a rename by case alone removes
- *   nothing, or it would remove the note it had just written. On a disk that
- *   keeps them apart, the old spelling stays behind.
+ * - The app made that file: nothing answered to the name when the app first
+ *   wrote it (`absent`, `FileRecord.made`). A file that was already there, the
+ *   reader's own or a deleted note's leftover, is overwritten as it always was
+ *   and never removed, however many notes have since been written to it.
+ * - No other note now owns that name, compared as a disk would. After two notes
+ *   swap titles each one's old file is the other's new one.
+ * - It is a different file from the one just written. "t.md" and "T.md" are
+ *   one file on Windows and macOS and two on Linux, and the app cannot ask which;
+ *   but on a disk that folds them the old file answers to the new spelling before
+ *   it is written, so the old spelling goes only when the new one was `absent`.
+ *   When it was not, the old spelling stays, and the new is recorded as not made:
+ *   the price is a stray after a later rename, and the alternative was a note.
+ * - The store's copy of the note is no newer than this list's (`latest`). Two
+ *   tabs share the folder and the record, not their lists, and a tab behind on a
+ *   note would otherwise remove the file the other tab had just written it to.
+ *   A note the store no longer has, or a store that cannot be read, is doubt.
  *
  * A file edited outside the app is overwritten at the note's next save, as it
  * always was, so an edit going with a renamed file is no new risk.
  *
  * Removals come after every write, so a slow or failing one holds up no note.
+ * Without `latest`, the list is taken as the store's: one tab, as the unit tests
+ * are. `mirrorNotes` always asks.
  */
 export async function writeMirror(
   folder: Pick<FileSystemDirectoryHandle, 'getFileHandle' | 'removeEntry'>,
   notes: Note[],
   inFolder: Map<string, MirrorFile>,
-  names: Map<string, string>,
-  words: CardWords = enUS.cards
+  names: Map<string, FileRecord>,
+  words: CardWords = enUS.cards,
+  latest: StoredNote = async (id) => notes.find((note) => note.id === id)
 ): Promise<number> {
   const files = mirrorFiles(notes, words);
 
@@ -326,11 +394,23 @@ export async function writeMirror(
   // in its name.
   const living = new Set(notes.map((note) => note.id));
   for (const id of names.keys()) if (!living.has(id)) names.delete(id);
-  const holders = new Map([...names].map(([id, name]) => [fileKey(name), id]));
+  const holders = new Map([...names].map(([id, file]) => [fileKey(file.name), id]));
 
-  const replaced: string[] = [];
+  // Files a note has moved off this turn, by key. One a note is written to
+  // later in the same turn is still the file the app knows, however the record
+  // reads by then: renaming the first of three "Psalm" notes hands "Psalm.md"
+  // to the second, and asking the folder would find it there and call it the reader's.
+  const left = new Map<string, FileRecord>();
+  const replaced: { name: string; note: Note }[] = [];
   let written = 0;
   for (const file of filesToWrite(files, inFolder)) {
+    const key = fileKey(file.name);
+    // Whose the file is, settled before the write changes the answer. A name the
+    // record holds under this very spelling is a file the app knows; any other,
+    // including this note's own name in another case, is asked of the folder.
+    const holder = holders.get(key);
+    const known = holder === undefined ? left.get(key) : names.get(holder);
+    const made = known?.name === file.name ? known.made : await absent(folder, file.name);
     try {
       const handle = await folder.getFileHandle(file.name, { create: true });
       const stream = await handle.createWritable();
@@ -341,29 +421,39 @@ export async function writeMirror(
       // recorded, so the next autosave tries it again.
       continue;
     }
-    const key = fileKey(file.name);
     inFolder.set(key, file);
     written++;
 
     // The file is this note's now. If another note last held it, that note no
     // longer has anything there to clean up.
-    const holder = holders.get(key);
     if (holder !== undefined && holder !== file.note.id) names.delete(holder);
     holders.set(key, file.note.id);
 
     const old = names.get(file.note.id);
-    names.set(file.note.id, file.name);
-    if (old !== undefined && fileKey(old) !== key) {
-      holders.delete(fileKey(old));
-      replaced.push(old);
+    names.set(file.note.id, { name: file.name, made });
+    if (old === undefined || old.name === file.name) continue;
+    const apart = fileKey(old.name) !== key;
+    if (apart) {
+      holders.delete(fileKey(old.name));
+      left.set(fileKey(old.name), old);
     }
+    if (old.made && (apart || made)) replaced.push({ name: old.name, note: file.note });
   }
 
-  const owned = new Set([...files.keys()].map(fileKey));
-  for (const name of replaced) {
-    if (owned.has(fileKey(name))) continue;
+  const owners = new Map([...files.values()].map((file) => [fileKey(file.name), file.note.id]));
+  for (const { name, note } of replaced) {
+    const owner = owners.get(fileKey(name));
+    if (owner !== undefined && owner !== note.id) continue;
+    try {
+      const stored = await latest(note.id);
+      if (stored === undefined || stored.updated > note.updated) continue;
+    } catch {
+      continue;
+    }
     // Forgotten whether or not the removal works: a note coming back to this
-    // name must be written again, not trusted to be there still.
+    // name must be written again, not trusted to be there still. After a rename
+    // by case alone this forgets the new spelling too, and one autosave writes
+    // it again: cheap insurance against a disk that folds names it said it kept.
     inFolder.delete(fileKey(name));
     try {
       await folder.removeEntry(name);
@@ -420,7 +510,9 @@ export function mirrorNotes(notes: Note[], words: CardWords = enUS.cards): Promi
     const stored = await get<unknown>(SETTINGS, FILE_NAMES).catch(() => undefined);
     const names = await recordedNames(stored, folder);
     const before = JSON.stringify([...names]);
-    const written = await writeMirror(folder, notes, record, names, words);
+    // Asked of the store, not of this list: another tab may have moved a note
+    // on since this one loaded it, and its file must not go for that.
+    const written = await writeMirror(folder, notes, record, names, words, (id) => get<Note>(NOTES, id));
     // Written only when a name changed, so an ordinary autosave adds no put. A
     // failure costs a stray file at some later rename, and is not worth a word.
     if (JSON.stringify([...names]) !== before) {

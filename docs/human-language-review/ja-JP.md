@@ -739,7 +739,7 @@ A surface where verses and notes are laid out as cards and joined with arrows. M
 | `cards.connections` | Connections | つながり |
 | `cards.missingCard` | (missing card) | （見つからないカード） |
 | `embed.scrolls` | Board: John 1, scrolls sideways | ボード：ヨハネによる福音書 1（横にスクロールできます） |
-| `embed.picture` | Board: John 1, 1 cards<br>Board: John 1, 4 cards | ボード：ヨハネによる福音書 1、カード1枚<br>ボード：ヨハネによる福音書 1、カード4枚 |
+| `embed.picture` | Board: John 1, 1 card<br>Board: John 1, 4 cards | ボード：ヨハネによる福音書 1、カード1枚<br>ボード：ヨハネによる福音書 1、カード4枚 |
 | `embed.empty` | This board is empty. | このボードは空です。 |
 | `embed.missing` | A board was embedded here, but it no longer exists. | ここにはボードが埋め込まれていましたが、そのボードはもうありません。 |
 | `embed.open` | Open board | ボードを開く |
@@ -869,7 +869,7 @@ When the reader has allowed an assistant to help, what it wants to add is shown 
 | `proposal.lede` | An assistant proposed this. Nothing has been saved — review it, change anything you like, and it only takes effect when you accept. | アシスタントからの提案です。まだ何も保存されていません。内容を確認し、自由に変更してください。承認したときにだけ反映されます。 |
 | `proposal.titleInput` | Proposed note title | 提案されたノートのタイトル |
 | `proposal.bodyInput` | Proposed note body | 提案されたノートの本文 |
-| `proposal.into`<br><sub>`{collection}` is replaced by the collection's name, in bold.</sub> | Into {collection} (amber) | {collection}（琥珀色の色）にマーク |
+| `proposal.into`<br><sub>`{collection}` is replaced by the collection's name, in bold.</sub> | Into {collection} (amber) | {collection}（琥珀色）にマーク |
 | `proposal.missing` | Not in this translation. | この訳にはありません。 |
 | `proposal.discard` | Discard | 破棄 |
 | `proposal.save` | Save this note | このノートを保存 |

@@ -929,6 +929,22 @@ summary:focus-visible,
 
 .verse { margin: 0 0 var(--verse-gap); }
 
+/* A Psalm's title (`superscription` on the chapter): scripture, not a verse.
+   It stands before verse 1 in the reading face, quieter than the verses —
+   smaller, in the soft ink (7:1 on paper, measured in contrast.test.ts) and
+   italic where the script slants — and it is no `.verse`: no number, no press,
+   no row of actions, and in running text it stays a block above verse 1 rather
+   than running into it. It carries the Bible's `lang`, so the face follows the
+   language, and Japanese and Chinese, which never slant, keep their upright. In
+   a comparison the same title sits above the rows under its own column. */
+.chapter__superscription, .compare__superscription {
+  font-family: var(--serif); font-style: italic; color: var(--ink-soft);
+}
+.chapter__superscription { margin: 0 0 var(--verse-gap); font-size: calc(var(--reading-size) * .92); }
+.compare__superscription { font-size: calc(var(--fs-base) * var(--text-scale) * .92); }
+.chapter__superscription:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)),
+.compare__superscription:is(:lang(ja), :lang(zh-Hans), :lang(zh-Hant)) { font-style: normal; }
+
 .attribution {
   margin-top: auto; padding: .75rem 1.25rem;
   border-top: 1px solid var(--rule);
@@ -1023,9 +1039,12 @@ summary:focus-visible,
    only their `top` changes, to minus their own height: they scroll off like
    any content, keep their place in the flow (so nothing below them moves),
    and stay in the accessibility tree and the Tab order. Focus arriving in
-   them pins them again (BiblePane). `display: none`, `visibility: hidden` or
-   `inert` here would take the passage landmark and the Help chip away from a
-   screen reader for as long as the pane was scrolled.
+   them pins them again, and focus the browser could not place clear of them
+   — at 400% zoom in a short window they are taller than the pane, and the
+   padding below has no room — unpins them (lib/recede.ts). `display: none`,
+   `visibility: hidden` or `inert` here would take the passage landmark and
+   the Help chip away from a screen reader for as long as the pane was
+   scrolled.
 
    `top` is what moves, so the slide is a transition, and both reduced-motion
    rules already switch it off (2.3.3). */
