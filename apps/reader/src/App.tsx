@@ -69,12 +69,7 @@ import {
 import { MarksPanel } from './components/MarksPanel';
 import { chooseNotesFolder, downloadNotes, mirrorNotes, mirroring } from './lib/export';
 import { SearchBar } from './components/SearchBar';
-import {
-  runQuery,
-  resolveReference,
-  type MatchOptions,
-  type ResolvedReference,
-} from './lib/search';
+import { runQuery, resolveReference, type MatchOptions } from './lib/search';
 import { quotePassage, resolveLink, toWikiLinks } from './lib/references';
 import { formatRuns, toRuns } from './lib/selection';
 import { boardEmbed } from './lib/markdown';
@@ -106,6 +101,8 @@ const AUTOSAVE_MS = 600;
 const BOARD_SAVE_MS = 150;
 /** A search is announced once the typing has paused, not per keystroke. */
 const ANNOUNCE_SEARCH_MS = 400;
+/** One empty list for "nothing searched", so an empty query is not a new answer each render. */
+const NO_HITS: SearchResult[] = [];
 
 /**
  * Say when a panel opens or closes (4.1.3). The chapter is replaced without
@@ -216,17 +213,6 @@ export function App() {
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   const [query, setQuery] = useState('');
-  /** Every match. The dropdown shows a slice; the results view walks them all. */
-  const [hits, setHits] = useState<SearchResult[]>([]);
-  /**
-   * The query `hits` were computed for.
-   *
-   * `hits` lags `query` by one render — the effect that recomputes it runs
-   * after. Carrying the query the results actually belong to lets the panel
-   * label itself honestly, and lets a test wait for the count that answers the
-   * question it just asked instead of the one before it.
-   */
-  const [hitsQuery, setHitsQuery] = useState('');
   const [resultsOpen, setResultsOpen] = useState(false);
   /**
    * Not persisted, deliberately. The toggles are visible whenever the search
@@ -234,7 +220,37 @@ export function App() {
    * asking why search has stopped finding anything.
    */
   const [matching, setMatching] = useState<MatchOptions>({ mode: 'substring' });
-  const [reference, setReference] = useState<ResolvedReference | null>(null);
+  /**
+   * The search, computed in the keystroke's own render. A reference jumps;
+   * anything else searches. Both run offline against the translation already
+   * in memory.
+   *
+   * ⚠️ Not in an effect. The results were state set from an effect after
+   * each key, so every keystroke in the search box committed with a second
+   * render still queued behind it — the pattern that lost a character from a
+   * note's title (`tests/reader/fast-typing.spec.ts`, "in the search box").
+   * Memoised on the query, so a render for anything else does not search
+   * again, and `matching` belongs in the key: without it, ticking a box left
+   * stale results. Not `useDeferredValue` either: that would leave a
+   * transition queued after each key, which is what the spec forbids.
+   */
+  const searching = !!bible && query.trim().length > 0;
+  const reference = useMemo(
+    () => (bible && query.trim() ? resolveReference(bible, query) : null),
+    [bible, query]
+  );
+  /** Every match. The dropdown shows a slice; the results view walks them all. */
+  const hits = useMemo(
+    () => (bible && query.trim() ? runQuery(bible, query, matching) : NO_HITS),
+    [bible, query, matching]
+  );
+  /**
+   * The query `hits` answer: the query itself now, or nothing while there is
+   * nothing to search. It is still carried separately and written onto the
+   * count (`data-query`), so a test can wait for the count that answers the
+   * question it just asked, which is what every search test does.
+   */
+  const hitsQuery = searching ? query : '';
   const [focusVerse, setFocusVerse] = useState<number | null>(null);
   /** The last verse of a range that was jumped to, so the whole of it is pointed out. */
   const [focusThrough, setFocusThrough] = useState<number | null>(null);
@@ -347,21 +363,14 @@ export function App() {
     return () => window.clearTimeout(t);
   }, [hits, hitsQuery]);
 
-  useEffect(() => {
-    if (!bible || !query.trim()) {
-      setHits([]);
-      setHitsQuery('');
-      setReference(null);
-      setResultsOpen(false);
-      return;
-    }
-    // A reference jumps; anything else searches. Both run offline against the
-    // translation already in memory.
-    setReference(resolveReference(bible, query));
-    setHits(runQuery(bible, query, matching));
-    setHitsQuery(query);
-    // `matching` belongs here: without it, ticking a box leaves stale results.
-  }, [bible, query, matching]);
+  /**
+   * A query cleared closes the results view, which has nothing left to show.
+   * In the key's own handler, with the query, not in an effect on it.
+   */
+  const changeQuery = (next: string) => {
+    setQuery(next);
+    if (!next.trim()) setResultsOpen(false);
+  };
 
   /**
    * Confirm an insertion in words, where it went, until the next action.
@@ -1472,7 +1481,7 @@ export function App() {
                 resultsFor={hitsQuery}
                 options={matching}
                 onOptions={setMatching}
-                onQuery={setQuery}
+                onQuery={changeQuery}
                 onGo={goTo}
                 onInsert={insertSearchResult}
                 onToCanvas={(r) => addVerseToBoard(r.book_slug, r.chapter, r.verse)}

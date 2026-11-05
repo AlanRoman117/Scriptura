@@ -96,6 +96,22 @@ test.describe('a keystroke leaves nothing queued behind it', () => {
     expect(await queued()).toEqual(Array.from(SHORT, () => 0));
   });
 
+  // The search box searched in an effect after each key and set the results
+  // as state from there, so every keystroke committed with a second render
+  // queued behind it (lane 32, two commits a key) — the one place this was
+  // knowingly left, a query being short. The search runs in the key's own
+  // render now: one commit, nothing queued, and the count answers the query
+  // in the same render it is typed.
+  test('in the search box', async ({ page }) => {
+    await watchReact(page);
+    await open(page);
+    const queued = await queuedAfterEachKey(page);
+    await page.getByTestId('search-input').click();
+    await page.keyboard.type(SHORT);
+    await expect(page.getByTestId('search-count')).toHaveAttribute('data-query', SHORT);
+    expect(await queued()).toEqual(Array.from(SHORT, () => 0));
+  });
+
   // The notes pane looks for the heading and the link under the caret after
   // every keystroke, and set both each time, nearly always to what they were.
   for (const editor of ['live', 'plain'] as const) {
