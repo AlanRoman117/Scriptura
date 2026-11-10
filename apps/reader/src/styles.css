@@ -2478,6 +2478,11 @@ summary:focus-visible,
      has focus: then it is being written, at its own size. */
   .notes:has(.notes__editor:focus-within) { padding-top: .25rem; }
   .notes:has(.notes__editor:focus-within) .notes__title-field { font-size: var(--fs-base); margin-bottom: 0; }
+  /* The heading the caret is under steps aside too (27px). It is a reminder
+     for the eye only, already `aria-hidden`: a screen reader reads the note's
+     own heading lines, so nothing is taken from one. NotesPane still tracks
+     it, and it is back the moment the sheet is tall or focus leaves. */
+  .notes__editor:focus-within .notes__heading { display: none; }
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 

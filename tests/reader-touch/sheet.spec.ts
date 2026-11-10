@@ -204,19 +204,18 @@ test.describe('a note read with its menus away, then typed into above a keyboard
 
       const at = await page.evaluate(() => {
         const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
-        const heading = document.querySelector('.notes__heading')!;
         return {
           sheet: box('.sheet'),
-          heading: box('.notes__heading'),
-          headingClipped: heading.scrollHeight > heading.clientHeight + 1,
+          tools: box('.tools__slot'),
           note: box('#notes-surface'),
           status: box('.notes__status'),
         };
       });
       expect(at.sheet.bottom).toBeLessThanOrEqual(424 + 1);
-      // The heading the caret is under is drawn whole, and the note starts below it.
-      expect(at.headingClipped).toBe(false);
-      expect(at.note.top).toBeGreaterThanOrEqual(at.heading.bottom - 1);
+      // The heading the caret is under steps aside in a sheet this short
+      // ("the note in a short sheet", below); the note starts below the tools.
+      await expect(page.getByTestId('notes-heading')).toBeHidden();
+      expect(at.note.top).toBeGreaterThanOrEqual(at.tools.bottom - 1);
       // The note ends inside the sheet, and the status line comes after it.
       expect(at.note.bottom).toBeLessThanOrEqual(at.sheet.bottom + 1);
       expect(at.status.top).toBeGreaterThanOrEqual(at.note.bottom - 1);
@@ -398,6 +397,48 @@ test.describe('the note in a short sheet', () => {
     await settled(page);
     await surface.focus();
     expect((await look()).size).toBeCloseTo(titled.size, 1);
+  });
+
+  test('the heading the caret is under steps aside while the note is typed into, and only in a short sheet', async ({ page }) => {
+    const surface = await typing(page);
+    const heading = page.getByTestId('notes-heading');
+    // Still tracked, and still out of the accessibility tree as it always
+    // was: a reminder for the eye, which a screen reader gets from the note.
+    await expect(heading).toHaveText('What does it take to get something from God');
+    await expect(heading).toHaveAttribute('aria-hidden', 'true');
+    await expect(heading).toBeHidden();
+    // The note starts right under the tools.
+    const tools = (await page.getByTestId('editor-tools').boundingBox())!;
+    expect((await surface.boundingBox())!.y).toBeLessThan(tools.y + tools.height + 12);
+
+    // Focus out of the note: drawn again.
+    await page.getByTestId('note-title').focus();
+    await expect(heading).toBeVisible();
+    // A tall sheet draws it while the note is typed into.
+    await surface.focus();
+    await expect(heading).toBeHidden();
+    await page.evaluate(() => document.querySelectorAll('style').forEach((s) => s.textContent?.includes('--vvh') && s.remove()));
+    await settled(page);
+    await expect(heading).toBeVisible();
+    await expect(surface).toBeFocused();
+  });
+
+  test('all three together roughly double the note: tools folded, a smaller title, no heading line', async ({ page }) => {
+    const surface = await typing(page);
+    // 114px before any of this, in this geometry.
+    await page.getByTestId('note-tools-toggle').tap();
+    await expect(page.getByTestId('editor-tools')).toBeHidden();
+    await expect(surface).toBeFocused();
+    await settled(page);
+    const at = await page.evaluate(() => ({
+      sheet: document.querySelector('.sheet')!.getBoundingClientRect(),
+      note: document.querySelector('#notes-surface')!.getBoundingClientRect(),
+      status: document.querySelector('.notes__status')!.getBoundingClientRect(),
+    }));
+    expect(at.note.height).toBeGreaterThanOrEqual(200);
+    // And it still ends inside the sheet, above its status line.
+    expect(at.note.bottom).toBeLessThanOrEqual(at.status.top + 1);
+    expect(at.status.bottom).toBeLessThanOrEqual(at.sheet.bottom + 1);
   });
 
   for (const [scheme, media] of [
