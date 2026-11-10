@@ -51,6 +51,17 @@ const ICONS = {
       <path d="m18 15-6-6-6 6" />
     </>
   ),
+  // "Aa", the formatting tools' button in a short notes sheet. Not a caret:
+  // the note's menus button beside it is one, and two carets side by side
+  // would be told apart only by guessing.
+  'a-large-small': (
+    <>
+      <path d="m15 16 2.536-7.328a1.02 1.02 1 0 1 1.928 0L22 16" />
+      <path d="M15.697 14h5.606" />
+      <path d="m2 16 4.039-9.69a.5.5 0 0 1 .923 0L11 16" />
+      <path d="M3.304 13h6.392" />
+    </>
+  ),
   'chevron-left': (
     <>
       <path d="m15 18-6-6 6-6" />

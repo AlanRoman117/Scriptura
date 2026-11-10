@@ -66,6 +66,28 @@ const STATES: Record<string, (page: Page) => Promise<void>> = {
     await page.keyboard.type('Notes on the prologue of John: the Word, the light, the witness of John the Baptist, and grace upon grace');
     await expect.poll(() => page.getByTestId('note-title').evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0);
   },
+  // With a keyboard up the sheet is short, and its own rules apply: the note
+  // bar steps aside and the "Aa" button beside the title can fold the tools.
+  // A long title, under a heading, so the title row and the heading line are
+  // at their fullest.
+  'writing above a keyboard': async (page) => {
+    await STATES['writing a note'](page);
+    await page.getByTestId('note-title').fill('Notes on the prologue of John: the Word, the light, and grace upon grace');
+    await page.getByTestId('notes-surface').tap();
+    await page.keyboard.insertText('## The Word\nIn the beginning was the Word.');
+    // The keyboard as a shorter window, not as `--vvh`: axe takes the full
+    // sheet for a modal over the inert Bible only when it covers the window,
+    // and with `--vvh` alone the window runs on under the sheet.
+    await page.setViewportSize({ width: page.viewportSize()!.width, height: 400 });
+    await expect(page.getByTestId('note-tools-toggle')).toBeVisible();
+    await expect.poll(() => page.getByTestId('pane-notes').evaluate((el) => el.getAnimations().length)).toBe(0);
+  },
+  'writing above a keyboard, tools folded': async (page) => {
+    await STATES['writing above a keyboard'](page);
+    await page.getByTestId('note-tools-toggle').tap();
+    await expect(page.getByTestId('editor-tools')).toBeHidden();
+    await expect(page.getByTestId('note-tools-toggle')).toHaveAttribute('aria-expanded', 'false');
+  },
   marks: async (page) => {
     await page.getByTestId('marks-open').tap();
     await expect(page.getByTestId('marks-panel')).toBeVisible();
@@ -221,6 +243,7 @@ const TRUNCATES_BY_DESIGN = [
   '.search__result-text', // two-line preview; the result opens the whole verse
   '.marks__ref-text', // two-line preview; the mark opens the whole verse
   '.notes__heading', // one-line reminder of the heading the caret is under
+  '.live-line:not(.is-active) .md-mark', // a Markdown marker off the caret's line: clipped to a pixel, read by a screen reader, shown when the caret comes to its line
   '.reader__select', // native select; its options list shows the full name
   '.notes__select', // native select; its options list shows the full title
   ":root[data-verse-numbers='hidden'] .verse__num", // hidden on request; shown whole while it has focus
@@ -323,7 +346,7 @@ for (const locale of ['es-MX', 'fr-FR', 'ja-JP', 'pt-BR', 'zh-Hans', 'zh-Hant'] 
  * is colour only"), so each style runs once, and axe on the desktop covers
  * every appearance (tests/reader/a11y.spec.ts).
  */
-const STYLE_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'settings', 'board'];
+const STYLE_HEAVY = ['reading', 'verse actions docked', 'writing a note', 'writing above a keyboard, tools folded', 'settings', 'board'];
 
 for (const style of STYLES.filter((s) => s !== 'classic')) {
   test.describe(`in the ${style} style`, () => {

@@ -433,6 +433,8 @@ const catalog = {
 
   tools: {
     label: 'Mise en forme',
+    show: 'Afficher les outils de mise en forme',
+    hide: 'Masquer les outils de mise en forme',
     heading: (level: number) => `T${level}, titre ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Gras',

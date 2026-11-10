@@ -411,6 +411,8 @@ export const jaJP = {
 
   tools: {
     label: '書式',
+    show: '書式ツールを表示する',
+    hide: '書式ツールを隠す',
     heading: (level: number) => `H${level}、見出し${level}`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '太字',

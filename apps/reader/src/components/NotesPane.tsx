@@ -9,7 +9,7 @@ import { MarkdownPreview } from './MarkdownPreview';
 import { LiveEditor } from './LiveEditor';
 import { BoardThumbnail } from './BoardThumbnail';
 import { textareaSurface, type NoteSurface } from '../lib/surface';
-import type { EditorPref } from '../lib/prefs';
+import { usePrefs, type EditorPref } from '../lib/prefs';
 import { TitleField, oneLine } from './TitleField';
 import { ConfirmButton } from './ConfirmButton';
 import { settleFocus } from '../lib/focus';
@@ -90,6 +90,9 @@ export function NotesPane({
 }: NotesPaneProps) {
   const { t } = useI18n();
   const active = notes.find((n) => n.id === activeId) ?? null;
+  // Whether the tools are folded away in a short sheet: the reader's choice,
+  // kept on this device, and changed only by the button beside the title.
+  const [{ noteTools }, setPrefs] = usePrefs();
 
   // On a phone the picker row and the Notes/Canvas tabs step aside as the
   // note is scrolled, as the reading bar does (lib/recede.ts): read back on
@@ -303,6 +306,7 @@ export function NotesPane({
       tabIndex={-1}
       data-testid="notes"
       data-menus={narrow ? receding.menus : undefined}
+      data-tools={narrow ? (noteTools ? 'shown' : 'hidden') : undefined}
       // The text stays where it was when the menus leave (padFor).
       style={
         narrow && !menusShown
@@ -401,6 +405,30 @@ export function NotesPane({
                 surface.focus();
               }}
             />
+            {/* With a keyboard up the sheet is about 330px, and the tools'
+                row was a third of what the note had left. This folds them
+                away and brings them back, in a short sheet only (styles.css);
+                a taller one always shows them. It is on this row, not one of
+                its own, so that folding them frees a whole row. Only a press
+                changes it — never focus: tools that come and go as focus
+                moves are tools nobody can rely on finding. "Aa", not a
+                caret, so it cannot be taken for the menus button beside it.
+                Like the tools, a pointer press leaves focus, the caret and
+                the keyboard in the note. */}
+            {narrow && !reading && (
+              <button
+                type="button"
+                className="notes__action notes__tools-toggle"
+                data-testid="note-tools-toggle"
+                aria-label={noteTools ? t.tools.hide : t.tools.show}
+                aria-expanded={noteTools}
+                aria-controls="notes-tools"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setPrefs({ noteTools: !noteTools })}
+              >
+                <Icon name="a-large-small" className="tools-toggle__glyph" />
+              </button>
+            )}
             {/* A press for what a scroll does (2.5.1), as beside the chapter
                 title. */}
             {narrow && (
@@ -421,7 +449,7 @@ export function NotesPane({
               group. Preview has nothing to format, so it has no tools. */}
           <div className="notes__editor" ref={watchEditor}>
           {!reading && (
-            <div className="tools__slot">
+            <div className="tools__slot" id="notes-tools">
               <EditorToolbar
                 onHeading={(level) => apply((t, a, b) => toggleHeading(t, a, b, level))}
                 onWrap={(marker) => apply((t, a, b) => toggleWrap(t, a, b, marker))}

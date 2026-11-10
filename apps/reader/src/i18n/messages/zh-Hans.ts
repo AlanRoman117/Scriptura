@@ -418,6 +418,8 @@ export const zhHans = {
 
   tools: {
     label: '格式',
+    show: '显示格式工具',
+    hide: '隐藏格式工具',
     heading: (level: number) => `H${level}，${level}级标题`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '粗体',
