@@ -191,7 +191,20 @@ test.describe('a note read with its menus away, then typed into above a keyboard
           return notes.getAttribute('data-menus');
         })
         .toBe('hidden');
-      await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBeGreaterThan(400);
+      // On, until past the menus' room. Waiting alone was not enough: on a slow
+      // runner the menus went after two turns, at 300px, and nothing scrolled
+      // further (macOS CI, 2026-11-10).
+      await expect
+        .poll(async () => {
+          const top = await surface.evaluate((el) => el.scrollTop);
+          if (top <= 400) {
+            const box = (await surface.boundingBox())!;
+            await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+            await page.mouse.wheel(0, 150);
+          }
+          return top;
+        })
+        .toBeGreaterThan(400);
 
       // Back into the note, and the keyboard comes up: the sheet is what is
       // left above it, with Safari's visual viewport scrolled for the caret.
