@@ -2200,6 +2200,12 @@ summary:focus-visible,
 .notes__title-row { display: flex; align-items: flex-start; gap: .35rem; }
 .notes__title-row > .title-field { flex: 1; min-width: 0; }
 .notes__menus { flex: none; min-width: var(--control-h); }
+/* The button that folds the formatting tools away. It exists only in a short
+   sheet (the 28rem rules under "Narrow"), so it is drawn there and nowhere
+   else. Open, it is drawn pressed in, as an open chip is, which no caret
+   button ever is; the "Aa" is the second difference from the menus button. */
+.notes__tools-toggle { display: none; flex: none; align-items: center; justify-content: center; font-size: var(--fs-lg); line-height: 1; }
+.notes__tools-toggle[aria-expanded='true'] { color: var(--ink); border-color: var(--ink-soft); background-color: var(--accent-wash); }
 .notes__title-field {
   margin-bottom: .5rem;
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: 600; line-height: 1.3;
@@ -2447,12 +2453,36 @@ summary:focus-visible,
    tall. While the note is being edited in a sheet that short, the note bar
    steps aside and the tools scroll in one row. Nothing is removed from the
    keyboard path: Shift+Tab to the title leaves the editing group, and the bar
-   comes back. */
+   comes back.
+
+   That still left the note about 88px on the owner's iPhone, so the tools
+   can be folded away too, by the "Aa" button beside the title. ⚠️ The fold
+   answers to the press and to the sheet's height, never to focus: the owner
+   took a toolbar that came and went with focus out of the app, and a fold
+   that undid itself whenever focus left the note would bring it back. A
+   taller sheet always shows the tools, whatever the button last said. Folded,
+   formatting is one press away (the button), and Markdown typed by hand is
+   drawn as it always is. */
 @container sheet-body (max-height: 28rem) {
   .notes:has(.notes__editor:focus-within) .notes__bar,
   .sheet__body:has(.notes__editor:focus-within) .side-switch { display: none; }
   .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
+  .notes__tools-toggle { display: inline-flex; }
+  .notes[data-tools='hidden'] .notes__editor .tools__slot { display: none; }
+  /* The title, while the note under it is typed into: smaller type and no
+     room around the row. ⚠️ Still shown whole (TitleField): it wraps and
+     grows as it always does, only smaller, so a long title takes fewer lines
+     and none is cut off or scrolled out of sight. Its padding is in `em`, so
+     one line stays centred in the row's 44px. Never while the title itself
+     has focus: then it is being written, at its own size. */
+  .notes:has(.notes__editor:focus-within) { padding-top: .25rem; }
+  .notes:has(.notes__editor:focus-within) .notes__title-field { font-size: var(--fs-base); margin-bottom: 0; }
+  /* The heading the caret is under steps aside too (27px). It is a reminder
+     for the eye only, already `aria-hidden`: a screen reader reads the note's
+     own heading lines, so nothing is taken from one. NotesPane still tracks
+     it, and it is back the moment the sheet is tall or focus leaves. */
+  .notes__editor:focus-within .notes__heading { display: none; }
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 
@@ -2476,17 +2506,42 @@ summary:focus-visible,
    menus' height when they leave, which alone would move every line up by as
    much — and the lines jumped over could then only be read by scrolling
    back, which brought the menus back and moved the lines away again. So the
-   scroller's content is padded by the same amount (`--menus-pad`, padFor):
+   scroller's content gains as much room at its top (`--menus-pad`, padFor):
    the line being read stays put, and the room above it fills with the lines
-   just scrolled past. Nothing writes a scroll position. */
+   just scrolled past. Nothing writes a scroll position.
+
+   ⚠️ The room is a block at the top of the content, not the scroller's
+   padding. A box is never smaller than its padding, and the room is sized
+   for the sheet the menus left: 160px, read in the full sheet, which then
+   met the 334px sheet left above an iPhone's keyboard. The note could not
+   shrink to its slot, so it squeezed the heading above it to a sliver, ran
+   past the bottom of the sheet, and its "Saved" line was drawn inside it
+   (the owner's iPhone, preview.17). Content scrolls; it never sets a
+   scroller's size. A textarea has no content to put a block in, so it keeps
+   the padding, and gives it up in a sheet too short to hold it — the text
+   there moves up by the menus' height as they go. */
 .sheet .notes[data-menus='hidden'] .notes__bar,
 .sheet .canvas[data-menus='hidden'] .canvas__bar,
 .sheet__body:has(.side-panel:not([hidden]) > [data-menus='hidden']) .side-switch {
   position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-.sheet .notes[data-menus='hidden'] .notes__surface { padding-top: calc(var(--surface-pad-y) + var(--menus-pad, 0px)); }
-.sheet .notes[data-menus='hidden'] .preview { padding-top: calc(.3rem + var(--menus-pad, 0px)); }
+.sheet .notes[data-menus='hidden'] .live:not([data-empty])::before,
+.sheet .notes[data-menus='hidden'] .preview:not(.preview--empty)::before {
+  content: ''; display: block; height: var(--menus-pad, 0px);
+}
+/* The room holds the text still by hand, so the browser's scroll anchoring
+   must not do it too. Chromium saw the block come and go above the line
+   being read and scrolled by as much to keep that line where it was in a
+   scroller whose top had just moved: the text jumped the menus' height
+   after all, and padding (a change to the scroller itself) never set it
+   off. Off for good, not only while the menus are away: turned back on in
+   the same change that removes the block, it still answered it. */
+.sheet .notes .live, .sheet .notes .preview { overflow-anchor: none; }
+.sheet .notes[data-menus='hidden'] textarea.notes__surface { padding-top: calc(var(--surface-pad-y) + var(--menus-pad, 0px)); }
+@container sheet-body (max-height: 28rem) {
+  .sheet .notes[data-menus='hidden'] textarea.notes__surface { padding-top: var(--surface-pad-y); }
+}
 
 /* ── A new version is ready ───────────────────────────────────────────────── */
 

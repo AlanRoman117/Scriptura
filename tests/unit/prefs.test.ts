@@ -96,6 +96,14 @@ describe('normalizePrefs', () => {
     expect(normalizePrefs({ recedeMenus: 'no' }).recedeMenus).toBe(true);
   });
 
+  test('the formatting tools show in a short notes sheet unless folded away', () => {
+    expect(DEFAULT_PREFS.noteTools).toBe(true);
+    // Stored before the button existed: shown, as for a new reader.
+    expect(normalizePrefs({ style: 'sepia' }).noteTools).toBe(true);
+    expect(normalizePrefs({ noteTools: false }).noteTools).toBe(false);
+    expect(normalizePrefs({ noteTools: 'no' }).noteTools).toBe(true);
+  });
+
   /**
    * The preference was one `theme` before it was a style and an appearance.
    * A reader who chose high contrast, dark, keeps it.
