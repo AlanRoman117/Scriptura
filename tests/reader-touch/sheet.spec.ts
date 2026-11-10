@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { usePlainEditor } from '../helpers/note';
 
 /**
  * The notes sheet under a finger, and above a keyboard.
@@ -147,4 +148,80 @@ test('the grip is a full-width, finger-sized target clear of the bottom edge, an
   await pane.evaluate((el) => el.scrollTo(0, el.scrollHeight));
   const last = (await page.locator('.verse').last().boundingBox())!;
   expect(last.y + last.height).toBeLessThanOrEqual(sheetBox.y + 1);
+});
+
+/**
+ * A long note read with its menus put away, then typed into above a keyboard
+ * (owner's iPhone, iOS 27.0.1, preview.17). The note's scroller kept the
+ * menus' room as top padding (`--menus-pad`, padFor) — 160px here, sized for
+ * the full sheet. A box cannot be smaller than its padding, so in the 334px
+ * sheet left above the keyboard the note could not shrink to its slot: it
+ * squeezed the heading above it to a sliver, ran past the bottom of the
+ * sheet, and the "Saved" line was drawn inside it. The geometry here is the
+ * owner's screenshots': the sheet from 90 to 424, the note from 269 to 445.
+ */
+test.describe('a note read with its menus away, then typed into above a keyboard', () => {
+  // An iPhone's width; the height only decides the sheet before the keyboard.
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  for (const editor of ['live', 'plain'] as const) {
+    test(`the ${editor} note stays in its own place in the sheet`, async ({ page }) => {
+      if (editor === 'plain') await usePlainEditor(page);
+      await open(page);
+      await page.getByRole('button', { name: /expand notes/i }).tap();
+      await page.getByTestId('note-new').tap();
+      const surface = page.getByTestId('notes-surface');
+      await surface.tap();
+      await expect(page.getByTestId('pane-notes')).toHaveAttribute('data-sheet', 'full');
+      const lines = Array.from({ length: 40 }, (_, i) => `Line ${i + 1}: persistence is a key word for this parable.`);
+      await page.keyboard.insertText(['## What does it take', ...lines].join('\n'));
+      await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+
+      // Read back from the top, and on: the menus go (a wheel, which is the
+      // reader's own scrolling; lib/recede.ts ignores a scroll no input made).
+      await surface.evaluate((el) => el.scrollTo(0, 0));
+      const notes = page.getByTestId('notes');
+      await expect(notes).toHaveAttribute('data-menus', 'shown');
+      await expect
+        .poll(async () => {
+          const box = (await surface.boundingBox())!;
+          await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+          await page.mouse.wheel(0, 150);
+          return notes.getAttribute('data-menus');
+        })
+        .toBe('hidden');
+      await expect.poll(() => surface.evaluate((el) => el.scrollTop)).toBeGreaterThan(400);
+
+      // Back into the note, and the keyboard comes up: the sheet is what is
+      // left above it, with Safari's visual viewport scrolled for the caret.
+      await surface.tap();
+      await expect(surface).toBeFocused();
+      await page.addStyleTag({ content: ':root { --vvh: 363px !important; --vv-top: 61px !important; }' });
+      await expect(page.getByTestId('note-new')).toBeHidden();
+      await expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0);
+      await expect(notes).toHaveAttribute('data-menus', 'hidden');
+
+      const at = await page.evaluate(() => {
+        const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+        const heading = document.querySelector('.notes__heading')!;
+        return {
+          sheet: box('.sheet'),
+          heading: box('.notes__heading'),
+          headingClipped: heading.scrollHeight > heading.clientHeight + 1,
+          note: box('#notes-surface'),
+          status: box('.notes__status'),
+        };
+      });
+      expect(at.sheet.bottom).toBeLessThanOrEqual(424 + 1);
+      // The heading the caret is under is drawn whole, and the note starts below it.
+      expect(at.headingClipped).toBe(false);
+      expect(at.note.top).toBeGreaterThanOrEqual(at.heading.bottom - 1);
+      // The note ends inside the sheet, and the status line comes after it.
+      expect(at.note.bottom).toBeLessThanOrEqual(at.sheet.bottom + 1);
+      expect(at.status.top).toBeGreaterThanOrEqual(at.note.bottom - 1);
+      expect(at.status.bottom).toBeLessThanOrEqual(at.sheet.bottom + 1);
+      // And it still has lines to type into.
+      expect(at.note.height).toBeGreaterThanOrEqual(80);
+    });
+  }
 });

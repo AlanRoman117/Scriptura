@@ -2476,17 +2476,42 @@ summary:focus-visible,
    menus' height when they leave, which alone would move every line up by as
    much — and the lines jumped over could then only be read by scrolling
    back, which brought the menus back and moved the lines away again. So the
-   scroller's content is padded by the same amount (`--menus-pad`, padFor):
+   scroller's content gains as much room at its top (`--menus-pad`, padFor):
    the line being read stays put, and the room above it fills with the lines
-   just scrolled past. Nothing writes a scroll position. */
+   just scrolled past. Nothing writes a scroll position.
+
+   ⚠️ The room is a block at the top of the content, not the scroller's
+   padding. A box is never smaller than its padding, and the room is sized
+   for the sheet the menus left: 160px, read in the full sheet, which then
+   met the 334px sheet left above an iPhone's keyboard. The note could not
+   shrink to its slot, so it squeezed the heading above it to a sliver, ran
+   past the bottom of the sheet, and its "Saved" line was drawn inside it
+   (the owner's iPhone, preview.17). Content scrolls; it never sets a
+   scroller's size. A textarea has no content to put a block in, so it keeps
+   the padding, and gives it up in a sheet too short to hold it — the text
+   there moves up by the menus' height as they go. */
 .sheet .notes[data-menus='hidden'] .notes__bar,
 .sheet .canvas[data-menus='hidden'] .canvas__bar,
 .sheet__body:has(.side-panel:not([hidden]) > [data-menus='hidden']) .side-switch {
   position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; border: 0;
   overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
-.sheet .notes[data-menus='hidden'] .notes__surface { padding-top: calc(var(--surface-pad-y) + var(--menus-pad, 0px)); }
-.sheet .notes[data-menus='hidden'] .preview { padding-top: calc(.3rem + var(--menus-pad, 0px)); }
+.sheet .notes[data-menus='hidden'] .live:not([data-empty])::before,
+.sheet .notes[data-menus='hidden'] .preview:not(.preview--empty)::before {
+  content: ''; display: block; height: var(--menus-pad, 0px);
+}
+/* The room holds the text still by hand, so the browser's scroll anchoring
+   must not do it too. Chromium saw the block come and go above the line
+   being read and scrolled by as much to keep that line where it was in a
+   scroller whose top had just moved: the text jumped the menus' height
+   after all, and padding (a change to the scroller itself) never set it
+   off. Off for good, not only while the menus are away: turned back on in
+   the same change that removes the block, it still answered it. */
+.sheet .notes .live, .sheet .notes .preview { overflow-anchor: none; }
+.sheet .notes[data-menus='hidden'] textarea.notes__surface { padding-top: calc(var(--surface-pad-y) + var(--menus-pad, 0px)); }
+@container sheet-body (max-height: 28rem) {
+  .sheet .notes[data-menus='hidden'] textarea.notes__surface { padding-top: var(--surface-pad-y); }
+}
 
 /* ── A new version is ready ───────────────────────────────────────────────── */
 
