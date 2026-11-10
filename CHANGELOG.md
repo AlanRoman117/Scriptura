@@ -7,6 +7,18 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.19] - 2026-11-10
+
+The nineteenth preview changes nothing you can see. It brings the tools the
+reader is built and tested with up to date, and closes the update requests that
+were open for them. There are no new texts for reviewers.
+
+### Changed
+
+- The tools the reader is built and tested with are updated: Playwright to 1.65.0
+  (the tests run in Chromium 158), Vite to 8.3.6 and its React plugin to 6.2.1.
+  Nothing in how the reader behaves changes.
+
 ## [0.1.0-preview.18] - 2026-11-09
 
 The eighteenth preview is about writing on a phone. It fixes a note being pushed
@@ -567,6 +579,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.19]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.19
 [0.1.0-preview.18]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.18
 [0.1.0-preview.17]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.17
 [0.1.0-preview.16]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.16
