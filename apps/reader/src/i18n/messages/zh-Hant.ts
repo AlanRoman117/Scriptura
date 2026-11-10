@@ -416,6 +416,8 @@ export const zhHant = {
 
   tools: {
     label: '格式',
+    show: '顯示格式工具',
+    hide: '隱藏格式工具',
     heading: (level: number) => `H${level}，${level}級標題`,
     headingGlyph: (level: number) => `H${level}`,
     bold: '粗體',

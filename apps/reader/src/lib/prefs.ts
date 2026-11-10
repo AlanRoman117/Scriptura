@@ -84,6 +84,13 @@ export interface DisplayPrefs {
    * reader who finds controls that move by themselves disorienting.
    */
   recedeMenus: boolean;
+  /**
+   * The formatting tools in a short notes sheet, the one left above a phone's
+   * keyboard: shown, or folded away to give the note their row. Only the
+   * button beside the note's title changes it, never focus, and a taller
+   * sheet shows the tools whatever it says (NotesPane, styles.css).
+   */
+  noteTools: boolean;
 }
 
 export const DEFAULT_PREFS: DisplayPrefs = {
@@ -99,6 +106,7 @@ export const DEFAULT_PREFS: DisplayPrefs = {
   verseLines: true,
   verseNumbers: true,
   recedeMenus: true,
+  noteTools: true,
 };
 
 /** The localStorage key. Mirrored in index.html's inline script. */
@@ -193,6 +201,10 @@ export function normalizePrefs(raw: unknown): DisplayPrefs {
     // first paint — a page always opens with its menus showing — so
     // index.html's inline script has no part in it.
     recedeMenus: r.recedeMenus !== false,
+    // Shown unless folded away. Nothing about it is drawn before the reader
+    // has a note open in a short sheet, so the inline script has no part in
+    // it either.
+    noteTools: r.noteTools !== false,
   };
 }
 

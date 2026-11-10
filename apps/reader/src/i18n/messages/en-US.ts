@@ -444,6 +444,9 @@ export const enUS = {
 
   tools: {
     label: 'Formatting',
+    /** Said for the button beside a note's title that folds the tools away in a short notes sheet, the one left above a phone's keyboard, and brings them back. Heard, not seen: the button shows a picture (Aa). It names what a press will do. */
+    show: 'Show the formatting tools',
+    hide: 'Hide the formatting tools',
     /** Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3). */
     heading: (level: number) => `H${level}, heading ${level}`,
     headingGlyph: (level: number) => `H${level}`,

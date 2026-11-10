@@ -428,6 +428,8 @@ export const esMX = {
 
   tools: {
     label: 'Formato',
+    show: 'Mostrar las herramientas de formato',
+    hide: 'Ocultar las herramientas de formato',
     heading: (level: number) => `T${level}, título ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Negrita',

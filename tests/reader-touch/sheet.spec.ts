@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { usePlainEditor } from '../helpers/note';
+import { axeFor, describeViolations } from '../helpers/axe';
 
 /**
  * The notes sheet under a finger, and above a keyboard.
@@ -222,6 +223,154 @@ test.describe('a note read with its menus away, then typed into above a keyboard
       expect(at.status.bottom).toBeLessThanOrEqual(at.sheet.bottom + 1);
       // And it still has lines to type into.
       expect(at.note.height).toBeGreaterThanOrEqual(80);
+    });
+  }
+});
+
+/**
+ * More room for the note above a keyboard (owner's iPhone, preview.17). With
+ * the keyboard up the sheet is about 330px, and the note being typed into had
+ * 88px of it: the grip, the title row, the tools and the heading line took the
+ * rest. The geometry is the scenario above's: an iPhone's width, the sheet
+ * from 90 to 424.
+ */
+test.describe('the note in a short sheet', () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  const KEYBOARD = ':root { --vvh: 363px !important; --vv-top: 61px !important; }';
+  const TITLE = 'November 8 Morning service';
+
+  /**
+   * A note under a heading, typed into with the keyboard up. The keyboard is
+   * `--vvh`, as the app sees one, except for axe, which takes the full sheet
+   * for a modal over the inert Bible only when it covers the window: there it
+   * is a window as short as the space left above one.
+   */
+  async function typing(page: Page, title = TITLE, keyboard: 'vvh' | 'window' = 'vvh') {
+    await open(page);
+    await page.getByRole('button', { name: /expand notes/i }).tap();
+    await page.getByTestId('note-new').tap();
+    await page.getByTestId('note-title').fill(title);
+    const surface = page.getByTestId('notes-surface');
+    await surface.tap();
+    await page.keyboard.insertText('## What does it take to get something from God\nAbout prayer. Persistence is a key word for this parable.\n');
+    if (keyboard === 'vvh') await keyboardUp(page);
+    else {
+      await page.setViewportSize({ width: 393, height: 400 });
+      await expect(page.getByTestId('note-new')).toBeHidden();
+      await settled(page);
+    }
+    return surface;
+  }
+
+  async function keyboardUp(page: Page) {
+    await page.addStyleTag({ content: KEYBOARD });
+    await expect(page.getByTestId('note-new')).toBeHidden();
+    await settled(page);
+  }
+
+  const settled = (page: Page) => expect.poll(() => page.evaluate(() => document.getAnimations().length)).toBe(0);
+
+  test('a button beside the title folds the tools away, says what a press will do, and leaves the caret in the note', async ({ page }) => {
+    const surface = await typing(page);
+    const toggle = page.getByTestId('note-tools-toggle');
+    const tools = page.getByTestId('editor-tools');
+    await expect(toggle).toBeVisible();
+    await expect(tools).toBeVisible();
+    await expect(toggle).toHaveAccessibleName('Hide the formatting tools');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(toggle).toHaveAttribute('aria-controls', 'notes-tools');
+    await expect(page.locator('#notes-tools')).toHaveCount(1);
+    // On the title row, not a row of its own, and a finger-sized target.
+    const row = (await page.locator('.notes__title-row').boundingBox())!;
+    const box = (await toggle.boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(row.y - 1);
+    expect(box.y + box.height).toBeLessThanOrEqual(row.y + row.height + 1);
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    // Not the menus button's caret: a picture of its own.
+    await expect(toggle.locator('svg[data-icon="a-large-small"]')).toHaveCount(1);
+    await expect(toggle.locator('svg[data-icon^="chevron"]')).toHaveCount(0);
+
+    const before = (await surface.boundingBox())!.height;
+    const tap = async () => {
+      const b = (await toggle.boundingBox())!;
+      await page.touchscreen.tap(b.x + b.width / 2, b.y + b.height / 2);
+    };
+    await tap();
+    await expect(tools).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toHaveAccessibleName('Show the formatting tools');
+    // The press left focus, and so the keyboard, in the note.
+    await expect(surface).toBeFocused();
+    // The note has the tools' row.
+    await settled(page);
+    expect((await surface.boundingBox())!.height).toBeGreaterThan(before + 40);
+
+    // Focus moving never changes it: not into the title, not out of the note.
+    await page.getByTestId('note-title').focus();
+    await expect(tools).toBeHidden();
+    await surface.focus();
+    await page.evaluate(() => (document.activeElement as HTMLElement).blur());
+    await expect(tools).toBeHidden();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    // A second press brings them back.
+    await surface.focus();
+    await tap();
+    await expect(tools).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(surface).toBeFocused();
+  });
+
+  test('the choice is kept on this device, and a tall sheet shows the tools whatever it says', async ({ page }) => {
+    await typing(page);
+    const toggle = page.getByTestId('note-tools-toggle');
+    await toggle.tap();
+    await expect(page.getByTestId('editor-tools')).toBeHidden();
+    await expect
+      .poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('scriptura-display') || '{}').noteTools))
+      .toBe(false);
+
+    await page.reload();
+    await expect(page.getByTestId('chapter')).toBeVisible({ timeout: 30_000 });
+    await page.getByRole('button', { name: /expand notes/i }).tap();
+    await page.getByTestId('notes-surface').tap();
+    await expect(page.getByTestId('pane-notes')).toHaveAttribute('data-sheet', 'full');
+    // No keyboard: a tall sheet. The tools show, and the button is not drawn.
+    await settled(page);
+    await expect(page.getByTestId('editor-tools')).toBeVisible();
+    await expect(toggle).toBeHidden();
+
+    // The keyboard comes up: still folded, as the reader left it.
+    await keyboardUp(page);
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toHaveAccessibleName('Show the formatting tools');
+    await expect(page.getByTestId('editor-tools')).toBeHidden();
+  });
+
+  for (const [scheme, media] of [
+    ['light', { colorScheme: 'light' }],
+    ['dark', { colorScheme: 'dark' }],
+    ['forced colours', { forcedColors: 'active' }],
+  ] as const) {
+    test(`axe finds nothing with the tools open and folded, in ${scheme}`, async ({ page }) => {
+      await page.emulateMedia(media);
+      await typing(page, TITLE, 'window');
+      const toggle = page.getByTestId('note-tools-toggle');
+      for (const expanded of ['true', 'false']) {
+        await expect(toggle).toHaveAttribute('aria-expanded', expanded);
+        const results = await axeFor(page).analyze();
+        expect(results.violations, describeViolations(results)).toEqual([]);
+        if (expanded === 'true') await toggle.tap();
+      }
+      // The button shows the focus ring when the keyboard reaches it: the
+      // next stop after the title.
+      await page.getByTestId('note-title').focus();
+      await page.keyboard.press('Tab');
+      await expect(toggle).toBeFocused();
+      await expect(toggle).toHaveCSS('outline-style', 'solid');
     });
   }
 });

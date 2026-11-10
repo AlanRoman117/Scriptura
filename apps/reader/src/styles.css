@@ -2200,6 +2200,12 @@ summary:focus-visible,
 .notes__title-row { display: flex; align-items: flex-start; gap: .35rem; }
 .notes__title-row > .title-field { flex: 1; min-width: 0; }
 .notes__menus { flex: none; min-width: var(--control-h); }
+/* The button that folds the formatting tools away. It exists only in a short
+   sheet (the 28rem rules under "Narrow"), so it is drawn there and nowhere
+   else. Open, it is drawn pressed in, as an open chip is, which no caret
+   button ever is; the "Aa" is the second difference from the menus button. */
+.notes__tools-toggle { display: none; flex: none; align-items: center; justify-content: center; font-size: var(--fs-lg); line-height: 1; }
+.notes__tools-toggle[aria-expanded='true'] { color: var(--ink); border-color: var(--ink-soft); background-color: var(--accent-wash); }
 .notes__title-field {
   margin-bottom: .5rem;
   font-family: var(--serif); font-size: var(--fs-lg); font-weight: 600; line-height: 1.3;
@@ -2447,12 +2453,23 @@ summary:focus-visible,
    tall. While the note is being edited in a sheet that short, the note bar
    steps aside and the tools scroll in one row. Nothing is removed from the
    keyboard path: Shift+Tab to the title leaves the editing group, and the bar
-   comes back. */
+   comes back.
+
+   That still left the note about 88px on the owner's iPhone, so the tools
+   can be folded away too, by the "Aa" button beside the title. ⚠️ The fold
+   answers to the press and to the sheet's height, never to focus: the owner
+   took a toolbar that came and went with focus out of the app, and a fold
+   that undid itself whenever focus left the note would bring it back. A
+   taller sheet always shows the tools, whatever the button last said. Folded,
+   formatting is one press away (the button), and Markdown typed by hand is
+   drawn as it always is. */
 @container sheet-body (max-height: 28rem) {
   .notes:has(.notes__editor:focus-within) .notes__bar,
   .sheet__body:has(.notes__editor:focus-within) .side-switch { display: none; }
   .notes__editor .tools { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; }
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
+  .notes__tools-toggle { display: inline-flex; }
+  .notes[data-tools='hidden'] .notes__editor .tools__slot { display: none; }
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 

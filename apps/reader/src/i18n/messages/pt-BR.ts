@@ -454,6 +454,8 @@ export const ptBR = {
 
   tools: {
     label: 'Formatação',
+    show: 'Mostrar as ferramentas de formatação',
+    hide: 'Ocultar as ferramentas de formatação',
     heading: (level: number) => `T${level}, título ${level}`,
     headingGlyph: (level: number) => `T${level}`,
     bold: 'Negrito',
