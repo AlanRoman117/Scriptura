@@ -7,6 +7,35 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.18] - 2026-11-09
+
+The eighteenth preview is about writing on a phone. It fixes a note being pushed
+past the bottom of the notes sheet when the keyboard opened, found on an iPhone,
+and nearly doubles the room to type in above the keyboard.
+
+For reviewers, new texts in every language: the names of the new button that
+hides and shows the formatting tools. They are listed in
+`docs/plans/reader-i18n/README.md`.
+
+### Fixed
+
+- Typing in a note you had scrolled through no longer pushes it past the bottom of
+  the notes sheet on a phone, with "Saved" drawn inside it. When the menus stepped
+  aside, the note kept their room as padding sized for the full sheet, and once the
+  keyboard shrank the sheet the note could not get small enough to fit.
+
+### Added
+
+- Above the keyboard on a phone, an **Aa** button beside a note's title hides the
+  formatting tools to give the note more room, and shows them again. The choice is
+  remembered on the device. A tall sheet always shows the tools.
+
+### Changed
+
+- While you type in a note above the keyboard, its title is set smaller (a long
+  title still shows in full), and the line naming the heading you are under steps
+  aside. With the tools hidden too, the note has nearly twice the room it had.
+
 ## [0.1.0-preview.17] - 2026-11-05
 
 The seventeenth preview clears a code-scanning alert. Nothing you can see changes.
@@ -538,6 +567,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.18]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.18
 [0.1.0-preview.17]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.17
 [0.1.0-preview.16]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.16
 [0.1.0-preview.15]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.15

@@ -245,7 +245,7 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 - [ ] Every text in the table below is correct and sounds natural.
 - [ ] Nothing in the pictures is cut off, overlapping or badly broken across lines.
 
-**The 51 texts of this part**
+**The 53 texts of this part**
 
 | Key | English | Français (France) |
 |---|---|---|
@@ -276,6 +276,8 @@ The pane beside the Bible, where a reader writes. A quoted passage arrives with 
 | `notes.linkIn` | John 1:3-5 (BSB) | JEAN 1:3-5 (KJV) |
 | `notes.linkMissing` | John 1:3-5 (BSB — not downloaded) | JEAN 1:3-5 (KJV, non téléchargée) |
 | `tools.label` | Formatting | Mise en forme |
+| `tools.show`<br><sub>Said for the button beside a note's title that folds the tools away in a short notes sheet, the one left above a phone's keyboard, and brings them back. Heard, not seen: the button shows a picture (Aa). It names what a press will do.</sub> | Show the formatting tools | Afficher les outils de mise en forme |
+| `tools.hide` | Hide the formatting tools | Masquer les outils de mise en forme |
 | `tools.heading`<br><sub>Said for the H1, H2 and H3 buttons. It starts with the letters the button shows (headingGlyph), so someone using voice control can say what they see (WCAG 2.5.3).</sub> | H2, heading 2 | T2, titre 2 |
 | `tools.headingGlyph` | H2 | T2 |
 | `tools.bold` | Bold | Gras |
