@@ -2470,6 +2470,14 @@ summary:focus-visible,
   .notes__editor .tools__slot { min-height: calc(var(--control-h) + .35rem); }
   .notes__tools-toggle { display: inline-flex; }
   .notes[data-tools='hidden'] .notes__editor .tools__slot { display: none; }
+  /* The title, while the note under it is typed into: smaller type and no
+     room around the row. ⚠️ Still shown whole (TitleField): it wraps and
+     grows as it always does, only smaller, so a long title takes fewer lines
+     and none is cut off or scrolled out of sight. Its padding is in `em`, so
+     one line stays centred in the row's 44px. Never while the title itself
+     has focus: then it is being written, at its own size. */
+  .notes:has(.notes__editor:focus-within) { padding-top: .25rem; }
+  .notes:has(.notes__editor:focus-within) .notes__title-field { font-size: var(--fs-base); margin-bottom: 0; }
 }
 .sheet[data-sheet='peek'] .sheet__body { display: none; }
 

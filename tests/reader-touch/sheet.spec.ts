@@ -350,6 +350,56 @@ test.describe('the note in a short sheet', () => {
     await expect(page.getByTestId('editor-tools')).toBeHidden();
   });
 
+  test('while the note is typed into, its title is smaller and still shown whole; in the title it is full size', async ({ page }) => {
+    const LONG = 'November 8 Morning service at the church on the hill, with the youth group and the choir';
+    const surface = await typing(page, LONG);
+    const title = page.getByTestId('note-title');
+    const look = () =>
+      page.evaluate(() => {
+        const field = document.querySelector<HTMLTextAreaElement>('.notes__title')!;
+        const row = document.querySelector('.notes__title-row')!.getBoundingClientRect();
+        const body = document.querySelector('.sheet__body')!.getBoundingClientRect();
+        return {
+          size: parseFloat(getComputedStyle(field).fontSize),
+          // Every line of the title is drawn: the field is as tall as its text.
+          whole: field.scrollHeight <= field.clientHeight + 1,
+          lines: Math.round((field.clientHeight - 2 * parseFloat(getComputedStyle(field).paddingTop)) / parseFloat(getComputedStyle(field).lineHeight)),
+          above: row.top - body.top,
+          height: row.height,
+        };
+      });
+    await expect(surface).toBeFocused();
+    const typing_ = await look();
+    await title.focus();
+    await settled(page);
+    const titled = await look();
+
+    // Smaller type, and the room above the row given to the note.
+    expect(typing_.size).toBeLessThan(titled.size * 0.9);
+    expect(typing_.above).toBeLessThanOrEqual(5);
+    expect(typing_.height).toBeLessThan(titled.height);
+    // Whole in both: it wraps, and is never cut to a line.
+    expect(typing_.whole).toBe(true);
+    expect(titled.whole).toBe(true);
+    expect(typing_.lines).toBeGreaterThan(1);
+    // And all of it is still the field's value, for a screen reader.
+    await expect(title).toHaveValue(LONG);
+
+    // A short title is one line, centred in the row's 44px.
+    await title.fill(TITLE);
+    await surface.focus();
+    await settled(page);
+    const short = await look();
+    expect(short.height).toBeLessThanOrEqual(44 + 1);
+    expect(short.lines).toBe(1);
+
+    // A tall sheet keeps the title as it was.
+    await page.evaluate(() => document.querySelectorAll('style').forEach((s) => s.textContent?.includes('--vvh') && s.remove()));
+    await settled(page);
+    await surface.focus();
+    expect((await look()).size).toBeCloseTo(titled.size, 1);
+  });
+
   for (const [scheme, media] of [
     ['light', { colorScheme: 'light' }],
     ['dark', { colorScheme: 'dark' }],
