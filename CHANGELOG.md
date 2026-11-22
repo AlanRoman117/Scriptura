@@ -7,6 +7,16 @@ suffix and is published as a GitHub pre-release.
 
 ## [Unreleased]
 
+## [0.1.0-preview.20] - 2026-11-21
+
+The twentieth preview changes nothing you can see. It brings two of the tools
+the reader is built with up to date. There are no new texts for reviewers.
+
+### Changed
+
+- Vite is updated to 8.3.8 and its React plugin to 6.3.0. Nothing in how the
+  reader behaves changes.
+
 ## [0.1.0-preview.19] - 2026-11-10
 
 The nineteenth preview changes nothing you can see. It brings the tools the
@@ -579,6 +589,7 @@ interface in Spanish, French and Japanese.
 - **Checks by hand** on real phones, with screen readers, and in Windows high-contrast mode.
 - **Planned, not built:** GraphQL, the hosted JSON API and the AWS deployment.
 
+[0.1.0-preview.20]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.20
 [0.1.0-preview.19]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.19
 [0.1.0-preview.18]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.18
 [0.1.0-preview.17]: https://github.com/AlanRoman117/Scriptura/releases/tag/v0.1.0-preview.17
